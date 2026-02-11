@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Phone, Mail, MapPin } from 'lucide-react';
+import animatedLogo from '../assets/shilingi-logo-animated.gif';
 
 // Custom icons to match the requested look (WhatsApp, TikTok) if simpler ones aren't available, 
 // using generic Lucide ones or placeholders for now where specific brand icons might be needed.
@@ -36,21 +37,20 @@ const Footer = () => {
     ];
 
     return (
-        <footer className="bg-gray-50 text-gray-800 pt-12 md:pt-16 border-t border-gray-100">
+        <footer className="text-gray-800 pt-12 md:pt-16 border-t border-gray-200" style={{ backgroundColor: '#f8f8f8' }}>
             <div className="container-custom">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-10 mb-12 items-start">
                     {/* Brand */}
                     <div className="lg:col-span-1 space-y-4 md:space-y-6">
-                        <div className="flex items-center space-x-2">
-                            <div className="flex items-center justify-center w-10 h-10 bg-primary-500 rounded-lg text-white font-bold text-sm">
-                                LOGO
-                            </div>
-                            <span className="text-xl font-bold text-primary-900 leading-tight">
-                                Shilingi<br />Moves
-                            </span>
+                        <div className="flex items-center">
+                            <img
+                                src={animatedLogo}
+                                alt="Shilingi Moves Logo"
+                                className="h-14 md:h-16 object-contain"
+                            />
                         </div>
                         <p className="text-sm md:text-base text-gray-600">
-                            Learn. Plan. Grow
+                            Powering every step of your financial journey.
                         </p>
                     </div>
 

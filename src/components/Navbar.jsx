@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
+import animatedLogo from '../assets/shilingi-logo-animated.gif';
 
 const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,17 +19,16 @@ const Navbar = () => {
     const isActive = (path) => location.pathname === path;
 
     return (
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <nav className="sticky top-0 z-50 shadow-sm border-b border-gray-200" style={{ backgroundColor: '#f8f8f8' }}>
             <div className="container-custom">
                 <div className="flex items-center justify-between h-16 md:h-18 lg:h-20">
-                    {/* Logo */}
-                    <Link to="/" className="flex items-center space-x-2">
-                        <div className="flex items-center justify-center w-10 h-10 bg-primary-500 rounded-lg text-white font-bold text-sm">
-                            LOGO
-                        </div>
-                        <span className="text-xl font-bold text-gray-900 hidden sm:block">
-                            Shilingi Moves
-                        </span>
+                    {/* Animated Logo */}
+                    <Link to="/" className="flex items-center">
+                        <img
+                            src={animatedLogo}
+                            alt="Shilingi Moves Logo"
+                            className="h-12 md:h-14 lg:h-16 object-contain"
+                        />
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -69,7 +69,7 @@ const Navbar = () => {
 
             {/* Mobile Menu */}
             {mobileMenuOpen && (
-                <div className="md:hidden border-t border-gray-200 bg-white">
+                <div className="md:hidden border-t border-gray-200" style={{ backgroundColor: '#f8f8f8' }}>
                     <div className="container-custom py-4 space-y-1">
                         {navLinks.map((link) => (
                             <Link
