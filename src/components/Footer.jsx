@@ -7,6 +7,7 @@ import animatedLogo from '../assets/shilingi-logo-animated.gif';
 // using generic Lucide ones or placeholders for now where specific brand icons might be needed.
 // Lucide has Facebook, Twitter, Instagram, Linkedin. For WhatsApp and TikTok we might need to improvise or use text/other icons if not available in this version.
 // Using standard Lucide icons for social media for consistency.
+// icons
 
 const Footer = () => {
     const servicesLinks = [
