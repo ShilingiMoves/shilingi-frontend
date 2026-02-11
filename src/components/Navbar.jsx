@@ -69,14 +69,16 @@ const Navbar = () => {
 
             {/* Mobile Menu */}
             {mobileMenuOpen && (
-                <div className="md:hidden border-t border-gray-200" style={{ backgroundColor: '#f8f8f8' }}>
-                    <div className="container-custom py-4 space-y-1">
+                <div className="md:hidden fixed inset-0 z-40 bg-white pt-20 pb-6 px-4 overflow-y-auto" style={{ top: '0', backgroundColor: '#f8f8f8' }}>
+                    {/* Close button for mobile menu overlay provided by the main navbar toggle which is z-50 */}
+
+                    <div className="container-custom space-y-2">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className={`block px-4 py-3 rounded-md text-base font-medium min-h-[44px] flex items-center ${isActive(link.path)
+                                className={`block px-4 py-3.5 rounded-lg text-lg font-medium min-h-[52px] flex items-center ${isActive(link.path)
                                     ? 'text-primary-600 bg-primary-50'
                                     : 'text-gray-700 hover:bg-gray-50'
                                     }`}
@@ -84,11 +86,11 @@ const Navbar = () => {
                                 {link.name}
                             </Link>
                         ))}
-                        <div className="pt-4 space-y-2">
-                            <Button variant="ghost" to="/signin" size="sm" className="w-full min-h-[48px]">
+                        <div className="pt-6 space-y-3">
+                            <Button variant="ghost" to="/signin" size="md" className="w-full justify-center">
                                 Sign In
                             </Button>
-                            <Button variant="primary" to="/signup" size="sm" className="w-full min-h-[48px]">
+                            <Button variant="primary" to="/signup" size="md" className="w-full justify-center shadow-md">
                                 Free Sign Up
                             </Button>
                         </div>

@@ -17,17 +17,17 @@ const TrustAndCTA = () => {
     ];
 
     return (
-        <section className="py-12 md:py-16 lg:py-24 bg-white overflow-hidden">
+        <section className="section-padding bg-white overflow-hidden">
             <div className="container-custom">
                 {/* Trust Section Split Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 lg:gap-12 items-center mb-16 md:mb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center mb-16 md:mb-24">
                     {/* Image Column */}
                     <div className="relative order-last lg:order-first mt-8 lg:mt-0">
                         <div className="absolute inset-0 bg-primary-600 rounded-3xl rotate-2 opacity-5 transform scale-95 translate-y-4"></div>
                         <img
                             src={TrustImg}
                             alt="Happy Kenyan couple using financial app on tablet"
-                            className="relative rounded-3xl shadow-xl w-full object-cover aspect-[4/3] max-h-[300px] sm:max-h-[400px] lg:max-h-none"
+                            className="relative rounded-3xl shadow-xl w-full object-cover aspect-square sm:aspect-[4/3] lg:aspect-[4/3] max-h-[400px] lg:max-h-none mx-auto"
                         />
 
                         {/* Floating Badge */}
@@ -50,23 +50,23 @@ const TrustAndCTA = () => {
 
                     {/* Content Column */}
                     <div>
-                        <div className="mb-8">
+                        <div className="mb-8 md:mb-10">
                             <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide mb-2 flex items-center gap-2">
                                 <Shield size={16} /> Trusted Platform
                             </p>
-                            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
                                 Join thousands of Kenyans securing their future.
                             </h2>
-                            <p className="text-base md:text-lg text-gray-600">
+                            <p className="text-lg text-gray-600 leading-relaxed">
                                 We work with regulated partners to ensure your data and money are always safe. Your security is our top priority.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6 md:gap-x-6 md:gap-y-8 mb-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-10">
                             {metrics.map((metric, index) => (
                                 <div key={index} className="flex flex-col">
-                                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{metric.value}</div>
-                                    <p className="text-sm text-gray-600">{metric.label}</p>
+                                    <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">{metric.value}</div>
+                                    <p className="text-sm font-medium text-gray-600">{metric.label}</p>
                                 </div>
                             ))}
                         </div>
@@ -84,24 +84,24 @@ const TrustAndCTA = () => {
                 </div>
 
                 {/* Final CTA Box */}
-                <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-10 lg:p-12 text-center text-white relative overflow-hidden">
+                <div className="max-w-5xl mx-auto bg-gradient-to-br from-primary-600 to-primary-700 rounded-3xl shadow-2xl p-8 sm:p-10 md:p-14 lg:p-16 text-center text-white relative overflow-hidden">
                     {/* Decorative circles */}
                     <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                     <div className="absolute bottom-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full translate-x-1/2 translate-y-1/2"></div>
 
                     <div className="relative z-10">
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
                             Start your financial dashboard today.
                         </h2>
-                        <p className="text-base md:text-lg lg:text-xl mb-8 md:mb-10 text-primary-50 max-w-2xl mx-auto">
+                        <p className="text-lg sm:text-xl mb-8 md:mb-10 text-primary-50 max-w-2xl mx-auto leading-relaxed">
                             Join over 50,000 Kenyans who are taking control of their finances with Shilingi Moves. Free to start.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Button
                                 variant="primary"
                                 size="lg"
                                 to="/signup"
-                                className="bg-primary-500 hover:bg-primary-400 text-white border-transparent shadow-lg"
+                                className="bg-green-600 text-white hover:bg-green-600 border-2 border-white shadow-xl w-full sm:w-auto"
                             >
                                 Create my dashboard
                             </Button>

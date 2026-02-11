@@ -58,10 +58,10 @@ const Footer = () => {
                     {/* Company */}
                     <div>
                         <h3 className="text-gray-900 font-bold text-base md:text-lg mb-4">Company</h3>
-                        <ul className="space-y-2.5 md:space-y-3">
+                        <ul className="space-y-3 md:space-y-3">
                             {companyLinks.map((link) => (
                                 <li key={link.name}>
-                                    <Link to={link.path} className="text-sm md:text-base text-gray-600 hover:text-primary-600 transition-colors inline-block py-1">
+                                    <Link to={link.path} className="text-base text-gray-600 hover:text-primary-600 transition-colors inline-block py-2 md:py-1">
                                         {link.name}
                                     </Link>
                                 </li>
@@ -72,10 +72,10 @@ const Footer = () => {
                     {/* Services */}
                     <div>
                         <h3 className="text-gray-900 font-bold text-base md:text-lg mb-4">Services</h3>
-                        <ul className="space-y-2.5 md:space-y-3">
+                        <ul className="space-y-3 md:space-y-3">
                             {servicesLinks.map((link) => (
                                 <li key={link.name}>
-                                    <Link to={link.path} className="text-sm md:text-base text-gray-600 hover:text-primary-600 transition-colors inline-block py-1">
+                                    <Link to={link.path} className="text-base text-gray-600 hover:text-primary-600 transition-colors inline-block py-2 md:py-1">
                                         {link.name}
                                     </Link>
                                 </li>
@@ -86,10 +86,10 @@ const Footer = () => {
                     {/* Discover More */}
                     <div>
                         <h3 className="text-gray-900 font-bold text-base md:text-lg mb-4">Discover More</h3>
-                        <ul className="space-y-2.5 md:space-y-3">
+                        <ul className="space-y-3 md:space-y-3">
                             {discoverLinks.map((link) => (
                                 <li key={link.name}>
-                                    <Link to={link.path} className="text-sm md:text-base text-gray-600 hover:text-primary-600 transition-colors inline-block py-1">
+                                    <Link to={link.path} className="text-base text-gray-600 hover:text-primary-600 transition-colors inline-block py-2 md:py-1">
                                         {link.name}
                                     </Link>
                                 </li>

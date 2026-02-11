@@ -20,9 +20,9 @@ const Button = ({
     };
 
     const sizes = {
-        sm: 'px-4 py-2.5 text-sm min-h-[44px]',
-        md: 'px-6 py-3 text-base min-h-[48px]',
-        lg: 'px-8 py-4 text-lg min-h-[52px]',
+        sm: 'px-4 py-2.5 text-sm min-h-[44px] touch-manipulation',
+        md: 'px-5 sm:px-6 py-3 text-base min-h-[48px] touch-manipulation',
+        lg: 'px-6 sm:px-8 py-3.5 sm:py-4 text-lg min-h-[52px] touch-manipulation',
     };
 
     const classes = `${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`;

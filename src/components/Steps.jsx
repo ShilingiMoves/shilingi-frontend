@@ -24,7 +24,7 @@ const Steps = () => {
     ];
 
     return (
-        <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 to-white">
+        <section className="section-padding bg-gradient-to-br from-gray-50 to-white">
             <div className="container-custom">
                 {/* Section Header */}
                 <div className="text-center mb-10 md:mb-12">

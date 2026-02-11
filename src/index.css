@@ -30,4 +30,9 @@
   .text-responsive {
     font-size: clamp(0.875rem, 2.5vw, 1rem);
   }
+
+  /* Consistent section spacing */
+  .section-padding {
+    @apply py-12 md:py-16 lg:py-20;
+  }
 }
