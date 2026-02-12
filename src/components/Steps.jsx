@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserPlus, Search, TrendingUp } from 'lucide-react';
+import { UserPlus, Search, TrendingUp, ArrowRight } from 'lucide-react';
 
 const Steps = () => {
     const steps = [
@@ -67,6 +67,17 @@ const Steps = () => {
                                 </p>
                             </div>
                         ))}
+                    </div>
+
+                    {/* Expert CTA */}
+                    <div className="mt-12 text-center">
+                        <a
+                            href="/dashboard"
+                            className="inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-primary-600 rounded-full shadow-lg hover:bg-primary-700 hover:scale-105 transition-all duration-300 group"
+                        >
+                            Launch Your Shilingi Dashboard Today
+                            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </a>
                     </div>
                 </div>
             </div>

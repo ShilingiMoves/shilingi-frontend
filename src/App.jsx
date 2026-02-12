@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
+import LearnPage from './pages/LearnPage';
 import {
     Dashboard,
     Learn,
@@ -34,7 +35,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/learn" element={<Learn />} />
+                        <Route path="/learn" element={<LearnPage />} />
                         <Route path="/compare" element={<Compare />} />
                         <Route path="/tools" element={<Tools />} />
                         <Route path="/community" element={<Community />} />
