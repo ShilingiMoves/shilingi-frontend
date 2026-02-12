@@ -5,10 +5,24 @@ import {
     ChevronDown, Clock, Star, Users, FileText, Trophy, Sparkles,
     GraduationCap, Target, TrendingUp, CheckCircle2
 } from 'lucide-react';
+import HeroImg from '../assets/Learn-pg-hero-image.png';
+import HeroImg2 from '../assets/Learn-pg-hero-image-2.png';
 import Footer from '../components/Footer';
 
 const LearnPage = () => {
     const [activeFilter, setActiveFilter] = useState('All');
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    const images = [HeroImg, HeroImg2];
+
+    // Carousel Effect with Performance Optimization
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+        }, 5000); // Change image every 5 seconds 
+
+        return () => clearInterval(interval);
+    }, [images.length]);
 
     // SEO
     useEffect(() => {
@@ -118,36 +132,50 @@ const LearnPage = () => {
     return (
         <div className="min-h-screen bg-white">
             {/* =============== SECTION 1: HERO =============== */}
-            <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900 text-white overflow-hidden">
-                {/* Background pattern */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-10 left-10 w-72 h-72 bg-primary-500 rounded-full blur-3xl"></div>
-                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+            <section className="relative bg-gray-900 text-white overflow-hidden">
+                {/* Background Image Carousel */}
+                <div className="absolute inset-0 z-0">
+                    {images.map((img, index) => (
+                        <div
+                            key={index}
+                            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                                }`}
+                            style={{ willChange: 'opacity' }} // Optimization for smoother mobile transitions
+                        >
+                            <img
+                                src={img}
+                                alt={`Financial Education Background ${index + 1}`}
+                                className="w-full h-full object-cover opacity-90"
+                            />
+                            {/* Overlay is now part of the fading container to ensure smooth image+overlay transition */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/70 to-transparent"></div>
+                        </div>
+                    ))}
                 </div>
 
-                <div className="relative container-custom py-20 md:py-28 lg:py-32">
+                <div className="relative z-10 container-custom py-20 md:py-28 lg:py-32">
                     <div className="max-w-3xl">
                         <p className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-primary-300 mb-6">
                             <Sparkles size={16} /> Kenya's #1 Financial Education Platform
                         </p>
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight drop-shadow-sm mb-6">
                             Learn. Improve.<br />
                             <span className="text-primary-400">Master Your Money.</span>
                         </h1>
-                        <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl">
+                        <p className="text-lg md:text-xl text-gray-100 leading-relaxed max-w-lg drop-shadow-sm font-medium mb-8">
                             Access high-quality, practical, Kenya-focused financial education created for Kenyan realities, anytime you need it. From beginner basics to advanced strategies, we've got you covered.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 mb-12">
                             <a
                                 href="#content"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full shadow-lg hover:scale-105 transition-all duration-300 group"
+                                className="inline-flex items-center justify-center px-8 py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all bg-primary-600 border-transparent hover:bg-primary-500 text-white font-bold rounded-full group"
                             >
                                 Visit the Education Hub
                                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </a>
                             <a
                                 href="#paths"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-bold rounded-full transition-all duration-300"
+                                className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-white shadow-lg font-bold rounded-full transition-all duration-300"
                             >
                                 View Learning Paths
                                 <ChevronDown className="ml-2 w-5 h-5" />
@@ -225,8 +253,8 @@ const LearnPage = () => {
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
                                 className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${activeFilter === filter
-                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 {filter}
@@ -243,9 +271,9 @@ const LearnPage = () => {
                             >
                                 {/* Card Header with gradient */}
                                 <div className={`h-2 ${item.type === 'Article' ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
-                                        item.type === 'Video' ? 'bg-gradient-to-r from-red-400 to-rose-600' :
-                                            item.type === 'Quiz' ? 'bg-gradient-to-r from-purple-400 to-violet-600' :
-                                                'bg-gradient-to-r from-amber-400 to-orange-600'
+                                    item.type === 'Video' ? 'bg-gradient-to-r from-red-400 to-rose-600' :
+                                        item.type === 'Quiz' ? 'bg-gradient-to-r from-purple-400 to-violet-600' :
+                                            'bg-gradient-to-r from-amber-400 to-orange-600'
                                     }`}></div>
 
                                 <div className="p-6">
