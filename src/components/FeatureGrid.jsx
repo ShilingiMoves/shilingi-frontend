@@ -46,35 +46,35 @@ const FeatureGrid = () => {
         <section className="section-padding bg-white">
             <div className="container-custom">
                 {/* Section Header */}
-                <div className="text-center mb-12 md:mb-16">
+                <div className="text-center mb-10 md:mb-16">
                     <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
                         What You Get
                     </h2>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Everything you need to take control of your finances.
+                        Everything you need for financial wellness.
                     </p>
                 </div>
 
-                {/* Feature Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
+                {/* Feature Cards Grid/Scroll */}
+                <div className="flex overflow-x-auto pb-6 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 lg:gap-10 md:overflow-visible md:pb-0 md:px-0 snap-x snap-mandatory hide-scrollbar">
                     {features.map((feature, index) => (
                         <Link
                             key={index}
                             to={feature.path}
-                            className="group p-5 md:p-6 bg-white border border-gray-200 rounded-xl hover:border-primary-500 hover:shadow-lg transition-all duration-300 min-h-[140px] flex flex-col"
+                            className="flex-shrink-0 w-[280px] md:w-auto snap-center mr-4 md:mr-0 group p-6 bg-white border border-gray-100 rounded-2xl hover:border-primary-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-start"
                         >
                             {/* Icon */}
-                            <div className="flex items-center justify-center w-12 h-12 bg-primary-100 text-primary-600 rounded-lg mb-4 group-hover:bg-primary-500 group-hover:text-white transition-colors">
-                                <feature.icon size={24} />
+                            <div className="flex items-center justify-center w-14 h-14 bg-primary-50 text-primary-600 rounded-xl mb-5 group-hover:bg-primary-600 group-hover:text-white transition-colors duration-300">
+                                <feature.icon size={28} strokeWidth={1.5} />
                             </div>
 
                             {/* Title */}
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors">
                                 {feature.title}
                             </h3>
 
                             {/* Description */}
-                            <p className="text-sm text-gray-600">
+                            <p className="text-base text-gray-600 leading-relaxed line-clamp-2">
                                 {feature.description}
                             </p>
                         </Link>

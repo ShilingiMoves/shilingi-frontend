@@ -37,10 +37,10 @@ const Hero = () => {
                         <img
                             src={img}
                             alt={`Shilingi Moves Background ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-center"
                         />
-                        {/* Dark Overlay for Readability */}
-                        <div className="absolute inset-0 bg-black/60 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+                        {/* Dark Overlay for Readability - Responsive Gradient */}
+                        <div className="absolute inset-0 bg-black/40 sm:bg-transparent bg-gradient-to-b from-black/60 via-transparent to-black/60 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/30 sm:to-transparent"></div>
                     </div>
                 ))}
             </div>
