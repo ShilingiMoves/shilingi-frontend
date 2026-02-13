@@ -4,10 +4,11 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import LearnPage from './pages/LearnPage';
 import ComparePage from './pages/ComparePage';
+import ToolsPage from './pages/ToolsPage';
 import {
     Dashboard,
     Learn,
-    Tools,
+    // Tools,
     Community,
     TrustPage,
     SignIn,
@@ -37,7 +38,7 @@ function App() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/learn" element={<LearnPage />} />
                         <Route path="/compare" element={<ComparePage />} />
-                        <Route path="/tools" element={<Tools />} />
+                        <Route path="/tools" element={<ToolsPage />} />
                         <Route path="/community" element={<Community />} />
                         <Route path="/trust" element={<TrustPage />} />
                         <Route path="/signin" element={<SignIn />} />
