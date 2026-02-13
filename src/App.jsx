@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import LearnPage from './pages/LearnPage';
 import ComparePage from './pages/ComparePage';
 import ToolsPage from './pages/ToolsPage';
+import CommunityPage from './pages/CommunityPage';
 import {
     Dashboard,
     Learn,
@@ -39,7 +40,7 @@ function App() {
                         <Route path="/learn" element={<LearnPage />} />
                         <Route path="/compare" element={<ComparePage />} />
                         <Route path="/tools" element={<ToolsPage />} />
-                        <Route path="/community" element={<Community />} />
+                        <Route path="/community" element={<CommunityPage />} />
                         <Route path="/trust" element={<TrustPage />} />
                         <Route path="/signin" element={<SignIn />} />
                         <Route path="/signup" element={<SignUp />} />

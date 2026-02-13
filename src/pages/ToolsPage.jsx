@@ -77,10 +77,10 @@ const ToolsPage = () => {
     ];
 
     const books = [
-        { title: 'The Smart Money Woman', author: 'Arese Ugwu', color: 'bg-rose-100 text-rose-700', cover: 'https://covers.openlibrary.org/b/isbn/9781911617532-L.jpg' },
-        { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', color: 'bg-purple-100 text-purple-700', cover: 'https://covers.openlibrary.org/b/isbn/9781612680194-L.jpg' },
-        { title: 'The Psychology of Money', author: 'Morgan Housel', color: 'bg-amber-100 text-amber-700', cover: 'https://covers.openlibrary.org/b/isbn/9780857197689-L.jpg' },
-        { title: 'Money Wisdom', author: 'Keyan Author', color: 'bg-blue-100 text-blue-700', cover: 'https://covers.openlibrary.org/b/isbn/9780743200400-L.jpg' },
+        { title: 'The Smart Money Woman', author: 'Arese Ugwu', color: 'bg-rose-100 text-rose-700', cover: 'https://placehold.co/400x600/ffe4e6/be123c?text=Smart+Money\nWoman' },
+        { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', color: 'bg-purple-100 text-purple-700', cover: 'https://placehold.co/400x600/f3e8ff/7e22ce?text=Rich+Dad\nPoor+Dad' },
+        { title: 'The Psychology of Money', author: 'Morgan Housel', color: 'bg-amber-100 text-amber-700', cover: 'https://placehold.co/400x600/fef3c7/b45309?text=Psychology\nof+Money' },
+        { title: 'Money Wisdom', author: 'Keyan Author', color: 'bg-blue-100 text-blue-700', cover: 'https://placehold.co/400x600/dbeafe/1d4ed8?text=Money\nWisdom' },
     ];
 
     const podcasts = [
@@ -92,7 +92,7 @@ const ToolsPage = () => {
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900">
             {/* HERO SECTION with Video Background */}
-            <section className="relative text-white min-h-[70vh] flex items-center overflow-hidden">
+            <section className="relative text-white min-h-[85vh] flex items-center overflow-hidden">
                 {/* Video Background */}
                 <video
                     autoPlay
@@ -104,11 +104,11 @@ const ToolsPage = () => {
                 >
                     <source src={toolsHeroVideo} type="video/mp4" />
                 </video>
-                {/* Dark Gradient Overlay for readability */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" style={{ zIndex: 1 }}></div>
+                {/* Lighter Gradient Overlay for better video visibility */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" style={{ zIndex: 1 }}></div>
 
                 <div className="container-custom relative z-10 text-center max-w-4xl mx-auto py-20">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg">
+                    <h1 className="text-5xl md:text-7xl font-bold mb-8 drop-shadow-xl tracking-tight leading-tight">
                         Make Smart Decisions with <span className="text-primary-400">Tools That Work for You</span>
                     </h1>
                     <p className="text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
