@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import LearnPage from './pages/LearnPage';
+import ComparePage from './pages/ComparePage';
 import {
     Dashboard,
     Learn,
-    Compare,
     Tools,
     Community,
     TrustPage,
@@ -36,7 +36,7 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/learn" element={<LearnPage />} />
-                        <Route path="/compare" element={<Compare />} />
+                        <Route path="/compare" element={<ComparePage />} />
                         <Route path="/tools" element={<Tools />} />
                         <Route path="/community" element={<Community />} />
                         <Route path="/trust" element={<TrustPage />} />
