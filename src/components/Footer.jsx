@@ -28,7 +28,7 @@ const Footer = () => {
 
             {/* 2. Main Footer Content */}
             <div className="container-custom pt-16 pb-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
                     {/* Brand Column */}
                     <div className="space-y-6">
                         <Link to="/" className="inline-block">
@@ -95,6 +95,18 @@ const Footer = () => {
                         </ul>
                     </div>
 
+                    {/* Company Column - NEW */}
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-6 font-display">Company</h3>
+                        <ul className="space-y-4">
+                            <li><Link to="/about" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>About</Link></li>
+                            <li><Link to="/careers" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Career</Link></li>
+                            <li><Link to="/partnerships" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Partnerships</Link></li>
+                            <li><Link to="/community" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Community</Link></li>
+                            <li><Link to="/faqs" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>FAQs</Link></li>
+                        </ul>
+                    </div>
+
                     {/* Contact Column */}
                     <div>
                         <h3 className="text-lg font-bold text-gray-900 mb-6 font-display">Get in Touch</h3>
@@ -127,7 +139,7 @@ const Footer = () => {
                     </div>
 
                     <p className="flex items-center gap-1">
-                        Developed by <span className="text-primary-600 font-medium">Myra Jarenga</span>
+                        Developed by <span className="text-primary-600 font-medium">Prospect Pilot AI</span>
                     </p>
                 </div>
             </div>
