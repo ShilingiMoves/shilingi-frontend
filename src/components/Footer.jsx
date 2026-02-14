@@ -3,28 +3,30 @@ import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Phone, Mail, MapPin, ArrowRight, Linkedin, Youtube } from 'lucide-react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
 
-const Footer = () => {
+const Footer = ({ showCTA = true }) => {
     return (
         <footer className="bg-gray-50 text-gray-900 border-t border-gray-200 font-sans">
             {/* 1. Pre-Footer CTA Banner */}
-            <div className="bg-primary-600 py-12 md:py-16 relative overflow-hidden">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+            {showCTA && (
+                <div className="bg-primary-600 py-12 md:py-16 relative overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
 
-                <div className="container-custom relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
-                    <div>
-                        <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white">Your financial journey starts here.</h2>
-                        <p className="text-primary-100 text-lg max-w-xl">Take the first step towards a wealthier future today with Shilingi Moves.</p>
+                    <div className="container-custom relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white">Your financial journey starts here.</h2>
+                            <p className="text-primary-100 text-lg max-w-xl">Take the first step towards a wealthier future today with Shilingi Moves.</p>
+                        </div>
+                        <Link
+                            to="/learn"
+                            className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-100 text-primary-700 font-extrabold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-lg group"
+                        >
+                            START LEARNING FREE
+                            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
                     </div>
-                    <Link
-                        to="/learn"
-                        className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-100 text-primary-700 font-extrabold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-lg group"
-                    >
-                        START LEARNING FREE
-                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
                 </div>
-            </div>
+            )}
 
             {/* 2. Main Footer Content */}
             <div className="container-custom pt-16 pb-12">
@@ -79,7 +81,7 @@ const Footer = () => {
                         <ul className="space-y-4">
                             <li><Link to="/tools" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Budgeting Tools</Link></li>
                             <li><Link to="/compare" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Compare Rates</Link></li>
-                            <li><Link to="/community" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Find Advisors</Link></li>
+                            <li><Link to="/advisors" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Find Advisors</Link></li>
                             <li><Link to="/learn" className="text-gray-600 hover:text-primary-600 transition-colors inline-flex items-center group"><span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover:bg-primary-600 transition-colors"></span>Workshops</Link></li>
                         </ul>
                     </div>

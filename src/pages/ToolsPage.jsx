@@ -465,7 +465,7 @@ const ToolsPage = () => {
                 </div>
             </section>
 
-            <Footer />
+            <Footer showCTA={false} />
         </div>
     );
 };

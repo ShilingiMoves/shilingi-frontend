@@ -332,7 +332,7 @@ const ComparePage = () => {
                 </div>
             </section>
 
-            <Footer />
+            <Footer showCTA={false} />
         </div>
     );
 };
