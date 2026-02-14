@@ -7,6 +7,10 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import toolsHeroVideo from '../video/tools-page-video-1.mp4';
+import smartMoneyWoman from '../assets/smart-money-woman.PNG';
+import richDadPoorDad from '../assets/Rich-Dad-Poor-Dad.PNG';
+import psychologyOfMoney from '../assets/The-psychology-of-money.PNG';
+import wealthWisdom from '../assets/Wealth-wisdom.PNG';
 
 const ToolsPage = () => {
     // SEO
@@ -77,10 +81,10 @@ const ToolsPage = () => {
     ];
 
     const books = [
-        { title: 'The Smart Money Woman', author: 'Arese Ugwu', color: 'bg-rose-100 text-rose-700', cover: 'https://placehold.co/400x600/ffe4e6/be123c?text=Smart+Money\nWoman' },
-        { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', color: 'bg-purple-100 text-purple-700', cover: 'https://placehold.co/400x600/f3e8ff/7e22ce?text=Rich+Dad\nPoor+Dad' },
-        { title: 'The Psychology of Money', author: 'Morgan Housel', color: 'bg-amber-100 text-amber-700', cover: 'https://placehold.co/400x600/fef3c7/b45309?text=Psychology\nof+Money' },
-        { title: 'Money Wisdom', author: 'Keyan Author', color: 'bg-blue-100 text-blue-700', cover: 'https://placehold.co/400x600/dbeafe/1d4ed8?text=Money\nWisdom' },
+        { title: 'The Smart Money Woman', author: 'Arese Ugwu', color: 'bg-rose-100 text-rose-700', cover: smartMoneyWoman },
+        { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', color: 'bg-purple-100 text-purple-700', cover: richDadPoorDad },
+        { title: 'The Psychology of Money', author: 'Morgan Housel', color: 'bg-amber-100 text-amber-700', cover: psychologyOfMoney },
+        { title: 'The Wealth of Wisdom', author: 'Tom McCullough & Keith Whitaker', color: 'bg-blue-100 text-blue-700', cover: wealthWisdom },
     ];
 
     const podcasts = [
