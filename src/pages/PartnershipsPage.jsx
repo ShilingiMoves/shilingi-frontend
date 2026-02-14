@@ -7,6 +7,7 @@ import {
     Phone, Mail
 } from 'lucide-react';
 import Footer from '../components/Footer';
+import partnershipsVideo from '../assets/Partnerships-herovideo.mp4';
 
 const PartnershipsPage = () => {
     const navigate = useNavigate();
@@ -139,12 +140,20 @@ const PartnershipsPage = () => {
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900">
 
-            {/* ═══════════ HERO — Gradient with strong value prop ═══════════ */}
-            <section className="relative bg-gradient-to-br from-primary-900 via-primary-800 to-emerald-900 text-white min-h-[80vh] md:min-h-[85vh] flex items-center overflow-hidden">
-                {/* Decorative circles */}
-                <div className="absolute top-10 right-20 w-80 h-80 bg-emerald-400 rounded-full blur-3xl opacity-10 animate-pulse"></div>
-                <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary-400 rounded-full blur-3xl opacity-10"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full"></div>
+            {/* ═══════════ HERO — Video background with strong value prop ═══════════ */}
+            <section className="relative text-white min-h-[80vh] md:min-h-[85vh] flex items-center overflow-hidden">
+                {/* Video Background */}
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                >
+                    <source src={partnershipsVideo} type="video/mp4" />
+                </video>
+                {/* Dark overlay for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-800/70 to-emerald-900/80"></div>
 
                 <div className="container-custom relative z-10 py-16 md:py-24">
                     <div className="max-w-3xl mx-auto text-center">

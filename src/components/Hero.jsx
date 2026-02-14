@@ -46,7 +46,7 @@ const Hero = () => {
             </div>
 
             {/* Content Content - Left Aligned */}
-            <div className="container-custom relative z-10 w-full pt-20">
+            <div className="container- custom relative z-10 w-full pt-20">
                 <div className="max-w-2xl space-y-6 md:space-y-8">
                     <div className="space-y-4 md:space-y-6">
                         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
