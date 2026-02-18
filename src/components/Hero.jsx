@@ -43,7 +43,7 @@ const Hero = () => {
             </div>
 
             {/* Hero Content */}
-            <div className="container-custom relative z-10 w-full pt-20 px-6 sm:px-8 md:px-12 lg:px-16">
+            <div className="container-custom relative z-10 w-full pt-20 pb-28 px-6 sm:px-8 md:px-12 lg:px-16">
                 <div className="max-w-2xl md:ml-8 lg:ml-16">
 
                     {/* Headline — DM Serif Display, WealthPro-style large multi-line */}
@@ -76,10 +76,10 @@ const Hero = () => {
                         </Link>
                         <Link
                             to="/dashboard"
-                            className="inline-flex items-center justify-center gap-3 px-8 py-4 border-2 border-white/80 text-white font-semibold rounded-full hover:bg-white/10 hover:border-white transition-all duration-300 hover:-translate-y-0.5 group text-base"
+                            className="inline-flex items-center justify-between gap-4 px-6 py-4 border-2 border-white/80 text-white font-semibold rounded-lg hover:bg-white/10 hover:border-white transition-all duration-300 hover:-translate-y-0.5 group text-base min-w-[200px]"
                         >
-                            See dashboard demo
-                            <span className="w-7 h-7 rounded-full border border-white/50 flex items-center justify-center group-hover:border-white transition-colors">
+                            <span>See dashboard demo</span>
+                            <span className="w-8 h-8 rounded-full border-2 border-white/70 flex items-center justify-center group-hover:border-white group-hover:bg-white/10 transition-all shrink-0">
                                 <ArrowRight size={15} />
                             </span>
                         </Link>
@@ -87,14 +87,16 @@ const Hero = () => {
                 </div>
             </div>
 
-            {/* Scroll Cue */}
+            {/* Scroll Cue — pinned to bottom centre, always clear of buttons */}
             <div
-                className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce cursor-pointer"
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 animate-bounce cursor-pointer"
                 onClick={scrollToContent}
             >
-                <div className="flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors">
-                    <span className="text-xs font-sans font-medium uppercase tracking-widest hidden md:block">Explore</span>
-                    <ArrowDown size={28} />
+                <div className="flex flex-col items-center gap-1.5 text-white hover:text-primary-300 transition-colors drop-shadow-lg">
+                    <span className="text-[10px] font-sans font-semibold uppercase tracking-[0.2em]">Explore</span>
+                    <div className="w-8 h-8 rounded-full border-2 border-white/60 flex items-center justify-center hover:border-white transition-colors">
+                        <ArrowDown size={16} />
+                    </div>
                 </div>
             </div>
         </section>
