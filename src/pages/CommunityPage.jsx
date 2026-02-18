@@ -85,7 +85,10 @@ const CommunityPage = () => {
                     <span className="inline-block py-1 px-3 rounded-full bg-primary-700 text-primary-200 text-sm font-semibold mb-6 animate-fadeIn">
                         🚀 Join 5,000+ Members
                     </span>
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    <h1
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 leading-[1.1] tracking-tight"
+                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                    >
                         You’re Not Alone <br /> in Your <span className="text-primary-400">Financial Journey</span>
                     </h1>
                     <p className="text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed">

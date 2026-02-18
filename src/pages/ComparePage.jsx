@@ -113,7 +113,10 @@ const ComparePage = () => {
                                 <Search size={16} /> Smart Product Finder
                             </div>
 
-                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight mb-8 drop-shadow-lg animate-slideUp">
+                            <h1
+                                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-8"
+                                style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                            >
                                 Compare Financial Products,<br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-green-400">Make Smarter Choices.</span>
                             </h1>

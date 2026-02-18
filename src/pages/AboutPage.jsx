@@ -128,7 +128,10 @@ const AboutPage = () => {
                         <p className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-primary-300 mb-6">
                             <Sparkles size={16} /> Kenya's Financial Companion
                         </p>
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight mb-6">
+                        <h1
+                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-6"
+                            style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                        >
                             We help Kenyans<br />
                             <span className="text-primary-400">take control of their money.</span>
                         </h1>

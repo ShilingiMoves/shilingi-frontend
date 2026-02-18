@@ -228,7 +228,10 @@ const FAQPage = () => {
                     <p className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-5">
                         <HelpCircle size={14} /> Help Centre
                     </p>
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-5 leading-tight">
+                    <h1
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-5 leading-[1.1] tracking-tight"
+                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                    >
                         How can we help you?
                     </h1>
                     <p className="text-primary-100 text-lg mb-10 max-w-xl mx-auto">

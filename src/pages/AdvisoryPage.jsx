@@ -99,7 +99,10 @@ const AdvisoryPage = () => {
                         <span className="text-sm font-medium text-emerald-200">Trusted Advisor Network</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight tracking-tight px-4">
+                    <h1
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 md:mb-6 leading-[1.1] tracking-tight px-4"
+                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                    >
                         Where Expertise Meets{' '}
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-primary-300">
                             Opportunity

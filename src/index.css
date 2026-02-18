@@ -9,12 +9,8 @@
   }
 
   h1, h2, h3 {
-    font-family: 'DM Serif Display', Georgia, serif !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
     @apply tracking-tight;
-  }
-
-  h1 {
-    font-weight: 400 !important;
   }
 
   /* Small uppercase label headings (footer columns, section labels) stay sans-serif */

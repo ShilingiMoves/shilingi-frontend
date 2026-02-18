@@ -162,7 +162,10 @@ const PartnershipsPage = () => {
                             <span className="text-sm font-medium text-emerald-200">Partnership Opportunities</span>
                         </div>
 
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-5 md:mb-6 leading-tight tracking-tight">
+                        <h1
+                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-5 md:mb-6 leading-[1.1] tracking-tight"
+                            style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                        >
                             Grow Your Brand With{' '}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-yellow-300">
                                 Kenya's Financial Community

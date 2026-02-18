@@ -48,7 +48,7 @@ const Hero = () => {
 
                     {/* Headline */}
                     <h1
-                        className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-5"
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-5"
                         style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                     >
                         Take control of your money.{' '}

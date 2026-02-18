@@ -162,7 +162,10 @@ const ToolsPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" style={{ zIndex: 1 }}></div>
 
                 <div className="container-custom relative z-10 text-center max-w-4xl mx-auto py-20">
-                    <h1 className="text-5xl md:text-7xl font-bold mb-8 drop-shadow-xl tracking-tight leading-tight">
+                    <h1
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-8 drop-shadow-xl tracking-tight leading-[1.1]"
+                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                    >
                         Make Smart Decisions with <span className="text-primary-400">Tools That Work for You</span>
                     </h1>
                     <p className="text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
