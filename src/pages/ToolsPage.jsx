@@ -187,13 +187,13 @@ const ToolsPage = () => {
                         <p className="text-gray-600">Simple tools to help you crunch the numbers.</p>
                     </div>
 
-                    {/* Calculator Tabs */}
-                    <div className="flex flex-wrap justify-center gap-4 mb-10">
+                    {/* Calculator Tabs — scrollable on mobile */}
+                    <div className="flex overflow-x-auto gap-3 mb-10 pb-2 scrollbar-hide sm:flex-wrap sm:justify-center sm:overflow-visible">
                         {calculators.map(calc => (
                             <button
                                 key={calc.id}
                                 onClick={() => setActiveTab(calc.id)}
-                                className={`px-6 py-3 rounded-full font-bold flex items-center gap-2 transition-all ${activeTab === calc.id
+                                className={`px-5 py-3 rounded-full font-bold flex items-center gap-2 transition-all shrink-0 ${activeTab === calc.id
                                     ? 'bg-primary-600 text-white shadow-md'
                                     : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                     }`}

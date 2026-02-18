@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
@@ -7,6 +7,17 @@ import animatedLogo from '../assets/shilingi-logo-animated.gif';
 const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
+
+    // Close menu on route change
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    // Prevent body scroll when menu is open
+    useEffect(() => {
+        document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [mobileMenuOpen]);
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -22,7 +33,7 @@ const Navbar = () => {
         <nav className="sticky top-0 z-50 shadow-sm border-b border-gray-200" style={{ backgroundColor: '#f8f8f8' }}>
             <div className="container-custom">
                 <div className="flex items-center justify-between h-16 md:h-18 lg:h-20">
-                    {/* Logo — links home */}
+                    {/* Logo */}
                     <Link to="/" className="flex items-center">
                         <img
                             src={animatedLogo}
@@ -47,52 +58,83 @@ const Navbar = () => {
                         ))}
                     </div>
 
-                    {/* Auth Buttons */}
+                    {/* Desktop Auth Buttons */}
                     <div className="hidden md:flex items-center space-x-3">
-                        <Button variant="ghost" to="/signin" size="sm" className="min-h-[40px]">
+                        <Link
+                            to="/signin"
+                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors min-h-[40px] flex items-center"
+                        >
                             Sign In
-                        </Button>
+                        </Link>
                         <Button variant="primary" to="/signup" size="sm" className="min-h-[40px]">
                             Free Sign Up
                         </Button>
                     </div>
 
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Hamburger */}
                     <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        onClick={() => setMobileMenuOpen(true)}
                         className="md:hidden p-2.5 rounded-md text-gray-700 hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        aria-label="Open menu"
                     >
-                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        <Menu size={24} />
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu Overlay */}
             {mobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 z-40 bg-white pt-20 pb-6 px-4 overflow-y-auto" style={{ top: '0', backgroundColor: '#f8f8f8' }}>
-                    <div className="container-custom space-y-2">
+                <div
+                    className="md:hidden fixed inset-0 z-[999] flex flex-col"
+                    style={{ backgroundColor: '#f8f8f8' }}
+                >
+                    {/* Top bar with logo + X close button */}
+                    <div className="flex items-center justify-between px-4 h-16 border-b border-gray-200 shrink-0">
+                        <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center">
+                            <img
+                                src={animatedLogo}
+                                alt="Shilingi Moves Logo"
+                                className="h-12 object-contain"
+                            />
+                        </Link>
+                        <button
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                            aria-label="Close menu"
+                        >
+                            <X size={22} />
+                        </button>
+                    </div>
+
+                    {/* Nav Links */}
+                    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className={`block px-4 py-3.5 rounded-lg text-lg font-medium min-h-[52px] flex items-center ${isActive(link.path)
+                                className={`flex items-center px-4 py-4 rounded-xl text-lg font-medium min-h-[56px] transition-colors ${isActive(link.path)
                                     ? 'text-primary-600 bg-primary-50'
-                                    : 'text-gray-700 hover:bg-gray-50'
+                                    : 'text-gray-700 hover:bg-gray-100'
                                     }`}
                             >
                                 {link.name}
                             </Link>
                         ))}
+                    </div>
 
-                        <div className="pt-6 space-y-3">
-                            <Button variant="ghost" to="/signin" size="md" className="w-full justify-center">
-                                Sign In
-                            </Button>
-                            <Button variant="primary" to="/signup" size="md" className="w-full justify-center shadow-md">
-                                Free Sign Up
-                            </Button>
-                        </div>
+                    {/* Auth Buttons at bottom */}
+                    <div className="px-4 pb-8 pt-4 border-t border-gray-200 space-y-3 shrink-0">
+                        <Link
+                            to="/signin"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center justify-center w-full px-4 py-4 text-lg font-medium text-gray-700 hover:text-primary-600 transition-colors border border-gray-200 rounded-xl min-h-[56px]"
+                        >
+                            Sign In
+                        </Link>
+                        <Button variant="primary" to="/signup" size="md" className="w-full justify-center shadow-md text-lg min-h-[56px]">
+                            Free Sign Up
+                        </Button>
                     </div>
                 </div>
             )}

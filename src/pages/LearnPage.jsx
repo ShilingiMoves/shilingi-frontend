@@ -165,17 +165,17 @@ const LearnPage = () => {
                         <p className="text-lg md:text-xl text-gray-100 leading-relaxed max-w-lg drop-shadow-sm font-medium mb-8">
                             Access high-quality, practical, Kenya-focused financial education created for Kenyan realities, anytime you need it. From beginner basics to advanced strategies, we've got you covered.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 mb-12">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-12">
                             <a
                                 href="#content"
-                                className="inline-flex items-center justify-center px-8 py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all bg-primary-600 border-transparent hover:bg-primary-500 text-white font-bold rounded-full group"
+                                className="inline-flex items-center justify-center px-8 py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all bg-primary-600 border-transparent hover:bg-primary-500 text-white font-bold rounded-full group w-full sm:w-auto"
                             >
                                 Visit the Education Hub
                                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </a>
                             <a
                                 href="#paths"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-white shadow-lg font-bold rounded-full transition-all duration-300"
+                                className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-white shadow-lg font-bold rounded-full transition-all duration-300 w-full sm:w-auto"
                             >
                                 View Learning Paths
                                 <ChevronDown className="ml-2 w-5 h-5" />
