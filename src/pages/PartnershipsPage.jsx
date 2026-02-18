@@ -138,7 +138,7 @@ const PartnershipsPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900">
+        <div className="min-h-screen bg-white text-gray-900">
 
             {/* ═══════════ HERO — Video background with strong value prop ═══════════ */}
             <section className="relative text-white min-h-[80vh] md:min-h-[85vh] flex items-center overflow-hidden">

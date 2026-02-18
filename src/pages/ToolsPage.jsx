@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import {
     Calculator, BookOpen, Headphones, MessageCircle,
     PieChart, TrendingUp, DollarSign, Calendar,
-    ArrowRight, CheckCircle2, RefreshCcw, Percent
+    ArrowRight, CheckCircle2, RefreshCcw, Percent,
+    Target, ShieldCheck, CreditCard
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import toolsHeroVideo from '../video/tools-page-video-1.mp4';
@@ -41,6 +42,24 @@ const ToolsPage = () => {
     const [income, setIncome] = useState(50000);
     const [budget, setBudget] = useState({ needs: 0, wants: 0, savings: 0 });
 
+    // Savings Goal Calculator State
+    const [savGoal, setSavGoal] = useState(500000);
+    const [savCurrent, setSavCurrent] = useState(50000);
+    const [savMonthly, setSavMonthly] = useState(10000);
+    const [savRate, setSavRate] = useState(8);
+    const [savMonthsNeeded, setSavMonthsNeeded] = useState(0);
+
+    // Emergency Fund Calculator State
+    const [emMonthlyExpenses, setEmMonthlyExpenses] = useState(40000);
+    const [emMonths, setEmMonths] = useState(6);
+    const [emSaved, setEmSaved] = useState(50000);
+
+    // Debt Payoff Calculator State
+    const [debtBalance, setDebtBalance] = useState(200000);
+    const [debtRate, setDebtRate] = useState(18);
+    const [debtPayment, setDebtPayment] = useState(15000);
+    const [debtResult, setDebtResult] = useState({ months: 0, totalPaid: 0, totalInterest: 0 });
+
     // Calculate Loan
     useEffect(() => {
         const r = loanRate / 100 / 12;
@@ -73,11 +92,42 @@ const ToolsPage = () => {
         });
     }, [income]);
 
+    // Calculate Savings Goal
+    useEffect(() => {
+        const r = savRate / 100 / 12;
+        const remaining = savGoal - savCurrent;
+        if (remaining <= 0) { setSavMonthsNeeded(0); return; }
+        if (r === 0) { setSavMonthsNeeded(Math.ceil(remaining / savMonthly)); return; }
+        // n = log(PMT / (PMT - r*PV)) / log(1+r)
+        const n = Math.log(savMonthly / (savMonthly - r * remaining)) / Math.log(1 + r);
+        setSavMonthsNeeded(isFinite(n) && n > 0 ? Math.ceil(n) : 999);
+    }, [savGoal, savCurrent, savMonthly, savRate]);
+
+    // Calculate Debt Payoff
+    useEffect(() => {
+        const r = debtRate / 100 / 12;
+        let balance = debtBalance;
+        let months = 0;
+        let totalPaid = 0;
+        if (debtPayment <= balance * r) { setDebtResult({ months: 999, totalPaid: 0, totalInterest: 0 }); return; }
+        while (balance > 0 && months < 600) {
+            const interest = balance * r;
+            const principal = Math.min(debtPayment - interest, balance);
+            balance -= principal;
+            totalPaid += debtPayment;
+            months++;
+        }
+        setDebtResult({ months, totalPaid, totalInterest: totalPaid - debtBalance });
+    }, [debtBalance, debtRate, debtPayment]);
+
 
     const calculators = [
-        { id: 'loan', label: 'Loan Calculator', icon: Calculator },
+        { id: 'loan', label: 'Loan Repayment', icon: Calculator },
         { id: 'investment', label: 'Investment Growth', icon: TrendingUp },
         { id: 'budget', label: 'Budget Planner', icon: PieChart },
+        { id: 'savings', label: 'Savings Goal', icon: Target },
+        { id: 'emergency', label: 'Emergency Fund', icon: ShieldCheck },
+        { id: 'debt', label: 'Debt Payoff', icon: CreditCard },
     ];
 
     const books = [
@@ -94,7 +144,7 @@ const ToolsPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900">
+        <div className="min-h-screen bg-white text-gray-900">
             {/* HERO SECTION with Video Background */}
             <section className="relative text-white min-h-[85vh] flex items-center overflow-hidden">
                 {/* Video Background */}
@@ -206,22 +256,44 @@ const ToolsPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 rounded-2xl p-8 flex flex-col justify-center items-center text-center border border-gray-100">
-                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-2">Monthly Payment</p>
-                                    <p className="text-4xl md:text-5xl font-bold text-primary-600 mb-6">
+                                <div className="bg-gray-50 rounded-2xl p-8 flex flex-col justify-center border border-gray-100">
+                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-1 text-center">Monthly Payment</p>
+                                    <p className="text-4xl md:text-5xl font-bold text-primary-600 mb-6 text-center">
                                         KES {monthlyPayment.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </p>
-                                    <div className="w-full border-t border-gray-200 pt-6 space-y-3">
+                                    <div className="w-full border-t border-gray-200 pt-5 space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Loan Principal:</span>
+                                            <span className="font-bold">KES {loanAmount.toLocaleString()}</span>
+                                        </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">Total Repayment:</span>
                                             <span className="font-bold">KES {(monthlyPayment * loanTerm).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Total Interest:</span>
+                                            <span className="text-gray-600">Interest Cost (KES):</span>
                                             <span className="font-bold text-rose-600">KES {((monthlyPayment * loanTerm) - loanAmount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                         </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Interest as % of Loan:</span>
+                                            <span className="font-bold text-rose-600">{loanAmount > 0 ? ((((monthlyPayment * loanTerm) - loanAmount) / loanAmount) * 100).toFixed(1) : 0}%</span>
+                                        </div>
+                                        {/* Visual bar */}
+                                        <div className="mt-2">
+                                            <div className="flex text-xs text-gray-500 justify-between mb-1">
+                                                <span>Principal</span><span>Interest</span>
+                                            </div>
+                                            <div className="w-full h-3 rounded-full bg-gray-200 flex overflow-hidden">
+                                                <div className="bg-primary-500 h-3 rounded-l-full transition-all duration-500"
+                                                    style={{ width: `${loanAmount > 0 ? Math.min(100, (loanAmount / (monthlyPayment * loanTerm)) * 100).toFixed(1) : 0}%` }}></div>
+                                                <div className="bg-rose-400 h-3 rounded-r-full flex-1"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button className="mt-8 w-full py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors">
+                                    <div className="mt-5 p-3 bg-primary-50 rounded-xl text-xs text-primary-800 border border-primary-100">
+                                        💡 <strong>Tip:</strong> Paying an extra KES 2,000/month can cut months off your loan and save you thousands in interest.
+                                    </div>
+                                    <button className="mt-5 w-full py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors">
                                         View Loan Offers
                                     </button>
                                 </div>
@@ -276,23 +348,41 @@ const ToolsPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-green-50 rounded-2xl p-8 flex flex-col justify-center items-center text-center border border-green-100">
-                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-2">Future Value</p>
-                                    <p className="text-4xl md:text-5xl font-bold text-green-700 mb-6">
+                                <div className="bg-green-50 rounded-2xl p-8 flex flex-col justify-center border border-green-100">
+                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-1 text-center">Future Value</p>
+                                    <p className="text-4xl md:text-5xl font-bold text-green-700 mb-6 text-center">
                                         KES {invTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </p>
-                                    <div className="w-full border-t border-green-200 pt-6 space-y-3">
+                                    <div className="w-full border-t border-green-200 pt-5 space-y-3">
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">Total Invested:</span>
                                             <span className="font-bold">KES {(invPrincipal + (invMonthly * invYears * 12)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">Total Interest Earned:</span>
+                                            <span className="text-gray-600">Interest Earned (KES):</span>
                                             <span className="font-bold text-green-600">KES {(invTotal - (invPrincipal + (invMonthly * invYears * 12))).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                         </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Return on Investment:</span>
+                                            <span className="font-bold text-green-600">{(invPrincipal + (invMonthly * invYears * 12)) > 0 ? (((invTotal - (invPrincipal + (invMonthly * invYears * 12))) / (invPrincipal + (invMonthly * invYears * 12))) * 100).toFixed(1) : 0}%</span>
+                                        </div>
+                                        {/* Visual bar */}
+                                        <div className="mt-2">
+                                            <div className="flex text-xs text-gray-500 justify-between mb-1">
+                                                <span>Your money</span><span>Interest earned</span>
+                                            </div>
+                                            <div className="w-full h-3 rounded-full bg-gray-200 flex overflow-hidden">
+                                                <div className="bg-green-400 h-3 rounded-l-full transition-all duration-500"
+                                                    style={{ width: `${invTotal > 0 ? Math.min(100, ((invPrincipal + (invMonthly * invYears * 12)) / invTotal) * 100).toFixed(1) : 0}%` }}></div>
+                                                <div className="bg-green-700 h-3 rounded-r-full flex-1"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button className="mt-8 w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors">
-                                        start Investing Now
+                                    <div className="mt-5 p-3 bg-green-100 rounded-xl text-xs text-green-900 border border-green-200">
+                                        🚀 <strong>Power of compounding:</strong> The longer you invest, the more interest earns interest — your money works for you 24/7.
+                                    </div>
+                                    <button className="mt-5 w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors">
+                                        Start Investing Now
                                     </button>
                                 </div>
                             </div>
@@ -342,6 +432,220 @@ const ToolsPage = () => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-4 p-3 bg-purple-50 rounded-xl text-xs text-purple-900 border border-purple-100">
+                                    💡 <strong>Did you know?</strong> If you invest your 20% savings (KES {budget.savings.toLocaleString()}/mo) at 12% p.a., you'd have <strong>KES {Math.round(budget.savings * 12 * 1.12).toLocaleString()}</strong> after just one year — including interest!
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SAVINGS GOAL CALCULATOR */}
+                        {activeTab === 'savings' && (
+                            <div className="grid md:grid-cols-2 gap-12 animate-fadeIn">
+                                <div>
+                                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                                        <Target className="text-amber-500" /> Savings Goal Calculator
+                                    </h3>
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Savings Goal (KES)</label>
+                                            <input type="number" value={savGoal} onChange={e => setSavGoal(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-shadow" />
+                                            <input type="range" min="10000" max="10000000" step="10000" value={savGoal} onChange={e => setSavGoal(Number(e.target.value))} className="w-full mt-2" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Already Saved (KES)</label>
+                                            <input type="number" value={savCurrent} onChange={e => setSavCurrent(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-shadow" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Savings (KES)</label>
+                                            <input type="number" value={savMonthly} onChange={e => setSavMonthly(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-shadow" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Annual Interest Rate (%)</label>
+                                            <input type="number" value={savRate} onChange={e => setSavRate(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-shadow" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-amber-50 rounded-2xl p-8 flex flex-col justify-center border border-amber-100">
+                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-1 text-center">Time to Reach Goal</p>
+                                    <p className="text-5xl font-bold text-amber-600 mb-1 text-center">
+                                        {savMonthsNeeded >= 999 ? '∞' : savMonthsNeeded}
+                                    </p>
+                                    <p className="text-amber-700 font-semibold mb-5 text-center">
+                                        {savMonthsNeeded >= 999 ? 'increase your monthly savings' : `months (~${(savMonthsNeeded / 12).toFixed(1)} years)`}
+                                    </p>
+                                    <div className="w-full border-t border-amber-200 pt-5 space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Remaining to Save:</span>
+                                            <span className="font-bold">KES {Math.max(0, savGoal - savCurrent).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Your Contributions:</span>
+                                            <span className="font-bold">KES {(savMonthly * Math.min(savMonthsNeeded, 998)).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Interest Earned (KES):</span>
+                                            <span className="font-bold text-amber-600">KES {Math.max(0, savGoal - savCurrent - (savMonthly * Math.min(savMonthsNeeded, 998))).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                        </div>
+                                        {/* Visual bar */}
+                                        <div className="mt-2">
+                                            <div className="flex text-xs text-gray-500 justify-between mb-1">
+                                                <span>Your savings</span><span>Interest</span>
+                                            </div>
+                                            <div className="w-full h-3 rounded-full bg-gray-200 flex overflow-hidden">
+                                                <div className="bg-amber-400 h-3 rounded-l-full transition-all duration-500"
+                                                    style={{ width: `${savGoal > 0 ? Math.min(100, ((savMonthly * Math.min(savMonthsNeeded, 998) + savCurrent) / savGoal) * 100).toFixed(1) : 0}%` }}></div>
+                                                <div className="bg-amber-600 h-3 rounded-r-full flex-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-5 p-3 bg-amber-100 rounded-xl text-xs text-amber-900 border border-amber-200">
+                                        💡 <strong>Tip:</strong> Even a small interest rate (e.g. 8% MMF) means your money grows while you sleep — start today!
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* EMERGENCY FUND CALCULATOR */}
+                        {activeTab === 'emergency' && (
+                            <div className="grid md:grid-cols-2 gap-12 animate-fadeIn">
+                                <div>
+                                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                                        <ShieldCheck className="text-teal-600" /> Emergency Fund Calculator
+                                    </h3>
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Expenses (KES)</label>
+                                            <input type="number" value={emMonthlyExpenses} onChange={e => setEmMonthlyExpenses(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow" />
+                                            <input type="range" min="5000" max="500000" step="5000" value={emMonthlyExpenses} onChange={e => setEmMonthlyExpenses(Number(e.target.value))} className="w-full mt-2" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Months of Cover Needed</label>
+                                            <div className="flex gap-3 flex-wrap">
+                                                {[3, 6, 9, 12].map(m => (
+                                                    <button key={m} onClick={() => setEmMonths(m)}
+                                                        className={`px-5 py-2.5 rounded-full font-bold text-sm transition-all ${emMonths === m ? 'bg-teal-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-teal-50'
+                                                            }`}>{m} months</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Already Saved (KES)</label>
+                                            <input type="number" value={emSaved} onChange={e => setEmSaved(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow" />
+                                        </div>
+                                        <div className="bg-teal-50 p-4 rounded-xl border border-teal-100 text-sm text-teal-800">
+                                            <p>Experts recommend <strong>3–6 months</strong> of expenses. Kenyans with dependants should aim for <strong>6–12 months</strong>.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-teal-50 rounded-2xl p-8 flex flex-col justify-center border border-teal-100">
+                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-1 text-center">Target Fund Size</p>
+                                    <p className="text-5xl font-bold text-teal-700 mb-6 text-center">
+                                        KES {(emMonthlyExpenses * emMonths).toLocaleString()}
+                                    </p>
+                                    <div className="w-full border-t border-teal-200 pt-5 space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Already Saved:</span>
+                                            <span className="font-bold text-teal-600">KES {emSaved.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Still Needed:</span>
+                                            <span className={`font-bold ${emSaved >= emMonthlyExpenses * emMonths ? 'text-green-600' : 'text-rose-600'}`}>
+                                                {emSaved >= emMonthlyExpenses * emMonths
+                                                    ? '✅ Goal Reached!'
+                                                    : `KES ${(emMonthlyExpenses * emMonths - emSaved).toLocaleString()}`}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Save KES 5,000/mo to reach in:</span>
+                                            <span className="font-bold">{emSaved < emMonthlyExpenses * emMonths ? `${Math.ceil((emMonthlyExpenses * emMonths - emSaved) / 5000)} months` : '—'}</span>
+                                        </div>
+                                        <div className="w-full bg-teal-100 rounded-full h-3 mt-2">
+                                            <div className="bg-teal-600 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${Math.min(100, (emSaved / (emMonthlyExpenses * emMonths)) * 100).toFixed(1)}%` }}></div>
+                                        </div>
+                                        <p className="text-xs text-teal-700 font-semibold text-center">{Math.min(100, ((emSaved / (emMonthlyExpenses * emMonths)) * 100)).toFixed(0)}% funded</p>
+                                    </div>
+                                    <div className="mt-5 p-3 bg-teal-100 rounded-xl text-xs text-teal-900 border border-teal-200">
+                                        🛡️ <strong>Why it matters:</strong> Job loss, medical bills, car repairs — an emergency fund means you never have to take a loan in a crisis.
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* DEBT PAYOFF CALCULATOR */}
+                        {activeTab === 'debt' && (
+                            <div className="grid md:grid-cols-2 gap-12 animate-fadeIn">
+                                <div>
+                                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                                        <CreditCard className="text-rose-600" /> Debt Payoff Planner
+                                    </h3>
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Total Debt Balance (KES)</label>
+                                            <input type="number" value={debtBalance} onChange={e => setDebtBalance(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-shadow" />
+                                            <input type="range" min="10000" max="5000000" step="10000" value={debtBalance} onChange={e => setDebtBalance(Number(e.target.value))} className="w-full mt-2" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Annual Interest Rate (% p.a)</label>
+                                            <input type="number" value={debtRate} onChange={e => setDebtRate(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-shadow" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Payment (KES)</label>
+                                            <input type="number" value={debtPayment} onChange={e => setDebtPayment(Number(e.target.value))}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-shadow" />
+                                            <input type="range" min="1000" max="200000" step="1000" value={debtPayment} onChange={e => setDebtPayment(Number(e.target.value))} className="w-full mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-rose-50 rounded-2xl p-8 flex flex-col justify-center border border-rose-100">
+                                    <p className="text-gray-500 font-medium uppercase tracking-wide text-sm mb-1 text-center">Debt-Free In</p>
+                                    <p className="text-5xl font-bold text-rose-600 mb-1 text-center">
+                                        {debtResult.months >= 999 ? '∞' : debtResult.months}
+                                    </p>
+                                    <p className="text-rose-700 font-semibold mb-5 text-center">
+                                        {debtResult.months >= 999 ? 'Payment too low — increase it!' : `months (~${(debtResult.months / 12).toFixed(1)} years)`}
+                                    </p>
+                                    <div className="w-full border-t border-rose-200 pt-5 space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Original Debt:</span>
+                                            <span className="font-bold">KES {debtBalance.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Total Paid:</span>
+                                            <span className="font-bold">KES {debtResult.totalPaid.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Interest Cost (KES):</span>
+                                            <span className="font-bold text-rose-600">KES {debtResult.totalInterest.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">Interest % of Debt:</span>
+                                            <span className="font-bold text-rose-600">{debtBalance > 0 ? ((debtResult.totalInterest / debtBalance) * 100).toFixed(0) : 0}%</span>
+                                        </div>
+                                        {/* Visual bar */}
+                                        <div className="mt-2">
+                                            <div className="flex text-xs text-gray-500 justify-between mb-1">
+                                                <span>Principal</span><span>Interest paid</span>
+                                            </div>
+                                            <div className="w-full h-3 rounded-full bg-gray-200 flex overflow-hidden">
+                                                <div className="bg-rose-300 h-3 rounded-l-full transition-all duration-500"
+                                                    style={{ width: `${debtResult.totalPaid > 0 ? Math.min(100, (debtBalance / debtResult.totalPaid) * 100).toFixed(1) : 0}%` }}></div>
+                                                <div className="bg-rose-600 h-3 rounded-r-full flex-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-5 p-3 bg-rose-100 rounded-xl text-xs text-rose-900 border border-rose-200">
+                                        ⚡ <strong>Quick win:</strong> Adding even KES 1,000 extra per month can save you months of payments and thousands in interest.
+                                    </div>
                                 </div>
                             </div>
                         )}

@@ -6,7 +6,7 @@ import {
     Calendar, CheckCircle
 } from 'lucide-react';
 import Footer from '../components/Footer';
-import communityHeroBg from '../assets/shilingi-community.png';
+import communityHeroVideo from '../assets/../video/Community video.mp4';
 
 const CommunityPage = () => {
     useEffect(() => {
@@ -63,17 +63,22 @@ const CommunityPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+        <div className="min-h-screen bg-gray-50 text-gray-900">
             {/* HERO SECTION */}
             <section className="relative bg-primary-900 text-white min-h-[70vh] flex items-center overflow-hidden">
                 {/* Background Image with Overlay */}
                 <div className="absolute inset-0 z-0">
-                    <img
-                        src={communityHeroBg}
-                        alt="Community"
+                    <video
+                        src={communityHeroVideo}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
                         className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-900/70 to-primary-900/40"></div>
+                    {/* Light scrim so video is visible, bottom gradient anchors the text */}
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 </div>
 
                 <div className="container-custom relative z-10 text-center max-w-4xl mx-auto py-20">

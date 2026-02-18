@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Search, ChevronDown, BookOpen, BarChart2,
@@ -181,6 +181,14 @@ const FAQPage = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [openIndex, setOpenIndex] = useState(null);
+    const faqSectionRef = useRef(null);
+
+    const handleCategoryClick = (id) => {
+        setActiveCategory(id);
+        setTimeout(() => {
+            faqSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    };
 
     useEffect(() => {
         document.title = 'FAQs — Shilingi Moves | Kenya\'s Financial Companion';
@@ -203,7 +211,14 @@ const FAQPage = () => {
         <div className="min-h-screen bg-white">
 
             {/* ── HERO ──────────────────────────────────────────────────── */}
-            <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 pt-20 pb-32 relative overflow-hidden">
+            <section
+                className="pt-20 pb-32 relative overflow-hidden"
+                style={{
+                    backgroundColor: '#004d3d',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'%3E%3Cpath d='M0 200c100 0 150 50 250 50s150-50 250-50 150 50 250 50 150-50 250-50v1H0z' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1'/%3E%3C/svg%3E")`,
+                    backgroundSize: 'cover',
+                }}
+            >
                 {/* Dot grid */}
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '28px 28px' }} />
                 <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
@@ -236,7 +251,7 @@ const FAQPage = () => {
             </section>
 
             {/* ── CATEGORY TABS + ACCORDION ─────────────────────────────── */}
-            <section className="container-custom -mt-10 pb-20 relative z-10">
+            <section ref={faqSectionRef} className="container-custom -mt-10 pb-20 relative z-10">
 
                 {/* Category pill tabs */}
                 <div className="flex flex-wrap gap-2 justify-center mb-10">
@@ -246,10 +261,10 @@ const FAQPage = () => {
                         return (
                             <button
                                 key={cat.id}
-                                onClick={() => setActiveCategory(cat.id)}
+                                onClick={() => handleCategoryClick(cat.id)}
                                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${active
-                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
-                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-600'
+                                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
+                                    : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-300 hover:text-primary-600'
                                     }`}
                             >
                                 <Icon size={14} />

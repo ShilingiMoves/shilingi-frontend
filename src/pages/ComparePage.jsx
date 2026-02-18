@@ -86,7 +86,7 @@ const ComparePage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900">
+        <div className="min-h-screen bg-white text-gray-900">
             {/* HERO SECTION - VIDEO BACKGROUND + INTERACTIVE WIDGET */}
             <section className="relative h-auto md:h-[80vh] min-h-[700px] flex items-center justify-center overflow-hidden py-24 md:py-0">
                 {/* Video Background */}

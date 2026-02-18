@@ -5,6 +5,16 @@
 @layer base {
   body {
     @apply font-sans antialiased text-gray-900 bg-white;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'DM Serif Display', Georgia, serif !important;
+    @apply tracking-tight;
+  }
+
+  h1 {
+    font-weight: 400 !important;
   }
 
   /* Ensure proper touch scrolling on iOS */

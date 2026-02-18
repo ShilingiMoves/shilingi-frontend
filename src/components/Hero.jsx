@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowDown } from 'lucide-react';
-import Button from './Button';
+import { ArrowDown, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import HomePage1 from '../assets/home-page-1.png';
 import HomePage2 from '../assets/home-page-2.png';
 import HomePage3 from '../assets/home-page-3.png';
@@ -12,20 +12,17 @@ const Hero = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-        }, 5000); // Change image every 5 seconds 
-
+        }, 5000);
         return () => clearInterval(interval);
     }, [images.length]);
 
     const scrollToContent = () => {
-        window.scrollTo({
-            top: window.innerHeight - 80, // Approximate navbar height of narbar
-            behavior: 'smooth'
-        });
+        window.scrollTo({ top: window.innerHeight - 80, behavior: 'smooth' });
     };
 
     return (
         <section className="relative h-screen min-h-[600px] flex items-center overflow-hidden">
+
             {/* Background Image Carousel */}
             <div className="absolute inset-0 z-0">
                 {images.map((img, index) => (
@@ -39,51 +36,65 @@ const Hero = () => {
                             alt={`Shilingi Moves Background ${index + 1}`}
                             className="w-full h-full object-cover object-center"
                         />
-                        {/* Dark Overlay for Readability - Responsive Gradient */}
-                        <div className="absolute inset-0 bg-black/40 sm:bg-transparent bg-gradient-to-b from-black/60 via-transparent to-black/60 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/30 sm:to-transparent"></div>
+                        {/* Gradient overlay — stronger on left for text, fades right */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
                     </div>
                 ))}
             </div>
 
-            {/* Content Content - Left Aligned */}
-            <div className="container- custom relative z-10 w-full pt-20">
-                <div className="max-w-2xl space-y-6 md:space-y-8">
-                    <div className="space-y-4 md:space-y-6">
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
-                            Take Control of Your Money. <br />
-                            <span className="text-primary-400">Build the Life You Want.</span>
-                        </h1>
-                        <p className="text-lg md:text-xl text-gray-100 leading-relaxed max-w-lg drop-shadow-sm font-medium">
-                            Shilingi Moves is your complete financial wellness platform. Learn, plan, compare, and grow your money using one personalized dashboard built for Kenyan realities.
-                        </p>
-                    </div>
+            {/* Hero Content */}
+            <div className="container-custom relative z-10 w-full pt-20 px-6 sm:px-8 md:px-12 lg:px-16">
+                <div className="max-w-2xl md:ml-8 lg:ml-16">
 
-                    {/* CTAs */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                        <Button
-                            variant="primary"
-                            size="lg"
+                    {/* Headline — DM Serif Display, WealthPro-style large multi-line */}
+                    <h1
+                        className="font-serif text-5xl sm:text-6xl md:text-7xl text-white leading-[1.1] tracking-tight mb-6"
+                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
+                    >
+                        Take control of your money.{' '}
+                        <span className="text-primary-400">Build the life you want.</span>
+                    </h1>
+
+                    {/* Subtext — DM Sans, lighter weight */}
+                    <p
+                        className="font-sans text-lg md:text-xl text-gray-200 leading-relaxed mb-10 max-w-lg font-light"
+                        style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}
+                    >
+                        Shilingi Moves is your complete financial wellness platform. Learn, plan, compare, and grow your money — built for Kenyan realities.
+                    </p>
+
+                    {/* CTA Buttons — WealthPro pill style with arrow icons */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Link
                             to="/signup"
-                            className="shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all bg-primary-600 border-transparent hover:bg-primary-500 text-white"
+                            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/40 hover:-translate-y-0.5 group text-base"
                         >
                             Create free account
-                        </Button>
-                        <Button
-                            size="lg"
+                            <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                                <ArrowRight size={15} />
+                            </span>
+                        </Link>
+                        <Link
                             to="/dashboard"
-                            className="bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-white shadow-lg"
+                            className="inline-flex items-center justify-center gap-3 px-8 py-4 border-2 border-white/80 text-white font-semibold rounded-full hover:bg-white/10 hover:border-white transition-all duration-300 hover:-translate-y-0.5 group text-base"
                         >
                             See dashboard demo
-                        </Button>
+                            <span className="w-7 h-7 rounded-full border border-white/50 flex items-center justify-center group-hover:border-white transition-colors">
+                                <ArrowRight size={15} />
+                            </span>
+                        </Link>
                     </div>
                 </div>
             </div>
 
             {/* Scroll Cue */}
-            <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 animate-bounce cursor-pointer" onClick={scrollToContent}>
-                <div className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors">
-                    <span className="text-xs font-medium uppercase tracking-widest hidden md:block text-shadow">Explore</span>
-                    <ArrowDown size={32} />
+            <div
+                className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce cursor-pointer"
+                onClick={scrollToContent}
+            >
+                <div className="flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors">
+                    <span className="text-xs font-sans font-medium uppercase tracking-widest hidden md:block">Explore</span>
+                    <ArrowDown size={28} />
                 </div>
             </div>
         </section>
