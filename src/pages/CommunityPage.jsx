@@ -178,28 +178,34 @@ const CommunityPage = () => {
                 </div>
             </section>
 
-            {/* TESTIMONIALS */}
-            <section className="py-20 bg-gray-50">
+            {/* TESTIMONIALS (Marquee) */}
+            <section id="success-stories" className="py-20 bg-gray-50 overflow-hidden">
                 <div className="container-custom text-center mb-16">
-                    <h2 className="text-3xl font-bold mb-4">Real Stories, Real Growth</h2>
+                    <h2 className="text-4xl font-bold mb-4">Real Stories, Real Growth</h2>
                     <p className="text-gray-600 max-w-2xl mx-auto">See what happens when you surround yourself with the right people.</p>
                 </div>
-                <div className="container-custom grid md:grid-cols-3 gap-8">
-                    {testimonials.map((t, i) => (
-                        <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                            <div className="flex gap-1 text-amber-400 mb-4">
-                                <Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} />
-                            </div>
-                            <p className="text-gray-700 italic mb-6">"{t.text}"</p>
-                            <div className="flex items-center gap-4">
-                                <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full bg-gray-200" />
-                                <div className="text-left">
-                                    <h4 className="font-bold">{t.name}</h4>
-                                    <p className="text-xs text-primary-600 font-semibold uppercase">{t.role}</p>
+
+                {/* Marquee Container */}
+                <div className="w-full relative">
+                    <div className="flex w-max gap-8 animate-scroll hover:[animation-play-state:paused] px-4">
+                        {[...testimonials, ...testimonials].map((t, i) => (
+                            <div key={i} className="w-[350px] md:w-[400px] shrink-0 bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                <div className="flex gap-1 text-amber-400 mb-4">
+                                    <Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} /><Star fill="currentColor" size={16} />
+                                </div>
+                                <p className="text-gray-700 italic mb-6 text-lg leading-relaxed">"{t.text}"</p>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-xl">
+                                        {t.name.charAt(0)}
+                                    </div>
+                                    <div className="text-left">
+                                        <h4 className="font-bold">{t.name}</h4>
+                                        <p className="text-xs text-primary-600 font-semibold uppercase">{t.role}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </section>
 

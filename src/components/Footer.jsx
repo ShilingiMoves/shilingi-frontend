@@ -87,7 +87,7 @@ const Footer = ({ showCTA = true }) => {
 
             {/* ── MAIN FOOTER BODY ───────────────────────────────────────── */}
             <div className="container-custom pt-14 pb-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
 
                     {/* Brand column — spans 2 on lg */}
                     <div className="lg:col-span-2 space-y-6">
@@ -150,16 +150,37 @@ const Footer = ({ showCTA = true }) => {
                         </div>
                     </div>
 
-                    {/* Explore column */}
+                    {/* Platform column */}
                     <div>
-                        <h3 className="text-gray-900 font-bold text-sm uppercase tracking-widest mb-5">Explore</h3>
+                        <h3 className="text-gray-900 font-bold text-sm uppercase tracking-widest mb-5">Platform</h3>
                         <ul className="space-y-3">
                             {[
-                                { label: 'Learning Hub', to: '/learn' },
+                                { label: 'Dashboard', to: '/dashboard' },
                                 { label: 'Compare Products', to: '/compare' },
                                 { label: 'Financial Tools', to: '/tools' },
+                                { label: 'Learning Hub', to: '/learn' },
+                            ].map((item, i) => (
+                                <li key={i}>
+                                    <Link
+                                        to={item.to}
+                                        className="group inline-flex items-center text-sm text-gray-500 hover:text-primary-600 transition-colors duration-200"
+                                    >
+                                        <ChevronRight size={13} className="mr-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-primary-600" />
+                                        {item.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Community column */}
+                    <div>
+                        <h3 className="text-gray-900 font-bold text-sm uppercase tracking-widest mb-5">Community</h3>
+                        <ul className="space-y-3">
+                            {[
+                                { label: 'Community Hub', to: '/community' },
+                                { label: 'Success Stories', to: '/community#success-stories' },
                                 { label: 'Find Advisors', to: '/advisors' },
-                                { label: 'Community', to: '/community' },
                             ].map((item, i) => (
                                 <li key={i}>
                                     <Link
@@ -253,16 +274,16 @@ const Footer = ({ showCTA = true }) => {
             </div>
 
             {/* ── BOTTOM BAR ─────────────────────────────────────────────── */}
-            <div className="border-t border-gray-200 bg-white py-5">
-                <div className="container-custom flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-gray-500">
-                    <p>© {new Date().getFullYear()} Shilingi Moves Ltd. All Rights Reserved.</p>
+            <div className="border-t border-primary-700 bg-primary-600 py-5">
+                <div className="container-custom flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-white/80">
+                    <p className="text-white font-medium">© {new Date().getFullYear()} Shilingi Moves Ltd. All Rights Reserved.</p>
                     <div className="flex items-center gap-5">
-                        <Link to="/privacy" className="hover:text-primary-600 transition-colors">Privacy Policy</Link>
-                        <Link to="/terms" className="hover:text-primary-600 transition-colors">Terms of Service</Link>
+                        <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                     </div>
                     <p>
-                        Built with <span className="text-primary-600">♥</span> for Kenya by{' '}
-                        <span className="text-primary-600 font-medium">Prospect Pilot AI</span>
+                        Built with <span className="text-white">♥</span> for Kenya by{' '}
+                        <span className="text-white font-semibold">Prospect Pilot AI</span>
                     </p>
                 </div>
             </div>
