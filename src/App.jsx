@@ -11,6 +11,7 @@ import PartnershipsPage from './pages/PartnershipsPage';
 import AboutPage from './pages/AboutPage';
 import FAQPage from './pages/FAQPage';
 import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import {
     Dashboard,
     Learn,
@@ -54,6 +55,7 @@ function App() {
                         <Route path="/signin" element={<SignIn />} />
                         <Route path="/signup" element={<SignUp />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/terms" element={<TermsPage />} />
                     </Routes>
                 </main>
             </div>
