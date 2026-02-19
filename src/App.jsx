@@ -10,6 +10,7 @@ import AdvisoryPage from './pages/AdvisoryPage';
 import PartnershipsPage from './pages/PartnershipsPage';
 import AboutPage from './pages/AboutPage';
 import FAQPage from './pages/FAQPage';
+import PrivacyPage from './pages/PrivacyPage';
 import {
     Dashboard,
     Learn,
@@ -52,6 +53,7 @@ function App() {
                         <Route path="/trust" element={<TrustPage />} />
                         <Route path="/signin" element={<SignIn />} />
                         <Route path="/signup" element={<SignUp />} />
+                        <Route path="/privacy" element={<PrivacyPage />} />
                     </Routes>
                 </main>
             </div>
