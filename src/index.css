@@ -55,4 +55,10 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Floating card animation used by hero glassmorphism cards */
+  @keyframes floatCard {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-8px); }
+  }
 }

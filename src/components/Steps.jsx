@@ -18,7 +18,7 @@ const Steps = () => {
         {
             number: 3,
             icon: TrendingUp,
-            title: 'Track progress and grow',
+            title: 'Keep track of your expenses and your income',
             description: 'Achieve your financial goals',
         },
     ];

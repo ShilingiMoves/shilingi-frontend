@@ -12,7 +12,6 @@ const TrustAndCTA = () => {
 
     const metrics = [
         { icon: Target, value: '50,000+', label: 'Goals tracked' },
-        { icon: Users, value: '500+', label: 'Trusted advisors' },
         { icon: ThumbsUp, value: '98%', label: 'User satisfaction' },
     ];
 

@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import SplashScreen from './components/SplashScreen';
 import Home from './pages/Home';
 import LearnPage from './pages/LearnPage';
 import ComparePage from './pages/ComparePage';
@@ -34,32 +35,45 @@ function ScrollToTop() {
 }
 
 function App() {
+    // Show splash once per browser session
+    const [showSplash, setShowSplash] = useState(
+        () => !sessionStorage.getItem('sm_splashed')
+    );
+
+    const handleSplashComplete = () => {
+        sessionStorage.setItem('sm_splashed', '1');
+        setShowSplash(false);
+    };
+
     return (
-        <Router>
-            <ScrollToTop />
-            <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-grow">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/learn" element={<LearnPage />} />
-                        <Route path="/compare" element={<ComparePage />} />
-                        <Route path="/tools" element={<ToolsPage />} />
-                        <Route path="/community" element={<CommunityPage />} />
-                        <Route path="/advisors" element={<AdvisoryPage />} />
-                        <Route path="/partnerships" element={<PartnershipsPage />} />
-                        <Route path="/about" element={<AboutPage />} />
-                        <Route path="/faqs" element={<FAQPage />} />
-                        <Route path="/trust" element={<TrustPage />} />
-                        <Route path="/signin" element={<SignIn />} />
-                        <Route path="/signup" element={<SignUp />} />
-                        <Route path="/privacy" element={<PrivacyPage />} />
-                        <Route path="/terms" element={<TermsPage />} />
-                    </Routes>
-                </main>
-            </div>
-        </Router>
+        <>
+            {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+            <Router>
+                <ScrollToTop />
+                <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <main className="flex-grow">
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/learn" element={<LearnPage />} />
+                            <Route path="/compare" element={<ComparePage />} />
+                            <Route path="/tools" element={<ToolsPage />} />
+                            <Route path="/community" element={<CommunityPage />} />
+                            <Route path="/advisors" element={<AdvisoryPage />} />
+                            <Route path="/partnerships" element={<PartnershipsPage />} />
+                            <Route path="/about" element={<AboutPage />} />
+                            <Route path="/faqs" element={<FAQPage />} />
+                            <Route path="/trust" element={<TrustPage />} />
+                            <Route path="/signin" element={<SignIn />} />
+                            <Route path="/signup" element={<SignUp />} />
+                            <Route path="/privacy" element={<PrivacyPage />} />
+                            <Route path="/terms" element={<TermsPage />} />
+                        </Routes>
+                    </main>
+                </div>
+            </Router>
+        </>
     );
 }
 

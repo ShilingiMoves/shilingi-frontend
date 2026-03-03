@@ -8,13 +8,6 @@ import {
 } from 'lucide-react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
 
-// ─── Feature strip data ───────────────────────────────────────────────────────
-const features = [
-    { icon: BookOpen, label: 'Learn', desc: 'Financial education built for Kenya', link: '/learn' },
-    { icon: BarChart2, label: 'Compare', desc: 'Banks, SACCOs & investment rates', link: '/compare' },
-    { icon: Wrench, label: 'Tools', desc: 'Free budgeting & savings calculators', link: '/tools' },
-    { icon: Users, label: 'Community', desc: 'Join 10,000+ Kenyans on the journey', link: '/community' },
-];
 
 const Footer = ({ showCTA = true }) => {
     return (
@@ -41,14 +34,14 @@ const Footer = ({ showCTA = true }) => {
                             Your financial future starts<br className="hidden md:block" /> with one good decision.
                         </h2>
                         <p className="text-primary-100 text-lg mb-8 max-w-xl mx-auto">
-                            Join thousands of Kenyans who are learning, planning, and growing their wealth — for free.
+                            Join thousands of Kenyans who are learning, planning, and growing their wealth — one shilling at a time.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link
                                 to="/signup"
                                 className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 text-primary-700 font-extrabold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-base group"
                             >
-                                Get Started — It's Free
+                                Get Started Today
                                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link
@@ -61,29 +54,6 @@ const Footer = ({ showCTA = true }) => {
                     </div>
                 </div>
             )}
-
-            {/* ── WHAT WE OFFER STRIP ────────────────────────────────────── */}
-            <div className="bg-white border-b border-gray-100">
-                <div className="container-custom py-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {features.map((f, i) => (
-                            <Link
-                                key={i}
-                                to={f.link}
-                                className="group flex items-start gap-3 p-4 rounded-xl hover:bg-primary-50 transition-colors duration-200"
-                            >
-                                <div className="w-9 h-9 shrink-0 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-600 transition-colors">
-                                    <f.icon size={18} className="text-primary-600 group-hover:text-white transition-colors" />
-                                </div>
-                                <div>
-                                    <p className="text-gray-900 font-semibold text-sm group-hover:text-primary-700 transition-colors">{f.label}</p>
-                                    <p className="text-gray-500 text-xs leading-snug mt-0.5 hidden md:block">{f.desc}</p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            </div>
 
             {/* ── MAIN FOOTER BODY ───────────────────────────────────────── */}
             <div className="container-custom pt-14 pb-10">
