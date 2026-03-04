@@ -54,7 +54,7 @@ const Navbar = () => {
                                     : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
                                     }`}
                             >
-                                {link.icon && <link.icon size={16} className={isActive(link.path) ? 'text-primary-600' : 'text-primary-500'} />}
+                                {link.icon && <link.icon size={16} className={isActive(link.path) ? 'text-primary-600' : 'text-amber-500'} />}
                                 {link.name}
                             </Link>
                         ))}
@@ -120,7 +120,7 @@ const Navbar = () => {
                                     : 'text-gray-700 hover:bg-gray-100'
                                     }`}
                             >
-                                {link.icon && <link.icon size={20} className={isActive(link.path) ? 'text-primary-600' : 'text-primary-500'} />}
+                                {link.icon && <link.icon size={20} className={isActive(link.path) ? 'text-primary-600' : 'text-amber-500'} />}
                                 {link.name}
                             </Link>
                         ))}
