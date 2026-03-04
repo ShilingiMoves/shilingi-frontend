@@ -13,6 +13,7 @@ import AboutPage from './pages/AboutPage';
 import FAQPage from './pages/FAQPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import ReferPage from './pages/ReferPage';
 import {
     Dashboard,
     Learn,
@@ -69,6 +70,7 @@ function App() {
                             <Route path="/signup" element={<SignUp />} />
                             <Route path="/privacy" element={<PrivacyPage />} />
                             <Route path="/terms" element={<TermsPage />} />
+                            <Route path="/refer" element={<ReferPage />} />
                         </Routes>
                     </main>
                 </div>

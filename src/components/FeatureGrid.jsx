@@ -91,7 +91,7 @@ const FeatureGrid = () => {
                                 alt="Shilingi Moves Dashboard"
                                 className="w-full h-auto object-cover block"
                             />
-                            {/* Subtle gradient overlay at bottom */}
+                            {/* Gradient overlay at bottom */}
                             <div
                                 className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
                                 style={{
@@ -112,7 +112,6 @@ const FeatureGrid = () => {
                     <div className="w-full lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-0">
                         {features.map((feature, index) => {
                             const Icon = feature.icon;
-
                             const col = index % 3;
                             const row = Math.floor(index / 3);
                             const totalRows = Math.ceil(features.length / 3);
@@ -136,12 +135,12 @@ const FeatureGrid = () => {
                                         (e.currentTarget.style.backgroundColor = 'transparent')
                                     }
                                 >
-                                    {/* Icon — original brand green */}
+                                    {/* Icon — brand green */}
                                     <div className="mb-4 w-10 h-10 rounded-lg flex items-center justify-center bg-primary-50 text-primary-600 group-hover:bg-primary-600 group-hover:text-white transition-colors duration-300">
                                         <Icon size={20} strokeWidth={2} />
                                     </div>
 
-                                    {/* Title — original brand */}
+                                    {/* Title */}
                                     <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
                                         {feature.title}
                                     </h3>

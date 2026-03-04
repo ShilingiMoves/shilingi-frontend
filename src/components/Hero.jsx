@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowDown, ArrowRight, TrendingUp, Target, Landmark, Wallet, PiggyBank, BarChart2 } from 'lucide-react';
+import { ArrowRight, TrendingUp, Landmark, Wallet, PiggyBank, BarChart2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import HomePage1 from '../assets/home-page-1.png';
 import HomePage2 from '../assets/home-page-2.png';
 import HomePage3 from '../assets/home-page-3.png';
 
-/* ─── Card style matching the screenshot: dark charcoal glass ─────────────── */
+/* ─── Card style: warm grey frosted glass matching screenshot ──────────────── */
 const cardBase = {
     background: 'rgba(130, 120, 115, 0.52)',
     backdropFilter: 'blur(20px)',
@@ -41,8 +41,7 @@ const StrokeRow = ({ label, amount, pct, color = '#10b981', icon: Icon }) => (
     </div>
 );
 
-/* ─── Green connector line SVG (Monarch-style) ─────────────────────────────── */
-/* Draws a thin green line from a card anchor point to a "device" focal point   */
+/* ─── Green connector line (Monarch-style dashed line with dots) ───────────── */
 const ConnectorLine = ({ x1, y1, x2, y2 }) => (
     <svg
         className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -50,52 +49,30 @@ const ConnectorLine = ({ x1, y1, x2, y2 }) => (
     >
         <defs>
             <linearGradient id="greenLine" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
+                <stop offset="40%" stopColor="#10b981" stopOpacity="0.7" />
                 <stop offset="100%" stopColor="#10b981" stopOpacity="0.15" />
             </linearGradient>
         </defs>
-        {/* Connector — draws itself in */}
         <line
             x1={x1} y1={y1} x2={x2} y2={y2}
             stroke="url(#greenLine)"
             strokeWidth="1.5"
-            strokeDasharray="6 4"
-            style={{ strokeDashoffset: 300, animation: 'drawLine 1.2s ease-out forwards 0.3s' }}
+            strokeDasharray="5 4"
         />
-        {/* Dot at card anchor */}
-        <circle cx={x1} cy={y1} r="3" fill="#10b981"
-            style={{ opacity: 0, animation: 'fadeInDot 0.4s ease forwards 0.2s' }}
-        />
-        {/* Pulsing target at device focal point */}
-        <circle cx={x2} cy={y2} r="5" fill="#10b981"
-            style={{ opacity: 0, animation: 'fadeInDot 0.4s ease forwards 1.4s' }}
-        />
-        <circle cx={x2} cy={y2} r="12" fill="none" stroke="#10b981" strokeWidth="1"
-            style={{ opacity: 0, animation: 'pulseRing 2s ease-out infinite 1.6s' }}
-        />
-        <circle cx={x2} cy={y2} r="20" fill="none" stroke="#10b981" strokeWidth="0.6"
-            style={{ opacity: 0, animation: 'pulseRing 2s ease-out infinite 1.9s' }}
-        />
-        <style>{`
-            @keyframes drawLine  { to { stroke-dashoffset: 0; } }
-            @keyframes fadeInDot { to { opacity: 0.85; } }
-            @keyframes pulseRing {
-                0%   { opacity: 0.5; }
-                100% { opacity: 0;   }
-            }
-        `}</style>
+        <circle cx={x1} cy={y1} r="3" fill="#10b981" opacity="0.8" />
+        <circle cx={x2} cy={y2} r="4" fill="#10b981" opacity="0.25" />
+        <circle cx={x2} cy={y2} r="7" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.2" />
     </svg>
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   SLIDE 0  —  Cash Flow + Spending breakdown
-   Cards: top-LEFT (small) + bottom-RIGHT (small)
-   Line: connects bottom-right card → centre of image where "device" is
+   SLIDE 0 — Cash Flow + Spending breakdown
+   Card A: top-right | Card B: bottom-right
 ══════════════════════════════════════════════════════════════════════════════ */
 const SlideCards0 = () => (
     <>
-        {/* Green connector line — anchored bottom-right card → person's screen */}
-        <ConnectorLine x1="78%" y1="72%" x2="55%" y2="58%" />
+        <ConnectorLine x1="75%" y1="72%" x2="48%" y2="58%" />
 
         {/* Card A — Cash Flow (top-right) */}
         <Card className="absolute top-28 right-6 lg:right-14 w-44" delay="0s">
@@ -110,7 +87,6 @@ const SlideCards0 = () => (
                     <p className="text-base font-bold text-white leading-tight">Ksh 54K</p>
                 </div>
             </div>
-            {/* Mini bar chart */}
             <div className="flex items-end gap-0.5 h-7">
                 {[40, 65, 55, 80, 60, 70, 85].map((h, i) => (
                     <div key={i} className="flex-1 flex flex-col gap-px items-center">
@@ -139,16 +115,17 @@ const SlideCards0 = () => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   SLIDE 1  —  Net Worth + Linked Accounts
-   Cards: centre-right (tall) + bottom-left (short)
-   Line: connects centre-right → lower-centre image focus
+   SLIDE 1 — Net Worth + Linked Accounts
+   Card A: CENTRE GAP (between hero text and person) | Card B: bottom-right
+   Line:  FROM laptop (right) → TO card in centre gap
 ══════════════════════════════════════════════════════════════════════════════ */
 const SlideCards1 = () => (
     <>
-        <ConnectorLine x1="78%" y1="50%" x2="55%" y2="62%" />
+        {/* Line: FROM card above heading → TO laptop on right side of image */}
+        <ConnectorLine x1="34%" y1="28%" x2="72%" y2="58%" />
 
-        {/* Card A — Net Worth (top-right) */}
-        <Card className="absolute top-28 right-6 lg:right-14 w-48" delay="0s">
+        {/* Card A — Net Worth (above the hero heading, left side) */}
+        <Card className="absolute top-20 left-6 lg:left-16 w-48" delay="0s">
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Net Worth</p>
             <p className="text-xl font-bold text-white tracking-tight leading-tight">Ksh 335,608</p>
             <div className="flex items-center gap-1">
@@ -186,13 +163,13 @@ const SlideCards1 = () => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   SLIDE 2  —  Budget Ring + Savings Goals
-   Cards: top-right (budget) + mid-left (goals)
-   Line: connects top-right card → upper-centre where device screen is
+   SLIDE 2 — Budget Ring + Savings Goals
+   Card A: top-right | Card B: mid-left
+   Line:  FROM phone (centre) → TO top-right card
 ══════════════════════════════════════════════════════════════════════════════ */
 const SlideCards2 = () => (
     <>
-        {/* Line: FROM phone (centre of image) TO top-right card */}
+        {/* Line: FROM phone in image → TO top-right card */}
         <ConnectorLine x1="42%" y1="62%" x2="78%" y2="30%" />
 
         {/* Card A — Budget ring (top-right) */}
@@ -220,8 +197,8 @@ const SlideCards2 = () => (
             </div>
         </Card>
 
-        {/* Card B — Savings Goals (bottom-right) */}
-        <Card className="absolute bottom-28 right-6 lg:right-14 w-44" delay="1.6s">
+        {/* Card B — Savings Goals (mid-left) */}
+        <Card className="absolute top-1/2 -translate-y-1/2 left-6 lg:left-16 w-44" delay="1.6s">
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Your Goals</p>
             <div className="flex flex-col gap-2 mt-0.5">
                 {[
@@ -252,26 +229,18 @@ const slideCards = [<SlideCards0 key={0} />, <SlideCards1 key={1} />, <SlideCard
 /* ─── Main Hero component ──────────────────────────────────────────────────── */
 const Hero = () => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [cardsShown, setCardsShown] = useState(false); // cards hidden until image settles
+    const [cardsShown, setCardsShown] = useState(false);
     const images = [HomePage1, HomePage2, HomePage3];
 
     useEffect(() => {
-        // UX sequence per slide:
-        // 0ms   — new image fades in (1s CSS transition)
-        // 2000ms — cards + connector line fade/draw in
-        // 10000ms — cards fade out, image starts to change, cycle repeats
-
-        // Kick off the very first card appearance on mount
+        // UX sequence: image fades in first, then cards appear after 2s
         const firstShow = setTimeout(() => setCardsShown(true), 2000);
 
         const interval = setInterval(() => {
-            // 1. Hide cards
             setCardsShown(false);
-            // 2. Change image after cards are gone (500ms fade)
             setTimeout(() => {
                 setCurrentImageIndex(prev => (prev + 1) % images.length);
             }, 500);
-            // 3. Show cards 2s after image started fading in
             setTimeout(() => setCardsShown(true), 2000);
         }, 10000); // 10s per slide
 
@@ -284,9 +253,8 @@ const Hero = () => {
     };
 
     const handleHeroClick = (e) => {
-        // Only scroll if the user clicked on empty space, not on a button/link/card
-        const tag = e.target.tagName.toLowerCase();
         const isInteractive = e.target.closest('a, button, [data-no-scroll]');
+        const tag = e.target.tagName.toLowerCase();
         if (!isInteractive && tag !== 'svg' && tag !== 'path') {
             scrollToContent();
         }
@@ -297,7 +265,6 @@ const Hero = () => {
             className="relative h-screen min-h-[600px] flex items-center overflow-hidden cursor-pointer"
             onClick={handleHeroClick}
         >
-
             {/* Background Image Carousel */}
             <div className="absolute inset-0 z-0">
                 {images.map((img, index) => (
@@ -366,8 +333,6 @@ const Hero = () => {
             >
                 {slideCards[currentImageIndex]}
             </div>
-
-
         </section>
     );
 };

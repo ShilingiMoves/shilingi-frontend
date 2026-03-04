@@ -335,7 +335,7 @@ const ComparePage = () => {
                 </div>
             </section>
 
-            <Footer showCTA={false} />
+            <Footer />
         </div>
     );
 };

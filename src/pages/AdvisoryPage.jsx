@@ -384,7 +384,7 @@ const AdvisoryPage = () => {
                 </div>
             </section>
 
-            <Footer showCTA={false} />
+            <Footer />
         </div>
     );
 };

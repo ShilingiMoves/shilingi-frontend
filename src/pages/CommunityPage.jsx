@@ -231,7 +231,7 @@ const CommunityPage = () => {
                 </div>
             </section>
 
-            <Footer showCTA={false} />
+            <Footer />
         </div>
     );
 };

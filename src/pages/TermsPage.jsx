@@ -817,7 +817,7 @@ const TermsPage = () => {
                 </div>
             </section>
 
-            <Footer showCTA={false} />
+            <Footer />
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Gift } from 'lucide-react';
 import Button from './Button';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
 
@@ -25,7 +25,7 @@ const Navbar = () => {
         { name: 'Learn', path: '/learn' },
         { name: 'Compare', path: '/compare' },
         { name: 'Tools', path: '/tools' },
-        { name: 'Refer a Friend', path: '/refer' },
+        { name: 'Refer a Friend', path: '/refer', icon: Gift },
     ];
 
     const isActive = (path) => location.pathname === path;
@@ -49,11 +49,12 @@ const Navbar = () => {
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive(link.path)
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive(link.path)
                                     ? 'text-primary-600 bg-primary-50'
                                     : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
                                     }`}
                             >
+                                {link.icon && <link.icon size={16} className={isActive(link.path) ? 'text-primary-600' : 'text-primary-500'} />}
                                 {link.name}
                             </Link>
                         ))}
@@ -114,11 +115,12 @@ const Navbar = () => {
                                 key={link.path}
                                 to={link.path}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className={`flex items-center px-4 py-4 rounded-xl text-lg font-medium min-h-[56px] transition-colors ${isActive(link.path)
+                                className={`flex items-center gap-3 px-4 py-4 rounded-xl text-lg font-medium min-h-[56px] transition-colors ${isActive(link.path)
                                     ? 'text-primary-600 bg-primary-50'
                                     : 'text-gray-700 hover:bg-gray-100'
                                     }`}
                             >
+                                {link.icon && <link.icon size={20} className={isActive(link.path) ? 'text-primary-600' : 'text-primary-500'} />}
                                 {link.name}
                             </Link>
                         ))}

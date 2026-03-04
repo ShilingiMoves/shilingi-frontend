@@ -1,59 +1,204 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Facebook, Instagram, Phone, Mail, MapPin,
-    ArrowRight, Linkedin, Youtube, TrendingUp,
+    ArrowRight, Linkedin, Youtube,
     BookOpen, BarChart2, Wrench, Users, Shield,
-    ChevronRight
+    ChevronRight, Send, CheckCircle
 } from 'lucide-react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
+import contactHeroImg from '../assets/contact-form-hero.png';
 
 
-const Footer = ({ showCTA = true }) => {
+const Footer = () => {
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        message: '',
+        consent: false,
+    });
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [formError, setFormError] = useState('');
+
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value,
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setFormError('');
+
+        // Basic validation
+        if (!formData.firstName.trim() || !formData.email.trim()) {
+            setFormError('Please fill in at least your first name and email.');
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            setFormError('Please enter a valid email address.');
+            return;
+        }
+        if (!formData.consent) {
+            setFormError('Please give consent to be contacted.');
+            return;
+        }
+
+        // Simulate submission
+        setFormSubmitted(true);
+        setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            message: '',
+            consent: false,
+        });
+
+        // Reset success message after 5 seconds
+        setTimeout(() => setFormSubmitted(false), 5000);
+    };
+
     return (
         <footer className="font-sans bg-gray-50 border-t border-gray-200">
 
-            {/* ── PRE-FOOTER CTA ─────────────────────────────────────────── */}
-            {showCTA && (
-                <div className="bg-primary-600 py-14 md:py-20 relative overflow-hidden">
-                    <div
-                        className="absolute inset-0 opacity-10"
-                        style={{
-                            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                            backgroundSize: '28px 28px',
-                        }}
-                    />
-                    <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+            {/* ── CONTACT FORM SECTION ────────────────────────────────────── */}
+            <div className="bg-gradient-to-br from-primary-800 to-primary-900 relative overflow-hidden">
+                {/* Subtle overlay pattern */}
+                <div
+                    className="absolute inset-0 opacity-[0.04]"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+                        backgroundSize: '24px 24px',
+                    }}
+                />
 
-                    <div className="container-custom relative z-10 text-center">
-                        <p className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-5">
-                            <TrendingUp size={14} /> Kenya's #1 Financial Wellness Platform
-                        </p>
-                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                            Your financial future starts<br className="hidden md:block" /> with one good decision.
-                        </h2>
-                        <p className="text-primary-100 text-lg mb-8 max-w-xl mx-auto">
-                            Join thousands of Kenyans who are learning, planning, and growing their wealth — one shilling at a time.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link
-                                to="/signup"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 text-primary-700 font-extrabold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-base group"
-                            >
-                                Get Started Today
-                                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                            <Link
-                                to="/learn"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 text-white font-bold rounded-full transition-all duration-300"
-                            >
-                                Explore the Platform
-                            </Link>
+                <div className="container-custom relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[500px]">
+                        {/* Left: Image */}
+                        <div className="relative hidden lg:block">
+                            <img
+                                src={contactHeroImg}
+                                alt="Shilingi Moves customer support representative"
+                                className="absolute inset-0 w-full h-full object-cover object-center"
+                            />
+                            {/* Gradient overlay for smooth edge blending */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary-800/60" />
+                        </div>
+
+                        {/* Right: Contact Form */}
+                        <div className="py-12 md:py-16 lg:py-14 px-2 sm:px-6 lg:px-12">
+                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 leading-tight">
+                                Contact Shilingi Moves
+                            </h2>
+
+                            {/* Success Message */}
+                            {formSubmitted && (
+                                <div className="mb-6 flex items-center gap-3 px-5 py-4 bg-green-500/20 border border-green-400/30 rounded-xl text-green-100 text-sm font-medium animate-fade-in">
+                                    <CheckCircle size={20} className="text-green-400 shrink-0" />
+                                    Thank you! We've received your message and will get back to you shortly.
+                                </div>
+                            )}
+
+                            {/* Error Message */}
+                            {formError && (
+                                <div className="mb-6 px-5 py-4 bg-red-500/20 border border-red-400/30 rounded-xl text-red-200 text-sm font-medium">
+                                    {formError}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* Row 1: First Name + Last Name */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <input
+                                            type="text"
+                                            name="firstName"
+                                            placeholder="First Name"
+                                            value={formData.firstName}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div>
+                                        <input
+                                            type="text"
+                                            name="lastName"
+                                            placeholder="Last Name"
+                                            value={formData.lastName}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Row 2: Email + Phone */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            placeholder="Email Address"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            placeholder="Phone Number"
+                                            value={formData.phone}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Row 3: Message */}
+                                <div>
+                                    <textarea
+                                        name="message"
+                                        placeholder="Message"
+                                        rows={4}
+                                        value={formData.message}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200 resize-none"
+                                    />
+                                </div>
+
+                                {/* Consent Checkbox */}
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <input
+                                        type="checkbox"
+                                        name="consent"
+                                        checked={formData.consent}
+                                        onChange={handleInputChange}
+                                        className="mt-0.5 w-5 h-5 rounded border-2 border-white/40 bg-transparent text-primary-500 focus:ring-primary-400 focus:ring-offset-0 cursor-pointer accent-primary-500"
+                                    />
+                                    <span className="text-sm text-white/80 group-hover:text-white transition-colors leading-snug">
+                                        I allow Shilingi Moves to contact me via email and phone.
+                                    </span>
+                                </label>
+
+                                {/* Submit Button */}
+                                <button
+                                    type="submit"
+                                    className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold text-base rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group"
+                                >
+                                    Submit
+                                    <Send size={16} className="group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* ── MAIN FOOTER BODY ───────────────────────────────────────── */}
             <div className="container-custom pt-14 pb-10">

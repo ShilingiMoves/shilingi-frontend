@@ -1,6 +1,6 @@
 import React from 'react';
-import { Shield, Award, CheckCircle2, Target, Users, ThumbsUp } from 'lucide-react';
-import Button from './Button';
+import { Link } from 'react-router-dom';
+import { Shield, Award, CheckCircle2, Target, Users, ThumbsUp, TrendingUp, ArrowRight } from 'lucide-react';
 import TrustImg from '../assets/trust_people_kenya.png';
 
 const TrustAndCTA = () => {
@@ -84,34 +84,42 @@ const TrustAndCTA = () => {
 
                 {/* Final CTA Box */}
                 <div className="max-w-5xl mx-auto bg-gradient-to-br from-primary-600 to-primary-700 rounded-3xl shadow-2xl p-8 sm:p-10 md:p-14 lg:p-16 text-center text-white relative overflow-hidden">
-                    {/* Decorative circles */}
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full translate-x-1/2 translate-y-1/2"></div>
+                    {/* Decorative dot pattern */}
+                    <div
+                        className="absolute inset-0 opacity-10"
+                        style={{
+                            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                            backgroundSize: '28px 28px',
+                        }}
+                    />
+                    {/* Decorative blurs */}
+                    <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+                    <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
 
                     <div className="relative z-10">
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
-                            Start your financial dashboard today.
+                        <p className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-5">
+                            <TrendingUp size={14} /> Kenya's #1 Financial Wellness Platform
+                        </p>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                            Your financial future starts<br className="hidden md:block" /> with one good decision.
                         </h2>
-                        <p className="text-lg sm:text-xl mb-8 md:mb-10 text-primary-50 max-w-2xl mx-auto leading-relaxed">
-                            Join over 50,000 Kenyans who are taking control of their finances with Shilingi Moves. Free to start.
+                        <p className="text-lg sm:text-xl mb-8 md:mb-10 text-primary-100 max-w-xl mx-auto leading-relaxed">
+                            Join thousands of Kenyans who are learning, planning, and growing their wealth — one shilling at a time.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Button
-                                variant="primary"
-                                size="lg"
+                            <Link
                                 to="/signup"
-                                className="bg-green-600 text-white hover:bg-green-600 border-2 border-white shadow-xl w-full sm:w-auto"
+                                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 text-primary-700 font-extrabold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-base group"
                             >
-                                Create my dashboard
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="lg"
-                                to="/dashboard"
-                                className="border-white/30 text-white hover:bg-white/10"
+                                Get Started Today
+                                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </Link>
+                            <Link
+                                to="/learn"
+                                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 text-white font-bold rounded-full transition-all duration-300"
                             >
-                                Explore platform
-                            </Button>
+                                Explore the Platform
+                            </Link>
                         </div>
                     </div>
                 </div>
