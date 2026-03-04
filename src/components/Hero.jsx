@@ -5,6 +5,39 @@ import HomePage1 from '../assets/home-page-1.png';
 import HomePage2 from '../assets/home-page-2.png';
 import HomePage3 from '../assets/home-page-3.png';
 
+/* ─── Animated Number Component ────────────────────────────────────────────── */
+const AnimatedNumber = ({ value, prefix = '', suffix = '', decimals = 0, isActive = true }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (!isActive) return;
+        let startTime;
+        const duration = 1500; // 1.5s animation
+        const endValue = parseFloat(value);
+
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+
+            // easeOutQuart for smooth slow-down at the end
+            const easeProgress = 1 - Math.pow(1 - progress, 4);
+            setCount(endValue * easeProgress);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        requestAnimationFrame(animate);
+    }, [value, isActive]);
+
+    const formatted = count.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
+
+    return <>{prefix}{formatted}{suffix}</>;
+};
+
 /* ─── Card style: warm grey frosted glass matching screenshot ──────────────── */
 const cardBase = {
     background: 'rgba(130, 120, 115, 0.52)',
@@ -16,35 +49,44 @@ const cardBase = {
 };
 
 /* ─── Reusable glass card ──────────────────────────────────────────────────── */
-const Card = ({ children, className = '', delay = '0s', style = {} }) => (
+const Card = ({ children, className = '', animDelay = '0s', delayMs = 0, isActive = true, style = {} }) => (
     <div
-        className={`hidden md:flex flex-col gap-1.5 px-4 py-3 ${className}`}
-        style={{ ...cardBase, animation: `floatCard 5s ease-in-out infinite ${delay}`, ...style }}
+        className={`hidden md:flex flex-col gap-1.5 px-4 py-3 transition-all duration-700 ease-out ${className}`}
+        style={{
+            ...cardBase,
+            animation: isActive ? `floatCard 5s ease-in-out infinite ${animDelay}` : 'none',
+            opacity: isActive ? 1 : 0,
+            transform: isActive ? 'translateY(0) scale(1)' : 'translateY(15px) scale(0.95)',
+            transitionDelay: `${delayMs}ms`,
+            ...style
+        }}
     >
         {children}
     </div>
 );
 
 /* ─── Stroke-bar row ───────────────────────────────────────────────────────── */
-const StrokeRow = ({ label, amount, pct, color = '#10b981', icon: Icon }) => (
+const StrokeRow = ({ label, amount, pct, color = '#10b981', icon: Icon, isActive = true, delayMs = 0 }) => (
     <div className="flex flex-col gap-0.5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between transition-opacity duration-500" style={{ opacity: isActive ? 1 : 0, transitionDelay: `${delayMs}ms` }}>
             <div className="flex items-center gap-1">
                 {Icon && <Icon size={10} color={color} strokeWidth={2.5} />}
                 <span className="text-white/65 text-[10px] font-medium">{label}</span>
             </div>
             <span className="text-white/90 text-[10px] font-semibold">{amount}</span>
         </div>
-        <div className="w-full h-[2.5px] rounded-full" style={{ background: 'rgba(255,255,255,0.10)' }}>
-            <div className="h-[2.5px] rounded-full" style={{ width: `${pct}%`, background: color }} />
+        <div className="w-full h-[2.5px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
+            <div className="h-[2.5px] rounded-full transform origin-left transition-transform duration-1000 ease-out"
+                style={{ width: `${pct}%`, background: color, transform: isActive ? 'scaleX(1)' : 'scaleX(0)', transitionDelay: `${delayMs + 200}ms` }} />
         </div>
     </div>
 );
 
 /* ─── Green connector line (Monarch-style dashed line with dots) ───────────── */
-const ConnectorLine = ({ x1, y1, x2, y2 }) => (
+const ConnectorLine = ({ x1, y1, x2, y2, isActive = true }) => (
     <svg
-        className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-10"
+        className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-10 transition-opacity duration-1000 ease-out"
+        style={{ opacity: isActive ? 1 : 0, transitionDelay: '300ms' }}
         xmlns="http://www.w3.org/2000/svg"
     >
         <defs>
@@ -70,45 +112,45 @@ const ConnectorLine = ({ x1, y1, x2, y2 }) => (
    SLIDE 0 — Cash Flow + Spending breakdown
    Card A: top-right | Card B: bottom-right
 ══════════════════════════════════════════════════════════════════════════════ */
-const SlideCards0 = () => (
+const SlideCards0 = ({ isActive }) => (
     <>
-        <ConnectorLine x1="75%" y1="72%" x2="48%" y2="58%" />
+        <ConnectorLine x1="75%" y1="72%" x2="52%" y2="58%" isActive={isActive} />
 
         {/* Card A — Cash Flow (top-right) */}
-        <Card className="absolute top-28 right-6 lg:right-14 w-44" delay="0s">
+        <Card className="absolute top-28 right-6 lg:right-14 w-44" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Cash Flow · March</p>
             <div className="flex items-end justify-between">
                 <div>
                     <p className="text-[9px] text-primary-400 uppercase">Income</p>
-                    <p className="text-base font-bold text-white leading-tight">Ksh 85K</p>
+                    <p className="text-base font-bold text-white leading-tight"><AnimatedNumber value={85} prefix="Ksh " suffix="K" isActive={isActive} delayMs={800} /></p>
                 </div>
                 <div className="text-right">
                     <p className="text-[9px] text-red-400 uppercase">Spent</p>
-                    <p className="text-base font-bold text-white leading-tight">Ksh 54K</p>
+                    <p className="text-base font-bold text-white leading-tight"><AnimatedNumber value={54} prefix="Ksh " suffix="K" isActive={isActive} delayMs={900} /></p>
                 </div>
             </div>
             <div className="flex items-end gap-0.5 h-7">
                 {[40, 65, 55, 80, 60, 70, 85].map((h, i) => (
-                    <div key={i} className="flex-1 flex flex-col gap-px items-center">
+                    <div key={i} className="flex-1 flex flex-col gap-px items-center transition-all duration-700 ease-out" style={{ opacity: isActive ? 1 : 0, transform: isActive ? 'scaleY(1)' : 'scaleY(0)', transformOrigin: 'bottom', transitionDelay: `${1200 + (i * 100)}ms` }}>
                         <div className="w-full rounded-sm bg-primary-500/70" style={{ height: `${h * 0.25}px` }} />
                         <div className="w-full rounded-sm bg-red-400/45" style={{ height: `${(100 - h) * 0.14}px` }} />
                     </div>
                 ))}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 transition-opacity duration-500" style={{ opacity: isActive ? 1 : 0, transitionDelay: '1900ms' }}>
                 <TrendingUp size={10} className="text-primary-400" />
-                <span className="text-primary-400 text-[9px] font-semibold">Ksh 30,800 saved</span>
+                <span className="text-primary-400 text-[9px] font-semibold"><AnimatedNumber value={30800} prefix="Ksh " suffix=" saved" isActive={isActive} delayMs={2000} /></span>
             </div>
         </Card>
 
         {/* Card B — Spending breakdown (bottom-right) */}
-        <Card className="absolute bottom-28 right-6 lg:right-14 w-48" delay="1.8s">
+        <Card className="absolute bottom-28 right-6 lg:right-14 w-48" animDelay="1s" delayMs={1200} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Where It Went</p>
             <div className="flex flex-col gap-1.5 mt-0.5">
-                <StrokeRow label="Housing" amount="Ksh 18K" pct={85} color="#10b981" icon={Landmark} />
-                <StrokeRow label="Food & Groceries" amount="Ksh 9.5K" pct={55} color="#34d399" icon={Wallet} />
-                <StrokeRow label="Transport" amount="Ksh 5.2K" pct={38} color="#6ee7b7" icon={BarChart2} />
-                <StrokeRow label="Savings" amount="Ksh 21K" pct={72} color="#059669" icon={PiggyBank} />
+                <StrokeRow label="Housing" amount="Ksh 18K" pct={85} color="#10b981" icon={Landmark} isActive={isActive} delayMs={1400} />
+                <StrokeRow label="Food & Groceries" amount="Ksh 9.5K" pct={55} color="#34d399" icon={Wallet} isActive={isActive} delayMs={1450} />
+                <StrokeRow label="Transport" amount="Ksh 5.2K" pct={38} color="#6ee7b7" icon={BarChart2} isActive={isActive} delayMs={1500} />
+                <StrokeRow label="Savings" amount="Ksh 21K" pct={72} color="#059669" icon={PiggyBank} isActive={isActive} delayMs={1550} />
             </div>
         </Card>
     </>
@@ -119,28 +161,32 @@ const SlideCards0 = () => (
    Card A: CENTRE GAP (between hero text and person) | Card B: bottom-right
    Line:  FROM laptop (right) → TO card in centre gap
 ══════════════════════════════════════════════════════════════════════════════ */
-const SlideCards1 = () => (
+const SlideCards1 = ({ isActive }) => (
     <>
-        {/* Line: FROM card above heading → TO laptop on right side of image */}
-        <ConnectorLine x1="34%" y1="28%" x2="72%" y2="58%" />
+        {/* Line: FROM phone on right side → TO Card A in centre */}
+        <ConnectorLine x1="72%" y1="58%" x2="52%" y2="35%" isActive={isActive} />
 
-        {/* Card A — Net Worth (above the hero heading, left side) */}
-        <Card className="absolute top-20 left-6 lg:left-16 w-48" delay="0s">
+        {/* Card A — Net Worth (Moved to centre to avoid left-side text) */}
+        <Card className="absolute top-20 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-[52%] w-48" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Net Worth</p>
-            <p className="text-xl font-bold text-white tracking-tight leading-tight">Ksh 335,608</p>
+            <p className="text-xl font-bold text-white tracking-tight leading-tight">
+                <AnimatedNumber value={335608} prefix="Ksh " isActive={isActive} delayMs={800} />
+            </p>
             <div className="flex items-center gap-1">
                 <TrendingUp size={11} className="text-primary-400" />
-                <span className="text-primary-400 text-[10px] font-semibold">+Ksh 3,356 (1.0%)</span>
+                <span className="text-primary-400 text-[10px] font-semibold">
+                    +<AnimatedNumber value={3356} prefix="Ksh " isActive={isActive} delayMs={1000} /> (1.0%)
+                </span>
             </div>
             <div className="flex flex-col gap-1.5 mt-1 pt-1.5 border-t border-white/10">
-                <StrokeRow label="Savings" amount="Ksh 120K" pct={80} color="#10b981" />
-                <StrokeRow label="Investments" amount="Ksh 180K" pct={90} color="#34d399" />
-                <StrokeRow label="M-Pesa" amount="Ksh 35K" pct={30} color="#6ee7b7" />
+                <StrokeRow label="Savings" amount="Ksh 120K" pct={80} color="#10b981" isActive={isActive} delayMs={1200} />
+                <StrokeRow label="Investments" amount="Ksh 180K" pct={90} color="#34d399" isActive={isActive} delayMs={1250} />
+                <StrokeRow label="M-Pesa" amount="Ksh 35K" pct={30} color="#6ee7b7" isActive={isActive} delayMs={1300} />
             </div>
         </Card>
 
         {/* Card B — Linked Accounts (bottom-right) */}
-        <Card className="absolute bottom-28 right-6 lg:right-14 w-44" delay="1.6s">
+        <Card className="absolute bottom-28 right-6 lg:right-14 w-44" animDelay="1s" delayMs={1400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Accounts</p>
             <div className="flex flex-col gap-1.5 mt-0.5">
                 {[
@@ -149,7 +195,7 @@ const SlideCards1 = () => (
                     { name: 'M-Pesa', amount: 'Ksh 35K', dot: '#34d399' },
                     { name: 'NSE Portfolio', amount: 'Ksh 225K', dot: '#a7f3d0' },
                 ].map((acc, i) => (
-                    <div key={i} className="flex items-center justify-between">
+                    <div key={i} className="flex items-center justify-between transition-all duration-500 ease-out" style={{ opacity: isActive ? 1 : 0, transform: isActive ? 'translateY(0)' : 'translateY(10px)', transitionDelay: `${1700 + (i * 100)}ms` }}>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: acc.dot }} />
                             <span className="text-white/75 text-[10px]">{acc.name}</span>
@@ -167,13 +213,13 @@ const SlideCards1 = () => (
    Card A: top-right | Card B: mid-left
    Line:  FROM phone (centre) → TO top-right card
 ══════════════════════════════════════════════════════════════════════════════ */
-const SlideCards2 = () => (
+const SlideCards2 = ({ isActive }) => (
     <>
-        {/* Line: FROM phone in image → TO top-right card */}
-        <ConnectorLine x1="42%" y1="62%" x2="78%" y2="30%" />
+        {/* Line: FROM device in image → TO top-right card */}
+        <ConnectorLine x1="42%" y1="62%" x2="72%" y2="30%" isActive={isActive} />
 
         {/* Card A — Budget ring (top-right) */}
-        <Card className="absolute top-28 right-6 lg:right-14 w-48" delay="0s">
+        <Card className="absolute top-20 right-6 lg:right-14 w-48" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Monthly Budget</p>
             <div className="flex items-center gap-3">
                 <svg width="48" height="48" viewBox="0 0 48 48" className="flex-shrink-0 -rotate-90">
@@ -183,22 +229,28 @@ const SlideCards2 = () => (
                         stroke="#10b981" strokeWidth="5"
                         strokeDasharray={`${2 * Math.PI * 18 * 0.68} ${2 * Math.PI * 18}`}
                         strokeLinecap="round"
+                        className="transition-all duration-1000 ease-out"
+                        style={{ strokeDashoffset: isActive ? 0 : 2 * Math.PI * 18 * 0.68, transitionDelay: '1000ms' }}
                     />
                 </svg>
                 <div>
-                    <p className="text-primary-400 text-[10px] font-bold">68% used</p>
-                    <p className="text-white text-sm font-semibold">Ksh 34K</p>
+                    <p className="text-primary-400 text-[10px] font-bold">
+                        <AnimatedNumber value={68} suffix="% used" isActive={isActive} delayMs={800} />
+                    </p>
+                    <p className="text-white text-sm font-semibold">
+                        <AnimatedNumber value={34} prefix="Ksh " suffix="K" isActive={isActive} delayMs={900} />
+                    </p>
                     <p className="text-white/40 text-[9px]">of Ksh 50K</p>
                 </div>
             </div>
             <div className="flex flex-col gap-1.5 pt-1.5 border-t border-white/10">
-                <StrokeRow label="Fixed" amount="Ksh 23K" pct={75} color="#10b981" icon={Landmark} />
-                <StrokeRow label="Flex" amount="Ksh 11K" pct={45} color="#34d399" icon={Wallet} />
+                <StrokeRow label="Fixed" amount="Ksh 23K" pct={75} color="#10b981" icon={Landmark} isActive={isActive} delayMs={1300} />
+                <StrokeRow label="Flex" amount="Ksh 11K" pct={45} color="#34d399" icon={Wallet} isActive={isActive} delayMs={1350} />
             </div>
         </Card>
 
-        {/* Card B — Savings Goals (mid-left) */}
-        <Card className="absolute top-1/2 -translate-y-1/2 left-6 lg:left-16 w-44" delay="1.6s">
+        {/* Card B — Savings Goals (Moved from left to bottom centre-right to avoid text) */}
+        <Card className="absolute bottom-16 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-[55%] w-48" animDelay="1s" delayMs={1400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Your Goals</p>
             <div className="flex flex-col gap-2 mt-0.5">
                 {[
@@ -206,15 +258,16 @@ const SlideCards2 = () => (
                     { label: '🏖️ Mombasa Trip', pct: 68, note: 'Ksh 68K / 100K', color: '#34d399' },
                     { label: '🏠 Home Deposit', pct: 22, note: 'Ksh 220K / 1M', color: '#6ee7b7' },
                 ].map((g, i) => (
-                    <div key={i} className="flex flex-col gap-0.5">
+                    <div key={i} className="flex flex-col gap-0.5 transition-all duration-500 ease-out" style={{ opacity: isActive ? 1 : 0, transform: isActive ? 'translateY(0)' : 'translateY(10px)', transitionDelay: `${1700 + (i * 150)}ms` }}>
                         <div className="flex justify-between items-center">
                             <span className="text-white/75 text-[10px] font-medium">{g.label}</span>
                             <span className="text-[9px] font-bold" style={{ color: g.color }}>
                                 {g.pct === 100 ? '✓' : `${g.pct}%`}
                             </span>
                         </div>
-                        <div className="w-full h-[2.5px] rounded-full" style={{ background: 'rgba(255,255,255,0.10)' }}>
-                            <div className="h-[2.5px] rounded-full" style={{ width: `${g.pct}%`, background: g.color }} />
+                        <div className="w-full h-[2.5px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
+                            <div className="h-[2.5px] rounded-full transform origin-left transition-transform duration-1000 ease-out"
+                                style={{ width: `${g.pct}%`, background: g.color, transform: isActive ? 'scaleX(1)' : 'scaleX(0)', transitionDelay: `${1900 + (i * 150)}ms` }} />
                         </div>
                         <span className="text-white/30 text-[9px]">{g.note}</span>
                     </div>
@@ -224,7 +277,7 @@ const SlideCards2 = () => (
     </>
 );
 
-const slideCards = [<SlideCards0 key={0} />, <SlideCards1 key={1} />, <SlideCards2 key={2} />];
+const slideCards = [SlideCards0, SlideCards1, SlideCards2];
 
 /* ─── Main Hero component ──────────────────────────────────────────────────── */
 const Hero = () => {
@@ -324,14 +377,15 @@ const Hero = () => {
             </div>
 
             {/* Slide-synced floating cards + connector line */}
-            <div
-                className="absolute inset-0 z-20 pointer-events-none"
-                style={{
-                    opacity: cardsShown ? 1 : 0,
-                    transition: 'opacity 0.7s ease-in-out',
-                }}
-            >
-                {slideCards[currentImageIndex]}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+                {slideCards.map((SlideComponent, index) => (
+                    <div
+                        key={index}
+                        className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${index === currentImageIndex && cardsShown ? 'opacity-100' : 'opacity-0'}`}
+                    >
+                        <SlideComponent isActive={index === currentImageIndex && cardsShown} />
+                    </div>
+                ))}
             </div>
         </section>
     );
