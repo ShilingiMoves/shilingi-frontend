@@ -305,7 +305,7 @@ const Hero = () => {
                             to="/signup"
                             className="inline-flex items-center justify-center gap-3 px-7 py-4 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/40 hover:-translate-y-0.5 group text-base w-full sm:w-auto"
                         >
-                            Create your account
+                            Unlock better money habits
                             <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors shrink-0">
                                 <ArrowRight size={15} />
                             </span>
