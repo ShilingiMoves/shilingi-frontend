@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
+import referHeroVideo from '../video/Refer-friend.mp4';
 
 const ReferPage = () => {
     const [copied, setCopied] = useState(false);
@@ -118,19 +119,20 @@ const ReferPage = () => {
         <div className="min-h-screen bg-white text-gray-900">
 
             {/* ═══════════ HERO — Dark background with overlapping avatars ═══════════ */}
-            <section className="relative bg-gradient-to-br from-primary-800 to-primary-900 text-white overflow-hidden">
-                {/* Decorative background elements */}
-                <div className="absolute inset-0">
-                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl" />
-                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
-                    <div
-                        className="absolute inset-0 opacity-[0.03]"
-                        style={{
-                            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                            backgroundSize: '32px 32px',
-                        }}
-                    />
-                </div>
+            <section className="relative bg-gray-900 text-white overflow-hidden min-h-[75vh] flex flex-col justify-center">
+                {/* Background Video */}
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover z-0"
+                >
+                    <source src={referHeroVideo} type="video/mp4" />
+                </video>
+
+                {/* Subtle dark overlay for text legibility */}
+                <div className="absolute inset-0 bg-gray-900/30 z-10" />
 
                 <div className="container-custom relative z-10 pt-20 pb-16 md:pt-28 md:pb-24 text-center">
                     {/* Overlapping avatars with Shilingi logo */}
