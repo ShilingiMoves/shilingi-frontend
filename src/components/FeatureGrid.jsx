@@ -61,6 +61,7 @@ const features = [
 const FeatureGrid = () => {
     return (
         <section
+            id="what-you-get"
             style={{ backgroundColor: '#f0f7f9' }}
             className="section-padding"
         >
