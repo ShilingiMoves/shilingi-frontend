@@ -159,7 +159,7 @@ const ReferPage = () => {
 
                     {/* Heading */}
                     <h1
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-4xl mx-auto px-4"
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-4xl mx-auto px-4"
                         style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                     >
                         You got better with money.{' '}
