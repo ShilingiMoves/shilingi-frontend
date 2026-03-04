@@ -3,25 +3,222 @@ import { Link } from 'react-router-dom';
 import {
     BookOpen, PlayCircle, Brain, Gamepad2, Route, ArrowRight,
     ChevronDown, Clock, Star, Users, FileText, Trophy, Sparkles,
-    GraduationCap, Target, TrendingUp, CheckCircle2
+    GraduationCap, Target, TrendingUp, CheckCircle2, Award, Zap
 } from 'lucide-react';
 import HeroImg from '../assets/Learn-pg-hero-image.png';
 import HeroImg2 from '../assets/Learn-pg-hero-image-2.png';
 import Footer from '../components/Footer';
 
+/* ─── Animated Number Component ────────────────────────────────────────────── */
+const AnimatedNumber = ({ value, prefix = '', suffix = '', decimals = 0, isActive = true }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (!isActive) return;
+        let startTime;
+        const duration = 1500;
+        const endValue = parseFloat(value);
+
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 4);
+            setCount(endValue * easeProgress);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        requestAnimationFrame(animate);
+    }, [value, isActive]);
+
+    const formatted = count.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
+
+    return <>{prefix}{formatted}{suffix}</>;
+};
+
+/* ─── Card style: warm grey frosted glass matching Home.jsx ──────────────── */
+const cardBase = {
+    background: 'rgba(130, 120, 115, 0.52)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: '14px',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+};
+
+/* ─── Reusable glass card ──────────────────────────────────────────────────── */
+const Card = ({ children, className = '', animDelay = '0s', delayMs = 0, isActive = true, style = {} }) => (
+    <div
+        className={`hidden md:flex flex-col gap-1.5 px-4 py-3 transition-all duration-700 ease-out ${className}`}
+        style={{
+            ...cardBase,
+            animation: isActive ? `floatCard 5s ease-in-out infinite ${animDelay}` : 'none',
+            opacity: isActive ? 1 : 0,
+            transform: isActive ? 'translateY(0) scale(1)' : 'translateY(15px) scale(0.95)',
+            transitionDelay: `${delayMs}ms`,
+            ...style
+        }}
+    >
+        {children}
+    </div>
+);
+
+/* ─── Stroke-bar row ───────────────────────────────────────────────────────── */
+const StrokeRow = ({ label, amount, pct, color = '#10b981', icon: Icon, isActive = true, delayMs = 0 }) => (
+    <div className="flex flex-col gap-0.5">
+        <div className="flex items-center justify-between transition-opacity duration-500" style={{ opacity: isActive ? 1 : 0, transitionDelay: `${delayMs}ms` }}>
+            <div className="flex items-center gap-1">
+                {Icon && <Icon size={10} color={color} strokeWidth={2.5} />}
+                <span className="text-white/65 text-[10px] font-medium">{label}</span>
+            </div>
+            <span className="text-white/90 text-[10px] font-semibold">{amount}</span>
+        </div>
+        <div className="w-full h-[2.5px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
+            <div className="h-[2.5px] rounded-full transform origin-left transition-transform duration-1000 ease-out"
+                style={{ width: `${pct}%`, background: color, transform: isActive ? 'scaleX(1)' : 'scaleX(0)', transitionDelay: `${delayMs + 200}ms` }} />
+        </div>
+    </div>
+);
+
+/* ─── Green connector line ───────────── */
+const ConnectorLine = ({ x1, y1, x2, y2, isActive = true }) => (
+    <svg
+        className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-10 transition-opacity duration-1000 ease-out"
+        style={{ opacity: isActive ? 1 : 0, transitionDelay: '300ms' }}
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <defs>
+            <linearGradient id="greenLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
+                <stop offset="40%" stopColor="#10b981" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0.15" />
+            </linearGradient>
+        </defs>
+        <line
+            x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke="url(#greenLine)"
+            strokeWidth="1.5"
+            strokeDasharray="5 4"
+        />
+        <circle cx={x1} cy={y1} r="3" fill="#10b981" opacity="0.8" />
+        <circle cx={x2} cy={y2} r="4" fill="#10b981" opacity="0.25" />
+        <circle cx={x2} cy={y2} r="7" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.2" />
+    </svg>
+);
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LEARN SLIDE 0 — Learning Path + Next Lesson
+   Card A: top-right | Card B: bottom-right
+══════════════════════════════════════════════════════════════════════════════ */
+const SlideCards0 = ({ isActive }) => (
+    <>
+        <ConnectorLine x1="75%" y1="72%" x2="52%" y2="58%" isActive={isActive} />
+
+        {/* Card A — Learning Path (top-right) */}
+        <Card className="absolute top-28 right-6 lg:right-14 w-48" animDelay="0s" delayMs={400} isActive={isActive}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45 flex items-center gap-1">
+                <Route size={10} /> Active Path
+            </p>
+            <div className="mt-1">
+                <p className="text-base font-bold text-white leading-tight">Wealth Builder</p>
+                <div className="flex items-center gap-2 mt-1 px-2 py-1 bg-white/10 rounded-md">
+                    <Target size={14} className="text-primary-400" />
+                    <span className="text-[10px] text-white/80"><AnimatedNumber value={65} suffix="% Complete" isActive={isActive} delayMs={800} /></span>
+                </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-white/10">
+                <StrokeRow label="Modules Completed" amount="8/12" pct={66} color="#10b981" isActive={isActive} delayMs={1200} />
+            </div>
+        </Card>
+
+        {/* Card B — Next Lesson (bottom-right) */}
+        <Card className="absolute bottom-28 right-6 lg:right-14 w-48" animDelay="1s" delayMs={1200} isActive={isActive}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Up Next</p>
+            <div className="flex items-start gap-2 mt-1">
+                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                    <PlayCircle size={14} className="text-blue-400" />
+                </div>
+                <div>
+                    <p className="text-[11px] font-bold text-white leading-tight">Understanding SACCOs</p>
+                    <p className="text-[9px] text-white/60 mt-0.5"><Clock size={8} className="inline mr-1" /> 7 min watch</p>
+                </div>
+            </div>
+        </Card>
+    </>
+);
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LEARN SLIDE 1 — Weekly Goal + Skill Unlocked
+   Card A: centre gap | Card B: bottom-right
+══════════════════════════════════════════════════════════════════════════════ */
+const SlideCards1 = ({ isActive }) => (
+    <>
+        <ConnectorLine x1="72%" y1="58%" x2="52%" y2="35%" isActive={isActive} />
+
+        {/* Card A — Weekly Goal (centre) */}
+        <Card className="absolute top-20 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-[52%] w-48" animDelay="0s" delayMs={400} isActive={isActive}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45 flex items-center gap-1">
+                <Zap size={10} /> Weekly Goal
+            </p>
+            <div className="flex items-end justify-between mt-1 pt-1">
+                <div>
+                    <p className="text-xl font-bold text-white">
+                        <AnimatedNumber value={45} isActive={isActive} delayMs={800} /> <span className="text-[10px] font-normal text-white/60">/ 60 mins</span>
+                    </p>
+                </div>
+                <div className="text-primary-400 font-bold text-xs">
+                    <AnimatedNumber value={75} suffix="%" isActive={isActive} delayMs={1000} />
+                </div>
+            </div>
+            <div className="w-full h-[3px] rounded-full overflow-hidden mt-2 bg-white/10">
+                <div className="h-full rounded-full bg-primary-500 transform origin-left transition-transform duration-1000 ease-out"
+                    style={{ width: '75%', transform: isActive ? 'scaleX(1)' : 'scaleX(0)', transitionDelay: '1200ms' }} />
+            </div>
+            <p className="text-[9px] text-white/60 mt-2 text-center">You're on a 3-week streak! 🔥</p>
+        </Card>
+
+        {/* Card B — Specific Skill Unlocked (bottom-right) */}
+        <Card className="absolute bottom-28 right-6 lg:right-14 w-44" animDelay="1s" delayMs={1400} isActive={isActive}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Recent Achievement</p>
+            <div className="flex items-center gap-3 mt-1.5 px-1">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex flex-col items-center justify-center shrink-0 border border-amber-500/30">
+                    <Award size={16} className="text-amber-400" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] text-amber-400 uppercase font-bold tracking-wide">Skill Unlocked</span>
+                    <span className="text-white text-xs font-semibold">Budgeting Pro</span>
+                </div>
+            </div>
+        </Card>
+    </>
+);
+
+const slideCards = [SlideCards0, SlideCards1];
+
 const LearnPage = () => {
     const [activeFilter, setActiveFilter] = useState('All');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [cardsShown, setCardsShown] = useState(false);
 
     const images = [HeroImg, HeroImg2];
 
     // Carousel Effect with Performance Optimization
     useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-        }, 5000); // Change image every 5 seconds 
+        const firstShow = setTimeout(() => setCardsShown(true), 2000);
 
-        return () => clearInterval(interval);
+        const interval = setInterval(() => {
+            setCardsShown(false);
+            setTimeout(() => {
+                setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+            }, 500);
+            setTimeout(() => setCardsShown(true), 2000);
+        }, 10000); // Change image every 10 seconds 
+
+        return () => { clearInterval(interval); clearTimeout(firstShow); };
     }, [images.length]);
 
     // SEO
@@ -132,7 +329,7 @@ const LearnPage = () => {
     return (
         <div className="min-h-screen bg-white">
             {/* =============== SECTION 1: HERO =============== */}
-            <section className="relative bg-gray-900 text-white overflow-hidden">
+            <section className="relative min-h-[600px] h-screen bg-gray-900 text-white overflow-hidden flex items-center">
                 {/* Background Image Carousel */}
                 <div className="absolute inset-0 z-0">
                     {images.map((img, index) => (
@@ -145,15 +342,15 @@ const LearnPage = () => {
                             <img
                                 src={img}
                                 alt={`Financial Education Background ${index + 1}`}
-                                className="w-full h-full object-cover opacity-90"
+                                className="w-full h-full object-cover object-center"
                             />
                             {/* Overlay is now part of the fading container to ensure smooth image+overlay transition */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/70 to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/15"></div>
                         </div>
                     ))}
                 </div>
 
-                <div className="relative z-10 container-custom py-20 md:py-28 lg:py-32">
+                <div className="relative z-10 container-custom w-full pt-20 pb-28">
                     <div className="max-w-3xl">
                         <p className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-primary-300 mb-6">
                             <Sparkles size={16} /> Kenya's #1 Financial Education Platform
@@ -186,7 +383,7 @@ const LearnPage = () => {
                         </div>
 
                         {/* Stats Bar */}
-                        <div className="flex flex-wrap gap-8 md:gap-12">
+                        <div className="flex flex-wrap gap-8 md:gap-12 relative z-20">
                             {[
                                 { value: '200+', label: 'Articles & Guides', icon: FileText },
                                 { value: '50+', label: 'Video Lessons', icon: PlayCircle },
@@ -205,6 +402,18 @@ const LearnPage = () => {
                             ))}
                         </div>
                     </div>
+                </div>
+
+                {/* Slide-synced floating cards + connector line */}
+                <div className="absolute inset-0 z-20 pointer-events-none">
+                    {slideCards.map((SlideComponent, index) => (
+                        <div
+                            key={index}
+                            className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${index === currentImageIndex && cardsShown ? 'opacity-100' : 'opacity-0'}`}
+                        >
+                            <SlideComponent isActive={index === currentImageIndex && cardsShown} />
+                        </div>
+                    ))}
                 </div>
             </section>
 
