@@ -14,8 +14,8 @@ import FAQPage from './pages/FAQPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ReferPage from './pages/ReferPage';
+import DashboardPage from './pages/DashboardPage';
 import {
-    Dashboard,
     Learn,
     // Tools,
     Community,
@@ -56,7 +56,7 @@ function App() {
                     <main className="flex-grow">
                         <Routes>
                             <Route path="/" element={<Home />} />
-                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/dashboard" element={<DashboardPage />} />
                             <Route path="/learn" element={<LearnPage />} />
                             <Route path="/compare" element={<ComparePage />} />
                             <Route path="/tools" element={<ToolsPage />} />
