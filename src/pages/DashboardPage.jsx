@@ -11,15 +11,14 @@ import {
 } from 'lucide-react';
 import Button from '../components/Button';
 
+const DEFAULT_BACKEND_URL = 'https://shilingibackend-production.up.railway.app';
+
 const DashboardPage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // Replace with your actual Railway backend URL
-    const BACKEND_URL = 'https://shilingibackend-production.up.railway.app/'; 
-
-    useEffect(() => {
+    const BACKEND_URL = (import.meta.env.VITE_API_URL || DEFAULT_BACKEND_URL).replace(/\/$/, '');
+useEffect(() => {
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
@@ -197,3 +196,5 @@ const QuickAction = ({ icon, label }) => (
 );
 
 export default DashboardPage;
+
+
