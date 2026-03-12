@@ -101,3 +101,11 @@ All components are mobile-responsive and follow consistent styling patterns.
 ## License
 
 © 2026 Shilingi Moves. All rights reserved.
+
+
+## Deployment Note
+
+- If Vercel is not picking up GitHub pushes, first confirm the Vercel project is connected to the correct GitHub repository and branch.
+- This repo is intended to use the repo-local Git author `Shilingi Moves <devops@shilingimoves.com>` for deployment-related commits.
+- Also verify that the email used for commits is recognized or verified on the GitHub account or org that owns the connected repository.
+
