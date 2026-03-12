@@ -11,7 +11,7 @@ const SignUpPage = () => {
         last_name: '',
         email: '',
         password: '',
-        confirm_password: '',
+        password_confirm: '',
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -30,15 +30,15 @@ const SignUpPage = () => {
         setError('');
         setSuccess('');
 
-        if (formValues.password !== formValues.confirm_password) {
-            setError('Passwords do not match.');
+        if (formValues.password !== formValues.password_confirm) {
+            setError('Your passwords do not match. Please try again.');
             return;
         }
 
         try {
             setIsSubmitting(true);
             await registerUser(formValues);
-            setSuccess('Account created successfully. You can now sign in and your JWT token will be stored automatically.');
+            setSuccess('Your account is ready. You can now sign in and start taking control of your money.');
             setTimeout(() => navigate('/signin'), 1200);
         } catch (err) {
             setError(err.message || 'We could not create your account right now.');
@@ -54,18 +54,16 @@ const SignUpPage = () => {
                     <div className="inline-flex rounded-3xl bg-amber-50 p-4 text-amber-600">
                         <UserRoundPlus size={28} />
                     </div>
-                    <p className="mt-6 text-sm font-semibold uppercase tracking-[0.35em] text-primary-700">Create account</p>
-                    <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">Set up your account before testing protected API endpoints.</h1>
+                    <p className="mt-6 text-sm font-semibold uppercase tracking-[0.35em] text-primary-700">Create your account</p>
+                    <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">Start building better money habits with guidance you can trust.</h1>
                     <p className="mt-4 text-base leading-7 text-gray-600 sm:text-lg">
-                        This signup page is designed for the Django JWT flow your backend developer described. Create the account here,
-                        then sign in to save the access token used by the debt management page.
+                        Join Shilingi Moves to organise your finances, stay on top of your debt, and make smarter decisions with confidence, one step at a time.
                     </p>
                     <div className="mt-8 rounded-3xl border border-gray-100 bg-gray-50 p-5">
                         <div className="flex items-start gap-3">
                             <CheckCircle2 size={20} className="mt-1 text-emerald-600" />
                             <p className="text-sm leading-6 text-gray-600">
-                                If your backend uses slightly different field names for registration, we can adjust the payload quickly.
-                                Right now this form sends first name, last name, email, password, and confirm password.
+                                Your account gives you a private space to track your progress, return to your dashboard, and keep your financial plan moving forward.
                             </p>
                         </div>
                     </div>
@@ -74,7 +72,7 @@ const SignUpPage = () => {
                 <section className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm sm:p-10">
                     <div className="mb-8">
                         <h2 className="text-3xl font-extrabold text-gray-900">Create your account</h2>
-                        <p className="mt-2 text-sm leading-6 text-gray-600">Use the same details you would use in Swagger before requesting a JWT token.</p>
+                        <p className="mt-2 text-sm leading-6 text-gray-600">Fill in your details below to get started with Shilingi Moves.</p>
                     </div>
 
                     {error && (
@@ -97,11 +95,11 @@ const SignUpPage = () => {
                             <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
                         </div>
                         <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a password" required />
-                        <Field label="Confirm password" name="confirm_password" type="password" value={formValues.confirm_password} onChange={handleChange} placeholder="Repeat your password" required />
+                        <Field label="Confirm password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your password" required />
 
                         <div className="sm:col-span-2">
                             <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
-                                {isSubmitting ? 'Creating account...' : 'Create account'}
+                                {isSubmitting ? 'Creating your account...' : 'Create account'}
                             </Button>
                         </div>
                     </form>
