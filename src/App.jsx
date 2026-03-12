@@ -15,16 +15,15 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ReferPage from './pages/ReferPage';
 import DashboardPage from './pages/DashboardPage';
+import DebtManagementPage from './pages/DebtManagementPage';
 import {
     Learn,
-    // Tools,
     Community,
     TrustPage,
     SignIn,
     SignUp,
 } from './pages/PlaceholderPages';
 
-// Scroll to top on route change
 function ScrollToTop() {
     const { pathname } = useLocation();
 
@@ -36,7 +35,6 @@ function ScrollToTop() {
 }
 
 function App() {
-    // Show splash once per browser session
     const [showSplash, setShowSplash] = useState(
         () => !sessionStorage.getItem('sm_splashed')
     );
@@ -57,6 +55,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/dashboard" element={<DashboardPage />} />
+                            <Route path="/debts" element={<DebtManagementPage />} />
                             <Route path="/learn" element={<LearnPage />} />
                             <Route path="/compare" element={<ComparePage />} />
                             <Route path="/tools" element={<ToolsPage />} />

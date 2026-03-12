@@ -22,6 +22,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Debts', path: '/debts' },
         { name: 'Learn', path: '/learn' },
         { name: 'Compare', path: '/compare' },
         { name: 'Tools', path: '/tools' },
@@ -146,3 +147,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

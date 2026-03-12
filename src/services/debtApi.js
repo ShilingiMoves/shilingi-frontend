@@ -1,0 +1,130 @@
+const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
+const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+const DEBTS_ENDPOINT = `${API_URL}/api/debts`;
+
+function toNumber(value) {
+    if (value === null || value === undefined || value === '') {
+        return 0;
+    }
+
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function normaliseDebt(rawDebt, index = 0) {
+    return {
+        id: rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
+        name: rawDebt?.name ?? rawDebt?.title ?? rawDebt?.creditor ?? 'Untitled debt',
+        creditor: rawDebt?.creditor ?? rawDebt?.name ?? rawDebt?.title ?? 'Unknown creditor',
+        balance: toNumber(rawDebt?.balance ?? rawDebt?.remainingBalance ?? rawDebt?.amount ?? rawDebt?.currentBalance),
+        interestRate: toNumber(rawDebt?.interestRate ?? rawDebt?.interest_rate ?? rawDebt?.apr),
+        minimumPayment: toNumber(rawDebt?.minimumPayment ?? rawDebt?.minimum_payment ?? rawDebt?.monthlyPayment),
+        dueDate: rawDebt?.dueDate ?? rawDebt?.due_date ?? '',
+        status: rawDebt?.status ?? (toNumber(rawDebt?.balance ?? rawDebt?.remainingBalance ?? rawDebt?.amount) > 0 ? 'active' : 'paid'),
+        notes: rawDebt?.notes ?? rawDebt?.description ?? '',
+    };
+}
+
+function extractDebtCollection(payload) {
+    if (Array.isArray(payload)) {
+        return payload;
+    }
+
+    if (Array.isArray(payload?.data)) {
+        return payload.data;
+    }
+
+    if (Array.isArray(payload?.debts)) {
+        return payload.debts;
+    }
+
+    if (Array.isArray(payload?.results)) {
+        return payload.results;
+    }
+
+    return [];
+}
+
+async function parseJsonResponse(response) {
+    const rawText = await response.text();
+    let payload = null;
+
+    if (rawText) {
+        try {
+            payload = JSON.parse(rawText);
+        } catch {
+            payload = { message: rawText };
+        }
+    }
+
+    if (!response.ok) {
+        const message = payload?.message || payload?.error || `Request failed with status ${response.status}`;
+        throw new Error(message);
+    }
+
+    return payload;
+}
+
+function buildRequestOptions(method, body) {
+    return {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+    };
+}
+
+function prepareDebtPayload(formValues) {
+    return {
+        name: formValues.name,
+        creditor: formValues.creditor,
+        balance: toNumber(formValues.balance),
+        interestRate: toNumber(formValues.interestRate),
+        minimumPayment: toNumber(formValues.minimumPayment),
+        dueDate: formValues.dueDate,
+        status: formValues.status,
+        notes: formValues.notes,
+    };
+}
+
+export async function getDebts() {
+    const response = await fetch(DEBTS_ENDPOINT, buildRequestOptions('GET'));
+    const payload = await parseJsonResponse(response);
+    return extractDebtCollection(payload).map((debt, index) => normaliseDebt(debt, index));
+}
+
+export async function createDebt(formValues) {
+    const response = await fetch(DEBTS_ENDPOINT, buildRequestOptions('POST', prepareDebtPayload(formValues)));
+    const payload = await parseJsonResponse(response);
+    return normaliseDebt(payload?.data ?? payload?.debt ?? payload);
+}
+
+export async function updateDebt(debtId, formValues) {
+    const response = await fetch(`${DEBTS_ENDPOINT}/${debtId}`, buildRequestOptions('PUT', prepareDebtPayload(formValues)));
+    const payload = await parseJsonResponse(response);
+    return normaliseDebt(payload?.data ?? payload?.debt ?? payload);
+}
+
+export async function deleteDebt(debtId) {
+    const response = await fetch(`${DEBTS_ENDPOINT}/${debtId}`, buildRequestOptions('DELETE'));
+    await parseJsonResponse(response);
+    return debtId;
+}
+
+export function calculateDebtSummary(debts) {
+    const totalBalance = debts.reduce((sum, debt) => sum + debt.balance, 0);
+    const totalMinimumPayment = debts.reduce((sum, debt) => sum + debt.minimumPayment, 0);
+    const weightedInterest = totalBalance
+        ? debts.reduce((sum, debt) => sum + (debt.balance * debt.interestRate), 0) / totalBalance
+        : 0;
+
+    const activeDebts = debts.filter((debt) => debt.status !== 'paid').length;
+
+    return {
+        totalBalance,
+        totalMinimumPayment,
+        weightedInterest,
+        activeDebts,
+    };
+}
