@@ -1,6 +1,9 @@
 const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
 const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
-const DEBTS_ENDPOINT = `${API_URL}/api/debts`;
+const DEBTS_ENDPOINT = `${API_URL}/api/v1/debts/`;
+const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';
+const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
+const AUTH_HEADER_NAME = import.meta.env.VITE_AUTH_HEADER_NAME || 'Authorization';
 
 function toNumber(value) {
     if (value === null || value === undefined || value === '') {
@@ -45,6 +48,22 @@ function extractDebtCollection(payload) {
     return [];
 }
 
+function getAuthToken() {
+    return localStorage.getItem(TOKEN_STORAGE_KEY) || import.meta.env.VITE_AUTH_TOKEN || '';
+}
+
+function buildAuthHeaders() {
+    const token = getAuthToken();
+
+    if (!token) {
+        return {};
+    }
+
+    return {
+        [AUTH_HEADER_NAME]: `${AUTH_HEADER_PREFIX} ${token}`,
+    };
+}
+
 async function parseJsonResponse(response) {
     const rawText = await response.text();
     let payload = null;
@@ -70,6 +89,7 @@ function buildRequestOptions(method, body) {
         method,
         headers: {
             'Content-Type': 'application/json',
+            ...buildAuthHeaders(),
         },
         body: body ? JSON.stringify(body) : undefined,
     };
@@ -88,6 +108,15 @@ function prepareDebtPayload(formValues) {
     };
 }
 
+export function setDebtApiToken(token) {
+    if (token) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, token);
+        return;
+    }
+
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
 export async function getDebts() {
     const response = await fetch(DEBTS_ENDPOINT, buildRequestOptions('GET'));
     const payload = await parseJsonResponse(response);
@@ -101,13 +130,15 @@ export async function createDebt(formValues) {
 }
 
 export async function updateDebt(debtId, formValues) {
-    const response = await fetch(`${DEBTS_ENDPOINT}/${debtId}`, buildRequestOptions('PUT', prepareDebtPayload(formValues)));
+    const debtUrl = `${DEBTS_ENDPOINT}${debtId}/`;
+    const response = await fetch(debtUrl, buildRequestOptions('PUT', prepareDebtPayload(formValues)));
     const payload = await parseJsonResponse(response);
     return normaliseDebt(payload?.data ?? payload?.debt ?? payload);
 }
 
 export async function deleteDebt(debtId) {
-    const response = await fetch(`${DEBTS_ENDPOINT}/${debtId}`, buildRequestOptions('DELETE'));
+    const debtUrl = `${DEBTS_ENDPOINT}${debtId}/`;
+    const response = await fetch(debtUrl, buildRequestOptions('DELETE'));
     await parseJsonResponse(response);
     return debtId;
 }

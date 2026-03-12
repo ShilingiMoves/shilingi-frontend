@@ -16,13 +16,9 @@ import TermsPage from './pages/TermsPage';
 import ReferPage from './pages/ReferPage';
 import DashboardPage from './pages/DashboardPage';
 import DebtManagementPage from './pages/DebtManagementPage';
-import {
-    Learn,
-    Community,
-    TrustPage,
-    SignIn,
-    SignUp,
-} from './pages/PlaceholderPages';
+import SignInPage from './pages/SignInPage';
+import SignUpPage from './pages/SignUpPage';
+import { TrustPage } from './pages/PlaceholderPages';
 
 function ScrollToTop() {
     const { pathname } = useLocation();
@@ -65,8 +61,8 @@ function App() {
                             <Route path="/about" element={<AboutPage />} />
                             <Route path="/faqs" element={<FAQPage />} />
                             <Route path="/trust" element={<TrustPage />} />
-                            <Route path="/signin" element={<SignIn />} />
-                            <Route path="/signup" element={<SignUp />} />
+                            <Route path="/signin" element={<SignInPage />} />
+                            <Route path="/signup" element={<SignUpPage />} />
                             <Route path="/privacy" element={<PrivacyPage />} />
                             <Route path="/terms" element={<TermsPage />} />
                             <Route path="/refer" element={<ReferPage />} />
