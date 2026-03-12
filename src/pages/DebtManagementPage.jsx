@@ -85,11 +85,10 @@ const DebtManagementPage = () => {
                         <div className="max-w-3xl">
                             <p className="text-sm font-semibold uppercase tracking-[0.35em] text-primary-700">Debt management</p>
                             <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-                                Connect your Railway debt API to a clean, editable frontend workspace.
+                                Take control of your debts with a clearer plan and better daily visibility.
                             </h1>
                             <p className="mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
-                                This page fetches debt accounts from your backend, summarizes the totals, and lets you add,
-                                update, or remove records without mixing API code into your UI components.
+                                Use this space to see what you owe, keep track of repayment progress, and stay organised as you work toward more breathing room and stronger financial confidence.
                             </p>
                         </div>
 
@@ -109,7 +108,7 @@ const DebtManagementPage = () => {
                         <div className="flex min-h-[260px] items-center justify-center rounded-[2rem] border border-gray-100 bg-white shadow-sm">
                             <div className="text-center">
                                 <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary-600" />
-                                <p className="mt-4 text-sm font-medium text-gray-600">Loading debt accounts from Railway...</p>
+                                <p className="mt-4 text-sm font-medium text-gray-600">Loading your debt overview...</p>
                             </div>
                         </div>
                     ) : error ? (
@@ -145,11 +144,9 @@ const DebtManagementPage = () => {
                                         <div className="flex items-start gap-3">
                                             <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
                                             <div>
-                                                <h2 className="font-bold text-emerald-900">Integration note</h2>
+                                                <h2 className="font-bold text-emerald-900">A better debt routine</h2>
                                                 <p className="mt-2 text-sm leading-6 text-emerald-800">
-                                                    This frontend expects a Railway endpoint at <code className="rounded bg-white px-1.5 py-0.5 text-emerald-900">/api/debts</code>.
-                                                    It already tolerates responses shaped like an array, <code className="rounded bg-white px-1.5 py-0.5 text-emerald-900">data</code>,
-                                                    <code className="rounded bg-white px-1.5 py-0.5 text-emerald-900">debts</code>, or <code className="rounded bg-white px-1.5 py-0.5 text-emerald-900">results</code>.
+                                                    Keep each lender, balance, payment amount, and due date in one place so you can spot pressure early, stay consistent, and make calmer money decisions.
                                                 </p>
                                             </div>
                                         </div>
@@ -177,10 +174,9 @@ const DebtManagementPage = () => {
                                     ) : (
                                         <div className="rounded-[2rem] border border-dashed border-gray-300 bg-white p-10 text-center shadow-sm">
                                             <CircleOff className="mx-auto h-12 w-12 text-gray-400" />
-                                            <h2 className="mt-4 text-2xl font-extrabold text-gray-900">Your debt list is empty</h2>
+                                            <h2 className="mt-4 text-2xl font-extrabold text-gray-900">You have not added any debts yet</h2>
                                             <p className="mt-3 text-sm leading-6 text-gray-600">
-                                                That usually means the backend returned an empty array. Add a new debt on the left or confirm
-                                                the Railway API is returning records for this account.
+                                                Add your first debt account to start tracking balances, repayments, and due dates in one simple place.
                                             </p>
                                         </div>
                                     )}
