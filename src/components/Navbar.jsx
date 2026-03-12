@@ -8,12 +8,10 @@ const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
 
-    // Close menu on route change
     useEffect(() => {
         setMobileMenuOpen(false);
     }, [location.pathname]);
 
-    // Prevent body scroll when menu is open
     useEffect(() => {
         document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
         return () => { document.body.style.overflow = ''; };
@@ -22,7 +20,6 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'Dashboard', path: '/dashboard' },
-        { name: 'Debts', path: '/debts' },
         { name: 'Learn', path: '/learn' },
         { name: 'Compare', path: '/compare' },
         { name: 'Tools', path: '/tools' },
@@ -35,7 +32,6 @@ const Navbar = () => {
         <nav className="sticky top-0 z-50 shadow-sm border-b border-gray-200" style={{ backgroundColor: '#f8f8f8' }}>
             <div className="container-custom">
                 <div className="flex items-center justify-between h-16 md:h-18 lg:h-20">
-                    {/* Logo */}
                     <Link to="/" className="flex items-center">
                         <img
                             src={animatedLogo}
@@ -44,7 +40,6 @@ const Navbar = () => {
                         />
                     </Link>
 
-                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-1">
                         {navLinks.map((link) => (
                             <Link
@@ -61,7 +56,6 @@ const Navbar = () => {
                         ))}
                     </div>
 
-                    {/* Desktop Auth Buttons */}
                     <div className="hidden md:flex items-center space-x-3">
                         <Link
                             to="/signin"
@@ -74,7 +68,6 @@ const Navbar = () => {
                         </Button>
                     </div>
 
-                    {/* Mobile Hamburger */}
                     <button
                         onClick={() => setMobileMenuOpen(true)}
                         className="md:hidden p-2.5 rounded-md text-gray-700 hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -85,13 +78,11 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu Overlay */}
             {mobileMenuOpen && (
                 <div
                     className="md:hidden fixed inset-0 z-[999] flex flex-col"
                     style={{ backgroundColor: '#f8f8f8' }}
                 >
-                    {/* Top bar with logo + X close button */}
                     <div className="flex items-center justify-between px-4 h-16 border-b border-gray-200 shrink-0">
                         <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center">
                             <img
@@ -109,7 +100,6 @@ const Navbar = () => {
                         </button>
                     </div>
 
-                    {/* Nav Links */}
                     <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
                         {navLinks.map((link) => (
                             <Link
@@ -127,7 +117,6 @@ const Navbar = () => {
                         ))}
                     </div>
 
-                    {/* Auth Buttons at bottom */}
                     <div className="px-4 pb-8 pt-4 border-t border-gray-200 space-y-3 shrink-0">
                         <Link
                             to="/signin"
@@ -147,4 +136,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
