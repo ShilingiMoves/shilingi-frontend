@@ -15,7 +15,6 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ReferPage from './pages/ReferPage';
 import DashboardPage from './pages/DashboardPage';
-import DebtManagementPage from './pages/DebtManagementPage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import { TrustPage } from './pages/PlaceholderPages';
@@ -28,6 +27,38 @@ function ScrollToTop() {
     }, [pathname]);
 
     return null;
+}
+
+function AppLayout() {
+    const location = useLocation();
+    const hidePublicNavbar = location.pathname === '/dashboard' || location.pathname === '/debts';
+
+    return (
+        <div className="min-h-screen flex flex-col">
+            {!hidePublicNavbar && <Navbar />}
+            <main className="flex-grow">
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/debts" element={<DashboardPage initialSection="debt" />} />
+                    <Route path="/learn" element={<LearnPage />} />
+                    <Route path="/compare" element={<ComparePage />} />
+                    <Route path="/tools" element={<ToolsPage />} />
+                    <Route path="/community" element={<CommunityPage />} />
+                    <Route path="/advisors" element={<AdvisoryPage />} />
+                    <Route path="/partnerships" element={<PartnershipsPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/faqs" element={<FAQPage />} />
+                    <Route path="/trust" element={<TrustPage />} />
+                    <Route path="/signin" element={<SignInPage />} />
+                    <Route path="/signup" element={<SignUpPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/refer" element={<ReferPage />} />
+                </Routes>
+            </main>
+        </div>
+    );
 }
 
 function App() {
@@ -45,30 +76,7 @@ function App() {
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
             <Router>
                 <ScrollToTop />
-                <div className="min-h-screen flex flex-col">
-                    <Navbar />
-                    <main className="flex-grow">
-                        <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/dashboard" element={<DashboardPage />} />
-                            <Route path="/debts" element={<DebtManagementPage />} />
-                            <Route path="/learn" element={<LearnPage />} />
-                            <Route path="/compare" element={<ComparePage />} />
-                            <Route path="/tools" element={<ToolsPage />} />
-                            <Route path="/community" element={<CommunityPage />} />
-                            <Route path="/advisors" element={<AdvisoryPage />} />
-                            <Route path="/partnerships" element={<PartnershipsPage />} />
-                            <Route path="/about" element={<AboutPage />} />
-                            <Route path="/faqs" element={<FAQPage />} />
-                            <Route path="/trust" element={<TrustPage />} />
-                            <Route path="/signin" element={<SignInPage />} />
-                            <Route path="/signup" element={<SignUpPage />} />
-                            <Route path="/privacy" element={<PrivacyPage />} />
-                            <Route path="/terms" element={<TermsPage />} />
-                            <Route path="/refer" element={<ReferPage />} />
-                        </Routes>
-                    </main>
-                </div>
+                <AppLayout />
             </Router>
         </>
     );
