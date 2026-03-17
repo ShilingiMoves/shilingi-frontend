@@ -4,14 +4,16 @@ import {
     HeartHandshake, TrendingUp, Users, BarChart3, Shield, Star,
     ArrowRight, CheckCircle, ChevronRight, Building2, Landmark,
     PiggyBank, GraduationCap, Sparkles, Zap, Globe, Award,
-    Phone, Mail
+    Phone, Mail, PlayCircle, BookOpen
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import partnershipsVideo from '../assets/Partnerships-herovideo.mp4';
+import story1 from '../assets/stories/story1.png';
+import story2 from '../assets/stories/story2.png';
+import story3 from '../assets/stories/story3.png';
 
 const PartnershipsPage = () => {
     const navigate = useNavigate();
-    const [activeTier, setActiveTier] = useState(1);
 
     useEffect(() => {
         document.title = 'Partnerships | Shilingi Moves';
@@ -22,53 +24,114 @@ const PartnershipsPage = () => {
     }, []);
 
     const audienceStats = [
-        { value: '50K+', label: 'Active Users', icon: Users },
-        { value: '85%', label: 'Engagement Rate', icon: BarChart3 },
-        { value: '2M+', label: 'Monthly Page Views', icon: Globe },
-        { value: '4.8/5', label: 'User Satisfaction', icon: Star },
+        { value: '500K+', label: 'Kenyans Reached', icon: Users },
+        { value: '1.2M', label: 'Financial Decisions supported', icon: BarChart3 },
+        { value: '150+', label: 'Partners onboarded', icon: Globe },
+        { value: '4.9/5', label: 'User Satisfaction', icon: Star },
     ];
 
-    const categories = [
+    const valuePillars = [
         {
-            title: 'Banking',
-            icon: Landmark,
-            color: 'from-blue-500 to-blue-700',
-            bgLight: 'bg-blue-50',
-            textColor: 'text-blue-600',
-            borderColor: 'border-blue-100',
-            desc: 'Get your products in front of users actively comparing savings accounts, loans, and credit cards.',
-            benefits: ['Featured in comparison tools', 'Lead generation pipeline', 'Co-branded content'],
+            title: 'Visibility to Financially Intentional Audiences',
+            desc: 'Reach individuals, SMEs, corporates, educators, and professionals actively seeking financial clarity.',
+            icon: Users,
+            color: 'from-blue-500 to-indigo-600',
+            cta: 'Explore Tools'
         },
         {
-            title: 'Investment',
-            icon: TrendingUp,
-            color: 'from-emerald-500 to-emerald-700',
-            bgLight: 'bg-emerald-50',
-            textColor: 'text-emerald-600',
-            borderColor: 'border-emerald-100',
-            desc: 'Connect with users who are learning to invest and ready to open their first investment account.',
-            benefits: ['Direct user onboarding', 'Educational co-creation', 'Product showcasing'],
-        },
-        {
-            title: 'Insurance',
+            title: 'Trust Built Through Education',
+            desc: 'Position your brand in a neutral, education-first ecosystem focused on long-term financial fitness.',
             icon: Shield,
-            color: 'from-purple-500 to-purple-700',
-            bgLight: 'bg-purple-50',
-            textColor: 'text-purple-600',
-            borderColor: 'border-purple-100',
-            desc: 'Reach users exploring health, life, and asset insurance as part of their financial wellness journey.',
-            benefits: ['Insurance comparison listings', 'Targeted audience access', 'Trust-driven leads'],
+            color: 'from-emerald-500 to-teal-600',
+            cta: 'See Comparisons'
         },
         {
-            title: 'Education',
-            icon: GraduationCap,
-            color: 'from-amber-500 to-amber-700',
-            bgLight: 'bg-amber-50',
-            textColor: 'text-amber-600',
-            borderColor: 'border-amber-100',
-            desc: 'Co-create financial literacy content and position your brand as a thought leader in the space.',
-            benefits: ['Co-branded workshops', 'Content sponsorship', 'Certification programs'],
+            title: 'Measurable Financial Impact',
+            desc: 'Support literacy across Kenya and the diaspora with clear engagement metrics.',
+            icon: BarChart3,
+            color: 'from-amber-500 to-orange-600',
+            cta: 'View Impact'
         },
+        {
+            title: 'Ecosystem Collaboration',
+            desc: 'Integrate into dashboards, tools, advisor networks, and comparison hubs that convert learning into action.',
+            icon: Zap,
+            color: 'from-purple-500 to-violet-600',
+            cta: 'Join Now'
+        }
+    ];
+
+    const partnerCommunity = [
+        {
+            category: 'Individual Partners',
+            items: [
+                {
+                    role: 'Certified Professional Advisors',
+                    benefit: 'Access to qualified, education-led client leads.',
+                    cta: 'Join Our Advisor Network',
+                    icon: GraduationCap,
+                    color: 'bg-blue-50 text-blue-600'
+                },
+                {
+                    role: 'Content & Media Partners',
+                    benefit: 'Expanded reach and authority.',
+                    cta: 'Content Collaboration',
+                    icon: PlayCircle,
+                    color: 'bg-red-50 text-red-600'
+                }
+            ]
+        },
+        {
+            category: 'Corporate Partners',
+            items: [
+                {
+                    role: 'Employers & Brands',
+                    benefit: 'Brand visibility, CSR alignment, workforce wellness.',
+                    cta: 'Corporate Partnership Details',
+                    icon: Building2,
+                    color: 'bg-emerald-50 text-emerald-600'
+                }
+            ]
+        },
+        {
+            category: 'Institutional & Community Partners',
+            items: [
+                {
+                    role: 'NGOs, SACCOs, Community Organizations',
+                    benefit: 'Scalable literacy programs and digital distribution.',
+                    cta: 'Join Our Financial Literacy Campaigns',
+                    icon: Landmark,
+                    color: 'bg-amber-50 text-amber-600'
+                }
+            ]
+        }
+    ];
+
+    const waysToPartner = [
+        {
+            title: 'Ecosystem Partner',
+            desc: 'Platform-wide visibility, dashboard exposure, thought leadership.',
+            icon: Globe,
+            color: 'from-blue-600 to-indigo-700'
+        },
+        {
+            title: 'Knowledge Partner',
+            desc: 'Co-created content, featured placement in Learn & Community.',
+            icon: BookOpen,
+            color: 'from-emerald-600 to-teal-700'
+        },
+        {
+            title: 'Tools & Solutions Partner',
+            desc: 'Visibility in Compare hub, smart tools integration, lead generation.',
+            icon: Zap,
+            color: 'from-primary-600 to-primary-800'
+        },
+        {
+            title: 'Advisor Network Partner',
+            desc: 'Verified advisor profile, lead matching, trust badges.',
+            icon: Shield,
+            color: 'from-purple-600 to-violet-800'
+        }
     ];
 
     const tiers = [
@@ -130,11 +193,22 @@ const PartnershipsPage = () => {
         },
     ];
 
-    const howItWorks = [
-        { step: '01', title: 'Reach Out', desc: 'Tell us about your organization and partnership goals.', icon: Phone },
-        { step: '02', title: 'We Align', desc: 'Our team matches your goals with the right partnership tier.', icon: HeartHandshake },
-        { step: '03', title: 'Go Live', desc: 'Launch your partnership and start reaching our audience.', icon: Zap },
-        { step: '04', title: 'Grow Together', desc: 'Track results with real-time analytics and scale.', icon: TrendingUp },
+    const partnerStories = [
+        {
+            title: 'Corporate Financial Wellness',
+            case: 'Rolling out a scalable wellness program for a 5,000+ employee brand.',
+            image: story1
+        },
+        {
+            title: 'Fintech Trust-Building',
+            case: 'Using education-first positioning to build user confidence in new credit products.',
+            image: story2
+        },
+        {
+            title: 'Advisor Pipeline Growth',
+            case: 'Growing a compliant, high-quality client base through education-led leads.',
+            image: story3
+        }
     ];
 
     return (
@@ -156,38 +230,49 @@ const PartnershipsPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-800/70 to-emerald-900/80"></div>
 
                 <div className="container-custom relative z-10 py-16 md:py-24">
-                    <div className="max-w-3xl mx-auto text-center">
+                    <div className="max-w-4xl mx-auto text-center">
                         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 md:mb-8 border border-white/15">
                             <HeartHandshake size={16} className="text-emerald-400" />
-                            <span className="text-sm font-medium text-emerald-200">Partnership Opportunities</span>
+                            <span className="text-sm font-medium text-emerald-200">Shilingi Moves Partnership Ecosystem</span>
                         </div>
 
                         <h1
-                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-5 md:mb-6 leading-[1.1] tracking-tight"
+                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-6 md:mb-8"
                             style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                         >
-                            Grow Your Brand With{' '}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-yellow-300">
-                                Kenya's Financial Community
+                            Together, into a new era of <br className="hidden md:block" />
+                            <span className="text-emerald-400">
+                                financial wellness across Kenya and the diaspora
                             </span>
                         </h1>
 
-                        <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 md:mb-10 leading-relaxed max-w-2xl mx-auto px-4">
-                            Partner with Shilingi Moves and put your products in front of thousands of Kenyans who are actively learning, comparing, and making financial decisions — every day.
+                        <p className="text-lg md:text-2xl text-white font-medium mb-6 max-w-3xl mx-auto leading-tight">
+                            Become part of Kenya’s leading financial literacy platform and support a community choosing financial fitness, every day, everywhere.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-6">
+                        <p className="text-base md:text-lg text-white/80 mb-10 leading-relaxed max-w-3xl mx-auto">
+                            Shilingi Moves is Kenya’s financial wellness hub, connecting people to trusted knowledge, smart tools, licensed advisors, and transparent financial comparisons. By partnering with us, you’re not just supporting a platform; you’re helping shape financially confident lives and empowering communities to thrive across generations.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-6">
                             <a
-                                href="mailto:partnerships@shilingimoves.com"
-                                className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-primary-900 font-bold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 text-base sm:text-lg"
+                                href="#ways"
+                                className="w-full sm:w-auto px-10 py-5 bg-primary-600 text-white font-bold rounded-2xl shadow-2xl hover:bg-primary-500 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 text-lg group"
                             >
-                                <HeartHandshake size={20} /> Become a Partner
+                                Become a Partner
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </a>
                             <a
-                                href="#tiers"
-                                className="px-6 sm:px-8 py-3.5 sm:py-4 bg-emerald-500/20 text-white font-bold rounded-full border border-emerald-400/40 hover:bg-emerald-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-base sm:text-lg backdrop-blur-sm"
+                                href="#impact"
+                                className="w-full sm:w-auto px-8 py-5 bg-white/10 backdrop-blur-md text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 flex items-center justify-center gap-2 text-lg"
                             >
-                                View Partnership Tiers <ArrowRight size={18} />
+                                View Our Impact
+                            </a>
+                            <a
+                                href="#community"
+                                className="w-full sm:w-auto px-8 py-5 bg-transparent text-white/80 font-bold hover:text-white transition-all duration-300 flex items-center justify-center gap-2 text-lg"
+                            >
+                                Explore the Community
                             </a>
                         </div>
                     </div>
@@ -201,214 +286,208 @@ const PartnershipsPage = () => {
                 </div>
             </section>
 
-            {/* ═══════════ WHY PARTNER — Audience Stats ═══════════ */}
-            <section className="py-12 md:py-16 bg-gray-50 border-b border-gray-100">
+            {/* ═══════════ SECTION 2: WHY PARTNER (Value Pillars) ═══════════ */}
+            <section id="pillars" className="py-20 md:py-32 bg-white overflow-hidden">
                 <div className="container-custom">
-                    <div className="text-center mb-8 md:mb-12">
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">Why Partner With <span className="text-primary-600">Shilingi Moves</span>?</h2>
-                        <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base px-4">
-                            Our users don't just scroll — they compare, calculate, and make decisions. Your brand meets them at the moment that matters.
+                    <div className="text-center mb-16 md:mb-24">
+                        <h2 className="text-2xl md:text-4xl font-bold mb-6 tracking-tight">Why Partner with <span className="text-primary-600">Shilingi Moves?</span></h2>
+                        <p className="text-gray-500 max-w-2xl mx-auto text-lg md:text-xl">
+                            Position your brand at the center of Kenya's financial wellness revolution and reach a community committed to growth.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {valuePillars.map((pillar, idx) => (
+                            <div key={idx} className="group relative bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col h-full">
+                                <div className={`w-16 h-16 bg-gradient-to-br ${pillar.color} text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                                    <pillar.icon size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-4 leading-snug group-hover:text-primary-600 transition-colors">{pillar.title}</h3>
+                                <p className="text-gray-600 leading-relaxed mb-8 flex-grow">{pillar.desc}</p>
+                                
+                                <div className="pt-6 border-t border-gray-50 mt-auto">
+                                    <button className="flex items-center gap-2 text-primary-600 font-bold group/btn">
+                                        {pillar.cta}
+                                        <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
+
+                                <div className={`absolute -inset-1 bg-gradient-to-br ${pillar.color} rounded-3xl blur opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════════ SECTION 6: IMPACT & SOCIAL PROOF (Integrated) ═══════════ */}
+            <section id="impact" className="py-20 bg-gray-900 text-white rounded-[40px] md:rounded-[80px] mx-4 md:mx-10 mb-20 overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-full opacity-10">
+                    <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-primary-500 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-emerald-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                </div>
+
+                <div className="container-custom relative z-10">
+                    <div className="text-center mb-16">
+                        <h2 className="text-2xl md:text-4xl font-bold mb-4">Our Growing Impact</h2>
+                        <p className="text-gray-400">Scale your brand alongside our community performance.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
                         {audienceStats.map((stat, idx) => (
-                            <div key={idx} className="bg-white rounded-2xl p-5 md:p-8 text-center border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                                <div className="w-12 h-12 md:w-14 md:h-14 bg-primary-100 text-primary-600 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform">
-                                    <stat.icon size={24} />
-                                </div>
-                                <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                                <p className="text-xs md:text-sm text-gray-500">{stat.label}</p>
+                            <div key={idx} className="text-center">
+                                <p className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-primary-400 mb-2">{stat.value}</p>
+                                <p className="text-sm md:text-base font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ═══════════ PARTNERSHIP CATEGORIES ═══════════ */}
-            <section className="py-12 md:py-20">
+            {/* ═══════════ SECTION 3: OUR PARTNER COMMUNITY ═══════════ */}
+            <section id="community" className="py-20 md:py-32 bg-gray-50">
                 <div className="container-custom">
-                    <div className="text-center mb-10 md:mb-16">
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">Partnership <span className="text-primary-600">Categories</span></h2>
-                        <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base px-4">
-                            We work with organizations across the financial ecosystem. Find where you fit.
+                    <div className="text-center mb-16 md:mb-24">
+                        <h2 className="text-2xl md:text-4xl font-bold mb-6 tracking-tight">Our <span className="text-primary-600">Partner Community</span></h2>
+                        <p className="text-gray-500 max-w-2xl mx-auto text-lg md:text-xl">
+                            Join a diverse network of professionals and organizations dedicated to building a financially stronger Kenya.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-5 md:gap-6 px-2 sm:px-0">
-                        {categories.map((cat, idx) => (
-                            <div key={idx} className={`group relative bg-white rounded-2xl md:rounded-3xl p-6 sm:p-8 border ${cat.borderColor} hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden`}>
-                                {/* Decorative accent */}
-                                <div className={`absolute top-0 right-0 w-32 h-32 ${cat.bgLight} rounded-full blur-3xl opacity-60 group-hover:opacity-100 transition-opacity`}></div>
-
-                                <div className="relative z-10">
-                                    <div className={`w-14 h-14 md:w-16 md:h-16 ${cat.bgLight} ${cat.textColor} rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-5 group-hover:scale-110 transition-transform`}>
-                                        <cat.icon size={28} />
-                                    </div>
-                                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">{cat.title}</h3>
-                                    <p className="text-gray-600 text-sm sm:text-base mb-5 md:mb-6 leading-relaxed">{cat.desc}</p>
-
-                                    <ul className="space-y-2 mb-6">
-                                        {cat.benefits.map((benefit, i) => (
-                                            <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                                                <CheckCircle size={16} className={`${cat.textColor} shrink-0`} />
-                                                {benefit}
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    <a
-                                        href="mailto:partnerships@shilingimoves.com"
-                                        className={`inline-flex items-center gap-2 text-sm font-bold ${cat.textColor} hover:underline`}
-                                    >
-                                        Explore {cat.title} Partnership <ChevronRight size={16} />
-                                    </a>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ═══════════ PARTNERSHIP TIERS ═══════════ */}
-            <section id="tiers" className="py-12 md:py-20 bg-gray-50">
-                <div className="container-custom">
-                    <div className="text-center mb-10 md:mb-16">
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">Partnership <span className="text-primary-600">Tiers</span></h2>
-                        <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base px-4">
-                            Choose the level that matches your goals. Every tier is designed to deliver real value.
-                        </p>
-                    </div>
-
-                    {/* Mobile: Swipeable tabs */}
-                    <div className="flex md:hidden gap-2 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide mb-6">
-                        {tiers.map((tier, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => setActiveTier(idx)}
-                                className={`shrink-0 snap-start px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTier === idx
-                                    ? 'bg-primary-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-600 border border-gray-200'
-                                    }`}
-                            >
-                                {tier.name}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Mobile: Show active tier card */}
-                    <div className="md:hidden px-2">
-                        {(() => {
-                            const tier = tiers[activeTier];
-                            return (
-                                <div className={`relative bg-white rounded-2xl p-6 border-2 ${tier.popular ? 'border-primary-400 shadow-xl' : 'border-gray-100 shadow-md'}`}>
-                                    {tier.popular && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white px-4 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                            <Sparkles size={12} /> Most Popular
+                    <div className="space-y-20">
+                        {partnerCommunity.map((group, idx) => (
+                            <div key={idx}>
+                                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-8 border-l-4 border-primary-500 pl-4 uppercase tracking-widest">{group.category}</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {group.items.map((item, i) => (
+                                        <div key={i} className="group bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500">
+                                            <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center mb-6`}>
+                                                <item.icon size={28} />
+                                            </div>
+                                            <h4 className="text-xl font-bold text-gray-900 mb-3">{item.role}</h4>
+                                            <p className="text-gray-500 mb-8 text-sm leading-relaxed">{item.benefit}</p>
+                                            <button className="w-full py-4 bg-gray-50 text-gray-900 font-bold rounded-2xl group-hover:bg-primary-600 group-hover:text-white transition-all duration-300">
+                                                {item.cta}
+                                            </button>
                                         </div>
-                                    )}
-                                    <div className={`w-12 h-12 bg-gradient-to-br ${tier.color} rounded-xl flex items-center justify-center text-white mb-4`}>
-                                        <Award size={24} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════════ SECTION 4: WAYS TO PARTNER ═══════════ */}
+            <section id="ways" className="py-20 md:py-32 bg-white">
+                <div className="container-custom">
+                    <div className="text-center mb-16 md:mb-24">
+                        <h2 className="text-2xl md:text-4xl font-bold mb-6 tracking-tight">Ways to <span className="text-primary-600">Partner</span></h2>
+                        <p className="text-gray-500 max-w-2xl mx-auto text-lg">
+                            Flexible partnership models designed for maximum impact and mutual growth.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {waysToPartner.map((way, idx) => (
+                            <div key={idx} className="group relative overflow-hidden rounded-[40px] p-10 bg-gray-900 text-white">
+                                <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${way.color} opacity-20 blur-3xl group-hover:opacity-40 transition-opacity`}></div>
+                                
+                                <div className="relative z-10">
+                                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-8 border border-white/10 group-hover:scale-110 transition-transform">
+                                        <way.icon size={32} className="text-white" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-1">{tier.name}</h3>
-                                    <p className="text-sm font-medium text-primary-600 mb-5">{tier.tagline}</p>
-                                    <ul className="space-y-3 mb-6">
-                                        {tier.features.map((feature, i) => (
-                                            <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                                                <CheckCircle size={16} className="text-primary-500 shrink-0 mt-0.5" />
-                                                {feature}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <a
-                                        href="mailto:partnerships@shilingimoves.com"
-                                        className={`block w-full text-center py-3 rounded-xl font-bold transition-colors ${tier.popular
-                                            ? 'bg-primary-600 text-white hover:bg-primary-700'
-                                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                            }`}
+                                    <h3 className="text-2xl md:text-3xl font-bold mb-4">{way.title}</h3>
+                                    <p className="text-gray-400 text-lg mb-8 leading-relaxed max-w-md">{way.desc}</p>
+                                    <a 
+                                        href="#contact"
+                                        className="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 text-white font-bold rounded-2xl hover:bg-primary-500 transition-all shadow-xl group/btn"
                                     >
-                                        Let's Talk
+                                        Become a Partner
+                                        <ArrowRight size={20} className="text-white group-hover/btn:translate-x-1 transition-transform" />
                                     </a>
                                 </div>
-                            );
-                        })()}
-                    </div>
-
-                    {/* Desktop: Side-by-side tier cards */}
-                    <div className="hidden md:grid md:grid-cols-4 gap-5 lg:gap-6">
-                        {tiers.map((tier, idx) => (
-                            <div
-                                key={idx}
-                                className={`relative bg-white rounded-2xl p-6 lg:p-8 border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${tier.popular
-                                    ? 'border-primary-400 shadow-xl scale-105'
-                                    : 'border-gray-100 shadow-sm'
-                                    }`}
-                            >
-                                {tier.popular && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white px-4 py-1 rounded-full text-xs font-bold flex items-center gap-1 whitespace-nowrap">
-                                        <Sparkles size={12} /> Most Popular
-                                    </div>
-                                )}
-                                <div className={`w-12 h-12 bg-gradient-to-br ${tier.color} rounded-xl flex items-center justify-center text-white mb-4`}>
-                                    <Award size={24} />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-1">{tier.name}</h3>
-                                <p className="text-sm font-medium text-primary-600 mb-5">{tier.tagline}</p>
-                                <ul className="space-y-3 mb-6">
-                                    {tier.features.map((feature, i) => (
-                                        <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                                            <CheckCircle size={16} className="text-primary-500 shrink-0 mt-0.5" />
-                                            {feature}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <a
-                                    href="mailto:partnerships@shilingimoves.com"
-                                    className={`block w-full text-center py-3 rounded-xl font-bold transition-colors ${tier.popular
-                                        ? 'bg-primary-600 text-white hover:bg-primary-700'
-                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    Let's Talk
-                                </a>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ═══════════ HOW IT WORKS ═══════════ */}
-            <section className="py-12 md:py-20 bg-white">
+            {/* ═══════════ SECTION 5: ECOSYSTEM INTEGRATION MAP ═══════════ */}
+            <section className="py-20 bg-gray-50">
                 <div className="container-custom">
-                    <div className="text-center mb-10 md:mb-16">
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">How It <span className="text-primary-600">Works</span></h2>
-                        <p className="text-gray-500 text-sm sm:text-base">From first conversation to first results — in 4 simple steps.</p>
+                    <div className="max-w-4xl mx-auto text-center mb-16">
+                        <h2 className="text-2xl md:text-4xl font-bold mb-6">One Platform. <span className="text-primary-600">Multiple Touchpoints.</span></h2>
+                        <p className="text-gray-500 text-lg">Visualizing the interconnected Shilingi Moves ecosystem.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 px-2 sm:px-0">
-                        {howItWorks.map((item, idx) => (
-                            <div key={idx} className="text-center group">
-                                <div className="relative mb-4 md:mb-6">
-                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto group-hover:bg-primary-100 group-hover:scale-110 transition-all duration-300">
-                                        <item.icon size={28} />
+                    <div className="relative py-20">
+                        {/* Map Background Connection Lines (CSS-only approximation) */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                            <div className="w-[80%] h-[80%] border-2 border-dashed border-primary-600 rounded-full animate-[spin_60s_linear_infinite]"></div>
+                            <div className="absolute w-[60%] h-[60%] border border-primary-400 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
+                        </div>
+
+                        <div className="relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8">
+                            {[
+                                { name: 'Dashboard', icon: Users, color: 'from-blue-400 to-blue-600' },
+                                { name: 'Learn', icon: GraduationCap, color: 'from-amber-400 to-amber-600' },
+                                { name: 'Compare', icon: BarChart3, color: 'from-emerald-400 to-emerald-600' },
+                                { name: 'Advisors', icon: Shield, color: 'from-purple-400 to-purple-600' },
+                                { name: 'Tools', icon: Zap, color: 'from-rose-400 to-rose-600' },
+                                { name: 'Community', icon: Globe, color: 'from-indigo-400 to-indigo-600' }
+                            ].map((node, i) => (
+                                <div key={i} className="flex flex-col items-center gap-4 group cursor-pointer">
+                                    <div className={`w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br ${node.color} rounded-full flex items-center justify-center text-white shadow-xl group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300 relative`}>
+                                        <node.icon size={32} />
+                                        <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity animate-ping"></div>
                                     </div>
-                                    <span className="absolute -top-2 -right-2 md:-top-3 md:-right-3 w-7 h-7 md:w-8 md:h-8 bg-primary-600 text-white rounded-full text-xs font-bold flex items-center justify-center shadow-lg">{item.step}</span>
+                                    <span className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors uppercase tracking-widest text-xs md:text-sm">{node.name}</span>
                                 </div>
-                                <h4 className="font-bold text-base md:text-lg text-gray-900 mb-1 md:mb-2">{item.title}</h4>
-                                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════════ SECTION 7: PARTNER STORIES & USE CASES ═══════════ */}
+            <section className="py-20 md:py-32 bg-white">
+                <div className="container-custom">
+                    <div className="text-center mb-16">
+                        <h2 className="text-2xl md:text-4xl font-bold mb-6 tracking-tight">What Partnership Looks Like <span className="text-primary-600">in Action</span></h2>
+                        <p className="text-gray-500 text-lg">Real success stories from our ecosystem.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {partnerStories.map((story, idx) => (
+                            <div key={idx} className="group relative rounded-[32px] overflow-hidden bg-primary-600 hover:shadow-2xl transition-all duration-500 flex flex-col h-full border border-primary-500">
+                                <div className="aspect-[4/3] overflow-hidden relative">
+                                    <img src={story.image} alt={story.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-primary-900/60 via-transparent to-transparent"></div>
+                                </div>
+                                <div className="p-8 flex flex-col flex-grow relative text-white">
+                                    <h4 className="text-xl font-bold mb-4 tracking-tight">{story.title}</h4>
+                                    <p className="text-emerald-50 mb-8 leading-relaxed flex-grow italic opacity-90">"{story.case}"</p>
+                                    <a 
+                                        href="#contact"
+                                        className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white text-primary-700 font-bold rounded-2xl hover:bg-emerald-50 transition-all shadow-lg group/btn mt-auto w-full sm:w-auto self-start"
+                                    >
+                                        Become a Partner
+                                        <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                                    </a>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ═══════════ TRUST BAR ═══════════ */}
-            <section className="py-10 md:py-12 bg-primary-900 text-white">
+            {/* ═══════════ TRUST BAR (Restored) ═══════════ */}
+            <section className="py-12 bg-gray-50 border-y border-gray-100">
                 <div className="container-custom text-center">
-                    <p className="text-primary-200 text-sm md:text-base mb-4 md:mb-6 font-medium">Trusted by leading organizations across Kenya</p>
-                    <div className="flex flex-wrap justify-center gap-6 md:gap-12 items-center opacity-60">
+                    <p className="text-gray-400 text-sm mb-8 font-bold uppercase tracking-widest">Trusted by leading organizations across Kenya</p>
+                    <div className="flex flex-wrap justify-center gap-8 md:gap-16 items-center opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
                         {['Equity Bank', 'Safaricom', 'Britam', 'KCB', 'CIC Group', 'Cytonn'].map((name, idx) => (
-                            <div key={idx} className="text-lg md:text-xl font-bold text-white/80 tracking-wider uppercase">
+                            <div key={idx} className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
                                 {name}
                             </div>
                         ))}
@@ -416,35 +495,57 @@ const PartnershipsPage = () => {
                 </div>
             </section>
 
-            {/* ═══════════ FINAL CTA ═══════════ */}
-            <section className="py-16 md:py-24 bg-gradient-to-br from-primary-800 to-emerald-900 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-primary-600 rounded-full blur-3xl opacity-20 -translate-y-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-48 md:w-72 h-48 md:h-72 bg-emerald-500 rounded-full blur-3xl opacity-20 translate-y-1/3"></div>
+            {/* ═══════════ SECTION 8: PRIMARY CONVERSION BLOCK (Bottom Fold) ═══════════ */}
+            <section id="contact" className="py-24 md:py-32 bg-gray-900 text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-600 rounded-full blur-[120px]"></div>
+                </div>
 
-                <div className="container-custom relative z-10 text-center max-w-3xl mx-auto px-4">
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight">
-                        Let's Build Something<br className="hidden sm:block" /> Great Together
+                <div className="container-custom relative z-10 text-center max-w-5xl mx-auto px-4">
+                    <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight tracking-tight">
+                        Build Financial Wellness <br className="hidden md:block" /> <span className="text-emerald-400">with Us</span>
                     </h2>
-                    <p className="text-base sm:text-lg md:text-xl text-primary-100 mb-8 md:mb-10 max-w-xl mx-auto">
-                        Join the Shilingi Moves partner ecosystem and reach the audience that matters most to your business.
+                    <p className="text-xl md:text-2xl text-gray-400 mb-16 max-w-3xl mx-auto font-medium">
+                        Whether you are an individual, institution, or brand, partnering with Shilingi Moves means shaping a financially stronger Kenya, one informed decision at a time.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-                        <a
-                            href="mailto:partnerships@shilingimoves.com"
-                            className="px-8 md:px-10 py-3.5 md:py-4 bg-white text-primary-900 font-bold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all text-base md:text-lg inline-flex items-center justify-center gap-2"
-                        >
-                            <Mail size={20} /> Email Us
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                        {[
+                            { label: 'Become a Partner', variant: 'primary', href: 'mailto:partnerships@shilingimoves.com', icon: Mail },
+                            { label: 'Call Us Now', variant: 'secondary', href: 'tel:+254700000000', icon: Phone },
+                            { label: 'Explore Dashboard', variant: 'outline', href: '/dashboard' },
+                            { label: 'Compare Options', variant: 'outline', href: '/compare' },
+                            { label: 'Meet Advisors', variant: 'outline', href: '/advisors' },
+                            { label: 'Try Smart Tools', variant: 'outline', href: '/tools' },
+                            { label: 'Join Community', variant: 'outline', href: '/community' },
+                            { label: 'View Impact', variant: 'outline', href: '#impact' }
+                        ].map((btn, i) => (
+                            <a
+                                key={i}
+                                href={btn.href}
+                                className={`px-6 py-5 rounded-2xl font-bold transition-all text-center flex items-center justify-center gap-2 ${
+                                    btn.variant === 'primary' 
+                                    ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/20 hover:bg-primary-500 hover:-translate-y-1' 
+                                    : btn.variant === 'secondary'
+                                    ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500 hover:-translate-y-1'
+                                    : 'bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20'
+                                }`}
+                            >
+                                {btn.icon && <btn.icon size={18} />}
+                                {btn.label}
+                            </a>
+                        ))}
+                    </div>
+                    
+                    <div className="mt-20 pt-10 border-t border-white/5 flex flex-wrap justify-center gap-8 text-gray-500 text-sm font-medium uppercase tracking-widest">
+                        <a href="mailto:partnerships@shilingimoves.com" className="hover:text-primary-400 transition-colors flex items-center gap-2">
+                             <Mail size={16} /> partnerships@shilingimoves.com
                         </a>
-                        <a
-                            href="tel:+254700000000"
-                            className="px-8 md:px-10 py-3.5 md:py-4 bg-emerald-500 text-white font-bold rounded-full border border-emerald-400 hover:bg-emerald-400 transition-all text-base md:text-lg inline-flex items-center justify-center gap-2 shadow-lg"
-                        >
-                            <Phone size={20} /> Call Us
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-800"></div>
+                        <a href="tel:+254700000000" className="hover:text-primary-400 transition-colors flex items-center gap-2">
+                            <Phone size={16} /> +254 700 000 000
                         </a>
                     </div>
-                    <p className="mt-5 md:mt-6 text-xs md:text-sm text-primary-300">
-                        partnerships@shilingimoves.com • +254 700 000 000
-                    </p>
                 </div>
             </section>
 
