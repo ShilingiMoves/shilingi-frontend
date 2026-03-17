@@ -15,15 +15,19 @@ function toNumber(value) {
 }
 
 function normaliseDebt(rawDebt, index = 0) {
+    const currentBalance = toNumber(
+        rawDebt?.current_balance ?? rawDebt?.currentBalance ?? rawDebt?.balance ?? rawDebt?.remainingBalance ?? rawDebt?.amount,
+    );
+
     return {
         id: rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
-        name: rawDebt?.name ?? rawDebt?.title ?? rawDebt?.creditor ?? 'Untitled debt',
-        creditor: rawDebt?.creditor ?? rawDebt?.name ?? rawDebt?.title ?? 'Unknown creditor',
-        balance: toNumber(rawDebt?.balance ?? rawDebt?.remainingBalance ?? rawDebt?.amount ?? rawDebt?.currentBalance),
+        name: rawDebt?.name ?? rawDebt?.title ?? rawDebt?.creditor_name ?? rawDebt?.creditor ?? 'Untitled debt',
+        creditor: rawDebt?.creditor_name ?? rawDebt?.creditor ?? rawDebt?.name ?? rawDebt?.title ?? 'Unknown creditor',
+        balance: currentBalance,
         interestRate: toNumber(rawDebt?.interestRate ?? rawDebt?.interest_rate ?? rawDebt?.apr),
         minimumPayment: toNumber(rawDebt?.minimumPayment ?? rawDebt?.minimum_payment ?? rawDebt?.monthlyPayment),
         dueDate: rawDebt?.dueDate ?? rawDebt?.due_date ?? '',
-        status: rawDebt?.status ?? (toNumber(rawDebt?.balance ?? rawDebt?.remainingBalance ?? rawDebt?.amount) > 0 ? 'active' : 'paid'),
+        status: rawDebt?.status ?? (currentBalance > 0 ? 'active' : 'paid'),
         notes: rawDebt?.notes ?? rawDebt?.description ?? '',
     };
 }
@@ -96,15 +100,24 @@ function buildRequestOptions(method, body) {
 }
 
 function prepareDebtPayload(formValues) {
+    const balance = toNumber(formValues.balance);
+    const minimumPayment = toNumber(formValues.minimumPayment);
+    const interestRate = toNumber(formValues.interestRate);
+
     return {
         name: formValues.name,
-        creditor: formValues.creditor,
-        balance: toNumber(formValues.balance),
-        interestRate: toNumber(formValues.interestRate),
-        minimumPayment: toNumber(formValues.minimumPayment),
-        dueDate: formValues.dueDate,
+        creditor_name: formValues.creditor,
+        original_amount: balance,
+        current_balance: balance,
+        interest_rate: interestRate,
+        minimum_payment: minimumPayment,
+        due_date: formValues.dueDate,
         status: formValues.status,
         notes: formValues.notes,
+        currency: formValues.currency,
+        debt_type: formValues.debtType,
+        payment_frequency: formValues.paymentFrequency,
+        start_date: formValues.startDate,
     };
 }
 
