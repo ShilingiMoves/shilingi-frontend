@@ -31,8 +31,11 @@ async function parseResponse(response) {
 }
 
 function storeTokens(payload) {
-    const accessToken = payload?.access || payload?.access_token || payload?.token || payload?.jwt;
-    const refreshToken = payload?.refresh || payload?.refresh_token;
+    // Some endpoints wrap the response in a 'data' object
+    const source = payload?.data || payload;
+    
+    const accessToken = source?.access || source?.access_token || source?.token || source?.jwt || source?.access_token;
+    const refreshToken = source?.refresh || source?.refresh_token;
 
     if (!accessToken) {
         return false;

@@ -1,0 +1,9 @@
+{
+    "email": "debug_user_3@example.com",
+    "password": "Password123!",
+    "password_confirm": "Password123!",
+    "first_name": "Debug",
+    "last_name": "User",
+    "phone_number": "+254700000000",
+    "default_currency": "KES"
+}
