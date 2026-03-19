@@ -31,10 +31,10 @@ async function parseResponse(response) {
 }
 
 function storeTokens(payload) {
-    // Some endpoints wrap the response in a 'data' object
-    const source = payload?.data || payload;
+    // Some endpoints wrap tokens in 'data.tokens' or just 'data'
+    const source = payload?.data?.tokens || payload?.data || payload;
     
-    const accessToken = source?.access || source?.access_token || source?.token || source?.jwt || source?.access_token;
+    const accessToken = source?.access || source?.access_token || source?.token || source?.jwt;
     const refreshToken = source?.refresh || source?.refresh_token;
 
     if (!accessToken) {
