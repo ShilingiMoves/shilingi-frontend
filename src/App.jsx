@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
 import Home from './pages/Home';
@@ -40,16 +40,22 @@ function AppLayout() {
             <main className="flex-grow">
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/dashboard" element={
-                        <ProtectedRoute>
-                            <DashboardPage />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/debts" element={
-                        <ProtectedRoute>
-                            <DashboardPage initialSection="debt" />
-                        </ProtectedRoute>
-                    } />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute>
+                                <DashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/debts"
+                        element={
+                            <ProtectedRoute>
+                                <Navigate to="/dashboard" replace />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route path="/learn" element={<LearnPage />} />
                     <Route path="/compare" element={<ComparePage />} />
                     <Route path="/tools" element={<ToolsPage />} />

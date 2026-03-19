@@ -1,11 +1,10 @@
 import { setDebtApiToken } from './debtApi';
 
-const DEFAULT_API_URL = '';
-const API_URL = import.meta.env.PROD 
-    ? 'https://shilingibackend-production.up.railway.app' 
-    : ''; 
-const LOGIN_ENDPOINT = `${API_URL}/api/v1/auth/login/`;
-const REGISTER_ENDPOINT = `${API_URL}/api/v1/auth/register/`;
+const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
+const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+const LOGIN_ENDPOINT = import.meta.env.VITE_LOGIN_ENDPOINT || `${API_URL}/api/v1/auth/login/`;
+const REGISTER_ENDPOINT = import.meta.env.VITE_REGISTER_ENDPOINT || `${API_URL}/api/v1/auth/register/`;
+const PROFILE_ENDPOINT = import.meta.env.VITE_PROFILE_ENDPOINT || `${API_URL}/api/v1/users/me/`;
 const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';
 const REFRESH_STORAGE_KEY = import.meta.env.VITE_REFRESH_TOKEN_STORAGE_KEY || 'shilingi_refresh_token';
 
@@ -33,9 +32,7 @@ async function parseResponse(response) {
 }
 
 function storeTokens(payload) {
-    // Some endpoints wrap tokens in 'data.tokens' or just 'data'
     const source = payload?.data?.tokens || payload?.data || payload;
-    
     const accessToken = source?.access || source?.access_token || source?.token || source?.jwt;
     const refreshToken = source?.refresh || source?.refresh_token;
 
@@ -53,6 +50,12 @@ function storeTokens(payload) {
     return true;
 }
 
+function clearAuthStorage() {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_STORAGE_KEY);
+    setDebtApiToken('');
+}
+
 export async function loginUser(credentials) {
     const response = await fetch(LOGIN_ENDPOINT, {
         method: 'POST',
@@ -64,11 +67,11 @@ export async function loginUser(credentials) {
 
     const payload = await parseResponse(response);
     const success = storeTokens(payload);
-    
+
     if (!success) {
         throw new Error('Login response did not contain a valid authentication token.');
     }
-    
+
     return payload;
 }
 
@@ -87,15 +90,16 @@ export async function registerUser(payload) {
 
 export async function getUserProfile() {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+
     if (!token) {
         throw new Error('No access token found');
     }
 
-    const response = await fetch(`${API_URL}/api/v1/users/me/`, {
+    const response = await fetch(PROFILE_ENDPOINT, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
         },
     });
 
@@ -104,8 +108,7 @@ export async function getUserProfile() {
 }
 
 export function logoutUser() {
-    setDebtApiToken('');
-    localStorage.clear(); // Clear all to be safe
+    clearAuthStorage();
 }
 
 export function hasStoredAccessToken() {

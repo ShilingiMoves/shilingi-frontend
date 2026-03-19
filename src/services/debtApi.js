@@ -1,7 +1,5 @@
-const DEFAULT_API_URL = '';
-const API_URL = import.meta.env.PROD 
-    ? 'https://shilingibackend-production.up.railway.app' 
-    : ''; 
+const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
+const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
 const DEBTS_ENDPOINT = `${API_URL}/api/v1/debts/`;
 const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';
 const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
@@ -89,7 +87,7 @@ async function parseJsonResponse(response) {
     }
 
     if (!response.ok) {
-        const message = payload?.message || payload?.error || `Request failed with status ${response.status}`;
+        const message = payload?.message || payload?.error || payload?.detail || `Request failed with status ${response.status}`;
         throw new Error(message);
     }
 
@@ -115,7 +113,7 @@ function prepareDebtPayload(formValues) {
     return {
         name: formValues.name,
         creditor_name: formValues.creditor,
-        original_amount: balance.toString(), // Backend expects string/decimal
+        original_amount: balance.toString(),
         current_balance: balance.toString(),
         interest_rate: interestRate.toString(),
         minimum_payment: minimumPayment.toString(),

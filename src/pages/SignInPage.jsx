@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { hasStoredAccessToken, loginUser } from '../services/authApi';
 
 const SignInPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [formValues, setFormValues] = useState({
         email: '',
         password: '',
@@ -34,7 +35,8 @@ const SignInPage = () => {
                 password: formValues.password,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
-            navigate('/debts');
+            const redirectTo = location.state?.from?.pathname || '/dashboard';
+            navigate(redirectTo, { replace: true });
         } catch (err) {
             setError(err.message || 'We could not sign you in right now.');
         } finally {
