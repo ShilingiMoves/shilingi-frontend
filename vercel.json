@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://shilingibackend-production.up.railway.app/api/:path*"
+    }
+  ],
   "routes": [
     {
       "handle": "filesystem"
