@@ -61,7 +61,12 @@ export async function loginUser(credentials) {
     });
 
     const payload = await parseResponse(response);
-    storeTokens(payload);
+    const success = storeTokens(payload);
+    
+    if (!success) {
+        throw new Error('Login response did not contain a valid authentication token.');
+    }
+    
     return payload;
 }
 
@@ -74,7 +79,8 @@ export async function registerUser(payload) {
         body: JSON.stringify(payload),
     });
 
-    return parseResponse(response);
+    const result = await parseResponse(response);
+    return result?.data || result;
 }
 
 export async function getUserProfile() {
@@ -91,7 +97,8 @@ export async function getUserProfile() {
         },
     });
 
-    return parseResponse(response);
+    const result = await parseResponse(response);
+    return result?.data || result;
 }
 
 export function logoutUser() {
@@ -103,5 +110,3 @@ export function logoutUser() {
 export function hasStoredAccessToken() {
     return Boolean(localStorage.getItem(TOKEN_STORAGE_KEY));
 }
-
-

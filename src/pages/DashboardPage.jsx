@@ -17,7 +17,7 @@ const DashboardPage = () => {
             } catch (err) {
                 console.error('Failed to fetch user profile:', err);
                 // Redirect to sign in if not authenticated
-                if (err.message.includes('token') || err.message.includes('401')) {
+                if (err.message.includes('token') || err.message.includes('401') || err.message.includes('Unauthorized')) {
                     navigate('/signin');
                 }
             }
