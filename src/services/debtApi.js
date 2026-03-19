@@ -20,14 +20,15 @@ function normaliseDebt(rawDebt, index = 0) {
     );
 
     return {
-        id: rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
+        id: rawDebt?.uuid ?? rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
+        uuid: rawDebt?.uuid ?? rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
         name: rawDebt?.name ?? rawDebt?.title ?? rawDebt?.creditor_name ?? rawDebt?.creditor ?? 'Untitled debt',
         creditor: rawDebt?.creditor_name ?? rawDebt?.creditor ?? rawDebt?.name ?? rawDebt?.title ?? 'Unknown creditor',
         balance: currentBalance,
         interestRate: toNumber(rawDebt?.interestRate ?? rawDebt?.interest_rate ?? rawDebt?.apr),
         minimumPayment: toNumber(rawDebt?.minimumPayment ?? rawDebt?.minimum_payment ?? rawDebt?.monthlyPayment),
         dueDate: rawDebt?.dueDate ?? rawDebt?.due_date ?? '',
-        status: rawDebt?.status ?? (currentBalance > 0 ? 'active' : 'paid'),
+        status: rawDebt?.status ?? (currentBalance > 0 ? 'ACTIVE' : 'PAID_OFF'),
         notes: rawDebt?.notes ?? rawDebt?.description ?? '',
         debtType: rawDebt?.debt_type ?? rawDebt?.debtType ?? 'PERSONAL_LOAN',
         paymentFrequency: rawDebt?.payment_frequency ?? rawDebt?.paymentFrequency ?? 'MONTHLY',
@@ -41,6 +42,14 @@ function normaliseDebt(rawDebt, index = 0) {
 function extractDebtCollection(payload) {
     if (Array.isArray(payload)) {
         return payload;
+    }
+
+    if (Array.isArray(payload?.data?.debts)) {
+        return payload.data.debts;
+    }
+
+    if (Array.isArray(payload?.data?.results)) {
+        return payload.data.results;
     }
 
     if (Array.isArray(payload?.data)) {
@@ -87,7 +96,10 @@ async function parseJsonResponse(response) {
     }
 
     if (!response.ok) {
-        const message = payload?.message || payload?.error || payload?.detail || `Request failed with status ${response.status}`;
+        const firstFieldError = payload?.errors
+            ? Object.values(payload.errors).flat().find(Boolean)
+            : null;
+        const message = payload?.message || payload?.error || payload?.detail || firstFieldError || `Request failed with status ${response.status}`;
         throw new Error(message);
     }
 
@@ -108,17 +120,18 @@ function buildRequestOptions(method, body) {
 function prepareDebtPayload(formValues) {
     const balance = toNumber(formValues.balance);
     const minimumPayment = toNumber(formValues.minimumPayment);
-    const interestRate = toNumber(formValues.interestRate);
+    const interestRate = formValues.interestRate === '' ? null : toNumber(formValues.interestRate);
+    const status = formValues.status || 'ACTIVE';
 
     return {
         name: formValues.name,
         creditor_name: formValues.creditor,
         original_amount: balance.toString(),
         current_balance: balance.toString(),
-        interest_rate: interestRate.toString(),
+        interest_rate: interestRate === null ? null : interestRate.toString(),
         minimum_payment: minimumPayment.toString(),
         due_date: formValues.dueDate || null,
-        status: formValues.status,
+        status,
         notes: formValues.notes,
         currency: formValues.currency || 'KES',
         debt_type: formValues.debtType || 'PERSONAL_LOAN',
@@ -152,7 +165,7 @@ export async function createDebt(formValues) {
 
 export async function updateDebt(debtId, formValues) {
     const debtUrl = `${DEBTS_ENDPOINT}${debtId}/`;
-    const response = await fetch(debtUrl, buildRequestOptions('PUT', prepareDebtPayload(formValues)));
+    const response = await fetch(debtUrl, buildRequestOptions('PATCH', prepareDebtPayload(formValues)));
     const payload = await parseJsonResponse(response);
     return normaliseDebt(payload?.data ?? payload?.debt ?? payload);
 }
@@ -171,7 +184,7 @@ export function calculateDebtSummary(debts) {
         ? debts.reduce((sum, debt) => sum + (debt.balance * debt.interestRate), 0) / totalBalance
         : 0;
 
-    const activeDebts = debts.filter((debt) => debt.status !== 'paid').length;
+    const activeDebts = debts.filter((debt) => debt.status !== 'PAID_OFF').length;
 
     return {
         totalBalance,

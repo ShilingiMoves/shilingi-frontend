@@ -8,7 +8,7 @@ const emptyForm = {
     interestRate: '',
     minimumPayment: '',
     dueDate: '',
-    status: 'active',
+    status: 'ACTIVE',
     notes: '',
     debtType: 'PERSONAL_LOAN',
     paymentFrequency: 'MONTHLY',
@@ -30,7 +30,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
                 interestRate: initialValues.interestRate ?? '',
                 minimumPayment: initialValues.minimumPayment ?? '',
                 dueDate: initialValues.dueDate ?? '',
-                status: initialValues.status ?? 'active',
+                status: initialValues.status ?? 'ACTIVE',
                 notes: initialValues.notes ?? '',
                 debtType: initialValues.debtType ?? 'PERSONAL_LOAN',
                 paymentFrequency: initialValues.paymentFrequency ?? 'MONTHLY',
@@ -95,9 +95,15 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
                     >
                         <option value="PERSONAL_LOAN">Personal Loan</option>
                         <option value="CREDIT_CARD">Credit Card</option>
+                        <option value="MOBILE_LOAN">Mobile Loan</option>
+                        <option value="SACCO_LOAN">SACCO Loan</option>
+                        <option value="BANK_LOAN">Bank Loan</option>
                         <option value="MORTGAGE">Mortgage</option>
                         <option value="CAR_LOAN">Car Loan</option>
                         <option value="STUDENT_LOAN">Student Loan</option>
+                        <option value="BUSINESS_LOAN">Business Loan</option>
+                        <option value="FAMILY_FRIEND">Family or Friend</option>
+                        <option value="HIRE_PURCHASE">Hire Purchase</option>
                         <option value="OTHER">Other</option>
                     </select>
                 </label>
@@ -117,10 +123,9 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
                         className="rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500"
                     >
                         <option value="WEEKLY">Weekly</option>
-                        <option value="BI_WEEKLY">Bi-weekly</option>
+                        <option value="BIWEEKLY">Every 2 weeks</option>
                         <option value="MONTHLY">Monthly</option>
                         <option value="QUARTERLY">Quarterly</option>
-                        <option value="ANNUALLY">Annually</option>
                     </select>
                 </label>
 
@@ -135,9 +140,10 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
                         onChange={handleChange}
                         className="rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500"
                     >
-                        <option value="active">Active</option>
-                        <option value="paid">Paid</option>
-                        <option value="in-review">In review</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="PAID_OFF">Paid off</option>
+                        <option value="PAUSED">Paused</option>
+                        <option value="DEFAULTED">Defaulted</option>
                     </select>
                 </label>
 
