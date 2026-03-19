@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Briefcase, CircleDollarSign, ReceiptText, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, CircleDollarSign, Receipt, ShieldCheck } from 'lucide-react';
 import CashflowSummaryCards from './CashflowSummaryCards';
 
 const emptySummary = {
@@ -43,7 +43,7 @@ const CashflowManagerPanel = () => {
                             text="Record salary, business income, side hustles, and other inflows in one place so your monthly picture stays clear."
                         />
                         <FeatureCard
-                            icon={ReceiptText}
+                            icon={Receipt}
                             title="Expense tracking"
                             text="Capture spending clearly so you can understand your habits, protect priorities, and free up room for savings and debt reduction."
                         />
