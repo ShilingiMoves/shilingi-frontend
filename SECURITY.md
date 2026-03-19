@@ -31,6 +31,7 @@ Before connecting a new endpoint in the frontend, confirm:
 - On logout, remove only auth storage keys.
 - Do not log tokens to the console.
 - If a protected request returns `401`, redirect the user back to sign in.
+- Do not rely on stale UI state after `401`; clear stored session state immediately.
 
 ## Frontend review steps before each release
 
@@ -48,3 +49,4 @@ Before connecting a new endpoint in the frontend, confirm:
 - Add user-facing handling for `401`, `403`, and validation errors.
 - Add backend-confirmed profile endpoint validation.
 - Add automated checks for linting, dependency review, and production build verification.
+- Move JWT storage from `localStorage` to secure `HttpOnly` cookies when backend support is ready. This is the biggest frontend auth hardening step still outstanding.

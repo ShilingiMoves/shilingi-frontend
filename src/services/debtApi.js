@@ -1,10 +1,10 @@
+import { getAccessToken, handleUnauthorizedSession, setAccessToken } from './sessionManager';
+
 const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
 const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
 const DEBTS_ENDPOINT = `${API_URL}/api/v1/debts/`;
-const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';
 const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
 const AUTH_HEADER_NAME = import.meta.env.VITE_AUTH_HEADER_NAME || 'Authorization';
-
 function toNumber(value) {
     if (value === null || value === undefined || value === '') {
         return 0;
@@ -68,7 +68,7 @@ function extractDebtCollection(payload) {
 }
 
 function getAuthToken() {
-    return localStorage.getItem(TOKEN_STORAGE_KEY) || import.meta.env.VITE_AUTH_TOKEN || '';
+    return getAccessToken() || import.meta.env.VITE_AUTH_TOKEN || '';
 }
 
 function buildAuthHeaders() {
@@ -96,6 +96,10 @@ async function parseJsonResponse(response) {
     }
 
     if (!response.ok) {
+        if (response.status === 401) {
+            handleUnauthorizedSession();
+        }
+
         const firstFieldError = payload?.errors
             ? Object.values(payload.errors).flat().find(Boolean)
             : null;
@@ -143,12 +147,7 @@ function prepareDebtPayload(formValues) {
 }
 
 export function setDebtApiToken(token) {
-    if (token) {
-        localStorage.setItem(TOKEN_STORAGE_KEY, token);
-        return;
-    }
-
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    setAccessToken(token);
 }
 
 export async function getDebts() {
