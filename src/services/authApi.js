@@ -7,6 +7,7 @@ const REGISTER_ENDPOINT = import.meta.env.VITE_REGISTER_ENDPOINT || `${API_URL}/
 const PROFILE_ENDPOINT = import.meta.env.VITE_PROFILE_ENDPOINT || `${API_URL}/api/v1/users/me/`;
 const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';
 const REFRESH_STORAGE_KEY = import.meta.env.VITE_REFRESH_TOKEN_STORAGE_KEY || 'shilingi_refresh_token';
+const USER_STORAGE_KEY = import.meta.env.VITE_AUTH_USER_STORAGE_KEY || 'shilingi_user_profile';
 
 async function parseResponse(response) {
     const rawText = await response.text();
@@ -53,7 +54,20 @@ function storeTokens(payload) {
 function clearAuthStorage() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(REFRESH_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
     setDebtApiToken('');
+}
+
+function extractUser(payload) {
+    return payload?.data?.user || payload?.user || payload?.data || payload || null;
+}
+
+function storeUserProfile(user) {
+    if (!user?.email) {
+        return;
+    }
+
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
 export async function loginUser(credentials) {
@@ -72,6 +86,8 @@ export async function loginUser(credentials) {
         throw new Error('Login response did not contain a valid authentication token.');
     }
 
+    storeUserProfile(extractUser(payload));
+
     return payload;
 }
 
@@ -85,6 +101,7 @@ export async function registerUser(payload) {
     });
 
     const result = await parseResponse(response);
+    storeUserProfile(extractUser(result));
     return result?.data || result;
 }
 
@@ -104,7 +121,9 @@ export async function getUserProfile() {
     });
 
     const result = await parseResponse(response);
-    return result?.data || result;
+    const user = extractUser(result);
+    storeUserProfile(user);
+    return user;
 }
 
 export function logoutUser() {
@@ -113,4 +132,18 @@ export function logoutUser() {
 
 export function hasStoredAccessToken() {
     return Boolean(localStorage.getItem(TOKEN_STORAGE_KEY));
+}
+
+export function getStoredUserProfile() {
+    const rawUser = localStorage.getItem(USER_STORAGE_KEY);
+
+    if (!rawUser) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(rawUser);
+    } catch {
+        return null;
+    }
 }

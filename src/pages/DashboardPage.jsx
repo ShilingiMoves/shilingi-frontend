@@ -4,7 +4,7 @@ import CashflowManagerPanel from '../components/dashboard/cashflow/CashflowManag
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
-import { getUserProfile, logoutUser } from '../services/authApi';
+import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 
 const sections = {
     debt: {
@@ -30,7 +30,7 @@ const sections = {
 const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [profile, setProfile] = useState(null);
+    const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [activeSection, setActiveSection] = useState('debt');
 
     useEffect(() => {

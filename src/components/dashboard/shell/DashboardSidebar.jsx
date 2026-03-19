@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownUp, ChevronLeft, Landmark, LogOut, User } from 'lucide-react';
+import { ArrowDownUp, ChevronLeft, Landmark, LogOut } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 
 const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection, onSelectSection }) => {
