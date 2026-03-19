@@ -18,6 +18,7 @@ import DashboardPage from './pages/DashboardPage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import { TrustPage } from './pages/PlaceholderPages';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function ScrollToTop() {
     const { pathname } = useLocation();
@@ -39,8 +40,16 @@ function AppLayout() {
             <main className="flex-grow">
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/debts" element={<DashboardPage initialSection="debt" />} />
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <DashboardPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/debts" element={
+                        <ProtectedRoute>
+                            <DashboardPage initialSection="debt" />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/learn" element={<LearnPage />} />
                     <Route path="/compare" element={<ComparePage />} />
                     <Route path="/tools" element={<ToolsPage />} />
