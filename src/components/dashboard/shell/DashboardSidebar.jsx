@@ -1,10 +1,25 @@
 import React from 'react';
-import { ChevronLeft, Landmark, LogOut } from 'lucide-react';
+import { ArrowDownUp, ChevronLeft, Landmark, LogOut } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 
-const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user }) => {
+const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection, onSelectSection }) => {
     const userInitial = user?.first_name ? user.first_name.charAt(0).toUpperCase() : 'U';
     const userName = user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'User account';
+
+    const navItems = [
+        {
+            id: 'debt',
+            label: 'Debt Management',
+            helper: 'Track and reduce what you owe',
+            icon: Landmark,
+        },
+        {
+            id: 'cashflow',
+            label: 'Cash Flow',
+            helper: 'Follow money in and out',
+            icon: ArrowDownUp,
+        },
+    ];
 
     return (
         <aside className={`flex flex-col bg-slate-950 text-white transition-all duration-300 ${collapsed ? 'w-full lg:w-[96px]' : 'w-full lg:w-[268px]'}`}>
@@ -30,20 +45,31 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user }) => {
             </div>
 
             <nav className="flex-1 px-3 py-5">
-                <button
-                    type="button"
-                    className={`flex w-full items-center rounded-2xl bg-primary-600 text-left shadow-lg shadow-primary-900/30 ${collapsed ? 'justify-center px-0 py-4' : 'gap-3 px-4 py-3'}`}
-                >
-                    <span className={`inline-flex items-center justify-center rounded-xl bg-white/15 ${collapsed ? 'h-12 w-12' : 'h-10 w-10'}`}>
-                        <Landmark size={19} />
-                    </span>
-                    {!collapsed && (
-                        <span>
-                            <span className="block text-sm font-semibold">Debt Management</span>
-                            <span className="block text-xs text-emerald-100">Track and reduce what you owe</span>
-                        </span>
-                    )}
-                </button>
+                <div className="space-y-3">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeSection === item.id;
+
+                        return (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => onSelectSection(item.id)}
+                                className={`flex w-full items-center rounded-2xl text-left transition-all ${isActive ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30' : 'bg-white/5 text-slate-200 hover:bg-white/10'} ${collapsed ? 'justify-center px-0 py-4' : 'gap-3 px-4 py-3'}`}
+                            >
+                                <span className={`inline-flex items-center justify-center rounded-xl ${isActive ? 'bg-white/15' : 'bg-white/10'} ${collapsed ? 'h-12 w-12' : 'h-10 w-10'}`}>
+                                    <Icon size={19} />
+                                </span>
+                                {!collapsed && (
+                                    <span>
+                                        <span className="block text-sm font-semibold">{item.label}</span>
+                                        <span className={`block text-xs ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>{item.helper}</span>
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
             </nav>
 
             <div className="border-t border-white/10 px-4 py-5">
