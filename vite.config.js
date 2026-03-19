@@ -6,6 +6,13 @@ export default defineConfig({
   assetsInclude: ['**/*.PNG'],
   server: {
     port: 5173,
-    open: true
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'https://shilingibackend-production.up.railway.app',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   }
 })
