@@ -20,12 +20,6 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
             helper: 'Follow money in and out',
             icon: ArrowDownUp,
         },
-        {
-            id: 'user',
-            label: 'Your Account',
-            helper: 'Update profile and security',
-            icon: User,
-        },
     ];
 
     return (
