@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BriefcaseBusiness, CircleDollarSign, ReceiptText, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, CircleDollarSign, ReceiptText, ShieldCheck } from 'lucide-react';
 import CashflowSummaryCards from './CashflowSummaryCards';
 
 const emptySummary = {
@@ -38,7 +38,7 @@ const CashflowManagerPanel = () => {
 
                     <div className="mt-8 grid gap-4 md:grid-cols-2">
                         <FeatureCard
-                            icon={BriefcaseBusiness}
+                            icon={Briefcase}
                             title="Income tracking"
                             text="Record salary, business income, side hustles, and other inflows in one place so your monthly picture stays clear."
                         />
