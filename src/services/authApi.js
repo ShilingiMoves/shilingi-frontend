@@ -1,7 +1,9 @@
 import { setDebtApiToken } from './debtApi';
 
 const DEFAULT_API_URL = '';
-const API_URL = '';
+const API_URL = import.meta.env.PROD 
+    ? 'https://shilingibackend-production.up.railway.app' 
+    : ''; 
 const LOGIN_ENDPOINT = `${API_URL}/api/v1/auth/login/`;
 const REGISTER_ENDPOINT = `${API_URL}/api/v1/auth/register/`;
 const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';

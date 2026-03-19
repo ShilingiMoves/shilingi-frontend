@@ -1,5 +1,7 @@
 const DEFAULT_API_URL = '';
-const API_URL = '';
+const API_URL = import.meta.env.PROD 
+    ? 'https://shilingibackend-production.up.railway.app' 
+    : ''; 
 const DEBTS_ENDPOINT = `${API_URL}/api/v1/debts/`;
 const TOKEN_STORAGE_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shilingi_access_token';
 const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
