@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CashflowManagerPanel from '../components/dashboard/cashflow/CashflowManagerPanel';
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
+import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import { getUserProfile, logoutUser } from '../services/authApi';
 
 const sections = {
@@ -17,6 +18,12 @@ const sections = {
         title: 'Understand what comes in, what goes out, and what you can direct with purpose.',
         description: 'Build a clear money rhythm by tracking income and expenses in one place, then use that clarity to budget, save, and reduce debt with confidence.',
         component: CashflowManagerPanel,
+    },
+    user: {
+        eyebrow: 'Your account',
+        title: 'Keep your profile, preferences, and security settings up to date.',
+        description: 'Manage the personal details and financial preferences that shape how Shilingi Moves supports you across the platform.',
+        component: UserProfilePanel,
     },
 };
 
