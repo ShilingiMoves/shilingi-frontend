@@ -26,15 +26,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://shilingibackend-production.up.railway.app/api/:path*"
-    }
-  ],
-  "routes": [
-    {
-      "handle": "filesystem"
     },
     {
-      "src": "/.*",
-      "dest": "/index.html"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
