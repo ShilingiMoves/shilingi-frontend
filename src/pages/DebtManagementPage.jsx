@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CircleOff, Loader2, RefreshCcw, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import DebtForm from '../components/DebtForm';
-import DebtList from '../components/DebtList';
-import DebtSummaryCards from '../components/DebtSummaryCards';
+import DebtForm from '../components/dashboard/debt/DebtForm';
+import DebtList from '../components/dashboard/debt/DebtList';
+import DebtSummaryCards from '../components/dashboard/debt/DebtSummaryCards';
 import {
     calculateDebtSummary,
     createDebt,

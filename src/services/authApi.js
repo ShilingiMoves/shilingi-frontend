@@ -74,6 +74,23 @@ export async function registerUser(payload) {
     return parseResponse(response);
 }
 
+export async function getUserProfile() {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!token) {
+        throw new Error('No access token found');
+    }
+
+    const response = await fetch(`${API_URL}/api/v1/users/me/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    return parseResponse(response);
+}
+
 export function logoutUser() {
     setDebtApiToken('');
     localStorage.removeItem(TOKEN_STORAGE_KEY);

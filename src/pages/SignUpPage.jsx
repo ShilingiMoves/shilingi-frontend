@@ -10,6 +10,7 @@ const SignUpPage = () => {
         first_name: '',
         last_name: '',
         email: '',
+        phone_number: '',
         password: '',
         password_confirm: '',
     });
@@ -37,7 +38,11 @@ const SignUpPage = () => {
 
         try {
             setIsSubmitting(true);
-            await registerUser(formValues);
+            // Include default_currency as 'KES' by default as required by backend
+            await registerUser({
+                ...formValues,
+                default_currency: 'KES',
+            });
             setSuccess('Your account is ready. You can now sign in and start taking control of your money.');
             setTimeout(() => navigate('/signin'), 1200);
         } catch (err) {
@@ -93,6 +98,9 @@ const SignUpPage = () => {
                         <Field label="Last name" name="last_name" value={formValues.last_name} onChange={handleChange} placeholder="Jarenga" required />
                         <div className="sm:col-span-2">
                             <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
+                        </div>
+                        <div className="sm:col-span-2">
+                            <Field label="Phone number (optional)" name="phone_number" value={formValues.phone_number} onChange={handleChange} placeholder="+254 700 000 000" />
                         </div>
                         <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a password" required />
                         <Field label="Confirm password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your password" required />

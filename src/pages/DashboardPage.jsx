@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
-import { logoutUser } from '../services/authApi';
+import { getUserProfile, logoutUser } from '../services/authApi';
 
 const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [profile, setProfile] = useState(null);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const userProfile = await getUserProfile();
+                setProfile(userProfile);
+            } catch (err) {
+                console.error('Failed to fetch user profile:', err);
+                // Redirect to sign in if not authenticated
+                if (err.message.includes('token') || err.message.includes('401')) {
+                    navigate('/signin');
+                }
+            }
+        };
+
+        fetchProfile();
+    }, [navigate]);
 
     const handleSignOut = () => {
         logoutUser();
@@ -19,6 +37,7 @@ const DashboardPage = () => {
                 collapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed((current) => !current)}
                 onSignOut={handleSignOut}
+                user={profile}
             />
 
             <main className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">

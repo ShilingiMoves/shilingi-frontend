@@ -29,6 +29,12 @@ function normaliseDebt(rawDebt, index = 0) {
         dueDate: rawDebt?.dueDate ?? rawDebt?.due_date ?? '',
         status: rawDebt?.status ?? (currentBalance > 0 ? 'active' : 'paid'),
         notes: rawDebt?.notes ?? rawDebt?.description ?? '',
+        debtType: rawDebt?.debt_type ?? rawDebt?.debtType ?? 'PERSONAL_LOAN',
+        paymentFrequency: rawDebt?.payment_frequency ?? rawDebt?.paymentFrequency ?? 'MONTHLY',
+        startDate: rawDebt?.start_date ?? rawDebt?.startDate ?? '',
+        isPriority: rawDebt?.is_priority ?? rawDebt?.isPriority ?? false,
+        accountNumber: rawDebt?.account_number ?? rawDebt?.accountNumber ?? '',
+        currency: rawDebt?.currency ?? 'KES',
     };
 }
 
@@ -107,17 +113,19 @@ function prepareDebtPayload(formValues) {
     return {
         name: formValues.name,
         creditor_name: formValues.creditor,
-        original_amount: balance,
-        current_balance: balance,
-        interest_rate: interestRate,
-        minimum_payment: minimumPayment,
-        due_date: formValues.dueDate,
+        original_amount: balance.toString(), // Backend expects string/decimal
+        current_balance: balance.toString(),
+        interest_rate: interestRate.toString(),
+        minimum_payment: minimumPayment.toString(),
+        due_date: formValues.dueDate || null,
         status: formValues.status,
         notes: formValues.notes,
-        currency: formValues.currency,
-        debt_type: formValues.debtType,
-        payment_frequency: formValues.paymentFrequency,
-        start_date: formValues.startDate,
+        currency: formValues.currency || 'KES',
+        debt_type: formValues.debtType || 'PERSONAL_LOAN',
+        payment_frequency: formValues.paymentFrequency || 'MONTHLY',
+        start_date: formValues.startDate || null,
+        is_priority: formValues.isPriority ?? false,
+        account_number: formValues.accountNumber || '',
     };
 }
 

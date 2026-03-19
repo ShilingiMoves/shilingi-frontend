@@ -30,6 +30,11 @@ const DebtList = ({ debts, onEdit, onDelete, deletingId }) => {
                                     <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-700">
                                         {debt.status}
                                     </span>
+                                    {debt.isPriority && (
+                                        <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-rose-700">
+                                            Priority
+                                        </span>
+                                    )}
                                     {debt.dueDate && (
                                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                                             <CalendarDays size={14} /> Due {debt.dueDate}
