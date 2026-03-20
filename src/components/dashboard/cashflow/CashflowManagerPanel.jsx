@@ -1,107 +1,119 @@
-import React from 'react';
-import { ArrowRight, Briefcase, CircleDollarSign, Receipt, ShieldCheck } from 'lucide-react';
-import CashflowSummaryCards from './CashflowSummaryCards';
-
-const emptySummary = {
-    monthlyIncome: 0,
-    monthlyExpenses: 0,
-    netCashflow: 0,
-    entriesTracked: 0,
-};
-
-const readinessSteps = [
-    'Add live cash flow endpoints to the Railway Swagger schema.',
-    'Confirm the income and expense request fields the frontend should send.',
-    'Confirm the response shape for list, create, update, delete, and summary.',
-    'Connect this workspace to the real API the same way we did with debt.',
-];
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, Info, Loader2 } from 'lucide-react';
+import CashflowAnalysisCard from './CashflowAnalysisCard';
+import CashflowExpenseList from './CashflowExpenseList';
+import CashflowHistoryCard from './CashflowHistoryCard';
+import CashflowIncomeList from './CashflowIncomeList';
+import CashflowOverviewCards from './CashflowOverviewCards';
+import {
+    getCashflowAnalysis,
+    getCashflowHistory,
+    getCashflowSummary,
+    getExpenseEntries,
+    getIncomeEntries,
+} from '../../../services/cashflowApi';
 
 const CashflowManagerPanel = () => {
+    const [summary, setSummary] = useState(null);
+    const [analysis, setAnalysis] = useState(null);
+    const [history, setHistory] = useState(null);
+    const [incomes, setIncomes] = useState([]);
+    const [expenses, setExpenses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const loadCashflowWorkspace = async () => {
+            try {
+                setLoading(true);
+                setError('');
+
+                const [summaryData, analysisData, historyData, incomeData, expenseData] = await Promise.all([
+                    getCashflowSummary(),
+                    getCashflowAnalysis(),
+                    getCashflowHistory(),
+                    getIncomeEntries(),
+                    getExpenseEntries(),
+                ]);
+
+                setSummary(summaryData);
+                setAnalysis(analysisData);
+                setHistory(historyData);
+                setIncomes(incomeData.incomes);
+                setExpenses(expenseData.expenses);
+            } catch (err) {
+                setError(err.message || 'We could not load your cash flow workspace right now.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadCashflowWorkspace();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex min-h-[260px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+                <div className="text-center">
+                    <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary-600" />
+                    <p className="mt-4 text-sm font-medium text-slate-600">Loading your cash flow workspace...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
-            <CashflowSummaryCards summary={emptySummary} />
-
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-                    <div className="flex items-start gap-4">
-                        <div className="rounded-3xl bg-primary-50 p-4 text-primary-700">
-                            <CircleDollarSign size={28} />
-                        </div>
+            {error && (
+                <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle size={18} className="mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">Cash flow workspace</p>
-                            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">See what is coming in, what is going out, and what is left to work with.</h2>
-                            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                                This section is ready on the frontend, but the live cash flow API routes are not yet published in the Railway Swagger schema. As soon as those routes are exposed, we can connect this page and begin tracking income and expenses end to end.
-                            </p>
+                            <p className="font-semibold">We could not load your cash flow view.</p>
+                            <p className="mt-1">{error}</p>
                         </div>
                     </div>
+                </div>
+            )}
 
-                    <div className="mt-8 grid gap-4 md:grid-cols-2">
-                        <FeatureCard
-                            icon={Briefcase}
-                            title="Income tracking"
-                            text="Record salary, business income, side hustles, and other inflows in one place so your monthly picture stays clear."
-                        />
-                        <FeatureCard
-                            icon={Receipt}
-                            title="Expense tracking"
-                            text="Capture spending clearly so you can understand your habits, protect priorities, and free up room for savings and debt reduction."
-                        />
+            <CashflowOverviewCards summary={summary} />
+
+            <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 shadow-sm">
+                <div className="flex items-start gap-3">
+                    <Info size={18} className="mt-0.5 shrink-0" />
+                    <div>
+                        <p className="font-semibold">Income and expense data are live.</p>
+                        <p className="mt-1">
+                            Add and edit forms are intentionally held back for now because the backend category endpoints return `uuid` values, while the create APIs currently expect integer primary keys for `category`. Once backend aligns that field, we can safely enable full cash flow CRUD.
+                        </p>
                     </div>
+                </div>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                <CashflowAnalysisCard analysis={analysis} />
+                <CashflowHistoryCard history={history} />
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+                <section className="space-y-4">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income</p>
+                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Money coming in</h3>
+                    </div>
+                    <CashflowIncomeList incomes={incomes} />
                 </section>
 
                 <section className="space-y-4">
-                    <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50/80 p-6 shadow-sm">
-                        <div className="flex items-start gap-3">
-                            <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
-                            <div>
-                                <h3 className="font-bold text-emerald-900">Good foundation in place</h3>
-                                <p className="mt-2 text-sm leading-6 text-emerald-800">
-                                    Your auth flow and debt module are already working. That gives us a secure pattern to reuse once the backend team publishes the cash flow endpoints.
-                                </p>
-                            </div>
-                        </div>
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Expenses</p>
+                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Money going out</h3>
                     </div>
-
-                    <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-                        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">Next integration steps</p>
-                        <div className="mt-5 space-y-4">
-                            {readinessSteps.map((step, index) => (
-                                <div key={step} className="flex items-start gap-3">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-bold text-white">
-                                        {index + 1}
-                                    </div>
-                                    <p className="pt-1 text-sm leading-6 text-slate-600">{step}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="rounded-[2rem] border border-dashed border-slate-300 bg-slate-50 p-6 shadow-sm">
-                        <div className="flex items-start gap-3">
-                            <ArrowRight className="mt-1 h-5 w-5 text-slate-600" />
-                            <div>
-                                <h3 className="font-bold text-slate-900">What we will plug in next</h3>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
-                                    Once Swagger exposes the cash flow contract, we will add a `cashflowApi.js` service, connect summary cards to live totals, and wire create, edit, and delete flows into this module.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <CashflowExpenseList expenses={expenses} />
                 </section>
             </div>
         </div>
     );
 };
-
-const FeatureCard = ({ icon: Icon, title, text }) => (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
-        <div className="inline-flex rounded-2xl bg-white p-3 text-primary-700 shadow-sm">
-            <Icon size={20} />
-        </div>
-        <h3 className="mt-4 text-lg font-bold text-slate-900">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-    </div>
-);
 
 export default CashflowManagerPanel;
