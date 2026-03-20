@@ -85,9 +85,9 @@ const CashflowManagerPanel = () => {
                 <div className="flex items-start gap-3">
                     <Info size={18} className="mt-0.5 shrink-0" />
                     <div>
-                        <p className="font-semibold">This workspace is live for visibility and analysis.</p>
+                        <p className="font-semibold">Your cash flow view is ready.</p>
                         <p className="mt-1">
-                            Income and expense data are already connected. We are holding back add and edit actions until the backend category mapping is aligned, so users do not run into broken form submissions during testing.
+                            Your income and expense activity is already connected, so you can start reviewing how money moves through your month. More action tools, including add and edit options, will be available soon.
                         </p>
                     </div>
                 </div>
