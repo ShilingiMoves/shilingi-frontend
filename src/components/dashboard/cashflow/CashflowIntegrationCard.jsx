@@ -2,37 +2,37 @@ import React from 'react';
 
 const flowSteps = [
     {
-        title: '1. Record income here',
-        description: 'Salary, business income, rent, gifts, and one-time money coming in belong in the Cash Flow module.',
+        title: 'Income gives the month its foundation',
+        description: 'Salary, business income, rent, gifts, and one-time payments help define the financial room you have to work with each month.',
     },
     {
-        title: '2. Expenses sync from Budget',
-        description: 'Spending is tracked in the Budget module, then reflected here so cash flow stays connected to how money is actually used.',
+        title: 'Spending reveals where your money is going',
+        description: 'Your expenses flow in from the Budget module so this view always reflects how your money is being used in real life.',
     },
     {
-        title: '3. We calculate your position',
-        description: 'Shilingi Moves turns income and expenses into net cash flow, savings rate, and monthly trend signals.',
+        title: 'Your monthly position becomes clear',
+        description: 'Shilingi Moves turns income and spending into net cash flow, savings rate, and trend signals that help you act early.',
     },
     {
-        title: '4. It feeds bigger money decisions',
-        description: 'Your cash flow helps power debt planning, future net worth growth, and your overall financial health view.',
+        title: 'Strong cash flow supports bigger goals',
+        description: 'A healthier monthly balance gives you more room to save, reduce debt steadily, and build long-term financial strength.',
     },
 ];
 
 const integrationPoints = [
-    'Expenses are pulled from the Budget module.',
-    'Surplus cash can later support savings goals and debt reduction.',
-    'Cash flow performance will feed Net Worth and Financial Health scoring.',
+    'Expenses are reflected here from your Budget activity.',
+    'A monthly surplus can strengthen savings goals and debt progress.',
+    'Over time, this picture will support net worth and financial health insights.',
 ];
 
 const CashflowIntegrationCard = () => {
     return (
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">How cash flow works</p>
-            <h3 className="mt-3 text-2xl font-extrabold text-slate-950">Built around the real Shilingi Moves money flow</h3>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Money flow guidance</p>
+            <h3 className="mt-3 text-2xl font-extrabold text-slate-950">A clearer view of how your money behaves each month</h3>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                This workspace follows the platform flow your backend team documented: income starts here, expenses come from Budget,
-                and the combined picture helps guide savings, debt reduction, and overall financial health.
+                This workspace brings together what you earn and what you spend so you can quickly see whether your month is giving you
+                breathing room, asking for adjustments, or creating opportunities to move faster toward your goals.
             </p>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -45,7 +45,7 @@ const CashflowIntegrationCard = () => {
             </div>
 
             <div className="mt-6 rounded-3xl bg-slate-950 px-5 py-5 text-white">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Integration points</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Why this matters</p>
                 <div className="mt-4 space-y-3">
                     {integrationPoints.map((point) => (
                         <div key={point} className="flex items-start gap-3">

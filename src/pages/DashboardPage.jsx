@@ -15,8 +15,8 @@ const sections = {
     },
     cashflow: {
         eyebrow: 'Cash flow',
-        title: 'See how income, spending, and monthly balance work together.',
-        description: 'Cash Flow is where Shilingi Moves turns income from this module and expenses from Budget into a clear picture of your monthly position, savings rate, and financial momentum.',
+        title: 'Stay close to the money coming in, the money going out, and what remains for your priorities.',
+        description: 'Use this view to understand your monthly money rhythm, spot whether you are running a surplus or deficit, and make better decisions about saving, spending, and debt reduction.',
         component: CashflowManagerPanel,
     },
     user: {

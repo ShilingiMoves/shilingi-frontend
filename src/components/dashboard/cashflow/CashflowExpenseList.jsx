@@ -11,9 +11,9 @@ const CashflowExpenseList = ({ expenses }) => {
     if (!expenses.length) {
         return (
             <div className="rounded-3xl border border-dashed border-gray-300 bg-white/80 p-8 text-center shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900">No expenses recorded yet</h3>
+                <h3 className="text-xl font-bold text-gray-900">No spending activity is showing yet</h3>
                 <p className="mt-2 text-sm text-gray-600">
-                    Your expense API is connected through the budget service. Once backend category mapping is confirmed for create or update, this section can support full expense actions.
+                    As budget activity grows, this section will help you see where your money is going and whether your spending is supporting your priorities.
                 </p>
             </div>
         );

@@ -87,7 +87,7 @@ const CashflowManagerPanel = () => {
                     <div>
                         <p className="font-semibold">Your cash flow view is ready.</p>
                         <p className="mt-1">
-                            Your income and expense activity is already connected, so you can start reviewing how money moves through your month. More action tools, including add and edit options, will be available soon.
+                            You can already use this view to understand your monthly money position, spot pressure points, and see where stronger habits could improve your financial breathing room. More action tools will be added soon.
                         </p>
                     </div>
                 </div>
@@ -102,9 +102,9 @@ const CashflowManagerPanel = () => {
                 <section className="space-y-4">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income tracking</p>
-                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Money coming in</h3>
+                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">What is supporting your month</h3>
                         <p className="mt-2 text-sm leading-6 text-slate-600">
-                            Track recurring and one-time income sources here so your monthly inflow stays visible and measurable.
+                            See the income sources that are carrying your month, from regular earnings to one-time payments and other support.
                         </p>
                     </div>
                     <CashflowIncomeList incomes={incomes} />
@@ -113,9 +113,9 @@ const CashflowManagerPanel = () => {
                 <section className="space-y-4">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Expenses from budget</p>
-                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Money going out</h3>
+                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Where your money is being used</h3>
                         <p className="mt-2 text-sm leading-6 text-slate-600">
-                            Expenses are reflected here from the Budget module so your cash flow always compares income against real spending.
+                            Review the spending already captured in your Budget view so you can compare what is leaving your account against what is coming in.
                         </p>
                     </div>
                     <CashflowExpenseList expenses={expenses} />

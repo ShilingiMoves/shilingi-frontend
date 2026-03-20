@@ -11,9 +11,9 @@ const CashflowIncomeList = ({ incomes }) => {
     if (!incomes.length) {
         return (
             <div className="rounded-3xl border border-dashed border-gray-300 bg-white/80 p-8 text-center shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900">No income recorded yet</h3>
+                <h3 className="text-xl font-bold text-gray-900">No income has been captured yet</h3>
                 <p className="mt-2 text-sm text-gray-600">
-                    Your live income API is connected. Once category ID mapping is confirmed by backend, this section can support full add and edit actions too.
+                    Once income activity starts building here, this section will help you see which sources are carrying your month and how reliable your inflow really is.
                 </p>
             </div>
         );

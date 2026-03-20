@@ -11,7 +11,7 @@ const CashflowAnalysisCard = ({ analysis }) => {
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Flow analysis</p>
             <h3 className="mt-3 text-2xl font-extrabold text-slate-950">{analysis?.period || 'Current month'}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-                Your current cash flow status is <span className="font-semibold text-slate-900">{status}</span>. Use this to understand whether more of your money is flowing toward spending or staying available for priorities.
+                Your current cash flow status is <span className="font-semibold text-slate-900">{status}</span>. Use this section to see whether your money is giving you room to save and plan ahead, or whether spending is tightening the month.
             </p>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -19,14 +19,14 @@ const CashflowAnalysisCard = ({ analysis }) => {
                     title="Income breakdown"
                     icon={ArrowUpCircle}
                     items={incomeBreakdown}
-                    emptyText="No income breakdown is available yet."
+                    emptyText="Income categories will appear here as soon as your income history grows."
                     accent="text-emerald-600"
                 />
                 <BreakdownList
                     title="Expense breakdown"
                     icon={ArrowDownCircle}
                     items={expenseBreakdown}
-                    emptyText="No expense breakdown is available yet."
+                    emptyText="Expense categories will appear here as more spending data is recorded."
                     accent="text-rose-600"
                 />
             </div>
