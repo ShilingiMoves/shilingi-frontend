@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownCircle, ArrowUpCircle, PiggyBank, Scale } from 'lucide-react';
+import { ArrowUpCircle, Landmark, PiggyBank, Wallet } from 'lucide-react';
 
 const cardConfig = [
     {
@@ -9,22 +9,22 @@ const cardConfig = [
         accent: 'from-emerald-500 to-teal-500',
     },
     {
-        key: 'expenses',
-        label: 'Expenses this month',
-        icon: ArrowDownCircle,
-        accent: 'from-rose-500 to-orange-500',
+        key: 'recurringIncome',
+        label: 'Recurring income',
+        icon: Landmark,
+        accent: 'from-primary-500 to-cyan-500',
     },
     {
-        key: 'net',
-        label: 'Net cash flow',
-        icon: Scale,
+        key: 'incomeSources',
+        label: 'Income sources',
+        icon: Wallet,
         accent: 'from-slate-700 to-slate-900',
     },
     {
         key: 'savingsRate',
         label: 'Savings rate',
         icon: PiggyBank,
-        accent: 'from-primary-500 to-cyan-500',
+        accent: 'from-amber-500 to-orange-500',
     },
 ];
 
@@ -37,8 +37,8 @@ const formatCurrency = (value, currency = 'KES') => new Intl.NumberFormat('en-KE
 const CashflowOverviewCards = ({ summary }) => {
     const cardValues = {
         income: formatCurrency(Number(summary?.current_month?.total_income || 0), summary?.currency || 'KES'),
-        expenses: formatCurrency(Number(summary?.current_month?.total_expenses || 0), summary?.currency || 'KES'),
-        net: formatCurrency(Number(summary?.current_month?.net_cashflow || 0), summary?.currency || 'KES'),
+        recurringIncome: formatCurrency(Number(summary?.monthly_recurring_income || 0), summary?.currency || 'KES'),
+        incomeSources: Number(summary?.income_sources_count || 0).toLocaleString(),
         savingsRate: `${Number(summary?.current_month?.savings_rate || 0).toFixed(1)}%`,
     };
 

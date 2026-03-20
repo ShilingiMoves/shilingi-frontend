@@ -6,23 +6,23 @@ const flowSteps = [
         description: 'Salary, business income, rent, gifts, and one-time payments help define the financial room you have to work with each month.',
     },
     {
-        title: 'Spending reveals where your money is going',
-        description: 'Your expenses flow in from the Budget module so this view always reflects how your money is being used in real life.',
+        title: 'Reliable inflow builds confidence',
+        description: 'When you can clearly see what is coming in and how often it arrives, it becomes easier to plan, save, and avoid financial surprises.',
     },
     {
-        title: 'Your monthly position becomes clear',
-        description: 'Shilingi Moves turns income and spending into net cash flow, savings rate, and trend signals that help you act early.',
+        title: 'Your income pattern becomes clearer',
+        description: 'Shilingi Moves turns your income history into trends, recurring signals, and monthly totals that help you plan ahead with more confidence.',
     },
     {
-        title: 'Strong cash flow supports bigger goals',
-        description: 'A healthier monthly balance gives you more room to save, reduce debt steadily, and build long-term financial strength.',
+        title: 'Strong inflow supports bigger goals',
+        description: 'A more stable income picture gives you a stronger base for saving, managing debt, and building long-term financial strength.',
     },
 ];
 
 const integrationPoints = [
-    'Expenses are reflected here from your Budget activity.',
-    'A monthly surplus can strengthen savings goals and debt progress.',
-    'Over time, this picture will support net worth and financial health insights.',
+    'Clear income visibility helps you judge whether your month is stable or strained.',
+    'Recurring income patterns make planning easier and reduce guesswork.',
+    'Over time, this picture will support bigger financial decisions across the platform.',
 ];
 
 const CashflowIntegrationCard = () => {
@@ -31,8 +31,8 @@ const CashflowIntegrationCard = () => {
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Money flow guidance</p>
             <h3 className="mt-3 text-2xl font-extrabold text-slate-950">A clearer view of how your money behaves each month</h3>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                This workspace brings together what you earn and what you spend so you can quickly see whether your month is giving you
-                breathing room, asking for adjustments, or creating opportunities to move faster toward your goals.
+                This workspace helps you understand the strength, timing, and consistency of your income so you can make smarter monthly decisions
+                with more clarity and less guesswork.
             </p>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-2">

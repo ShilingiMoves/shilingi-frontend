@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Info, Loader2 } from 'lucide-react';
 import CashflowAnalysisCard from './CashflowAnalysisCard';
-import CashflowExpenseList from './CashflowExpenseList';
 import CashflowHistoryCard from './CashflowHistoryCard';
 import CashflowIncomeList from './CashflowIncomeList';
 import CashflowIntegrationCard from './CashflowIntegrationCard';
@@ -10,7 +9,6 @@ import {
     getCashflowAnalysis,
     getCashflowHistory,
     getCashflowSummary,
-    getExpenseEntries,
     getIncomeEntries,
 } from '../../../services/cashflowApi';
 
@@ -19,7 +17,6 @@ const CashflowManagerPanel = () => {
     const [analysis, setAnalysis] = useState(null);
     const [history, setHistory] = useState(null);
     const [incomes, setIncomes] = useState([]);
-    const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -29,19 +26,17 @@ const CashflowManagerPanel = () => {
                 setLoading(true);
                 setError('');
 
-                const [summaryData, analysisData, historyData, incomeData, expenseData] = await Promise.all([
+                const [summaryData, analysisData, historyData, incomeData] = await Promise.all([
                     getCashflowSummary(),
                     getCashflowAnalysis(),
                     getCashflowHistory(),
                     getIncomeEntries(),
-                    getExpenseEntries(),
                 ]);
 
                 setSummary(summaryData);
                 setAnalysis(analysisData);
                 setHistory(historyData);
                 setIncomes(incomeData.incomes);
-                setExpenses(expenseData.expenses);
             } catch (err) {
                 setError(err.message || 'We could not load your cash flow workspace right now.');
             } finally {
@@ -87,7 +82,7 @@ const CashflowManagerPanel = () => {
                     <div>
                         <p className="font-semibold">Your cash flow view is ready.</p>
                         <p className="mt-1">
-                            You can already use this view to understand your monthly money position, spot pressure points, and see where stronger habits could improve your financial breathing room. More action tools will be added soon.
+                            You can already use this view to understand your monthly inflow, spot income patterns, and build a stronger sense of financial stability. More action tools will be added soon.
                         </p>
                     </div>
                 </div>
@@ -98,29 +93,16 @@ const CashflowManagerPanel = () => {
                 <CashflowHistoryCard history={history} />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-2">
-                <section className="space-y-4">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income tracking</p>
-                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">What is supporting your month</h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                            See the income sources that are carrying your month, from regular earnings to one-time payments and other support.
-                        </p>
-                    </div>
-                    <CashflowIncomeList incomes={incomes} />
-                </section>
-
-                <section className="space-y-4">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Expenses from budget</p>
-                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Where your money is being used</h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                            Review the spending already captured in your Budget view so you can compare what is leaving your account against what is coming in.
-                        </p>
-                    </div>
-                    <CashflowExpenseList expenses={expenses} />
-                </section>
-            </div>
+            <section className="space-y-4">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income tracking</p>
+                    <h3 className="mt-2 text-2xl font-extrabold text-slate-950">What is supporting your month</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                        See the income sources that are carrying your month, from regular earnings to one-time payments and other support.
+                    </p>
+                </div>
+                <CashflowIncomeList incomes={incomes} />
+            </section>
         </div>
     );
 };

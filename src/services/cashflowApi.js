@@ -10,8 +10,6 @@ const CASHFLOW_ANALYSIS_ENDPOINT = `${API_URL}/api/v1/cashflow/analysis/`;
 const CASHFLOW_HISTORY_ENDPOINT = `${API_URL}/api/v1/cashflow/history/`;
 const CASHFLOW_INCOME_ENDPOINT = `${API_URL}/api/v1/cashflow/income/`;
 const CASHFLOW_CATEGORIES_ENDPOINT = `${API_URL}/api/v1/cashflow/categories/`;
-const BUDGET_EXPENSES_ENDPOINT = `${API_URL}/api/v1/budgets/expenses/`;
-const BUDGET_CATEGORIES_ENDPOINT = `${API_URL}/api/v1/budgets/categories/`;
 
 function buildHeaders() {
     const token = import.meta.env.VITE_AUTH_TOKEN || getAccessToken();
@@ -83,25 +81,6 @@ function normaliseIncome(item, index = 0) {
     };
 }
 
-function normaliseExpense(item, index = 0) {
-    return {
-        id: item?.uuid || `expense-${index}`,
-        uuid: item?.uuid || `expense-${index}`,
-        amount: toNumber(item?.amount),
-        currency: item?.currency || 'KES',
-        description: item?.description || 'Expense entry',
-        merchant: item?.merchant || 'Unknown merchant',
-        expenseDate: item?.expense_date || '',
-        categoryName: item?.category_name || 'Expense',
-        categoryColor: item?.category_color || '#fd7e14',
-        paymentMethod: item?.payment_method || '',
-        paymentMethodDisplay: item?.payment_method_display || item?.payment_method || 'Not set',
-        isRecurring: Boolean(item?.is_recurring),
-        notes: item?.notes || '',
-        reference: item?.reference || '',
-    };
-}
-
 export async function getCashflowSummary() {
     const response = await fetch(CASHFLOW_SUMMARY_ENDPOINT, {
         method: 'GET',
@@ -147,33 +126,8 @@ export async function getIncomeEntries() {
     };
 }
 
-export async function getExpenseEntries() {
-    const response = await fetch(BUDGET_EXPENSES_ENDPOINT, {
-        method: 'GET',
-        headers: buildHeaders(),
-    });
-
-    const payload = await parseResponse(response);
-    const entries = payload?.data?.expenses || payload?.data?.results || [];
-    return {
-        count: payload?.data?.count || entries.length,
-        total: toNumber(payload?.data?.total),
-        expenses: entries.map((item, index) => normaliseExpense(item, index)),
-    };
-}
-
 export async function getIncomeCategories() {
     const response = await fetch(CASHFLOW_CATEGORIES_ENDPOINT, {
-        method: 'GET',
-        headers: buildHeaders(),
-    });
-
-    const payload = await parseResponse(response);
-    return payload?.data?.categories || [];
-}
-
-export async function getExpenseCategories() {
-    const response = await fetch(BUDGET_CATEGORIES_ENDPOINT, {
         method: 'GET',
         headers: buildHeaders(),
     });

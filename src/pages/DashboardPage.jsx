@@ -15,8 +15,8 @@ const sections = {
     },
     cashflow: {
         eyebrow: 'Cash flow',
-        title: 'Stay close to the money coming in, the money going out, and what remains for your priorities.',
-        description: 'Use this view to understand your monthly money rhythm, spot whether you are running a surplus or deficit, and make better decisions about saving, spending, and debt reduction.',
+        title: 'Stay close to the income that supports your month and the patterns shaping your stability.',
+        description: 'Use this view to understand how your income is building over time, how reliable it feels from month to month, and how confidently you can plan your next financial move.',
         component: CashflowManagerPanel,
     },
     user: {

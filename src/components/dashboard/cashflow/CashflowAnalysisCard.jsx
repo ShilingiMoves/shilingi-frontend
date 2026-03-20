@@ -1,17 +1,16 @@
 import React from 'react';
-import { ArrowDownCircle, ArrowUpCircle, Scale } from 'lucide-react';
+import { ArrowUpCircle, Scale, TrendingUp } from 'lucide-react';
 
 const CashflowAnalysisCard = ({ analysis }) => {
     const status = analysis?.status || 'balanced';
     const incomeBreakdown = Array.isArray(analysis?.income_breakdown) ? analysis.income_breakdown : [];
-    const expenseBreakdown = Array.isArray(analysis?.expense_breakdown) ? analysis.expense_breakdown : [];
 
     return (
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Flow analysis</p>
             <h3 className="mt-3 text-2xl font-extrabold text-slate-950">{analysis?.period || 'Current month'}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-                Your current cash flow status is <span className="font-semibold text-slate-900">{status}</span>. Use this section to see whether your money is giving you room to save and plan ahead, or whether spending is tightening the month.
+                Your current cash flow status is <span className="font-semibold text-slate-900">{status}</span>. Use this section to understand the strength of your income pattern and whether it is giving you the consistency you need month to month.
             </p>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -22,13 +21,7 @@ const CashflowAnalysisCard = ({ analysis }) => {
                     emptyText="Income categories will appear here as soon as your income history grows."
                     accent="text-emerald-600"
                 />
-                <BreakdownList
-                    title="Expense breakdown"
-                    icon={ArrowDownCircle}
-                    items={expenseBreakdown}
-                    emptyText="Expense categories will appear here as more spending data is recorded."
-                    accent="text-rose-600"
-                />
+                <HighlightsCard analysis={analysis} />
             </div>
 
             <div className="mt-6 rounded-3xl bg-slate-950 px-5 py-4 text-white">
@@ -60,6 +53,36 @@ const BreakdownList = ({ title, icon: Icon, items, emptyText, accent }) => (
         ) : (
             <p className="mt-4 text-sm leading-6 text-slate-600">{emptyText}</p>
         )}
+    </div>
+);
+
+const HighlightsCard = ({ analysis }) => (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+        <div className="inline-flex rounded-2xl bg-white p-3 text-primary-700 shadow-sm">
+            <TrendingUp size={18} />
+        </div>
+        <h4 className="mt-4 text-lg font-bold text-slate-900">Income highlights</h4>
+        <div className="mt-4 space-y-3">
+            <HighlightRow
+                label="Total income"
+                value={Number(analysis?.total_income || 0).toLocaleString()}
+            />
+            <HighlightRow
+                label="Savings rate"
+                value={`${Number(analysis?.savings_rate || 0).toFixed(1)}%`}
+            />
+            <HighlightRow
+                label="Monthly status"
+                value={analysis?.status || 'balanced'}
+            />
+        </div>
+    </div>
+);
+
+const HighlightRow = ({ label, value }) => (
+    <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-sm font-bold text-slate-900">{value}</span>
     </div>
 );
 
