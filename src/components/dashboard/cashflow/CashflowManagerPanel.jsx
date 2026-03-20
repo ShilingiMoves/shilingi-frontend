@@ -4,6 +4,7 @@ import CashflowAnalysisCard from './CashflowAnalysisCard';
 import CashflowExpenseList from './CashflowExpenseList';
 import CashflowHistoryCard from './CashflowHistoryCard';
 import CashflowIncomeList from './CashflowIncomeList';
+import CashflowIntegrationCard from './CashflowIntegrationCard';
 import CashflowOverviewCards from './CashflowOverviewCards';
 import {
     getCashflowAnalysis,
@@ -78,13 +79,15 @@ const CashflowManagerPanel = () => {
 
             <CashflowOverviewCards summary={summary} />
 
+            <CashflowIntegrationCard />
+
             <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 shadow-sm">
                 <div className="flex items-start gap-3">
                     <Info size={18} className="mt-0.5 shrink-0" />
                     <div>
-                        <p className="font-semibold">Income and expense data are live.</p>
+                        <p className="font-semibold">This workspace is live for visibility and analysis.</p>
                         <p className="mt-1">
-                            Add and edit forms are intentionally held back for now because the backend category endpoints return `uuid` values, while the create APIs currently expect integer primary keys for `category`. Once backend aligns that field, we can safely enable full cash flow CRUD.
+                            Income and expense data are already connected. We are holding back add and edit actions until the backend category mapping is aligned, so users do not run into broken form submissions during testing.
                         </p>
                     </div>
                 </div>
@@ -98,16 +101,22 @@ const CashflowManagerPanel = () => {
             <div className="grid gap-6 xl:grid-cols-2">
                 <section className="space-y-4">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income</p>
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income tracking</p>
                         <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Money coming in</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                            Track recurring and one-time income sources here so your monthly inflow stays visible and measurable.
+                        </p>
                     </div>
                     <CashflowIncomeList incomes={incomes} />
                 </section>
 
                 <section className="space-y-4">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Expenses</p>
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Expenses from budget</p>
                         <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Money going out</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                            Expenses are reflected here from the Budget module so your cash flow always compares income against real spending.
+                        </p>
                     </div>
                     <CashflowExpenseList expenses={expenses} />
                 </section>

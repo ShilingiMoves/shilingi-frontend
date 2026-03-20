@@ -15,8 +15,8 @@ const sections = {
     },
     cashflow: {
         eyebrow: 'Cash flow',
-        title: 'Understand what comes in, what goes out, and what you can direct with purpose.',
-        description: 'Build a clear money rhythm by tracking income and expenses in one place, then use that clarity to budget, save, and reduce debt with confidence.',
+        title: 'See how income, spending, and monthly balance work together.',
+        description: 'Cash Flow is where Shilingi Moves turns income from this module and expenses from Budget into a clear picture of your monthly position, savings rate, and financial momentum.',
         component: CashflowManagerPanel,
     },
     user: {
