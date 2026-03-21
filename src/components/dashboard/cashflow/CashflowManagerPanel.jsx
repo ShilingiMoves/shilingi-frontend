@@ -3,7 +3,6 @@ import { AlertCircle, Info, Loader2 } from 'lucide-react';
 import CashflowAnalysisCard from './CashflowAnalysisCard';
 import CashflowHistoryCard from './CashflowHistoryCard';
 import CashflowIncomeList from './CashflowIncomeList';
-import CashflowIntegrationCard from './CashflowIntegrationCard';
 import CashflowOverviewCards from './CashflowOverviewCards';
 import {
     getCashflowAnalysis,
@@ -74,15 +73,13 @@ const CashflowManagerPanel = () => {
 
             <CashflowOverviewCards summary={summary} />
 
-            <CashflowIntegrationCard />
-
-            <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 shadow-sm">
+            <div className="rounded-[1.75rem] border border-primary-100 bg-primary-50/70 p-5 text-sm text-slate-700 shadow-sm">
                 <div className="flex items-start gap-3">
-                    <Info size={18} className="mt-0.5 shrink-0" />
+                    <Info size={18} className="mt-0.5 shrink-0 text-primary-700" />
                     <div>
-                        <p className="font-semibold">Your cash flow view is ready.</p>
+                        <p className="font-semibold text-slate-900">Your cash flow view is ready.</p>
                         <p className="mt-1">
-                            You can already use this view to understand your monthly inflow, spot income patterns, and build a stronger sense of financial stability. More action tools will be added soon.
+                            Start here by reviewing the income patterns shaping your month. As this area grows, it will become an even stronger planning space for day-to-day money decisions.
                         </p>
                     </div>
                 </div>
@@ -96,9 +93,9 @@ const CashflowManagerPanel = () => {
             <section className="space-y-4">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income tracking</p>
-                    <h3 className="mt-2 text-2xl font-extrabold text-slate-950">What is supporting your month</h3>
+                    <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Income records you are tracking</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                        See the income sources that are carrying your month, from regular earnings to one-time payments and other support.
+                        Keep a clear view of the earnings and support flowing into your month so planning feels less uncertain.
                     </p>
                 </div>
                 <CashflowIncomeList incomes={incomes} />

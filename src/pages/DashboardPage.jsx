@@ -15,8 +15,8 @@ const sections = {
     },
     cashflow: {
         eyebrow: 'Cash flow',
-        title: 'Stay close to the income that supports your month and the patterns shaping your stability.',
-        description: 'Use this view to understand how your income is building over time, how reliable it feels from month to month, and how confidently you can plan your next financial move.',
+        title: 'Stay close to the income shaping your month.',
+        description: 'Use this view to understand how steady your inflow feels, what is supporting your month, and where stronger consistency could improve your financial confidence.',
         component: CashflowManagerPanel,
     },
     user: {
