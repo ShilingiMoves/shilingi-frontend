@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CashflowManagerPanel from '../components/dashboard/cashflow/CashflowManagerPanel';
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
+import NetWorthManagerPanel from '../components/dashboard/networth/NetWorthManagerPanel';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
@@ -18,6 +19,12 @@ const sections = {
         title: 'Stay close to the income shaping your month.',
         description: 'Use this view to understand how steady your inflow feels, what is supporting your month, and where stronger consistency could improve your financial confidence.',
         component: CashflowManagerPanel,
+    },
+    networth: {
+        eyebrow: 'Net worth',
+        title: 'Track what you own, what you owe, and how the gap is moving.',
+        description: 'Use this workspace to review your current net worth, inspect the asset and liability breakdown, and test the live endpoints backing that balance sheet.',
+        component: NetWorthManagerPanel,
     },
     user: {
         eyebrow: 'Your account',
