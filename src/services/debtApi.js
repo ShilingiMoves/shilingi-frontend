@@ -129,7 +129,7 @@ function prepareDebtPayload(formValues) {
 
     return {
         name: formValues.name,
-        creditor_name: formValues.creditor,
+        creditor_name: formValues.creditor || formValues.name,
         original_amount: balance.toString(),
         current_balance: balance.toString(),
         interest_rate: interestRate === null ? null : interestRate.toString(),

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
-import DebtForm from './DebtForm';
+import { AlertCircle, Loader2, Plus, ShieldCheck } from 'lucide-react';
+import Button from '../../Button';
+import DebtEntryModal from './DebtEntryModal';
 import DebtList from './DebtList';
 import DebtSummaryCards from './DebtSummaryCards';
 import { calculateDebtSummary, createDebt, deleteDebt, getDebts, updateDebt } from '../../../services/debtApi';
@@ -13,6 +14,7 @@ const DebtManagerPanel = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [editingDebt, setEditingDebt] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const summary = useMemo(() => calculateDebtSummary(debts), [debts]);
 
@@ -41,9 +43,11 @@ const DebtManagerPanel = () => {
                 const savedDebt = await updateDebt(editingDebt.id, formValues);
                 setDebts((current) => current.map((debt) => (debt.id === savedDebt.id ? savedDebt : debt)));
                 setEditingDebt(null);
+                setIsModalOpen(false);
             } else {
                 const createdDebt = await createDebt(formValues);
                 setDebts((current) => [createdDebt, ...current]);
+                setIsModalOpen(false);
             }
         } catch (err) {
             setSubmitError(err.message || 'We could not save this debt right now.');
@@ -78,6 +82,21 @@ const DebtManagerPanel = () => {
 
     return (
         <div className="space-y-6">
+            <DebtEntryModal
+                isOpen={isModalOpen}
+                initialValues={editingDebt}
+                onSubmit={handleSubmit}
+                onClose={() => {
+                    if (isSubmitting) {
+                        return;
+                    }
+                    setIsModalOpen(false);
+                    setEditingDebt(null);
+                    setSubmitError('');
+                }}
+                isSubmitting={isSubmitting}
+            />
+
             {error && (
                 <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm">
                     <div className="flex items-start gap-3">
@@ -92,40 +111,61 @@ const DebtManagerPanel = () => {
 
             <DebtSummaryCards summary={summary} />
 
-            <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
-                <div className="space-y-4">
-                    <DebtForm
-                        initialValues={editingDebt}
-                        onSubmit={handleSubmit}
-                        onCancel={() => {
-                            setEditingDebt(null);
-                            setSubmitError('');
-                        }}
-                        isSubmitting={isSubmitting}
-                    />
-
-                    <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 p-5 shadow-sm">
-                        <div className="flex items-start gap-3">
-                            <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
-                            <div>
-                                <h3 className="font-bold text-emerald-900">Calmer repayment decisions</h3>
-                                <p className="mt-2 text-sm leading-6 text-emerald-800">Keep lenders, balances, minimum payments, and due dates visible so you can reduce stress and stay one step ahead.</p>
-                            </div>
-                        </div>
+            <div className="space-y-6">
+                <div className="flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-3xl">
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Your debts</p>
+                        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">Stay clear on what you owe and how you are progressing.</h2>
+                        <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+                            Keep balances, lenders, repayment amounts, and due dates in one place so your next debt decision feels more deliberate and less stressful.
+                        </p>
                     </div>
 
-                    {submitError && <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">{submitError}</div>}
+                    <Button
+                        type="button"
+                        variant="primary"
+                        className="shrink-0 justify-center"
+                        onClick={() => {
+                            setEditingDebt(null);
+                            setSubmitError('');
+                            setIsModalOpen(true);
+                        }}
+                    >
+                        <Plus size={18} />
+                        Add Debt
+                    </Button>
                 </div>
 
-                <DebtList
-                    debts={debts}
-                    onEdit={(debt) => {
-                        setEditingDebt(debt);
-                        setSubmitError('');
-                    }}
-                    onDelete={handleDelete}
-                    deletingId={deletingId}
-                />
+                <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-5 shadow-sm">
+                    <div className="flex items-start gap-3">
+                        <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
+                        <div>
+                            <h3 className="font-bold text-slate-900">Repayment focus</h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                                Add each debt clearly, then use this space to follow balances, repayment commitments, and the progress you are making over time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {submitError && <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">{submitError}</div>}
+
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Active debts</p>
+                        <h3 className="mt-2 text-2xl font-extrabold text-slate-950">Accounts you are currently managing</h3>
+                    </div>
+                    <DebtList
+                        debts={debts}
+                        onEdit={(debt) => {
+                            setEditingDebt(debt);
+                            setSubmitError('');
+                            setIsModalOpen(true);
+                        }}
+                        onDelete={handleDelete}
+                        deletingId={deletingId}
+                    />
+                </div>
             </div>
         </div>
     );
