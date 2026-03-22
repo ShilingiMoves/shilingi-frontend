@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CashflowManagerPanel from '../components/dashboard/cashflow/CashflowManagerPanel';
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
+import BudgetDashboard from '../components/dashboard/budget/BudgetDashboard'; // ← Add this
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
@@ -12,6 +13,12 @@ const sections = {
         title: 'Stay on top of what you owe and make each repayment count.',
         description: 'Keep your balances, repayment amounts, and due dates in one place so you can make steady progress with less stress and more clarity.',
         component: DebtManagerPanel,
+    },
+    budget: { // ← Add this section
+        eyebrow: 'Budget & Spending',
+        title: 'Take control of your money with smart budgeting and expense tracking.',
+        description: 'Set spending limits, track expenses in real-time, and work towards your financial goals with clarity and confidence.',
+        component: BudgetDashboard,
     },
     cashflow: {
         eyebrow: 'Cash flow',

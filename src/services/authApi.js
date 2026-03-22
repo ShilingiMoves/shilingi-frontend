@@ -1,7 +1,7 @@
-import { setDebtApiToken } from './debtApi';
 import {
     clearSessionStorage,
     getAccessToken,
+    setAccessToken, // ← Use this directly
     getStoredUserProfile as getPersistedUserProfile,
     handleUnauthorizedSession,
     setRefreshToken,
@@ -50,7 +50,8 @@ function storeTokens(payload) {
         return false;
     }
 
-    setDebtApiToken(accessToken);
+    // Store token centrally in sessionManager
+    setAccessToken(accessToken);
 
     if (refreshToken) {
         setRefreshToken(refreshToken);
@@ -61,7 +62,6 @@ function storeTokens(payload) {
 
 function clearAuthStorage() {
     clearSessionStorage();
-    setDebtApiToken('');
 }
 
 function extractUser(payload) {

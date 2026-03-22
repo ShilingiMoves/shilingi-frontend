@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownUp, ChevronLeft, Landmark, LogOut } from 'lucide-react';
+import { ArrowDownUp, ChevronLeft, Landmark, LogOut, Wallet } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 
 const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection, onSelectSection }) => {
@@ -13,6 +13,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
             label: 'Debt Management',
             helper: 'Track and reduce what you owe',
             icon: Landmark,
+        },
+        {
+            id: 'budget',
+            label: 'Budget & Spending',
+            helper: 'Plan spending and save smart',
+            icon: Wallet,
         },
         {
             id: 'cashflow',
@@ -64,7 +70,11 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
                                 {!collapsed && (
                                     <span>
                                         <span className="block text-sm font-semibold">{item.label}</span>
-                                        <span className={`block text-xs ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>{item.helper}</span>
+                                        {item.helper && (
+                                            <span className={`block text-xs ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
+                                                {item.helper}
+                                            </span>
+                                        )}
                                     </span>
                                 )}
                             </button>
@@ -86,7 +96,9 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
                         {!collapsed && (
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-semibold text-white">{userName}</p>
-                                <p className={`truncate text-xs ${isUserSectionActive ? 'text-emerald-100' : 'text-slate-400'}`}>{user?.email || 'Signed in'}</p>
+                                <p className={`truncate text-xs ${isUserSectionActive ? 'text-emerald-100' : 'text-slate-400'}`}>
+                                    {user?.email || 'Signed in'}
+                                </p>
                             </div>
                         )}
                     </button>

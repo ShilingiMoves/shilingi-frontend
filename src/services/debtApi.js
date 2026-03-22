@@ -1,32 +1,26 @@
-import { getAccessToken, handleUnauthorizedSession, setAccessToken } from './sessionManager';
+import apiClient from './apiClient';
 
-const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
-const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
-const DEBTS_ENDPOINT = `${API_URL}/api/v1/debts/`;
-const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
-const AUTH_HEADER_NAME = import.meta.env.VITE_AUTH_HEADER_NAME || 'Authorization';
+const API_VERSION = '/api/v1';
+
 function toNumber(value) {
-    if (value === null || value === undefined || value === '') {
-        return 0;
-    }
-
+    if (value === null || value === undefined || value === '') return 0;
     const parsed = Number(value);
     return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function normaliseDebt(rawDebt, index = 0) {
     const currentBalance = toNumber(
-        rawDebt?.current_balance ?? rawDebt?.currentBalance ?? rawDebt?.balance ?? rawDebt?.remainingBalance ?? rawDebt?.amount,
+        rawDebt?.current_balance ?? rawDebt?.currentBalance ?? rawDebt?.balance ?? rawDebt?.amount
     );
 
     return {
-        id: rawDebt?.uuid ?? rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
-        uuid: rawDebt?.uuid ?? rawDebt?.id ?? rawDebt?._id ?? rawDebt?.debtId ?? `debt-${index}`,
-        name: rawDebt?.name ?? rawDebt?.title ?? rawDebt?.creditor_name ?? rawDebt?.creditor ?? 'Untitled debt',
-        creditor: rawDebt?.creditor_name ?? rawDebt?.creditor ?? rawDebt?.name ?? rawDebt?.title ?? 'Unknown creditor',
+        id: rawDebt?.uuid ?? rawDebt?.id ?? `debt-${index}`,
+        uuid: rawDebt?.uuid ?? rawDebt?.id ?? `debt-${index}`,
+        name: rawDebt?.name ?? rawDebt?.title ?? rawDebt?.creditor_name ?? 'Untitled debt',
+        creditor: rawDebt?.creditor_name ?? rawDebt?.creditor ?? rawDebt?.name ?? 'Unknown creditor',
         balance: currentBalance,
         interestRate: toNumber(rawDebt?.interestRate ?? rawDebt?.interest_rate ?? rawDebt?.apr),
-        minimumPayment: toNumber(rawDebt?.minimumPayment ?? rawDebt?.minimum_payment ?? rawDebt?.monthlyPayment),
+        minimumPayment: toNumber(rawDebt?.minimumPayment ?? rawDebt?.minimum_payment),
         dueDate: rawDebt?.dueDate ?? rawDebt?.due_date ?? '',
         status: rawDebt?.status ?? (currentBalance > 0 ? 'ACTIVE' : 'PAID_OFF'),
         notes: rawDebt?.notes ?? rawDebt?.description ?? '',
@@ -40,92 +34,19 @@ function normaliseDebt(rawDebt, index = 0) {
 }
 
 function extractDebtCollection(payload) {
-    if (Array.isArray(payload)) {
-        return payload;
-    }
-
-    if (Array.isArray(payload?.data?.debts)) {
-        return payload.data.debts;
-    }
-
-    if (Array.isArray(payload?.data?.results)) {
-        return payload.data.results;
-    }
-
-    if (Array.isArray(payload?.data)) {
-        return payload.data;
-    }
-
-    if (Array.isArray(payload?.debts)) {
-        return payload.debts;
-    }
-
-    if (Array.isArray(payload?.results)) {
-        return payload.results;
-    }
-
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data?.debts)) return payload.data.debts;
+    if (Array.isArray(payload?.data?.results)) return payload.data.results;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.debts)) return payload.debts;
+    if (Array.isArray(payload?.results)) return payload.results;
     return [];
-}
-
-function getAuthToken() {
-    return getAccessToken() || import.meta.env.VITE_AUTH_TOKEN || '';
-}
-
-function buildAuthHeaders() {
-    const token = getAuthToken();
-
-    if (!token) {
-        return {};
-    }
-
-    return {
-        [AUTH_HEADER_NAME]: `${AUTH_HEADER_PREFIX} ${token}`,
-    };
-}
-
-async function parseJsonResponse(response) {
-    const rawText = await response.text();
-    let payload = null;
-
-    if (rawText) {
-        try {
-            payload = JSON.parse(rawText);
-        } catch {
-            payload = { message: rawText };
-        }
-    }
-
-    if (!response.ok) {
-        if (response.status === 401) {
-            handleUnauthorizedSession();
-        }
-
-        const firstFieldError = payload?.errors
-            ? Object.values(payload.errors).flat().find(Boolean)
-            : null;
-        const message = payload?.message || payload?.error || payload?.detail || firstFieldError || `Request failed with status ${response.status}`;
-        throw new Error(message);
-    }
-
-    return payload;
-}
-
-function buildRequestOptions(method, body) {
-    return {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            ...buildAuthHeaders(),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-    };
 }
 
 function prepareDebtPayload(formValues) {
     const balance = toNumber(formValues.balance);
     const minimumPayment = toNumber(formValues.minimumPayment);
     const interestRate = formValues.interestRate === '' ? null : toNumber(formValues.interestRate);
-    const status = formValues.status || 'ACTIVE';
 
     return {
         name: formValues.name,
@@ -135,7 +56,7 @@ function prepareDebtPayload(formValues) {
         interest_rate: interestRate === null ? null : interestRate.toString(),
         minimum_payment: minimumPayment.toString(),
         due_date: formValues.dueDate || null,
-        status,
+        status: formValues.status || 'ACTIVE',
         notes: formValues.notes,
         currency: formValues.currency || 'KES',
         debt_type: formValues.debtType || 'PERSONAL_LOAN',
@@ -146,33 +67,23 @@ function prepareDebtPayload(formValues) {
     };
 }
 
-export function setDebtApiToken(token) {
-    setAccessToken(token);
-}
-
 export async function getDebts() {
-    const response = await fetch(DEBTS_ENDPOINT, buildRequestOptions('GET'));
-    const payload = await parseJsonResponse(response);
-    return extractDebtCollection(payload).map((debt, index) => normaliseDebt(debt, index));
+    const response = await apiClient.get(`${API_VERSION}/debts/`);
+    return extractDebtCollection(response).map((debt, index) => normaliseDebt(debt, index));
 }
 
 export async function createDebt(formValues) {
-    const response = await fetch(DEBTS_ENDPOINT, buildRequestOptions('POST', prepareDebtPayload(formValues)));
-    const payload = await parseJsonResponse(response);
-    return normaliseDebt(payload?.data ?? payload?.debt ?? payload);
+    const response = await apiClient.post(`${API_VERSION}/debts/`, prepareDebtPayload(formValues));
+    return normaliseDebt(response?.data ?? response?.debt ?? response);
 }
 
 export async function updateDebt(debtId, formValues) {
-    const debtUrl = `${DEBTS_ENDPOINT}${debtId}/`;
-    const response = await fetch(debtUrl, buildRequestOptions('PATCH', prepareDebtPayload(formValues)));
-    const payload = await parseJsonResponse(response);
-    return normaliseDebt(payload?.data ?? payload?.debt ?? payload);
+    const response = await apiClient.patch(`${API_VERSION}/debts/${debtId}/`, prepareDebtPayload(formValues));
+    return normaliseDebt(response?.data ?? response?.debt ?? response);
 }
 
 export async function deleteDebt(debtId) {
-    const debtUrl = `${DEBTS_ENDPOINT}${debtId}/`;
-    const response = await fetch(debtUrl, buildRequestOptions('DELETE'));
-    await parseJsonResponse(response);
+    await apiClient.delete(`${API_VERSION}/debts/${debtId}/`);
     return debtId;
 }
 
@@ -183,12 +94,10 @@ export function calculateDebtSummary(debts) {
         ? debts.reduce((sum, debt) => sum + (debt.balance * debt.interestRate), 0) / totalBalance
         : 0;
 
-    const activeDebts = debts.filter((debt) => debt.status !== 'PAID_OFF').length;
-
     return {
         totalBalance,
         totalMinimumPayment,
         weightedInterest,
-        activeDebts,
+        activeDebts: debts.filter((debt) => debt.status !== 'PAID_OFF').length,
     };
 }
