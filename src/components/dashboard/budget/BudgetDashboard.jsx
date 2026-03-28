@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Loader2, Plus, TrendingUp, Zap } from 'lucide-react';
+import { AlertCircle, Loader2, Zap, ChevronRight } from 'lucide-react';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
 import BudgetSummaryCards from './BudgetSummaryCards';
+import BudgetOverview from './BudgetOverview';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
-import GoalList from './GoalList';
+import GoalTracker from './GoalTracker';
 import QuickExpenseModal from './QuickExpenseModal';
 import {
     getBudgets,
@@ -24,6 +25,8 @@ const BudgetDashboard = () => {
     const [budgets, setBudgets] = useState([]);
     const [summary, setSummary] = useState(null);
     const [expenses, setExpenses] = useState([]);
+    const [expenseTotal, setExpenseTotal] = useState(0);
+    const [expenseCount, setExpenseCount] = useState(0);
     const [goals, setGoals] = useState([]);
     const [goalSummary, setGoalSummary] = useState(null);
     
@@ -57,6 +60,8 @@ const BudgetDashboard = () => {
             setBudgets(budgetsData);
             setSummary(summaryData);
             setExpenses(expensesData.expenses || []);
+            setExpenseTotal(expensesData.total || 0);
+            setExpenseCount(expensesData.count || 0);
             setGoals(goalsData);
             setGoalSummary(goalSummaryData);
         } catch (err) {
@@ -76,8 +81,6 @@ const BudgetDashboard = () => {
             setIsSubmitting(true);
             setSubmitError('');
             
-            console.log('Submitting budget:', formValues); 
-            
             if (editingBudget) {
                 const updated = await updateBudget(editingBudget.uuid, formValues);
                 setBudgets((current) => 
@@ -92,9 +95,7 @@ const BudgetDashboard = () => {
             const newSummary = await getBudgetSummary();
             setSummary(newSummary);
         } catch (err) {
-            console.error('Budget submission error:', err); 
             const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
-            console.error('Full error details:', errorMessage);
             setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
         } finally {
             setIsSubmitting(false);
@@ -108,7 +109,6 @@ const BudgetDashboard = () => {
             await deleteBudget(uuid);
             setBudgets((current) => current.filter((budget) => budget.uuid !== uuid));
             
-            // Refresh summary
             const newSummary = await getBudgetSummary();
             setSummary(newSummary);
         } catch (err) {
@@ -122,8 +122,9 @@ const BudgetDashboard = () => {
         try {
             const expensesData = await getExpenses({ limit: 10 });
             setExpenses(expensesData.expenses || []);
+            setExpenseTotal(expensesData.total || 0);
+            setExpenseCount(expensesData.count || 0);
             
-            // Also refresh budgets and summary
             const [budgetsData, summaryData] = await Promise.all([
                 getBudgets({ current: 'true' }),
                 getBudgetSummary(),
@@ -147,29 +148,23 @@ const BudgetDashboard = () => {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Budget Manager</h1>
-                    <p className="mt-1 text-sm text-slate-600">Take control of your spending and savings</p>
-                </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowQuickExpense(true)}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-amber-900 shadow-sm transition-all hover:bg-amber-100 hover:shadow-md"
-                    >
-                        <Zap size={18} />
-                        Quick Expense
-                    </button>
-                </div>
+        <div className="space-y-4">
+            {/* Compact Header with Quick Actions */}
+            <div className="flex items-center justify-between">
+                <button
+                    onClick={() => setShowQuickExpense(true)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm transition-all hover:bg-amber-100 hover:shadow-md"
+                >
+                    <Zap size={16} />
+                    Quick Expense
+                </button>
             </div>
 
             {/* Error Alert */}
             {error && (
-                <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm">
+                <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 shadow-sm">
                     <div className="flex items-start gap-3">
-                        <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                        <AlertCircle size={16} className="mt-0.5 shrink-0" />
                         <div>
                             <p className="font-semibold">Could not load your budget data.</p>
                             <p className="mt-1">{error}</p>
@@ -178,87 +173,47 @@ const BudgetDashboard = () => {
                 </div>
             )}
 
-            {/* Summary Cards */}
-            {summary && <BudgetSummaryCards summary={summary} budgetHealth={budgetHealth} />}
-
             {/* Navigation Tabs */}
-            <div className="flex gap-2 border-b border-slate-200">
+            <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
                 {[
                     { id: 'overview', label: 'Overview' },
-                    { id: 'budgets', label: `Budgets (${budgets.length})` },
-                    { id: 'expenses', label: 'Expenses' },
-                    { id: 'goals', label: `Goals (${goals.length})` },
+                    { id: 'budgets', label: `Budgets`, count: budgets.length },
+                    { id: 'expenses', label: `Expenses`, count: expenseCount },
+                    { id: 'goals', label: `Goals`, count: goals.length },
                 ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
                             activeTab === tab.id
-                                ? 'border-b-2 border-primary-600 text-primary-600'
+                                ? 'bg-white text-slate-900 shadow-sm'
                                 : 'text-slate-600 hover:text-slate-900'
                         }`}
                     >
                         {tab.label}
+                        {tab.count !== undefined && (
+                            <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
+                                activeTab === tab.id ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'
+                            }`}>
+                                {tab.count}
+                            </span>
+                        )}
                     </button>
                 ))}
             </div>
 
             {/* Tab Content */}
-            {activeTab === 'overview' && (
-                <div className="grid gap-6 xl:grid-cols-2">
-                    {/* Recent Budgets */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-900">Active Budgets</h3>
-                            <button
-                                onClick={() => setActiveTab('budgets')}
-                                className="text-sm font-semibold text-primary-600 hover:text-primary-700"
-                            >
-                                View All →
-                            </button>
-                        </div>
-                        <BudgetList
-                            budgets={budgets.slice(0, 4)}
-                            onEdit={(budget) => {
-                                setEditingBudget(budget);
-                                setActiveTab('budgets');
-                            }}
-                            onDelete={handleDeleteBudget}
-                            deletingId={deletingId}
-                            compact
-                        />
-                    </div>
-
-                    {/* Recent Expenses */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-900">Recent Expenses</h3>
-                            <button
-                                onClick={() => setActiveTab('expenses')}
-                                className="text-sm font-semibold text-primary-600 hover:text-primary-700"
-                            >
-                                View All →
-                            </button>
-                        </div>
-                        <ExpenseList expenses={expenses.slice(0, 5)} compact />
-                    </div>
-
-                    {/* Active Goals */}
-                    {goals.length > 0 && (
-                        <div className="col-span-full space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-slate-900">Financial Goals</h3>
-                                <button
-                                    onClick={() => setActiveTab('goals')}
-                                    className="text-sm font-semibold text-primary-600 hover:text-primary-700"
-                                >
-                                    View All →
-                                </button>
-                            </div>
-                            <GoalList goals={goals.slice(0, 3)} onUpdate={loadData} compact />
-                        </div>
-                    )}
-                </div>
+            {activeTab === 'overview' && summary && (
+                <BudgetOverview
+                    summary={summary}
+                    budgets={budgets}
+                    expenses={expenses}
+                    expenseTotal={expenseTotal}
+                    goals={goals}
+                    goalSummary={goalSummary}
+                    budgetHealth={budgetHealth}
+                    onNavigate={setActiveTab}
+                />
             )}
 
             {activeTab === 'budgets' && (
@@ -273,18 +228,6 @@ const BudgetDashboard = () => {
                             }}
                             isSubmitting={isSubmitting}
                         />
-
-                        <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 p-5 shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <TrendingUp className="mt-1 h-5 w-5 text-emerald-600" />
-                                <div>
-                                    <h3 className="font-bold text-emerald-900">Smart Budget Tracking</h3>
-                                    <p className="mt-2 text-sm leading-6 text-emerald-800">
-                                        Set spending limits, get alerts when approaching your budget, and make informed financial decisions.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
 
                         {submitError && (
                             <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
@@ -313,7 +256,7 @@ const BudgetDashboard = () => {
             )}
 
             {activeTab === 'goals' && (
-                <GoalList goals={goals} onUpdate={loadData} />
+                <GoalTracker goals={goals} goalSummary={goalSummary} onUpdate={loadData} />
             )}
 
             {/* Quick Expense Modal */}
