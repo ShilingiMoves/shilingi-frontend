@@ -7,6 +7,7 @@ import IncomeForm from './IncomeForm';
 import QuickIncomeModal from './QuickIncomeModal';
 import IncomeVsExpenseChart from './IncomeVsExpenseChart';
 import MonthlyTrendsChart from './MonthlyTrendsChart';
+import CategoryPieChart from './CategoryPieChart';
 
 const IncomeDashboard = () => {
     const {
@@ -365,102 +366,29 @@ const IncomeDashboard = () => {
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && (
                     <div className="space-y-6">
+                        {/* Top Section - Trends and Comparison */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <MonthlyTrendsChart history={history} loading={loading} />
                             <IncomeVsExpenseChart data={incomeVsExpense} loading={loading} />
                         </div>
 
-                        {/* Detailed Breakdown */}
+                        {/* Pie Charts - Only here! */}
                         {incomeVsExpense && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Income Breakdown */}
                                 {incomeVsExpense.income_breakdown && incomeVsExpense.income_breakdown.length > 0 && (
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-4">Income by Category</h3>
-                                        <div className="space-y-4">
-                                            {incomeVsExpense.income_breakdown.map((item, index) => (
-                                                <div key={index}>
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <span 
-                                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                                                                style={{ backgroundColor: item.color + '20' }}
-                                                            >
-                                                                {item.icon}
-                                                            </span>
-                                                            <div>
-                                                                <p className="font-semibold text-gray-900">{item.category}</p>
-                                                                <p className="text-xs text-gray-500">{item.count} {item.count === 1 ? 'transaction' : 'transactions'}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-bold text-gray-900">
-                                                                {incomeVsExpense.currency} {new Intl.NumberFormat('en-US', {
-                                                                    minimumFractionDigits: 2,
-                                                                    maximumFractionDigits: 2
-                                                                }).format(item.amount)}
-                                                            </p>
-                                                            <p className="text-xs font-semibold text-blue-600">{item.percentage}%</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                                        <div
-                                                            className="h-full rounded-full transition-all duration-500"
-                                                            style={{ 
-                                                                width: `${item.percentage}%`,
-                                                                backgroundColor: item.color 
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <CategoryPieChart
+                                        data={incomeVsExpense.income_breakdown}
+                                        title="Income by Category"
+                                        type="income"
+                                    />
                                 )}
 
-                                {/* Expense Breakdown */}
                                 {incomeVsExpense.expense_breakdown && incomeVsExpense.expense_breakdown.length > 0 && (
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-4">Expenses by Category</h3>
-                                        <div className="space-y-4">
-                                            {incomeVsExpense.expense_breakdown.map((item, index) => (
-                                                <div key={index}>
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <span 
-                                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                                                                style={{ backgroundColor: item.color + '20' }}
-                                                            >
-                                                                {item.icon}
-                                                            </span>
-                                                            <div>
-                                                                <p className="font-semibold text-gray-900">{item.category}</p>
-                                                                <p className="text-xs text-gray-500">{item.count} {item.count === 1 ? 'transaction' : 'transactions'}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-bold text-gray-900">
-                                                                {incomeVsExpense.currency} {new Intl.NumberFormat('en-US', {
-                                                                    minimumFractionDigits: 2,
-                                                                    maximumFractionDigits: 2
-                                                                }).format(item.amount)}
-                                                            </p>
-                                                            <p className="text-xs font-semibold text-red-600">{item.percentage}%</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                                        <div
-                                                            className="h-full rounded-full transition-all duration-500"
-                                                            style={{ 
-                                                                width: `${item.percentage}%`,
-                                                                backgroundColor: item.color 
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <CategoryPieChart
+                                        data={incomeVsExpense.expense_breakdown}
+                                        title="Expenses by Category"
+                                        type="expense"
+                                    />
                                 )}
                             </div>
                         )}

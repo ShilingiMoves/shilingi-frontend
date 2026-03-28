@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CashflowManagerPanel from '../components/dashboard/cashflow/CashflowManagerPanel';
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
 import BudgetDashboard from '../components/dashboard/budget/BudgetDashboard';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import IncomeDashboard from '../components/dashboard/income';
+import NetWorthDashboard from '../components/dashboard/networth';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
+import { NetWorthProvider } from '../contexts/NetWorthContext';
 
 const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
-    const [activeSection, setActiveSection] = useState('cashflow'); // Default to income (cashflow)
+    const [activeSection, setActiveSection] = useState('cashflow');
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -79,6 +80,13 @@ const DashboardPage = () => {
                     </IncomeProvider>
                 );
 
+            case 'networth':
+                return (
+                    <NetWorthProvider>
+                        <NetWorthDashboard />
+                    </NetWorthProvider>
+                );
+
             case 'user':
                 return (
                     <>
@@ -118,8 +126,8 @@ const DashboardPage = () => {
             />
 
             <main className="flex-1 lg:overflow-y-auto">
-                {activeSection === 'cashflow' ? (
-                    // Income dashboard has its own layout and doesn't need wrapper
+                {(activeSection === 'cashflow' || activeSection === 'networth') ? (
+                    // Income and NetWorth dashboards have their own layouts
                     renderActiveSection()
                 ) : (
                     // Other sections use the traditional layout

@@ -129,55 +129,6 @@ const IncomeVsExpenseChart = ({ data, loading }) => {
                     </div>
                 </div>
             </div>
-
-            {/* Breakdown Sections */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
-                {/* Income Breakdown */}
-                {data.income_breakdown && data.income_breakdown.length > 0 && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3">Income Sources</h4>
-                        <div className="space-y-2">
-                            {data.income_breakdown.slice(0, 3).map((item, index) => (
-                                <div key={index} className="flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <span 
-                                            className="w-3 h-3 rounded-full shrink-0" 
-                                            style={{ backgroundColor: item.color }}
-                                        ></span>
-                                        <span className="truncate text-gray-600">{item.category}</span>
-                                    </div>
-                                    <span className="font-semibold text-gray-900 ml-2">
-                                        {item.percentage}%
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Expense Breakdown */}
-                {data.expense_breakdown && data.expense_breakdown.length > 0 && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3">Top Expenses</h4>
-                        <div className="space-y-2">
-                            {data.expense_breakdown.slice(0, 3).map((item, index) => (
-                                <div key={index} className="flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <span 
-                                            className="w-3 h-3 rounded-full shrink-0" 
-                                            style={{ backgroundColor: item.color }}
-                                        ></span>
-                                        <span className="truncate text-gray-600">{item.category}</span>
-                                    </div>
-                                    <span className="font-semibold text-gray-900 ml-2">
-                                        {item.percentage}%
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
         </div>
     );
 };
