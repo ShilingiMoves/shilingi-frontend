@@ -9,16 +9,16 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
 
     const navItems = [
         {
-            id: 'debt',
-            label: 'Debt Management',
-            helper: 'Track and reduce what you owe',
-            icon: Landmark,
-        },
-        {
             id: 'budget',
             label: 'Budget & Spending',
             helper: 'Plan spending and save smart',
             icon: Wallet,
+        },
+        {
+            id: 'debt',
+            label: 'Debt Management',
+            helper: 'Track and reduce what you owe',
+            icon: Landmark,
         },
         {
             id: 'cashflow',

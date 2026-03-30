@@ -14,7 +14,7 @@ const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
-    const [activeSection, setActiveSection] = useState('cashflow');
+    const [activeSection, setActiveSection] = useState('budget');
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -107,9 +107,20 @@ const DashboardPage = () => {
 
             default:
                 return (
-                    <IncomeProvider>
-                        <IncomeDashboard />
-                    </IncomeProvider>
+                    <>
+                        <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+                            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">
+                                Budget & Spending
+                            </p>
+                            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
+                                Take control of your money with smart budgeting and expense tracking.
+                            </h1>
+                            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+                                Set spending limits, track expenses in real-time, and work towards your financial goals with clarity and confidence.
+                            </p>
+                        </section>
+                        <BudgetDashboard />
+                    </>
                 );
         }
     };
