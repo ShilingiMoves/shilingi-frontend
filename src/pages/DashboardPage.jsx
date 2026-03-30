@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
 import BudgetDashboard from '../components/dashboard/budget/BudgetDashboard';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
@@ -14,7 +15,9 @@ const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
-    const [activeSection, setActiveSection] = useState('budget');
+    const [activeSection, setActiveSection] = useState('cashflow');
+    const [budgetActiveTab, setBudgetActiveTab] = useState('overview');
+    const [debtActionNonce, setDebtActionNonce] = useState(0);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -41,17 +44,30 @@ const DashboardPage = () => {
                 return (
                     <>
                         <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
-                            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">
-                                Debt management
-                            </p>
-                            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
-                                Stay on top of what you owe and make each repayment count.
-                            </h1>
-                            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                                Keep your balances, repayment amounts, and due dates in one place so you can make steady progress with less stress and more clarity.
-                            </p>
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="max-w-3xl">
+                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">
+                                        Debt management
+                                    </p>
+                                    <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
+                                        Stay on top of what you owe and make each repayment count.
+                                    </h1>
+                                    <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+                                        Keep your balances, repayment amounts, and due dates in one place so you can make steady progress with less stress and more clarity.
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setDebtActionNonce((current) => current + 1)}
+                                    className="inline-flex items-center gap-2 self-start rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-colors hover:bg-primary-700"
+                                >
+                                    <Plus size={16} />
+                                    Add Debt
+                                </button>
+                            </div>
                         </section>
-                        <DebtManagerPanel />
+                        <DebtManagerPanel requestAddDebtSignal={debtActionNonce} />
                     </>
                 );
 
@@ -59,17 +75,40 @@ const DashboardPage = () => {
                 return (
                     <>
                         <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
-                            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">
-                                Budget & Spending
-                            </p>
-                            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
-                                Take control of your money with smart budgeting and expense tracking.
-                            </h1>
-                            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                                Set spending limits, track expenses in real-time, and work towards your financial goals with clarity and confidence.
-                            </p>
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="max-w-3xl">
+                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">
+                                        Budget & Spending
+                                    </p>
+                                    <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
+                                        Take control of your money with smart budgeting and expense tracking.
+                                    </h1>
+                                    <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+                                        Set spending limits, track expenses in real-time, and work towards your financial goals with clarity and confidence.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-3 lg:justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBudgetActiveTab('expenses')}
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-colors hover:bg-primary-700"
+                                    >
+                                        <Plus size={16} />
+                                        Add Expense
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBudgetActiveTab('budgets')}
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/40 transition-colors hover:bg-amber-300"
+                                    >
+                                        <Plus size={16} />
+                                        Add Budget
+                                    </button>
+                                </div>
+                            </div>
                         </section>
-                        <BudgetDashboard />
+                        <BudgetDashboard activeTab={budgetActiveTab} onTabChange={setBudgetActiveTab} />
                     </>
                 );
 
@@ -107,20 +146,9 @@ const DashboardPage = () => {
 
             default:
                 return (
-                    <>
-                        <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
-                            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">
-                                Budget & Spending
-                            </p>
-                            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
-                                Take control of your money with smart budgeting and expense tracking.
-                            </h1>
-                            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                                Set spending limits, track expenses in real-time, and work towards your financial goals with clarity and confidence.
-                            </p>
-                        </section>
-                        <BudgetDashboard />
-                    </>
+                    <IncomeProvider>
+                        <IncomeDashboard />
+                    </IncomeProvider>
                 );
         }
     };

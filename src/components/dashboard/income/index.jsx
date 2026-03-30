@@ -136,7 +136,7 @@ const IncomeDashboard = () => {
                                     setSelectedIncome(null);
                                     setShowIncomeForm(true);
                                 }}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                                className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2 font-medium text-slate-950 shadow-lg shadow-amber-300/40 transition-colors duration-200 hover:bg-amber-300 hover:shadow-xl"
                             >
                                 <Plus size={16} />
                                 Add Income

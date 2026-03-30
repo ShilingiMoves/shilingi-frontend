@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Loader2, Zap, ChevronRight } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
-import BudgetSummaryCards from './BudgetSummaryCards';
 import BudgetOverview from './BudgetOverview';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
 import GoalTracker from './GoalTracker';
-import QuickExpenseModal from './QuickExpenseModal';
 import {
     getBudgets,
     getBudgetSummary,
@@ -20,7 +18,7 @@ import {
 } from '../../../services/budgetApi';
 import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
 
-const BudgetDashboard = () => {
+const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     // State management
     const [budgets, setBudgets] = useState([]);
     const [summary, setSummary] = useState(null);
@@ -37,8 +35,10 @@ const BudgetDashboard = () => {
     const [deletingId, setDeletingId] = useState(null);
     const [editingBudget, setEditingBudget] = useState(null);
     
-    const [activeTab, setActiveTab] = useState('overview');
-    const [showQuickExpense, setShowQuickExpense] = useState(false);
+    const [internalActiveTab, setInternalActiveTab] = useState('overview');
+
+    const activeTab = controlledActiveTab ?? internalActiveTab;
+    const setActiveTab = onTabChange ?? setInternalActiveTab;
 
     // Calculate budget health metrics
     const budgetHealth = useMemo(() => calculateBudgetHealth(budgets), [budgets]);
@@ -149,17 +149,6 @@ const BudgetDashboard = () => {
 
     return (
         <div className="space-y-4">
-            {/* Compact Header with Quick Actions */}
-            <div className="flex items-center justify-between">
-                <button
-                    onClick={() => setShowQuickExpense(true)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm transition-all hover:bg-amber-100 hover:shadow-md"
-                >
-                    <Zap size={16} />
-                    Quick Expense
-                </button>
-            </div>
-
             {/* Error Alert */}
             {error && (
                 <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 shadow-sm">
@@ -177,9 +166,9 @@ const BudgetDashboard = () => {
             <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
                 {[
                     { id: 'overview', label: 'Overview' },
+                    { id: 'goals', label: `Goals`, count: goals.length },
                     { id: 'budgets', label: `Budgets`, count: budgets.length },
                     { id: 'expenses', label: `Expenses`, count: expenseCount },
-                    { id: 'goals', label: `Goals`, count: goals.length },
                 ].map((tab) => (
                     <button
                         key={tab.id}
@@ -257,17 +246,6 @@ const BudgetDashboard = () => {
 
             {activeTab === 'goals' && (
                 <GoalTracker goals={goals} goalSummary={goalSummary} onUpdate={loadData} />
-            )}
-
-            {/* Quick Expense Modal */}
-            {showQuickExpense && (
-                <QuickExpenseModal
-                    onClose={() => setShowQuickExpense(false)}
-                    onSuccess={() => {
-                        setShowQuickExpense(false);
-                        refreshExpenses();
-                    }}
-                />
             )}
         </div>
     );

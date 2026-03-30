@@ -9,6 +9,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
 
     const navItems = [
         {
+            id: 'cashflow',
+            label: 'Income Manager',
+            helper: 'Track money coming in',
+            icon: ArrowDownUp,
+        },
+        {
             id: 'budget',
             label: 'Budget & Spending',
             helper: 'Plan spending and save smart',
@@ -19,12 +25,6 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
             label: 'Debt Management',
             helper: 'Track and reduce what you owe',
             icon: Landmark,
-        },
-        {
-            id: 'cashflow',
-            label: 'Cash Flow',
-            helper: 'Follow money in and out',
-            icon: ArrowDownUp,
         },
         {
             id: 'networth',

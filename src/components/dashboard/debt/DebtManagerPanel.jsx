@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Loader2, Plus, ShieldCheck } from 'lucide-react';
-import Button from '../../Button';
+import { AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 import DebtEntryModal from './DebtEntryModal';
 import DebtList from './DebtList';
 import DebtSummaryCards from './DebtSummaryCards';
 import { calculateDebtSummary, createDebt, deleteDebt, getDebts, updateDebt } from '../../../services/debtApi';
 
-const DebtManagerPanel = () => {
+const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
     const [debts, setDebts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -34,6 +33,16 @@ const DebtManagerPanel = () => {
     useEffect(() => {
         loadDebts();
     }, []);
+
+    useEffect(() => {
+        if (!requestAddDebtSignal) {
+            return;
+        }
+
+        setEditingDebt(null);
+        setSubmitError('');
+        setIsModalOpen(true);
+    }, [requestAddDebtSignal]);
 
     const handleSubmit = async (formValues) => {
         try {
@@ -121,19 +130,6 @@ const DebtManagerPanel = () => {
                         </p>
                     </div>
 
-                    <Button
-                        type="button"
-                        variant="primary"
-                        className="shrink-0 justify-center"
-                        onClick={() => {
-                            setEditingDebt(null);
-                            setSubmitError('');
-                            setIsModalOpen(true);
-                        }}
-                    >
-                        <Plus size={18} />
-                        Add Debt
-                    </Button>
                 </div>
 
                 <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-5 shadow-sm">
