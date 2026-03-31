@@ -7,6 +7,7 @@ import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import IncomeDashboard from '../components/dashboard/income';
 import NetWorthDashboard from '../components/dashboard/networth';
+import InvestmentTracker from '../components/dashboard/investments';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
@@ -165,6 +166,9 @@ const DashboardPage = () => {
                     </NetWorthProvider>
                 );
 
+            case 'investments':
+                return <InvestmentTracker />;
+
             case 'user':
                 return (
                     <>
@@ -204,7 +208,7 @@ const DashboardPage = () => {
             />
 
             <main className="flex-1 lg:overflow-y-auto">
-                {(activeSection === 'cashflow' || activeSection === 'networth') ? (
+                {(activeSection === 'cashflow' || activeSection === 'networth' || activeSection === 'investments') ? (
                     renderActiveSection()
                 ) : (
                     <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">

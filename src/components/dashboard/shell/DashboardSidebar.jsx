@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownUp, ChevronLeft, Landmark, LogOut, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowDownUp, ChevronLeft, Landmark, LineChart, LogOut, TrendingUp, Wallet } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 
 const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection, onSelectSection }) => {
@@ -31,6 +31,12 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
             label: 'Net Worth',
             helper: 'Track assets and liabilities',
             icon: TrendingUp,
+        },
+        {
+            id: 'investments',
+            label: 'Investment Tracker',
+            helper: 'Track and grow investments',
+            icon: LineChart,
         },
     ];
 
