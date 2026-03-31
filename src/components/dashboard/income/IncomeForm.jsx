@@ -3,7 +3,7 @@ import { useIncome } from '../../../contexts/IncomeContext';
 import { X } from 'lucide-react';
 
 const IncomeForm = ({ income, onClose, onSuccess }) => {
-    const { createIncome, updateIncome, categories } = useIncome();
+    const { createIncome, updateIncome, addQuickIncome, fetchIncomes, fetchSummary, categories } = useIncome();
     const [formData, setFormData] = useState({
         category: '',
         amount: '',
@@ -86,25 +86,15 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
             if (!submitData.recurring_end_date) delete submitData.recurring_end_date;
             if (!submitData.notes) delete submitData.notes;
 
-            // The regular /income/ API expects category as integer PK, not UUID string.
-            // Look up the selected category to find its integer PK.
-            if (submitData.category) {
-                const selectedCat = categories.find(c => c.uuid === submitData.category);
-                console.log('Selected category object:', selectedCat);
-                if (selectedCat) {
-                    // Use the integer PK (id, pk, or category_id) instead of UUID
-                    const pk = selectedCat.id ?? selectedCat.pk ?? selectedCat.category_id;
-                    if (pk !== undefined && pk !== null) {
-                        submitData.category = Number(pk);
-                    }
-                }
-                console.log('Final category value being sent:', submitData.category, typeof submitData.category);
-            }
-
             if (income) {
+                // When editing, exclude category (can't change after creation)
+                delete submitData.category;
                 await updateIncome(income.uuid, submitData);
             } else {
-                await createIncome(submitData);
+                // Use the quick endpoint for creation — it properly handles
+                // UUID-based category lookups, unlike the regular /income/ endpoint
+                // which expects an integer PK that the categories API doesn't provide.
+                await addQuickIncome(submitData);
             }
 
             if (onSuccess) onSuccess();
