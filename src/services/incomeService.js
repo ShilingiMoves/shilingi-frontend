@@ -2,11 +2,23 @@ import apiClient from './apiClient';
 
 const INCOME_BASE = '/api/v1/cashflow';
 
+function normaliseCategory(item) {
+    const explicitId = item?.id ?? item?.pk ?? item?.category_id;
+    return {
+        ...item,
+        id: explicitId,
+        uuid: item?.uuid || '',
+        name: item?.name || 'Unknown Category',
+    };
+}
+
 class IncomeService {
     // ========== INCOME CATEGORIES ==========
     async getCategories() {
         const response = await apiClient.get(`${INCOME_BASE}/categories/`);
-        return response?.data || response;
+        const categories = response?.data?.categories || response?.categories || response?.data || response || [];
+        // Ensure it's an array before mapping
+        return Array.isArray(categories) ? categories.map(normaliseCategory) : [];
     }
 
     async createCategory(data) {
