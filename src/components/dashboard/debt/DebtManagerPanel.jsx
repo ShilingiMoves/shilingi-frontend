@@ -4,6 +4,7 @@ import DebtEntryModal from './DebtEntryModal';
 import DebtList from './DebtList';
 import DebtSummaryCards from './DebtSummaryCards';
 import { calculateDebtSummary, createDebt, deleteDebt, getDebts, updateDebt } from '../../../services/debtApi';
+import { markDashboardDataExists } from '../../../pages/DashboardPage';
 
 const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
     const [debts, setDebts] = useState([]);
@@ -57,6 +58,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
                 const createdDebt = await createDebt(formValues);
                 setDebts((current) => [createdDebt, ...current]);
                 setIsModalOpen(false);
+                markDashboardDataExists();
             }
         } catch (err) {
             setSubmitError(err.message || 'We could not save this debt right now.');

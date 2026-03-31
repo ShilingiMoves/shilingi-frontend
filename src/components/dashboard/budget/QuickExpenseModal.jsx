@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Zap } from 'lucide-react';
 import { getCategories, quickExpense } from '../../../services/budgetApi';
+import { markDashboardDataExists } from '../../../pages/DashboardPage';
 
 const QuickExpenseModal = ({ onClose, onSuccess }) => {
     const [categories, setCategories] = useState([]);
@@ -39,6 +40,7 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
                 category: formData.category ? Number(formData.category) : '',
             });
             if (onSuccess) onSuccess();
+            markDashboardDataExists();
         } catch (error) {
             console.error('Failed to add expense:', error);
             setIsSubmitting(false);

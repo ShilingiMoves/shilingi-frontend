@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Tag, Calendar, FileText, CreditCard, Building2, X } from 'lucide-react';
 import { getCategories, createExpense, updateExpense } from '../../../services/budgetApi';
+import { markDashboardDataExists } from '../../../pages/DashboardPage';
 
 const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
     const [categories, setCategories] = useState([]);
@@ -89,6 +90,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
             }
 
             if (onSuccess) onSuccess();
+            markDashboardDataExists();
         } catch (error) {
             console.error('Failed to save expense:', error);
             setIsSubmitting(false);

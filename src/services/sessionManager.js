@@ -50,6 +50,7 @@ export function clearSessionStorage() {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem('shilingi_has_dashboard_data');
 }
 
 export function handleUnauthorizedSession() {

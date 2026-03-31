@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import incomeService from '../services/incomeService';
+import { markDashboardDataExists } from '../pages/DashboardPage';
 
 const IncomeContext = createContext();
 
@@ -72,6 +73,7 @@ export const IncomeProvider = ({ children }) => {
             const newIncome = await incomeService.createIncome(incomeData);
             await fetchIncomes();
             await fetchSummary();
+            markDashboardDataExists();
             setError(null);
             return newIncome;
         } catch (err) {
@@ -119,6 +121,7 @@ export const IncomeProvider = ({ children }) => {
             const newIncome = await incomeService.quickIncome(quickData);
             await fetchIncomes();
             await fetchSummary();
+            markDashboardDataExists();
             setError(null);
             return newIncome;
         } catch (err) {

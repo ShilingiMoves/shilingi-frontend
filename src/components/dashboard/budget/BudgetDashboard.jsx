@@ -17,6 +17,7 @@ import {
     getGoalSummary,
 } from '../../../services/budgetApi';
 import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
+import { markDashboardDataExists } from '../../../pages/DashboardPage';
 
 const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     // State management
@@ -94,6 +95,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             
             const newSummary = await getBudgetSummary();
             setSummary(newSummary);
+            markDashboardDataExists();
         } catch (err) {
             const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
             setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);

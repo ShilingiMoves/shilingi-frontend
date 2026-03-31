@@ -10,12 +10,29 @@ import NetWorthDashboard from '../components/dashboard/networth';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
+import incomeService from '../services/incomeService';
+
+const DASHBOARD_DATA_KEY = 'shilingi_has_dashboard_data';
+
+/**
+ * Determines the initial dashboard section:
+ * - New users (no data yet) → 'cashflow' (Income Manager) to start adding data
+ * - Returning users (have data) → 'networth' (Net Worth) to review their position
+ */
+function getInitialSection() {
+    return localStorage.getItem(DASHBOARD_DATA_KEY) === 'true' ? 'networth' : 'cashflow';
+}
+
+/** Mark that the user has interacted with the dashboard */
+export function markDashboardDataExists() {
+    localStorage.setItem(DASHBOARD_DATA_KEY, 'true');
+}
 
 const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
-    const [activeSection, setActiveSection] = useState('cashflow');
+    const [activeSection, setActiveSection] = useState(getInitialSection);
     const [budgetActiveTab, setBudgetActiveTab] = useState('overview');
     const [debtActionNonce, setDebtActionNonce] = useState(0);
 
@@ -30,6 +47,28 @@ const DashboardPage = () => {
         };
 
         fetchProfile();
+
+        // On mount, verify the data flag by checking if the user actually has income data.
+        // This handles edge cases like cleared localStorage but existing backend data.
+        const verifyUserData = async () => {
+            try {
+                const summary = await incomeService.getSummary();
+                const hasData = summary && (
+                    (summary.total_income && Number(summary.total_income) > 0) ||
+                    (summary.income_count && Number(summary.income_count) > 0)
+                );
+                if (hasData) {
+                    markDashboardDataExists();
+                    // Only update section if the user hasn't already navigated away
+                    setActiveSection(prev => prev === 'cashflow' && localStorage.getItem(DASHBOARD_DATA_KEY) === 'true' ? 'networth' : prev);
+                }
+            } catch (err) {
+                // Non-critical — if the check fails, we just keep the current section
+                console.error('Data verification check failed:', err);
+            }
+        };
+
+        verifyUserData();
     }, []);
 
     const handleSignOut = () => {
