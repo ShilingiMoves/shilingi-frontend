@@ -24,9 +24,15 @@ function parseAmount(value) {
 }
 
 function normalizeCategory(item) {
-    const categoryId = item?.id ?? item?.pk ?? item?.category_id ?? item?.uuid;
+    const rawCategoryId = item?.id ?? item?.pk ?? item?.category_id ?? null;
+    const parsedCategoryId = rawCategoryId === null || rawCategoryId === undefined
+        ? null
+        : Number(rawCategoryId);
+    const categoryId = Number.isFinite(parsedCategoryId) ? parsedCategoryId : null;
+
     return {
-        id: categoryId,
+        id: categoryId ?? item?.uuid ?? '',
+        categoryId,
         uuid: item?.uuid || '',
         name: item?.name || 'Asset Category',
         color: item?.color || '#64748b',

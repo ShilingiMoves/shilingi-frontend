@@ -101,7 +101,25 @@ function isInvestmentCategory(categoryName) {
 
 function getCategoryIdentifier(category) {
     if (!category) return null;
-    return category.id ?? category.uuid ?? category.raw?.id ?? category.raw?.uuid ?? null;
+    const candidates = [
+        category.categoryId,
+        category.id,
+        category.raw?.id,
+        category.raw?.pk,
+        category.raw?.category_id,
+    ];
+
+    for (const candidate of candidates) {
+        if (candidate === null || candidate === undefined || candidate === '') {
+            continue;
+        }
+        const parsed = Number(candidate);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+
+    return null;
 }
 
 const InvestmentTracker = () => {
@@ -225,6 +243,9 @@ const InvestmentTracker = () => {
 
         try {
             const categoryIdentifier = getCategoryIdentifier(selectedCategory);
+            if (!categoryIdentifier) {
+                throw new Error('Could not map this investment category to a valid id. Please refresh and try again.');
+            }
             const payload = {
                 name: formData.name,
                 category: categoryIdentifier,
