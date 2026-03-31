@@ -25,8 +25,7 @@ export const IncomeProvider = ({ children }) => {
         try {
             setLoading(true);
             const data = await incomeService.getCategories();
-            const categoriesArray = Array.isArray(data) ? data : (data?.categories || []);
-            setCategories(categoriesArray);
+            setCategories(data.categories || []);
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -182,7 +181,7 @@ export const IncomeProvider = ({ children }) => {
         incomeVsExpense,
         loading,
         error,
-        
+
         // Actions
         fetchCategories,
         createCategory,

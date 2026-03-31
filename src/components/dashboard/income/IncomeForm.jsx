@@ -57,18 +57,18 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
     const handleChange = (field, value) => {
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
-            
+
             // If toggling recurring off, reset frequency to ONE_TIME
             if (field === 'is_recurring' && !value) {
                 updated.frequency = 'ONE_TIME';
                 updated.recurring_end_date = '';
             }
-            
+
             // If toggling recurring on and frequency is ONE_TIME, change to MONTHLY
             if (field === 'is_recurring' && value && prev.frequency === 'ONE_TIME') {
                 updated.frequency = 'MONTHLY';
             }
-            
+
             return updated;
         });
     };
@@ -80,16 +80,25 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
 
         try {
             const submitData = { ...formData };
-            
+
             // Remove empty optional fields
             if (!submitData.source) delete submitData.source;
             if (!submitData.recurring_end_date) delete submitData.recurring_end_date;
             if (!submitData.notes) delete submitData.notes;
 
-            // Convert category to a Number if it's numeric (API expects PK integer)
+            // The regular /income/ API expects category as integer PK, not UUID string.
+            // Look up the selected category to find its integer PK.
             if (submitData.category) {
-                const numericCategory = Number(submitData.category);
-                submitData.category = Number.isNaN(numericCategory) ? submitData.category : numericCategory;
+                const selectedCat = categories.find(c => c.uuid === submitData.category);
+                console.log('Selected category object:', selectedCat);
+                if (selectedCat) {
+                    // Use the integer PK (id, pk, or category_id) instead of UUID
+                    const pk = selectedCat.id ?? selectedCat.pk ?? selectedCat.category_id;
+                    if (pk !== undefined && pk !== null) {
+                        submitData.category = Number(pk);
+                    }
+                }
+                console.log('Final category value being sent:', submitData.category, typeof submitData.category);
             }
 
             if (income) {
@@ -97,7 +106,7 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
             } else {
                 await createIncome(submitData);
             }
-            
+
             if (onSuccess) onSuccess();
             onClose();
         } catch (err) {
@@ -147,7 +156,7 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                         >
                             <option value="">Select a category...</option>
                             {categories.map((cat) => (
-                                <option key={cat.uuid || cat.id || Math.random()} value={cat.id || cat.uuid}>
+                                <option key={cat.uuid} value={cat.uuid}>
                                     {cat.name}
                                 </option>
                             ))}
@@ -230,11 +239,10 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                                     key={option.value}
                                     type="button"
                                     onClick={() => handleChange('status', option.value)}
-                                    className={`py-3 px-4 rounded-lg border-2 font-medium transition-all duration-200 ${
-                                        formData.status === option.value
+                                    className={`py-3 px-4 rounded-lg border-2 font-medium transition-all duration-200 ${formData.status === option.value
                                             ? 'border-blue-500 bg-blue-50 text-blue-700'
                                             : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                                    }`}
+                                        }`}
                                 >
                                     {option.label}
                                 </button>
