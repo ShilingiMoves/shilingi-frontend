@@ -166,10 +166,8 @@ const DashboardPage = () => {
 
             <main className="flex-1 lg:overflow-y-auto">
                 {(activeSection === 'cashflow' || activeSection === 'networth') ? (
-                    // Income and NetWorth dashboards have their own layouts
                     renderActiveSection()
                 ) : (
-                    // Other sections use the traditional layout
                     <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                         <div className="mx-auto max-w-7xl space-y-6">
                             {renderActiveSection()}

@@ -34,7 +34,10 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
         setIsSubmitting(true);
 
         try {
-            await quickExpense(formData);
+            await quickExpense({
+                ...formData,
+                category: formData.category ? Number(formData.category) : '',
+            });
             if (onSuccess) onSuccess();
         } catch (error) {
             console.error('Failed to add expense:', error);
@@ -85,7 +88,7 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
                         >
                             <option value="">Select category</option>
                             {categories.map((cat) => (
-                                <option key={cat.uuid} value={cat.uuid}>
+                                <option key={cat.uuid || cat.id} value={cat.value}>
                                     {cat.name}
                                 </option>
                             ))}

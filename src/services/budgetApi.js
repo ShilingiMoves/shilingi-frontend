@@ -2,10 +2,38 @@ import apiClient from './apiClient';
 
 const BASE_PATH = '/api/v1/budgets';
 
+function normaliseCategory(item, index = 0) {
+    const explicitId = item?.id ?? item?.pk ?? item?.category_id;
+    const categoryId = explicitId ?? index + 1;
+
+    return {
+        ...item,
+        id: categoryId,
+        uuid: item?.uuid || '',
+        value: String(categoryId),
+        name: item?.name || `Category ${categoryId}`,
+        usesDerivedId: explicitId === undefined,
+    };
+}
+
+function prepareCategoryPayload(data) {
+    if (!data || data.category === null || data.category === undefined || data.category === '') {
+        return data;
+    }
+
+    const numericCategory = Number(data.category);
+
+    return {
+        ...data,
+        category: Number.isNaN(numericCategory) ? data.category : numericCategory,
+    };
+}
+
 // ============ CATEGORIES ============
 export async function getCategories() {
     const response = await apiClient.get(`${BASE_PATH}/categories/`);
-    return response?.data?.categories || response?.categories || [];
+    const categories = response?.data?.categories || response?.categories || [];
+    return categories.map((item, index) => normaliseCategory(item, index));
 }
 
 export async function createCategory(data) {
@@ -30,12 +58,12 @@ export async function getBudgetSummary() {
 }
 
 export async function createBudget(data) {
-    const response = await apiClient.post(`${BASE_PATH}/`, data);
+    const response = await apiClient.post(`${BASE_PATH}/`, prepareCategoryPayload(data));
     return response?.data || response;
 }
 
 export async function updateBudget(uuid, data) {
-    const response = await apiClient.patch(`${BASE_PATH}/${uuid}/`, data);
+    const response = await apiClient.patch(`${BASE_PATH}/${uuid}/`, prepareCategoryPayload(data));
     return response?.data || response;
 }
 
@@ -51,11 +79,11 @@ export async function getExpenses(params = {}) {
 }
 
 export async function createExpense(data) {
-    return await apiClient.post(`${BASE_PATH}/expenses/`, data);
+    return await apiClient.post(`${BASE_PATH}/expenses/`, prepareCategoryPayload(data));
 }
 
 export async function quickExpense(data) {
-    return await apiClient.post(`${BASE_PATH}/expenses/quick/`, data);
+    return await apiClient.post(`${BASE_PATH}/expenses/quick/`, prepareCategoryPayload(data));
 }
 
 export async function updateExpense(uuid, data) {

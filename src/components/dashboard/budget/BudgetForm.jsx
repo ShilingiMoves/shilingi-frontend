@@ -22,7 +22,7 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
     useEffect(() => {
         if (initialValues) {
             setFormData({
-                category: initialValues.category || '',
+                category: initialValues.category ? String(initialValues.category) : '',
                 amount: initialValues.amount || '',
                 currency: initialValues.currency || 'KES', 
                 period: initialValues.period || 'MONTHLY',
@@ -53,15 +53,11 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        // Ensure category is a valid UUID string
-        const submitData = {
+
+        onSubmit({
             ...formData,
-            category: formData.category, // This should be the UUID string
-        };
-        
-        console.log('Submitting budget data:', submitData); // Debug log
-        onSubmit(submitData);
+            category: formData.category ? Number(formData.category) : '',
+        });
     };
 
     const handleReset = () => {
@@ -105,7 +101,7 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
                     >
                         <option value="">Select a category</option>
                         {categories.map((cat) => (
-                            <option key={cat.uuid} value={cat.uuid}>
+                            <option key={cat.uuid || cat.id} value={cat.value}>
                                 {cat.name}
                             </option>
                         ))}

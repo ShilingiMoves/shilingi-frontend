@@ -25,7 +25,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
     useEffect(() => {
         if (initialValues) {
             setFormData({
-                category: initialValues.category || '', // Keep as-is for display
+                category: initialValues.category ? String(initialValues.category) : '',
                 amount: initialValues.amount || '',
                 description: initialValues.description || '',
                 expense_date: initialValues.expense_date || new Date().toISOString().split('T')[0],
@@ -67,7 +67,10 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                 await updateExpense(initialValues.uuid, submitData);
             } else {
                 // When creating, include category
-                submitData = formData;
+                submitData = {
+                    ...formData,
+                    category: formData.category ? Number(formData.category) : '',
+                };
                 
                 console.log('Creating expense:', submitData);
                 await createExpense(submitData);
@@ -135,7 +138,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                         >
                             <option value="">Select category</option>
                             {categories.map(cat => (
-                                <option key={cat.uuid} value={cat.uuid}>
+                                <option key={cat.uuid || cat.id} value={cat.value}>
                                     {cat.name}
                                 </option>
                             ))}
