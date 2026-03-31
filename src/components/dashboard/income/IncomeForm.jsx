@@ -86,6 +86,12 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
             if (!submitData.recurring_end_date) delete submitData.recurring_end_date;
             if (!submitData.notes) delete submitData.notes;
 
+            // Convert category to a Number if it's numeric (API expects PK integer)
+            if (submitData.category) {
+                const numericCategory = Number(submitData.category);
+                submitData.category = Number.isNaN(numericCategory) ? submitData.category : numericCategory;
+            }
+
             if (income) {
                 await updateIncome(income.uuid, submitData);
             } else {
@@ -141,7 +147,7 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                         >
                             <option value="">Select a category...</option>
                             {categories.map((cat) => (
-                                <option key={cat.uuid} value={cat.uuid}>
+                                <option key={cat.uuid || cat.id || Math.random()} value={cat.id || cat.uuid}>
                                     {cat.name}
                                 </option>
                             ))}

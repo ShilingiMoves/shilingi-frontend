@@ -20,7 +20,14 @@ const QuickIncomeModal = ({ isOpen, onClose }) => {
         setSubmitting(true);
 
         try {
-            await addQuickIncome(formData);
+            // Convert category to a Number if it's numeric
+            const submitData = { ...formData };
+            if (submitData.category) {
+                const numericCategory = Number(submitData.category);
+                submitData.category = Number.isNaN(numericCategory) ? submitData.category : numericCategory;
+            }
+
+            await addQuickIncome(submitData);
             setSuccess('Income added successfully!');
             
             // Refresh the data
@@ -98,7 +105,7 @@ const QuickIncomeModal = ({ isOpen, onClose }) => {
                         >
                             <option value="">Select a category...</option>
                             {categories.map((cat) => (
-                                <option key={cat.uuid} value={cat.uuid}>
+                                <option key={cat.uuid || cat.id || Math.random()} value={cat.id || cat.uuid}>
                                     {cat.name}
                                 </option>
                             ))}
