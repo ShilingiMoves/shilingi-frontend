@@ -204,17 +204,12 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
                     <button
                         type="button"
                         onClick={() => {
-                            if (activeTab === 'debts') {
-                                setEditingDebt(null);
-                                setIsModalOpen(true);
-                                return;
-                            }
                             setEditingLiability(null);
                             setIsLiabilityModalOpen(true);
                         }}
                         className="inline-flex h-fit items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
                     >
-                        {activeTab === 'debts' ? 'Add Debt' : 'Add Liability'}
+                        Add Liability
                     </button>
                 </div>
 
