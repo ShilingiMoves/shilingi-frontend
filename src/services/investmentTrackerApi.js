@@ -23,16 +23,17 @@ function parseAmount(value) {
     return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function normalizeCategory(item) {
+function normalizeCategory(item, index = 0) {
     const rawCategoryId = item?.id ?? item?.pk ?? item?.category_id ?? null;
     const parsedCategoryId = rawCategoryId === null || rawCategoryId === undefined
         ? null
         : Number(rawCategoryId);
-    const categoryId = Number.isFinite(parsedCategoryId) ? parsedCategoryId : null;
+    const categoryId = Number.isFinite(parsedCategoryId) ? parsedCategoryId : index + 1;
 
     return {
         id: categoryId ?? item?.uuid ?? '',
         categoryId,
+        usesDerivedId: !Number.isFinite(parsedCategoryId),
         uuid: item?.uuid || '',
         name: item?.name || 'Asset Category',
         color: item?.color || '#64748b',
@@ -70,7 +71,7 @@ export async function getAssetCategories() {
     const response = await apiClient.get(ASSET_CATEGORIES_ENDPOINT);
     const payload = unwrapPayload(response);
     const categories = arrayFromPayload(payload, 'categories');
-    return categories.map(normalizeCategory);
+    return categories.map((item, index) => normalizeCategory(item, index));
 }
 
 export async function createAssetCategory(data) {

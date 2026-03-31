@@ -27,16 +27,16 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
             icon: Landmark,
         },
         {
-            id: 'networth',
-            label: 'Net Worth',
-            helper: 'Track assets and liabilities',
-            icon: TrendingUp,
-        },
-        {
             id: 'investments',
             label: 'Investment Tracker',
             helper: 'Track and grow investments',
             icon: LineChart,
+        },
+        {
+            id: 'networth',
+            label: 'Net Worth',
+            helper: 'Track assets and liabilities',
+            icon: TrendingUp,
         },
     ];
 
