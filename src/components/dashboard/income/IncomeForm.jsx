@@ -154,7 +154,7 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                     </div>
 
                     {/* Amount and Date Row */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Amount <span className="text-red-500">*</span>
@@ -223,7 +223,7 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Status
                         </label>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             {statusOptions.map((option) => (
                                 <button
                                     key={option.value}

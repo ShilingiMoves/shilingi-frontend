@@ -11,7 +11,7 @@ import {
     getLiabilityCategories,
     updateLiability as updateNetworthLiability
 } from '../../../services/networthApi';
-import { markDashboardDataExists } from '../../../pages/DashboardPage';
+import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 
 const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
@@ -451,4 +451,5 @@ const LiabilityEntryModal = ({ isOpen, initialValues, categories, onSubmit, onCl
 };
 
 export default DebtManagerPanel;
+
 

@@ -135,9 +135,9 @@ const MetricRow = ({ label, labelClass, value, width }) => (
 
 const OverviewTable = ({ title, rows, total, totalLabel, emptyLabel }) => (
     <div>
-        <h3 className="mb-3 text-4xl font-semibold text-slate-900">{title}</h3>
-        <div className="overflow-hidden border border-slate-300 bg-white">
-            <table className="w-full text-left text-sm">
+        <h3 className="mb-3 text-2xl font-semibold text-slate-900 sm:text-3xl lg:text-4xl">{title}</h3>
+        <div className="overflow-x-auto border border-slate-300 bg-white">
+            <table className="min-w-[520px] w-full text-left text-sm">
                 <thead>
                     <tr className="bg-[#315d85] text-white">
                         <th className="border-r border-slate-200 px-4 py-3 font-semibold">{title === 'Assets' ? 'Asset Name' : 'Liability Name'}</th>

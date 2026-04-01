@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import incomeService from '../services/incomeService';
-import { markDashboardDataExists } from '../pages/DashboardPage';
+import { markDashboardDataExists } from '../utils/dashboardDataState';
 import { useHealthRefresh } from '../hooks/useHealthRefresh';
 
 const IncomeContext = createContext();
@@ -210,3 +210,4 @@ export const IncomeProvider = ({ children }) => {
         </IncomeContext.Provider>
     );
 };
+

@@ -102,22 +102,22 @@ const IncomeDashboard = () => {
             {/* Header */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                                <span className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl text-white">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="min-w-0">
+                            <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 sm:text-3xl">
+                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-400 to-green-600 text-white sm:h-12 sm:w-12">
                                     <TrendingUp size={24} />
                                 </span>
                                 Income Manager
                             </h1>
                             <p className="text-sm text-gray-500 mt-1">Track and manage all your income sources</p>
                         </div>
-                        
-                        <div className="flex items-center gap-3">
+
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
                             <button
                                 onClick={handleRefresh}
                                 disabled={loading}
-                                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors duration-200 hover:bg-gray-50 disabled:opacity-50"
                             >
                                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                                 Refresh
@@ -125,7 +125,7 @@ const IncomeDashboard = () => {
                             
                             <button
                                 onClick={() => setShowQuickIncome(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors duration-200 hover:bg-green-700 hover:shadow-xl"
                             >
                                 <Plus size={16} />
                                 Quick Add
@@ -136,7 +136,7 @@ const IncomeDashboard = () => {
                                     setSelectedIncome(null);
                                     setShowIncomeForm(true);
                                 }}
-                                className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2 font-medium text-slate-950 shadow-lg shadow-amber-300/40 transition-colors duration-200 hover:bg-amber-300 hover:shadow-xl"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-400 px-4 py-2 text-sm font-medium text-slate-950 shadow-lg shadow-amber-300/40 transition-colors duration-200 hover:bg-amber-300 hover:shadow-xl"
                             >
                                 <Plus size={16} />
                                 Add Income
@@ -145,7 +145,8 @@ const IncomeDashboard = () => {
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex items-center gap-2 mt-6 border-b border-gray-200">
+                    <div className="mt-6 overflow-x-auto border-b border-gray-200">
+                        <div className="flex min-w-max items-center gap-2">
                         <button
                             onClick={() => setActiveTab('overview')}
                             className={`px-4 py-2 font-medium text-sm transition-colors duration-200 border-b-2 ${
@@ -176,6 +177,7 @@ const IncomeDashboard = () => {
                         >
                             Analytics
                         </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -323,7 +325,7 @@ const IncomeDashboard = () => {
                                                     onClick={() => handleFilterChange(key, '')}
                                                     className="hover:text-blue-900"
                                                 >
-                                                    ×
+                                                    x
                                                 </button>
                                             </span>
                                         );
@@ -416,3 +418,4 @@ const IncomeDashboard = () => {
 };
 
 export default IncomeDashboard;
+

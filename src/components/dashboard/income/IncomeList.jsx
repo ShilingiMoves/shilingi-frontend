@@ -92,7 +92,7 @@ const IncomeList = ({ incomes, onEdit, onDelete, loading, currency = 'KES' }) =>
                     className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 overflow-hidden"
                 >
                     <div className="p-4">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             {/* Left Section - Color Indicator & Details */}
                             <div className="flex items-start gap-3 flex-1 min-w-0">
                                 <div 
@@ -137,7 +137,7 @@ const IncomeList = ({ incomes, onEdit, onDelete, loading, currency = 'KES' }) =>
                             </div>
 
                             {/* Right Section - Amount & Actions */}
-                            <div className="flex items-start gap-3 shrink-0">
+                            <div className="flex items-start justify-between gap-3 sm:justify-start sm:shrink-0">
                                 <div className="text-right">
                                     <p className="text-lg font-bold text-gray-900">
                                         {currency} {formatAmount(income.amount)}

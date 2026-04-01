@@ -17,7 +17,7 @@ import {
     getAssets,
 } from '../../../services/investmentTrackerApi';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
-import { markDashboardDataExists } from '../../../pages/DashboardPage';
+import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 
 const INVESTMENT_TYPES = [
     {
@@ -552,3 +552,4 @@ const InvestmentTracker = () => {
 };
 
 export default InvestmentTracker;
+

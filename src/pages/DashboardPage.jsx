@@ -14,28 +14,13 @@ import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 import incomeService from '../services/incomeService';
-
-const DASHBOARD_DATA_KEY = 'shilingi_has_dashboard_data';
-
-/**
- * Determines the initial dashboard section:
- * - New users (no data yet) → 'cashflow' (Income Manager) to start adding data
- * - Returning users (have data) → 'networth' (Net Worth) to review their position
- */
-function getInitialSection() {
-    return localStorage.getItem(DASHBOARD_DATA_KEY) === 'true' ? 'networth' : 'cashflow';
-}
-
-/** Mark that the user has interacted with the dashboard */
-export function markDashboardDataExists() {
-    localStorage.setItem(DASHBOARD_DATA_KEY, 'true');
-}
+import { DASHBOARD_DATA_KEY, getInitialDashboardSection, markDashboardDataExists } from '../utils/dashboardDataState';
 
 const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
-    const [activeSection, setActiveSection] = useState(getInitialSection);
+    const [activeSection, setActiveSection] = useState(getInitialDashboardSection);
     const [budgetActiveTab, setBudgetActiveTab] = useState('overview');
     const [debtActionNonce, setDebtActionNonce] = useState(0);
 
@@ -235,3 +220,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

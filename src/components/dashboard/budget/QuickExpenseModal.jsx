@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Zap } from 'lucide-react';
 import { getCategories, quickExpense } from '../../../services/budgetApi';
-import { markDashboardDataExists } from '../../../pages/DashboardPage';
+import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 
 const QuickExpenseModal = ({ onClose, onSuccess }) => {
     const [categories, setCategories] = useState([]);
@@ -161,3 +161,4 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
 };
 
 export default QuickExpenseModal;
+

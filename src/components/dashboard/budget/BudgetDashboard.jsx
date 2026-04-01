@@ -17,7 +17,7 @@ import {
     getGoalSummary,
 } from '../../../services/budgetApi';
 import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
-import { markDashboardDataExists } from '../../../pages/DashboardPage';
+import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 
 const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
@@ -175,32 +175,34 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             )}
 
             {/* Navigation Tabs */}
-            <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
-                {[
-                    { id: 'overview', label: 'Overview' },
-                    { id: 'goals', label: `Goals`, count: goals.length },
-                    { id: 'budgets', label: `Budgets`, count: budgets.length },
-                    { id: 'expenses', label: `Expenses`, count: expenseCount },
-                ].map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
-                            activeTab === tab.id
-                                ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                    >
-                        {tab.label}
-                        {tab.count !== undefined && (
-                            <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
-                                activeTab === tab.id ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'
-                            }`}>
-                                {tab.count}
-                            </span>
-                        )}
-                    </button>
-                ))}
+            <div className="overflow-x-auto rounded-2xl bg-slate-100 p-1">
+                <div className="flex min-w-max gap-1">
+                    {[
+                        { id: 'overview', label: 'Overview' },
+                        { id: 'goals', label: `Goals`, count: goals.length },
+                        { id: 'budgets', label: `Budgets`, count: budgets.length },
+                        { id: 'expenses', label: `Expenses`, count: expenseCount },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+                                activeTab === tab.id
+                                    ? 'bg-white text-slate-900 shadow-sm'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            {tab.label}
+                            {tab.count !== undefined && (
+                                <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
+                                    activeTab === tab.id ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'
+                                }`}>
+                                    {tab.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Tab Content */}
@@ -264,3 +266,4 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
 };
 
 export default BudgetDashboard;
+

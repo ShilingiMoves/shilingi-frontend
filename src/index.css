@@ -3,9 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    @apply w-full overflow-x-hidden;
+  }
+
   body {
     @apply font-sans antialiased text-gray-900 bg-white;
     font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  img, video, canvas, svg {
+    max-width: 100%;
+    height: auto;
   }
 
   h1, h2, h3 {
