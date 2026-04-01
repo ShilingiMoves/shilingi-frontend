@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownUp, ChevronLeft, Landmark, LogOut, Wallet,TrendingUp } from 'lucide-react';
+import { ArrowDownUp, ChevronLeft, Landmark, LogOut, Wallet, TrendingUp, Activity } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 
 const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection, onSelectSection }) => {
@@ -9,14 +9,8 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
 
     const navItems = [
         {
-            id: 'debt',
-            label: 'Debt Management',
-            helper: 'Track and reduce what you owe',
-            icon: Landmark,
-        },
-        {
             id: 'budget',
-            label: 'Budget & Spending',
+            label: 'Budget & Planning',
             helper: 'Plan spending and save smart',
             icon: Wallet,
         },
@@ -26,14 +20,24 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
             helper: 'Follow money in and out',
             icon: ArrowDownUp,
         },
-
+        {
+            id: 'debt',
+            label: 'Debt Management',
+            helper: 'Track and reduce what you owe',
+            icon: Landmark,
+        },
         {
             id: 'networth',
             label: 'Net Worth',
             helper: 'Track your total wealth',
-            icon: TrendingUp, // or any icon you prefer
+            icon: TrendingUp,
         },
-
+        {
+            id: 'health',
+            label: 'Financial Health',
+            helper: 'Monitor your wellness score',
+            icon: Activity,
+        },
     ];
 
     return (

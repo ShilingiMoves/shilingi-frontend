@@ -162,7 +162,7 @@ const NetWorthSummary = ({ summary, loading }) => {
             </div>
 
             {/* Breakdown by Category */}
-            {summary?.assets_breakdown && Object.keys(summary.assets_breakdown).length > 0 && (
+            {/* {summary?.assets_breakdown && Object.keys(summary.assets_breakdown).length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Assets by Category</h3>
                     <div className="space-y-3">
@@ -190,7 +190,7 @@ const NetWorthSummary = ({ summary, loading }) => {
                         })}
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 };

@@ -6,9 +6,11 @@ import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import IncomeDashboard from '../components/dashboard/income';
 import NetWorthDashboard from '../components/dashboard/networth';
+import FinancialHealthDashboard from '../components/dashboard/financialhealth/FinancialHealthDashboard';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
+import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -87,6 +89,13 @@ const DashboardPage = () => {
                     </NetWorthProvider>
                 );
 
+            case 'health':
+                return (
+                    <FinancialHealthProvider>
+                        <FinancialHealthDashboard />
+                    </FinancialHealthProvider>
+                );
+
             case 'user':
                 return (
                     <>
@@ -126,8 +135,8 @@ const DashboardPage = () => {
             />
 
             <main className="flex-1 lg:overflow-y-auto">
-                {(activeSection === 'cashflow' || activeSection === 'networth') ? (
-                    // Income and NetWorth dashboards have their own layouts
+                {(activeSection === 'cashflow' || activeSection === 'networth' || activeSection === 'health') ? (
+                    // Income, NetWorth, and Health dashboards have their own layouts
                     renderActiveSection()
                 ) : (
                     // Other sections use the traditional layout
