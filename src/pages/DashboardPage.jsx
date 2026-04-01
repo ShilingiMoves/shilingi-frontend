@@ -8,9 +8,11 @@ import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
 import IncomeDashboard from '../components/dashboard/income';
 import NetWorthDashboard from '../components/dashboard/networth';
 import InvestmentTracker from '../components/dashboard/investments';
+import FinancialHealthDashboard from '../components/dashboard/financialhealth/FinancialHealthDashboard';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
+import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 import incomeService from '../services/incomeService';
 
 const DASHBOARD_DATA_KEY = 'shilingi_has_dashboard_data';
@@ -169,6 +171,13 @@ const DashboardPage = () => {
             case 'investments':
                 return <InvestmentTracker />;
 
+            case 'health':
+                return (
+                    <FinancialHealthProvider>
+                        <FinancialHealthDashboard />
+                    </FinancialHealthProvider>
+                );
+
             case 'user':
                 return (
                     <>
@@ -208,7 +217,10 @@ const DashboardPage = () => {
             />
 
             <main className="flex-1 lg:overflow-y-auto">
-                {(activeSection === 'cashflow' || activeSection === 'networth' || activeSection === 'investments') ? (
+                {(activeSection === 'cashflow' ||
+                    activeSection === 'networth' ||
+                    activeSection === 'investments' ||
+                    activeSection === 'health') ? (
                     renderActiveSection()
                 ) : (
                     <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
