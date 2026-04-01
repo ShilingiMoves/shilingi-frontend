@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Menu, Plus } from 'lucide-react';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
@@ -20,6 +20,7 @@ const FinancialHealthDashboard = lazy(() => import('../components/dashboard/fina
 const DashboardPage = () => {
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [activeSection, setActiveSection] = useState(getInitialDashboardSection);
     const [budgetActiveTab, setBudgetActiveTab] = useState('overview');
@@ -58,6 +59,30 @@ const DashboardPage = () => {
         };
 
         verifyUserData();
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return undefined;
+        }
+
+        const mediaQuery = window.matchMedia('(min-width: 1024px)');
+        const syncSidebarState = (event) => {
+            if (event.matches) {
+                setMobileSidebarOpen(false);
+                setSidebarCollapsed(false);
+            }
+        };
+
+        syncSidebarState(mediaQuery);
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', syncSidebarState);
+            return () => mediaQuery.removeEventListener('change', syncSidebarState);
+        }
+
+        mediaQuery.addListener(syncSidebarState);
+        return () => mediaQuery.removeListener(syncSidebarState);
     }, []);
 
     const handleSignOut = () => {
@@ -224,9 +249,30 @@ const DashboardPage = () => {
                 user={profile}
                 activeSection={activeSection}
                 onSelectSection={setActiveSection}
+                mobileOpen={mobileSidebarOpen}
+                onCloseMobile={() => setMobileSidebarOpen(false)}
             />
 
-            <main className="flex-1 lg:overflow-y-auto">
+            <main className="min-w-0 flex-1 lg:overflow-y-auto">
+                <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/80 bg-slate-50/95 px-4 py-3 backdrop-blur lg:hidden">
+                    <button
+                        type="button"
+                        onClick={() => setMobileSidebarOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-slate-100"
+                    >
+                        <Menu size={18} />
+                        Dashboard Menu
+                    </button>
+                    <p className="truncate text-sm font-semibold text-slate-600">
+                        {activeSection === 'cashflow' ? 'Income Manager' :
+                            activeSection === 'budget' ? 'Budget & Planning' :
+                                activeSection === 'debt' ? 'Debt Management' :
+                                    activeSection === 'investments' ? 'Investment Planner' :
+                                        activeSection === 'networth' ? 'Net Worth' :
+                                            activeSection === 'health' ? 'Financial Health' : 'Your Account'}
+                    </p>
+                </div>
+
                 {(activeSection === 'cashflow' ||
                     activeSection === 'networth' ||
                     activeSection === 'investments' ||
