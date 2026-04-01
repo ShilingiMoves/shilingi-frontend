@@ -53,6 +53,43 @@ export const IncomeProvider = ({ children }) => {
         }
     }, []);
 
+    // ========== ANALYTICS ==========
+    const fetchSummary = useCallback(async () => {
+        try {
+            const data = await incomeService.getSummary();
+            setSummary(data);
+            setError(null);
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error('Error fetching income summary:', err);
+        }
+    }, []);
+
+    const fetchHistory = useCallback(async (months = 6) => {
+        try {
+            const data = await incomeService.getHistory(months);
+            setHistory(data);
+            setError(null);
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error('Error fetching income history:', err);
+        }
+    }, []);
+
+    const fetchIncomeVsExpense = useCallback(async (year, month) => {
+        try {
+            const data = await incomeService.getIncomeVsExpense(year, month);
+            setIncomeVsExpense(data);
+            setError(null);
+            return data;
+        } catch (err) {
+            setError(err.message);
+            console.error('Error fetching income vs expense:', err);
+        }
+    }, []);
+
     // ========== INCOMES ==========
     const fetchIncomes = useCallback(async (filters = {}) => {
         try {
@@ -137,43 +174,6 @@ export const IncomeProvider = ({ children }) => {
             setLoading(false);
         }
     }, [fetchIncomes, fetchSummary, triggerHealthRefresh]);
-
-    // ========== ANALYTICS ==========
-    const fetchSummary = useCallback(async () => {
-        try {
-            const data = await incomeService.getSummary();
-            setSummary(data);
-            setError(null);
-            return data;
-        } catch (err) {
-            setError(err.message);
-            console.error('Error fetching income summary:', err);
-        }
-    }, []);
-
-    const fetchHistory = useCallback(async (months = 6) => {
-        try {
-            const data = await incomeService.getHistory(months);
-            setHistory(data);
-            setError(null);
-            return data;
-        } catch (err) {
-            setError(err.message);
-            console.error('Error fetching income history:', err);
-        }
-    }, []);
-
-    const fetchIncomeVsExpense = useCallback(async (year, month) => {
-        try {
-            const data = await incomeService.getIncomeVsExpense(year, month);
-            setIncomeVsExpense(data);
-            setError(null);
-            return data;
-        } catch (err) {
-            setError(err.message);
-            console.error('Error fetching income vs expense:', err);
-        }
-    }, []);
 
     // Initialize on mount
     useEffect(() => {
