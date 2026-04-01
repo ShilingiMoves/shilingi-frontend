@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import incomeService from '../services/incomeService';
 import { markDashboardDataExists } from '../pages/DashboardPage';
+import { useHealthRefresh } from '../hooks/useHealthRefresh';
 
 const IncomeContext = createContext();
 
@@ -13,6 +14,7 @@ export const useIncome = () => {
 };
 
 export const IncomeProvider = ({ children }) => {
+    const { triggerHealthRefresh } = useHealthRefresh();
     const [categories, setCategories] = useState([]);
     const [incomes, setIncomes] = useState([]);
     const [summary, setSummary] = useState(null);
@@ -74,6 +76,7 @@ export const IncomeProvider = ({ children }) => {
             await fetchIncomes();
             await fetchSummary();
             markDashboardDataExists();
+            triggerHealthRefresh('income:create');
             setError(null);
             return newIncome;
         } catch (err) {
@@ -82,7 +85,7 @@ export const IncomeProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchIncomes, fetchSummary, triggerHealthRefresh]);
 
     const updateIncome = useCallback(async (uuid, incomeData) => {
         try {
@@ -90,6 +93,7 @@ export const IncomeProvider = ({ children }) => {
             const updated = await incomeService.updateIncome(uuid, incomeData);
             await fetchIncomes();
             await fetchSummary();
+            triggerHealthRefresh('income:update');
             setError(null);
             return updated;
         } catch (err) {
@@ -98,7 +102,7 @@ export const IncomeProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchIncomes, fetchSummary, triggerHealthRefresh]);
 
     const deleteIncome = useCallback(async (uuid) => {
         try {
@@ -106,6 +110,7 @@ export const IncomeProvider = ({ children }) => {
             await incomeService.deleteIncome(uuid);
             setIncomes(prev => prev.filter(inc => inc.uuid !== uuid));
             await fetchSummary();
+            triggerHealthRefresh('income:delete');
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -113,7 +118,7 @@ export const IncomeProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchSummary, triggerHealthRefresh]);
 
     const addQuickIncome = useCallback(async (quickData) => {
         try {
@@ -122,6 +127,7 @@ export const IncomeProvider = ({ children }) => {
             await fetchIncomes();
             await fetchSummary();
             markDashboardDataExists();
+            triggerHealthRefresh('income:quick');
             setError(null);
             return newIncome;
         } catch (err) {
@@ -130,7 +136,7 @@ export const IncomeProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [fetchIncomes, fetchSummary, triggerHealthRefresh]);
 
     // ========== ANALYTICS ==========
     const fetchSummary = useCallback(async () => {

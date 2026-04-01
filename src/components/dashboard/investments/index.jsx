@@ -16,6 +16,8 @@ import {
     getAssetCategories,
     getAssets,
 } from '../../../services/investmentTrackerApi';
+import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
+import { markDashboardDataExists } from '../../../pages/DashboardPage';
 
 const INVESTMENT_TYPES = [
     {
@@ -123,6 +125,7 @@ function getCategoryIdentifier(category) {
 }
 
 const InvestmentTracker = () => {
+    const { triggerHealthRefresh } = useHealthRefresh();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -265,6 +268,8 @@ const InvestmentTracker = () => {
             await createAsset(payload);
             await refreshData();
             setSuccess('Investment added successfully.');
+            markDashboardDataExists();
+            triggerHealthRefresh('investment:create');
             closeFormModal();
         } catch (err) {
             setError(err.message || 'Failed to add investment');
@@ -283,7 +288,7 @@ const InvestmentTracker = () => {
                                 Investments
                             </p>
                             <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">
-                                Investment Tracker
+                                Investment Planner
                             </h1>
                             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
                                 Add and monitor your fixed income, property, stocks, insurance, and other investments.

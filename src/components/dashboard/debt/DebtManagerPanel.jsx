@@ -12,8 +12,10 @@ import {
     updateLiability as updateNetworthLiability
 } from '../../../services/networthApi';
 import { markDashboardDataExists } from '../../../pages/DashboardPage';
+import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 
 const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
+    const { triggerHealthRefresh } = useHealthRefresh();
     const [debts, setDebts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -79,11 +81,13 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
                 setDebts((current) => current.map((debt) => (debt.id === savedDebt.id ? savedDebt : debt)));
                 setEditingDebt(null);
                 setIsModalOpen(false);
+                triggerHealthRefresh('debt:update');
             } else {
                 const createdDebt = await createDebt(formValues);
                 setDebts((current) => [createdDebt, ...current]);
                 setIsModalOpen(false);
                 markDashboardDataExists();
+                triggerHealthRefresh('debt:create');
             }
         } catch (err) {
             setSubmitError(err.message || 'We could not save this debt right now.');
@@ -98,6 +102,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
             setSubmitError('');
             await deleteDebt(debtId);
             setDebts((current) => current.filter((debt) => debt.id !== debtId));
+            triggerHealthRefresh('debt:delete');
         } catch (err) {
             setSubmitError(err.message || 'We could not remove this debt right now.');
         } finally {
@@ -111,9 +116,11 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
             setSubmitError('');
             if (editingLiability) {
                 await updateNetworthLiability(editingLiability.uuid, formValues);
+                triggerHealthRefresh('liability:update');
             } else {
                 await createNetworthLiability(formValues);
                 markDashboardDataExists();
+                triggerHealthRefresh('liability:create');
             }
             await loadLiabilities();
             setEditingLiability(null);
@@ -131,6 +138,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
             setSubmitError('');
             await deleteNetworthLiability(liabilityId);
             setLiabilities((current) => current.filter((item) => item.uuid !== liabilityId));
+            triggerHealthRefresh('liability:delete');
         } catch (err) {
             setSubmitError(err.message || 'We could not remove this liability right now.');
         } finally {

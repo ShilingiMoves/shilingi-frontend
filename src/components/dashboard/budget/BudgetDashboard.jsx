@@ -18,8 +18,10 @@ import {
 } from '../../../services/budgetApi';
 import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
 import { markDashboardDataExists } from '../../../pages/DashboardPage';
+import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 
 const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
+    const { triggerHealthRefresh } = useHealthRefresh();
     // State management
     const [budgets, setBudgets] = useState([]);
     const [summary, setSummary] = useState(null);
@@ -96,6 +98,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             const newSummary = await getBudgetSummary();
             setSummary(newSummary);
             markDashboardDataExists();
+            triggerHealthRefresh(editingBudget ? 'budget:update' : 'budget:create');
         } catch (err) {
             const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
             setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
@@ -113,6 +116,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             
             const newSummary = await getBudgetSummary();
             setSummary(newSummary);
+            triggerHealthRefresh('budget:delete');
         } catch (err) {
             setSubmitError(err.message || 'Could not remove this budget right now.');
         } finally {
@@ -133,9 +137,15 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             ]);
             setBudgets(budgetsData);
             setSummary(summaryData);
+            triggerHealthRefresh('expense:change');
         } catch (err) {
             console.error('Failed to refresh expenses:', err);
         }
+    };
+
+    const handleGoalUpdate = async () => {
+        await loadData();
+        triggerHealthRefresh('goal:change');
     };
 
     if (loading) {
@@ -247,7 +257,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             )}
 
             {activeTab === 'goals' && (
-                <GoalTracker goals={goals} goalSummary={goalSummary} onUpdate={loadData} />
+                <GoalTracker goals={goals} goalSummary={goalSummary} onUpdate={handleGoalUpdate} />
             )}
         </div>
     );

@@ -24,7 +24,7 @@ const FinancialHealthDashboard = () => {
 
     const [refreshing, setRefreshing] = useState(false);
     const [selectedComponent, setSelectedComponent] = useState(null);
-    const [lastTrigger, setLastTrigger] = useState(null);
+    const [lastTriggerTimestamp, setLastTriggerTimestamp] = useState(null);
 
     // Initial data load
     useEffect(() => {
@@ -53,9 +53,16 @@ const FinancialHealthDashboard = () => {
 
         const handleStorageChange = (e) => {
             if (e.key === 'healthRefreshTrigger') {
-                const newTrigger = e.newValue;
-                if (newTrigger && newTrigger !== lastTrigger) {
-                    setLastTrigger(newTrigger);
+                let triggerPayload = null;
+                try {
+                    triggerPayload = JSON.parse(e.newValue || '{}');
+                } catch {
+                    triggerPayload = { timestamp: Number(e.newValue) || Date.now() };
+                }
+
+                const nextTimestamp = Number(triggerPayload?.timestamp) || Date.now();
+                if (nextTimestamp !== lastTriggerTimestamp) {
+                    setLastTriggerTimestamp(nextTimestamp);
                     handleRefreshRequest();
                 }
             }
@@ -71,7 +78,7 @@ const FinancialHealthDashboard = () => {
             window.removeEventListener('healthRefreshRequested', handleRefreshRequest);
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, [lastTrigger, refreshAll]);
+    }, [lastTriggerTimestamp, refreshAll]);
 
     // Auto-refresh every 5 minutes if on the page
     useEffect(() => {

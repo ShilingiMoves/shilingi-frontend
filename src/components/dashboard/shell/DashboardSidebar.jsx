@@ -28,7 +28,7 @@ const DashboardSidebar = ({ collapsed, onToggle, onSignOut, user, activeSection,
         },
         {
             id: 'investments',
-            label: 'Investment Tracker',
+            label: 'Investment Planner',
             helper: 'Track and grow investments',
             icon: LineChart,
         },
