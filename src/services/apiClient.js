@@ -1,4 +1,5 @@
 import { getAccessToken, handleUnauthorizedSession } from './sessionManager';
+import { resolveApiBaseUrl } from './apiConfig';
 
 class ApiClient {
     constructor() {
@@ -10,23 +11,10 @@ class ApiClient {
     }
 
     detectBaseURL() {
-        const envURL = import.meta.env.VITE_API_URL;
-        const productionURL = 'https://shilingibackend-production.up.railway.app';
-        const localURL = 'http://localhost:8000';
-
-        // If explicit env URL is set, use it
-        if (envURL && envURL !== productionURL && envURL !== localURL) {
-            return envURL.replace(/\/$/, '');
-        }
-
-        // In development mode, prefer local
-        if (import.meta.env.DEV) {
-            console.log('Development mode - attempting local API first');
-            return localURL;
-        }
-
-        // Production mode
-        return productionURL;
+        return resolveApiBaseUrl({
+            envUrl: import.meta.env.VITE_API_URL,
+            isDev: import.meta.env.DEV,
+        });
     }
 
     getAuthHeaders() {

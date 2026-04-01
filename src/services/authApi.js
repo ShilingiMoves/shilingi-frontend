@@ -1,18 +1,22 @@
 import {
     clearSessionStorage,
     getAccessToken,
-    setAccessToken, // ← Use this directly
+    setAccessToken,
     getStoredUserProfile as getPersistedUserProfile,
     handleUnauthorizedSession,
     setRefreshToken,
     setStoredUserProfile,
 } from './sessionManager';
+import { resolveApiBaseUrl } from './apiConfig';
 
-const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
-const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+const API_URL = resolveApiBaseUrl({
+    envUrl: import.meta.env.VITE_API_URL,
+    isDev: import.meta.env.DEV,
+});
 const LOGIN_ENDPOINT = import.meta.env.VITE_LOGIN_ENDPOINT || `${API_URL}/api/v1/auth/login/`;
 const REGISTER_ENDPOINT = import.meta.env.VITE_REGISTER_ENDPOINT || `${API_URL}/api/v1/auth/register/`;
 const PROFILE_ENDPOINT = import.meta.env.VITE_PROFILE_ENDPOINT || `${API_URL}/api/v1/users/me/`;
+const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
 
 async function parseResponse(response) {
     const rawText = await response.text();
@@ -41,6 +45,51 @@ async function parseResponse(response) {
     return payload;
 }
 
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(url, options, timeoutMs = AUTH_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        return await fetch(url, {
+            ...options,
+            signal: controller.signal,
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function authRequestWithRetry(url, options, { timeoutMs = AUTH_TIMEOUT_MS, retries = 1 } = {}) {
+    let lastError = null;
+
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+        try {
+            return await fetchWithTimeout(url, options, timeoutMs);
+        } catch (error) {
+            lastError = error;
+            const isAbort = error?.name === 'AbortError';
+            const isNetworkFailure = error instanceof TypeError;
+            const canRetry = attempt < retries && (isAbort || isNetworkFailure);
+
+            if (!canRetry) {
+                break;
+            }
+
+            await wait(800);
+        }
+    }
+
+    if (lastError?.name === 'AbortError') {
+        throw new Error('The server is taking too long to respond. Please try again in a moment.');
+    }
+
+    throw new Error('Network connection to the server failed. Please verify backend availability and CORS settings.');
+}
+
 function storeTokens(payload) {
     const source = payload?.data?.tokens || payload?.data || payload;
     const accessToken = source?.access || source?.access_token || source?.token || source?.jwt;
@@ -50,7 +99,6 @@ function storeTokens(payload) {
         return false;
     }
 
-    // Store token centrally in sessionManager
     setAccessToken(accessToken);
 
     if (refreshToken) {
@@ -73,13 +121,20 @@ function storeUserProfile(user) {
 }
 
 export async function loginUser(credentials) {
-    const response = await fetch(LOGIN_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+    const response = await authRequestWithRetry(
+        LOGIN_ENDPOINT,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
         },
-        body: JSON.stringify(credentials),
-    });
+        {
+            timeoutMs: AUTH_TIMEOUT_MS,
+            retries: 1,
+        }
+    );
 
     const payload = await parseResponse(response);
     const success = storeTokens(payload);

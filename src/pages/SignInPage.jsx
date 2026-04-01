@@ -84,8 +84,13 @@ const SignInPage = () => {
                         <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Enter your password" required />
 
                         <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
-                            {isSubmitting ? 'Signing you in...' : 'Sign in'}
+                            {isSubmitting ? 'Signing you in... please wait' : 'Sign in'}
                         </Button>
+                        {isSubmitting && (
+                            <p className="text-center text-xs text-gray-500">
+                                First login may take a few extra seconds if the server is waking up.
+                            </p>
+                        )}
                     </form>
 
                     <p className="mt-6 text-sm text-gray-600">

@@ -19,6 +19,7 @@ import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import { TrustPage } from './pages/PlaceholderPages';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AppErrorBoundary from './components/AppErrorBoundary';
 
 function ScrollToTop() {
     const { pathname } = useLocation();
@@ -91,7 +92,9 @@ function App() {
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
             <Router>
                 <ScrollToTop />
-                <AppLayout />
+                <AppErrorBoundary>
+                    <AppLayout />
+                </AppErrorBoundary>
             </Router>
         </>
     );
