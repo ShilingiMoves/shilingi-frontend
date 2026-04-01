@@ -283,7 +283,7 @@ const DashboardLandingPage = () => {
                         <h1 className="mt-6 text-4xl font-[300] leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-7xl">
                             One Dashboard.
                             <br />
-                            Every <span className="font-[300]" style={{ color: brandYellow }}>Financial Decision</span>
+                            Every <span className="font-[300] text-primary-500">Financial Decision</span>
                         </h1>
 
                         <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-xl">
@@ -318,7 +318,7 @@ const DashboardLandingPage = () => {
                 <div className="container-custom grid gap-6 py-7 text-center sm:grid-cols-2 lg:grid-cols-4">
                     {stats.map((stat) => (
                         <div key={stat.label}>
-                            <p className="text-3xl font-extrabold" style={{ color: brandYellow }}>{stat.value}</p>
+                            <p className="text-3xl font-extrabold text-primary-500">{stat.value}</p>
                             <p className="mt-2 text-sm text-slate-600">{stat.label}</p>
                         </div>
                     ))}
