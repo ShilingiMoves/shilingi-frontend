@@ -15,6 +15,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ReferPage from './pages/ReferPage';
 import DashboardPage from './pages/DashboardPage';
+import DashboardLandingPage from './pages/DashboardLandingPage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import { TrustPage } from './pages/PlaceholderPages';
@@ -33,7 +34,7 @@ function ScrollToTop() {
 
 function AppLayout() {
     const location = useLocation();
-    const hidePublicNavbar = location.pathname === '/dashboard' || location.pathname === '/debts';
+    const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts';
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -41,8 +42,9 @@ function AppLayout() {
             <main className="flex-grow">
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/dashboard" element={<DashboardLandingPage />} />
                     <Route
-                        path="/dashboard"
+                        path="/dashboard/app"
                         element={
                             <ProtectedRoute>
                                 <DashboardPage />
@@ -53,7 +55,7 @@ function AppLayout() {
                         path="/debts"
                         element={
                             <ProtectedRoute>
-                                <Navigate to="/dashboard" replace />
+                                <Navigate to="/dashboard/app" replace />
                             </ProtectedRoute>
                         }
                     />

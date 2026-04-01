@@ -3,10 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Gift } from 'lucide-react';
 import Button from './Button';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
+import { hasStoredAccessToken } from '../services/authApi';
 
 const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
+    const dashboardPath = hasStoredAccessToken() ? '/dashboard/app' : '/dashboard';
 
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -19,7 +21,7 @@ const Navbar = () => {
 
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Dashboard', path: dashboardPath },
         { name: 'Learn', path: '/learn' },
         { name: 'Compare', path: '/compare' },
         { name: 'Tools', path: '/tools' },

@@ -35,7 +35,7 @@ const SignInPage = () => {
                 password: formValues.password,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
-            const redirectTo = location.state?.from?.pathname || '/dashboard';
+            const redirectTo = location.state?.from?.pathname || '/dashboard/app';
             navigate(redirectTo, { replace: true });
         } catch (err) {
             setError(err.message || 'We could not sign you in right now.');
