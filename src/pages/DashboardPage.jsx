@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import DebtManagerPanel from '../components/dashboard/debt/DebtManagerPanel';
-import BudgetDashboard from '../components/dashboard/budget/BudgetDashboard';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
-import UserProfilePanel from '../components/dashboard/user/UserProfilePanel';
-import IncomeDashboard from '../components/dashboard/income';
-import NetWorthDashboard from '../components/dashboard/networth';
-import InvestmentTracker from '../components/dashboard/investments';
-import FinancialHealthDashboard from '../components/dashboard/financialhealth/FinancialHealthDashboard';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 import incomeService from '../services/incomeService';
 import { DASHBOARD_DATA_KEY, getInitialDashboardSection, markDashboardDataExists } from '../utils/dashboardDataState';
+
+const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
+const BudgetDashboard = lazy(() => import('../components/dashboard/budget/BudgetDashboard'));
+const UserProfilePanel = lazy(() => import('../components/dashboard/user/UserProfilePanel'));
+const IncomeDashboard = lazy(() => import('../components/dashboard/income'));
+const NetWorthDashboard = lazy(() => import('../components/dashboard/networth'));
+const InvestmentTracker = lazy(() => import('../components/dashboard/investments'));
+const FinancialHealthDashboard = lazy(() => import('../components/dashboard/financialhealth/FinancialHealthDashboard'));
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -64,6 +65,12 @@ const DashboardPage = () => {
         navigate('/signin', { replace: true });
     };
 
+    const sectionLoader = (
+        <div className="flex min-h-[260px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+            <p className="text-sm font-medium text-slate-600">Loading dashboard section...</p>
+        </div>
+    );
+
     // Render active section with proper context wrapping
     const renderActiveSection = () => {
         switch (activeSection) {
@@ -94,7 +101,9 @@ const DashboardPage = () => {
                                 </button>
                             </div>
                         </section>
-                        <DebtManagerPanel requestAddDebtSignal={debtActionNonce} />
+                        <Suspense fallback={sectionLoader}>
+                            <DebtManagerPanel requestAddDebtSignal={debtActionNonce} />
+                        </Suspense>
                     </>
                 );
 
@@ -135,31 +144,43 @@ const DashboardPage = () => {
                                 </div>
                             </div>
                         </section>
-                        <BudgetDashboard activeTab={budgetActiveTab} onTabChange={setBudgetActiveTab} />
+                        <Suspense fallback={sectionLoader}>
+                            <BudgetDashboard activeTab={budgetActiveTab} onTabChange={setBudgetActiveTab} />
+                        </Suspense>
                     </>
                 );
 
             case 'cashflow':
                 return (
                     <IncomeProvider>
-                        <IncomeDashboard />
+                        <Suspense fallback={sectionLoader}>
+                            <IncomeDashboard />
+                        </Suspense>
                     </IncomeProvider>
                 );
 
             case 'networth':
                 return (
                     <NetWorthProvider>
-                        <NetWorthDashboard />
+                        <Suspense fallback={sectionLoader}>
+                            <NetWorthDashboard />
+                        </Suspense>
                     </NetWorthProvider>
                 );
 
             case 'investments':
-                return <InvestmentTracker />;
+                return (
+                    <Suspense fallback={sectionLoader}>
+                        <InvestmentTracker />
+                    </Suspense>
+                );
 
             case 'health':
                 return (
                     <FinancialHealthProvider>
-                        <FinancialHealthDashboard />
+                        <Suspense fallback={sectionLoader}>
+                            <FinancialHealthDashboard />
+                        </Suspense>
                     </FinancialHealthProvider>
                 );
 
@@ -177,14 +198,18 @@ const DashboardPage = () => {
                                 Manage the personal details and financial preferences that shape how Shilingi Moves supports you across the platform.
                             </p>
                         </section>
-                        <UserProfilePanel />
+                        <Suspense fallback={sectionLoader}>
+                            <UserProfilePanel />
+                        </Suspense>
                     </>
                 );
 
             default:
                 return (
                     <IncomeProvider>
-                        <IncomeDashboard />
+                        <Suspense fallback={sectionLoader}>
+                            <IncomeDashboard />
+                        </Suspense>
                     </IncomeProvider>
                 );
         }
