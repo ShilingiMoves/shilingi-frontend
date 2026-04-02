@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Award, CheckCircle2, Target, Users, ThumbsUp, TrendingUp, ArrowRight } from 'lucide-react';
+import { Shield, CheckCircle2, Target, ThumbsUp, TrendingUp, ArrowRight } from 'lucide-react';
 import TrustImg from '../assets/trust_people_kenya.png';
 
 const TrustAndCTA = () => {
@@ -16,25 +16,22 @@ const TrustAndCTA = () => {
     ];
 
     return (
-        <section className="section-padding bg-white overflow-hidden">
+        <section className="section-padding overflow-hidden bg-white">
             <div className="container-custom">
-                {/* Trust Section Split Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center mb-16 md:mb-24">
-                    {/* Image Column */}
-                    <div className="relative order-last lg:order-first mt-8 lg:mt-0">
-                        <div className="absolute inset-0 bg-primary-600 rounded-3xl rotate-2 opacity-5 transform scale-95 translate-y-4"></div>
+                <div className="mb-16 grid grid-cols-1 items-center gap-10 md:mb-24 md:gap-12 lg:grid-cols-2 lg:gap-16">
+                    <div className="relative order-last mt-8 lg:order-first lg:mt-0">
+                        <div className="absolute inset-0 translate-y-4 scale-95 rotate-2 rounded-3xl bg-primary-600 opacity-5" />
                         <img
                             src={TrustImg}
                             alt="Happy Kenyan couple using financial app on tablet"
-                            className="relative rounded-3xl shadow-xl w-full object-cover aspect-square sm:aspect-[4/3] lg:aspect-[4/3] max-h-[400px] lg:max-h-none mx-auto"
+                            className="relative mx-auto aspect-square max-h-[400px] w-full rounded-3xl object-cover shadow-xl sm:aspect-[4/3] lg:aspect-[4/3] lg:max-h-none"
                         />
 
-                        {/* Floating Badge */}
-                        <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-xl shadow-lg border border-gray-100 max-w-xs hidden md:block">
+                        <div className="absolute -bottom-6 -right-6 hidden max-w-xs rounded-xl border border-gray-100 bg-white p-4 shadow-lg md:block">
                             <div className="flex items-center space-x-3">
                                 <div className="flex -space-x-3">
                                     {[1, 2, 3].map((i) => (
-                                        <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500">
+                                        <div key={i} className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-xs font-medium text-gray-500">
                                             User
                                         </div>
                                     ))}
@@ -47,33 +44,31 @@ const TrustAndCTA = () => {
                         </div>
                     </div>
 
-                    {/* Content Column */}
                     <div>
                         <div className="mb-8 md:mb-10">
-                            <p className="text-sm font-semibold text-primary-600 uppercase tracking-wide mb-2 flex items-center gap-2">
+                            <p className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-primary-600">
                                 <Shield size={16} /> Trusted Platform
                             </p>
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
+                            <h2 className="mb-4 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl md:mb-6 md:text-5xl">
                                 Join thousands of Kenyans securing their future.
                             </h2>
-                            <p className="text-lg text-gray-600 leading-relaxed">
+                            <p className="text-lg leading-relaxed text-gray-600">
                                 We work with regulated partners to ensure your data and money are always safe. Your security is our top priority.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-10">
+                        <div className="mb-8 grid grid-cols-2 gap-6 sm:grid-cols-3 md:mb-10 md:gap-8">
                             {metrics.map((metric, index) => (
                                 <div key={index} className="flex flex-col">
-                                    <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">{metric.value}</div>
+                                    <div className="mb-1 text-3xl font-bold text-gray-900 sm:text-4xl">{metric.value}</div>
                                     <p className="text-sm font-medium text-gray-600">{metric.label}</p>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Badges */}
                         <div className="flex flex-wrap gap-3">
                             {badges.map((badge, index) => (
-                                <div key={index} className="flex items-center space-x-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                                <div key={index} className="flex items-center space-x-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
                                     <CheckCircle2 size={16} className="text-green-600" />
                                     <span className="text-sm font-medium text-gray-700">{badge.name}</span>
                                 </div>
@@ -82,9 +77,7 @@ const TrustAndCTA = () => {
                     </div>
                 </div>
 
-                {/* Final CTA Box */}
-                <div className="max-w-5xl mx-auto bg-gradient-to-br from-primary-600 to-primary-700 rounded-3xl shadow-2xl p-8 sm:p-10 md:p-14 lg:p-16 text-center text-white relative overflow-hidden">
-                    {/* Decorative dot pattern */}
+                <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 to-primary-700 p-8 text-center text-white shadow-2xl sm:p-10 md:p-14 lg:p-16">
                     <div
                         className="absolute inset-0 opacity-10"
                         style={{
@@ -92,31 +85,30 @@ const TrustAndCTA = () => {
                             backgroundSize: '28px 28px',
                         }}
                     />
-                    {/* Decorative blurs */}
-                    <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+                    <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+                    <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
 
                     <div className="relative z-10">
-                        <p className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-sm rounded-full text-sm font-semibold text-white mb-5">
-                            <TrendingUp size={14} /> Kenya's #1 Financial Wellness Platform
+                        <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">
+                            <TrendingUp size={14} /> Kenya&apos;s #1 Financial Wellness Platform
                         </p>
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                        <h2 className="mb-4 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">
                             Your financial future starts<br className="hidden md:block" /> with one good decision.
                         </h2>
-                        <p className="text-lg sm:text-xl mb-8 md:mb-10 text-primary-100 max-w-xl mx-auto leading-relaxed">
-                            Join thousands of Kenyans who are learning, planning, and growing their wealth — one shilling at a time.
+                        <p className="mx-auto mb-8 max-w-xl text-lg leading-relaxed text-primary-100 sm:text-xl md:mb-10">
+                            Join thousands of Kenyans who are learning, planning, and growing their wealth, one shilling at a time.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <div className="flex flex-col justify-center gap-4 sm:flex-row">
                             <Link
                                 to="/signup"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 text-primary-700 font-extrabold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-base group"
+                                className="group inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-extrabold text-primary-700 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-2xl"
                             >
                                 Get Started Today
-                                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                             </Link>
                             <Link
                                 to="/learn"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 text-white font-bold rounded-full transition-all duration-300"
+                                className="inline-flex items-center justify-center rounded-full border-2 border-white/30 bg-white/10 px-8 py-4 font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
                             >
                                 Explore the Platform
                             </Link>

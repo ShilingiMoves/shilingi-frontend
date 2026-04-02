@@ -1,11 +1,15 @@
 const DASHBOARD_DATA_KEY = 'shilingi_has_dashboard_data';
 
 export function markDashboardDataExists() {
-    localStorage.setItem(DASHBOARD_DATA_KEY, 'true');
+    try {
+        localStorage.setItem(DASHBOARD_DATA_KEY, 'true');
+    } catch (error) {
+        console.warn('Could not persist dashboard data flag:', error);
+    }
 }
 
 export function getInitialDashboardSection() {
-    return localStorage.getItem(DASHBOARD_DATA_KEY) === 'true' ? 'networth' : 'cashflow';
+    return 'overview';
 }
 
 export { DASHBOARD_DATA_KEY };

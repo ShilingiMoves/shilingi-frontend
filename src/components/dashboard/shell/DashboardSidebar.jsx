@@ -1,6 +1,7 @@
 import React from 'react';
-import { Activity, ArrowDownUp, ChevronLeft, Landmark, LineChart, LogOut, TrendingUp, Wallet, X } from 'lucide-react';
+import { ChevronLeft, LogOut, X } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
+import { dashboardNavSections } from './dashboardSections';
 
 const DashboardSidebar = ({
     collapsed,
@@ -22,45 +23,6 @@ const DashboardSidebar = ({
             onCloseMobile();
         }
     };
-
-    const navItems = [
-        {
-            id: 'cashflow',
-            label: 'Income Manager',
-            helper: 'Track money coming in',
-            icon: ArrowDownUp,
-        },
-        {
-            id: 'budget',
-            label: 'Budget & Planning',
-            helper: 'Plan spending and save smart',
-            icon: Wallet,
-        },
-        {
-            id: 'debt',
-            label: 'Debt Management',
-            helper: 'Track and reduce what you owe',
-            icon: Landmark,
-        },
-        {
-            id: 'investments',
-            label: 'Investment Planner',
-            helper: 'Track and grow investments',
-            icon: LineChart,
-        },
-        {
-            id: 'networth',
-            label: 'Net Worth',
-            helper: 'Track assets and liabilities',
-            icon: TrendingUp,
-        },
-        {
-            id: 'health',
-            label: 'Financial Health',
-            helper: 'Monitor your wellness score',
-            icon: Activity,
-        },
-    ];
 
     return (
         <>
@@ -111,7 +73,7 @@ const DashboardSidebar = ({
 
             <nav className="flex-1 overflow-y-auto px-3 py-5">
                 <div className="space-y-3">
-                    {navItems.map((item) => {
+                    {dashboardNavSections.map((item) => {
                         const Icon = item.icon;
                         const isActive = activeSection === item.id;
 

@@ -22,6 +22,23 @@ import { TrustPage } from './pages/PlaceholderPages';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppErrorBoundary from './components/AppErrorBoundary';
 
+function getSplashSeen() {
+    try {
+        return sessionStorage.getItem('sm_splashed') === '1';
+    } catch (error) {
+        console.warn('Session storage unavailable for splash state:', error);
+        return false;
+    }
+}
+
+function setSplashSeen() {
+    try {
+        sessionStorage.setItem('sm_splashed', '1');
+    } catch (error) {
+        console.warn('Could not persist splash state:', error);
+    }
+}
+
 function ScrollToTop() {
     const { pathname } = useLocation();
 
@@ -81,11 +98,11 @@ function AppLayout() {
 
 function App() {
     const [showSplash, setShowSplash] = useState(
-        () => !sessionStorage.getItem('sm_splashed')
+        () => !getSplashSeen()
     );
 
     const handleSplashComplete = () => {
-        sessionStorage.setItem('sm_splashed', '1');
+        setSplashSeen();
         setShowSplash(false);
     };
 

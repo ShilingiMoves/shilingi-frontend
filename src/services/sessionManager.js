@@ -2,38 +2,71 @@ const ACCESS_TOKEN_KEY = import.meta.env.VITE_AUTH_TOKEN_STORAGE_KEY || 'shiling
 const REFRESH_TOKEN_KEY = import.meta.env.VITE_REFRESH_TOKEN_STORAGE_KEY || 'shilingi_refresh_token';
 const USER_STORAGE_KEY = import.meta.env.VITE_AUTH_USER_STORAGE_KEY || 'shilingi_user_profile';
 
+function getStorage() {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        return window.localStorage;
+    } catch (error) {
+        console.warn('Local storage is unavailable:', error);
+        return null;
+    }
+}
+
 export function getAccessToken() {
-    return localStorage.getItem(ACCESS_TOKEN_KEY) || '';
+    const storage = getStorage();
+    return storage?.getItem(ACCESS_TOKEN_KEY) || '';
 }
 
 export function setAccessToken(token) {
-    if (token) {
-        localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    const storage = getStorage();
+
+    if (!storage) {
         return;
     }
 
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    if (token) {
+        storage.setItem(ACCESS_TOKEN_KEY, token);
+        return;
+    }
+
+    storage.removeItem(ACCESS_TOKEN_KEY);
 }
 
 export function setRefreshToken(token) {
-    if (token) {
-        localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    const storage = getStorage();
+
+    if (!storage) {
         return;
     }
 
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    if (token) {
+        storage.setItem(REFRESH_TOKEN_KEY, token);
+        return;
+    }
+
+    storage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 export function setStoredUserProfile(user) {
+    const storage = getStorage();
+
+    if (!storage) {
+        return;
+    }
+
     if (!user?.email) {
         return;
     }
 
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    storage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
 export function getStoredUserProfile() {
-    const rawUser = localStorage.getItem(USER_STORAGE_KEY);
+    const storage = getStorage();
+    const rawUser = storage?.getItem(USER_STORAGE_KEY);
 
     if (!rawUser) {
         return null;
@@ -47,10 +80,16 @@ export function getStoredUserProfile() {
 }
 
 export function clearSessionStorage() {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    localStorage.removeItem('shilingi_has_dashboard_data');
+    const storage = getStorage();
+
+    if (!storage) {
+        return;
+    }
+
+    storage.removeItem(ACCESS_TOKEN_KEY);
+    storage.removeItem(REFRESH_TOKEN_KEY);
+    storage.removeItem(USER_STORAGE_KEY);
+    storage.removeItem('shilingi_has_dashboard_data');
 }
 
 export function handleUnauthorizedSession() {

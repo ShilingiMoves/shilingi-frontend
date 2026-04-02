@@ -2,12 +2,14 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Plus } from 'lucide-react';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
+import DashboardOverview from '../components/dashboard/shell/DashboardOverview';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 import incomeService from '../services/incomeService';
 import { DASHBOARD_DATA_KEY, getInitialDashboardSection, markDashboardDataExists } from '../utils/dashboardDataState';
+import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
 
 const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
 const BudgetDashboard = lazy(() => import('../components/dashboard/budget/BudgetDashboard'));
@@ -99,6 +101,9 @@ const DashboardPage = () => {
     // Render active section with proper context wrapping
     const renderActiveSection = () => {
         switch (activeSection) {
+            case 'overview':
+                return <DashboardOverview user={profile} onSelectSection={setActiveSection} />;
+
             case 'debt':
                 return (
                     <>
@@ -264,16 +269,12 @@ const DashboardPage = () => {
                         Dashboard Menu
                     </button>
                     <p className="truncate text-sm font-semibold text-slate-600">
-                        {activeSection === 'cashflow' ? 'Income Manager' :
-                            activeSection === 'budget' ? 'Budget & Planning' :
-                                activeSection === 'debt' ? 'Debt Management' :
-                                    activeSection === 'investments' ? 'Investment Planner' :
-                                        activeSection === 'networth' ? 'Net Worth' :
-                                            activeSection === 'health' ? 'Financial Health' : 'Your Account'}
+                        {dashboardSectionMap[activeSection]?.label || 'Dashboard'}
                     </p>
                 </div>
 
-                {(activeSection === 'cashflow' ||
+                {(activeSection === 'overview' ||
+                    activeSection === 'cashflow' ||
                     activeSection === 'networth' ||
                     activeSection === 'investments' ||
                     activeSection === 'health') ? (

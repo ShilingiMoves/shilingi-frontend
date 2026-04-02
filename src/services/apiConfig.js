@@ -1,5 +1,5 @@
 const DEFAULT_PRODUCTION_API_URL = 'https://shilingibackend-production.up.railway.app';
-const DEFAULT_LOCAL_API_URL = 'http://localhost:8000';
+const DEFAULT_LOCAL_API_URL = '';
 
 function sanitizeUrl(candidate) {
     if (!candidate) return null;
@@ -32,7 +32,11 @@ export function resolveApiBaseUrl({ envUrl, isDev }) {
     const normalizedEnv = sanitizeUrl(raw);
     if (normalizedEnv) return normalizedEnv;
 
-    return isDev ? DEFAULT_LOCAL_API_URL : DEFAULT_PRODUCTION_API_URL;
+    if (isDev) {
+        return DEFAULT_LOCAL_API_URL;
+    }
+
+    return DEFAULT_PRODUCTION_API_URL;
 }
 
 export { DEFAULT_LOCAL_API_URL, DEFAULT_PRODUCTION_API_URL };

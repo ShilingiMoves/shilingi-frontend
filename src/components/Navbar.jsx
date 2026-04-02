@@ -11,10 +11,6 @@ const Navbar = () => {
     const dashboardPath = hasStoredAccessToken() ? '/dashboard/app' : '/dashboard';
 
     useEffect(() => {
-        setMobileMenuOpen(false);
-    }, [location.pathname]);
-
-    useEffect(() => {
         document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
         return () => { document.body.style.overflow = ''; };
     }, [mobileMenuOpen]);
@@ -47,6 +43,7 @@ const Navbar = () => {
                             <Link
                                 key={link.path}
                                 to={link.path}
+                                onClick={() => setMobileMenuOpen(false)}
                                 className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive(link.path)
                                     ? 'text-primary-600 bg-primary-50'
                                     : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'

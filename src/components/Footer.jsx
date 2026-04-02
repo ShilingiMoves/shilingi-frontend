@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Facebook, Instagram, Phone, Mail, MapPin,
-    ArrowRight, Linkedin, Youtube,
-    BookOpen, BarChart2, Wrench, Users, Shield,
+    Linkedin, Youtube,
+    Shield,
     ChevronRight, Send, CheckCircle
 } from 'lucide-react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
@@ -100,7 +100,7 @@ const Footer = () => {
                             {formSubmitted && (
                                 <div className="mb-6 flex items-center gap-3 px-5 py-4 bg-green-500/20 border border-green-400/30 rounded-xl text-green-100 text-sm font-medium animate-fade-in">
                                     <CheckCircle size={20} className="text-green-400 shrink-0" />
-                                    Thank you! We've received your message and will get back to you shortly.
+                                    Thank you! We&apos;ve received your message and will get back to you shortly.
                                 </div>
                             )}
 
