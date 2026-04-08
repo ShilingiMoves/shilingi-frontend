@@ -1,5 +1,6 @@
 import {
     Activity,
+    ArrowDownUp,
     BellRing,
     BookOpen,
     Briefcase,
@@ -30,6 +31,17 @@ export const dashboardSections = [
         topTab: true,
     },
     {
+        id: 'cashflow',
+        label: 'Income Manager',
+        helper: 'Track money coming in',
+        icon: ArrowDownUp,
+        accent: 'from-primary-500 to-emerald-600',
+        iconBg: 'bg-primary-100 text-primary-700',
+        badge: 'Core',
+        description: 'Track salary, business income, and other money coming in.',
+        group: 'planning',
+    },
+    {
         id: 'budget',
         label: 'Budget Planner',
         helper: 'Plan spending and save smart',
@@ -42,7 +54,7 @@ export const dashboardSections = [
     },
     {
         id: 'debt',
-        label: 'Debt Centre',
+        label: 'Debt Manager',
         helper: 'Track and reduce what you owe',
         icon: Landmark,
         accent: 'from-rose-400 to-red-500',
@@ -212,7 +224,7 @@ export const dashboardSidebarGroups = [
     {
         id: 'planning',
         label: 'Planning tools',
-        items: ['budget', 'debt', 'investments', 'protection', 'retirement', 'networth'],
+        items: ['cashflow', 'budget', 'debt', 'investments', 'protection', 'retirement', 'networth'],
     },
     {
         id: 'explore',
@@ -234,6 +246,7 @@ export const dashboardNavSections = dashboardSections.filter((section) =>
     [
         'overview',
         'budget',
+        'cashflow',
         'debt',
         'investments',
         'protection',

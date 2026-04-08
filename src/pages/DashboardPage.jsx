@@ -16,17 +16,22 @@ import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import DashboardOverview from '../components/dashboard/shell/DashboardOverview';
 import DashboardTopbar from '../components/dashboard/shell/DashboardTopbar';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
+import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 import { getInitialDashboardSection } from '../utils/dashboardDataState';
 import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
+import incomeService from '../services/incomeService';
 
 const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
 const BudgetDashboard = lazy(() => import('../components/dashboard/budget/BudgetDashboard'));
 const UserProfilePanel = lazy(() => import('../components/dashboard/user/UserProfilePanel'));
+const IncomeDashboard = lazy(() => import('../components/dashboard/income'));
 const NetWorthDashboard = lazy(() => import('../components/dashboard/networth'));
 const InvestmentTracker = lazy(() => import('../components/dashboard/investments'));
 const FinancialHealthDashboard = lazy(() => import('../components/dashboard/financialhealth/FinancialHealthDashboard'));
+const ProtectionPlanner = lazy(() => import('../components/dashboard/protection/ProtectionPlanner'));
+const RetirementPlanner = lazy(() => import('../components/dashboard/retirement/RetirementPlanner'));
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -36,19 +41,44 @@ const DashboardPage = () => {
     const [activeSection, setActiveSection] = useState(getInitialDashboardSection);
     const [budgetActiveTab, setBudgetActiveTab] = useState('overview');
     const [debtActionNonce, setDebtActionNonce] = useState(0);
+    const [hasIncomeData, setHasIncomeData] = useState(false);
 
     useEffect(() => {
-        const fetchProfile = async () => {
+        const shouldRefreshPrerequisites = ['overview', 'cashflow', 'user'].includes(activeSection);
+        if (!shouldRefreshPrerequisites) {
+            return undefined;
+        }
+
+        let isMounted = true;
+        const fetchDashboardPrerequisites = async () => {
             try {
-                const userProfile = await getUserProfile();
+                const [userProfile, incomeSummary] = await Promise.all([
+                    getUserProfile(),
+                    incomeService.getSummary().catch(() => null),
+                ]);
+
+                if (!isMounted) {
+                    return;
+                }
+
                 setProfile(userProfile);
+                const hasIncome = Boolean(
+                    (incomeSummary?.total_income && Number(incomeSummary.total_income) > 0) ||
+                    (incomeSummary?.income_count && Number(incomeSummary.income_count) > 0) ||
+                    (userProfile?.profile?.monthly_income && Number(userProfile.profile.monthly_income) > 0)
+                );
+                setHasIncomeData(hasIncome);
             } catch (err) {
                 console.error('Failed to fetch user profile:', err);
             }
         };
 
-        fetchProfile();
-    }, []);
+        fetchDashboardPrerequisites();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [activeSection]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -94,13 +124,22 @@ const DashboardPage = () => {
     const renderActiveSection = () => {
         switch (activeSection) {
             case 'overview':
-                return <DashboardOverview user={profile} onSelectSection={setActiveSection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={setActiveSection} />;
+
+            case 'cashflow':
+                return (
+                    <IncomeProvider>
+                        <Suspense fallback={sectionLoader}>
+                            <IncomeDashboard />
+                        </Suspense>
+                    </IncomeProvider>
+                );
 
             case 'debt':
                 return standardShell(
                     <>
                         <SectionHero
-                            eyebrow="Debt Centre"
+                            eyebrow="Debt Manager"
                             title="Reduce what you owe with a clearer repayment picture."
                             text="Track balances, due dates, and repayment amounts in one place, then compare better options when it is time to refinance or restructure."
                             primaryAction={{ label: 'Add debt', onClick: () => setDebtActionNonce((current) => current + 1) }}
@@ -284,56 +323,16 @@ const DashboardPage = () => {
 
             case 'protection':
                 return standardShell(
-                    <InsightPanel
-                        eyebrow="Planning tools"
-                        title="Protection Planner"
-                        description="Help users see the risks around them before they become emergencies by combining coverage review, comparisons, and calculators."
-                        sections={[
-                            {
-                                icon: Shield,
-                                title: 'Coverage review',
-                                text: 'Surface existing cover, key gaps, and priority protection areas such as health, life, and income risk.',
-                            },
-                            {
-                                icon: Calculator,
-                                title: 'Relevant calculators',
-                                text: 'Estimate cover needs, affordability bands, and the level of buffer a household may require.',
-                            },
-                            {
-                                icon: BarChart3,
-                                title: 'Compare products',
-                                text: 'Send the user to Compare Hub when it is time to review providers and plan features side by side.',
-                            },
-                        ]}
-                        primaryAction={{ label: 'Go to Compare Hub', onClick: () => setActiveSection('comparehub') }}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <ProtectionPlanner />
+                    </Suspense>
                 );
 
             case 'retirement':
                 return standardShell(
-                    <InsightPanel
-                        eyebrow="Planning tools"
-                        title="Retirement Planner"
-                        description="Give retirement planning its own destination so users can project income needs, compare products, and keep long-term saving visible."
-                        sections={[
-                            {
-                                icon: CheckCircle2,
-                                title: 'Retirement readiness snapshot',
-                                text: 'Highlight the user\'s current pace, likely gap, and the next action to improve long-term readiness.',
-                            },
-                            {
-                                icon: Calculator,
-                                title: 'Relevant calculators',
-                                text: 'Estimate target income, contribution needs, and the effect of time horizon changes.',
-                            },
-                            {
-                                icon: BookMarked,
-                                title: 'Compare products',
-                                text: 'Move to Compare Hub to review pensions, long-term savings, and investment-linked products.',
-                            },
-                        ]}
-                        primaryAction={{ label: 'Open Learning Hub', onClick: () => setActiveSection('learninghub') }}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <RetirementPlanner />
+                    </Suspense>
                 );
 
             case 'buddy':
@@ -391,7 +390,7 @@ const DashboardPage = () => {
                 );
 
             default:
-                return <DashboardOverview user={profile} onSelectSection={setActiveSection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={setActiveSection} />;
         }
     };
 

@@ -97,7 +97,7 @@ const isNewDashboardUser = (user) => {
     return !hasPlannerInputs;
 };
 
-const DashboardOverview = ({ user, onSelectSection }) => {
+const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => {
     const firstName = user?.first_name || 'there';
     const currentMoment = useMemo(() => getMoment(new Date()), []);
     const palette = toneMap[currentMoment];
@@ -112,6 +112,57 @@ const DashboardOverview = ({ user, onSelectSection }) => {
             }),
         []
     );
+
+    const ctaButtons = useMemo(() => {
+        if (newUser) {
+            return [
+                {
+                    id: 'complete-profile',
+                    label: 'Complete profile',
+                    target: 'user',
+                    primary: true,
+                },
+                {
+                    id: 'add-income',
+                    label: 'Add Income',
+                    target: 'cashflow',
+                    primary: false,
+                },
+                {
+                    id: 'start-planning',
+                    label: 'Start planning',
+                    target: 'budget',
+                    primary: false,
+                },
+            ];
+        }
+
+        if (!hasIncomeData) {
+            return [
+                {
+                    id: 'add-income',
+                    label: 'Add Income',
+                    target: 'cashflow',
+                    primary: true,
+                },
+                {
+                    id: 'continue-planning',
+                    label: 'Continue Planning',
+                    target: 'budget',
+                    primary: false,
+                },
+            ];
+        }
+
+        return [
+            {
+                id: 'continue-planning',
+                label: 'Continue Planning',
+                target: 'budget',
+                primary: true,
+            },
+        ];
+    }, [newUser, hasIncomeData]);
 
     return (
         <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
@@ -145,21 +196,21 @@ const DashboardOverview = ({ user, onSelectSection }) => {
                             )}
 
                             <div className="mt-6 flex flex-wrap gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => onSelectSection(newUser ? 'user' : 'budget')}
-                                    className="inline-flex items-center gap-2 rounded-full bg-[#F0C94D] px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/20"
-                                >
-                                    Continue planning
-                                    <ArrowRight size={15} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onSelectSection('comparehub')}
-                                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15"
-                                >
-                                    Explore Compare Hub
-                                </button>
+                                {ctaButtons.map((button) => (
+                                    <button
+                                        key={button.id}
+                                        type="button"
+                                        onClick={() => onSelectSection(button.target)}
+                                        className={
+                                            button.primary
+                                                ? 'inline-flex items-center gap-2 rounded-full bg-[#F0C94D] px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/20'
+                                                : 'inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15'
+                                        }
+                                    >
+                                        {button.label}
+                                        <ArrowRight size={15} />
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
