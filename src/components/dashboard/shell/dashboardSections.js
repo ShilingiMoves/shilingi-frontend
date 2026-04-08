@@ -238,7 +238,7 @@ export const dashboardSidebarGroups = [
     },
 ];
 
-export const dashboardTopTabs = ['overview', 'comparehub', 'resourceshub', 'communityhub']
+export const dashboardTopTabs = ['overview', 'comparehub', 'resourceshub', 'learninghub', 'communityhub']
     .map((id) => dashboardSections.find((section) => section.id === id))
     .filter(Boolean);
 

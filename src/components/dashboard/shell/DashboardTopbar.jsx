@@ -60,11 +60,10 @@ const DashboardTopbar = ({ activeSection, onSelectSection, onOpenMobileMenu, onS
                                 key={tab.id}
                                 type="button"
                                 onClick={() => onSelectSection(tab.id)}
-                                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                                    isActive
+                                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${isActive
                                         ? 'bg-[#eff8f4] text-primary-800 ring-1 ring-primary-100'
                                         : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950'
-                                }`}
+                                    }`}
                             >
                                 {tab.topLabel || tab.label}
                             </button>
