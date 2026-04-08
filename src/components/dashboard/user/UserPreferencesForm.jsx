@@ -37,9 +37,11 @@ const UserPreferencesForm = ({ profile, onSubmit, isSubmitting }) => {
 
     return (
         <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Financial preferences</p>
-            <h3 className="mt-3 text-2xl font-extrabold text-slate-950">Shape the guidance you receive.</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">These settings help Shilingi Moves reflect your financial priorities more clearly.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary-700">Income manager</p>
+            <h3 className="mt-3 text-2xl font-extrabold text-slate-950">Keep your core income picture current.</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+                This gives your dashboard, planners, and nudges the right starting point.
+            </p>
 
             <div className="mt-6 grid gap-4">
                 <Field
@@ -53,24 +55,6 @@ const UserPreferencesForm = ({ profile, onSubmit, isSubmitting }) => {
                     placeholder="120000"
                 />
 
-                <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    Primary financial goal
-                    <select
-                        name="primary_financial_goal"
-                        value={formValues.primary_financial_goal}
-                        onChange={handleChange}
-                        className="rounded-2xl border border-slate-200 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
-                    >
-                        <option value="">Select a goal</option>
-                        <option value="SAVE_EMERGENCY">Build emergency fund</option>
-                        <option value="PAY_DEBT">Pay off debt</option>
-                        <option value="SAVE_INVEST">Save and invest</option>
-                        <option value="BUDGET_BETTER">Budget better</option>
-                        <option value="RETIREMENT">Plan for retirement</option>
-                        <option value="OTHER">Other</option>
-                    </select>
-                </label>
-
                 <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700">
                     <input
                         type="checkbox"
@@ -79,7 +63,7 @@ const UserPreferencesForm = ({ profile, onSubmit, isSubmitting }) => {
                         onChange={handleChange}
                         className="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                     />
-                    Receive notifications
+                    Receive dashboard reminders
                 </label>
 
                 <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700">
@@ -90,13 +74,13 @@ const UserPreferencesForm = ({ profile, onSubmit, isSubmitting }) => {
                         onChange={handleChange}
                         className="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                     />
-                    Receive weekly summary
+                    Receive weekly money summary
                 </label>
             </div>
 
             <div className="mt-6">
                 <Button type="submit" variant="primary" className="justify-center" disabled={isSubmitting}>
-                    {isSubmitting ? 'Saving preferences...' : 'Save preferences'}
+                    {isSubmitting ? 'Saving income manager...' : 'Save income manager'}
                 </Button>
             </div>
         </form>
