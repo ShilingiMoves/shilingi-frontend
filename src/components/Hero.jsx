@@ -283,10 +283,11 @@ const slideCards = [SlideCards0, SlideCards1, SlideCards2];
 const Hero = () => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [cardsShown, setCardsShown] = useState(false);
+    
     const images = [HomePage1, HomePage2, HomePage3];
 
     useEffect(() => {
-        // UX sequence: image fades in first, then cards appear after 2s
+        // UX sequence: cards appear after 2s
         const firstShow = setTimeout(() => setCardsShown(true), 2000);
 
         const interval = setInterval(() => {
@@ -315,10 +316,10 @@ const Hero = () => {
 
     return (
         <section
-            className="relative h-screen min-h-[600px] flex items-center overflow-hidden cursor-pointer"
+            className="relative h-screen min-h-[650px] flex items-center overflow-hidden cursor-pointer"
             onClick={handleHeroClick}
         >
-            {/* Background Image Carousel */}
+            {/* Full Width Background Image Carousel */}
             <div className="absolute inset-0 z-0">
                 {images.map((img, index) => (
                     <div
@@ -327,57 +328,17 @@ const Hero = () => {
                     >
                         <img
                             src={img}
-                            alt={`Shilingi Moves Background ${index + 1}`}
-                            className="w-full h-full object-cover object-center"
+                            alt={`Shilingi Moves Feature ${index + 1}`}
+                            className="w-full h-full object-cover object-center lg:object-right"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/15" />
+                        {/* Gradient overlay to ensure text on the left is readable */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent text-white" />
                     </div>
                 ))}
             </div>
 
-            {/* Hero Content */}
-            <div className="container-custom relative z-10 w-full pt-20 pb-28">
-                <div className="max-w-xl">
-                    <h1
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-5"
-                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
-                    >
-                        Take control of your money.{' '}
-                        <span className="text-primary-400">Build the life you want.</span>
-                    </h1>
-
-                    <p
-                        className="font-sans text-base sm:text-lg text-gray-200 leading-relaxed mb-8 max-w-md font-light"
-                        style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}
-                    >
-                        Shilingi Moves is your complete financial wellness platform. Learn, plan, compare, and grow your money built for Kenyan realities. One Shilingi at a time.
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                        <Link
-                            to="/signup"
-                            className="inline-flex items-center justify-center gap-3 px-7 py-4 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/40 hover:-translate-y-0.5 group text-base w-full sm:w-auto"
-                        >
-                            Unlock better money habits
-                            <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors shrink-0">
-                                <ArrowRight size={15} />
-                            </span>
-                        </Link>
-                        <Link
-                            to="/dashboard"
-                            className="inline-flex items-center justify-between gap-4 px-6 py-4 border-2 border-white/80 text-white font-semibold rounded-lg hover:bg-white/10 hover:border-white transition-all duration-300 hover:-translate-y-0.5 group text-base w-full sm:w-auto"
-                        >
-                            <span>Launch your Shilingi Dashboard</span>
-                            <span className="w-8 h-8 rounded-full border-2 border-white/70 flex items-center justify-center group-hover:border-white group-hover:bg-white/10 transition-all shrink-0">
-                                <ArrowRight size={15} />
-                            </span>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
-            {/* Slide-synced floating cards + connector line */}
-            <div className="absolute inset-0 z-20 pointer-events-none">
+            {/* Slide-synced floating cards */}
+            <div className="absolute inset-0 z-10 pointer-events-none">
                 {slideCards.map((SlideComponent, index) => (
                     <div
                         key={index}
@@ -386,6 +347,48 @@ const Hero = () => {
                         <SlideComponent isActive={index === currentImageIndex && cardsShown} />
                     </div>
                 ))}
+            </div>
+
+            {/* Left-Aligned Text Content */}
+            <div className="container-custom relative z-20 w-full pt-20 pb-28 pl-6 sm:pl-12 lg:pl-20">
+                <div className="max-w-xl">
+                    <h1
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-5"
+                        style={{ textShadow: '0 2px 16px rgba(0,0,0,0.5)' }}
+                    >
+                        Take control of <br className="hidden md:block"/> your money.{' '}
+                        <br />
+                        <span className="text-[#34d399]">Build the life you want.</span>
+                    </h1>
+
+                    <p
+                        className="font-sans text-base sm:text-lg text-gray-200 leading-relaxed mb-8 max-w-md font-medium"
+                        style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}
+                    >
+                        Shilingi Moves is your complete financial wellness platform. Learn, plan, compare, and grow your money built for Kenyan realities. One Shilingi at a time.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <Link
+                            to="/signup"
+                            className="inline-flex items-center justify-center gap-3 px-7 py-4 bg-[#10b981] hover:bg-[#059669] text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group text-base w-full sm:w-auto"
+                        >
+                            Unlock better money habits
+                            <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors shrink-0">
+                                <ArrowRight size={15} />
+                            </span>
+                        </Link>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); scrollToContent(); }}
+                            className="inline-flex items-center justify-between gap-4 px-6 py-4 border border-white/60 text-white font-semibold rounded-lg hover:bg-white/10 hover:border-white transition-all duration-300 hover:-translate-y-0.5 group text-base w-full sm:w-auto"
+                        >
+                            <span>Launch your Shilingi Dashboard</span>
+                            <span className="w-8 h-8 rounded-full border border-white/60 flex items-center justify-center group-hover:border-white group-hover:bg-white/10 transition-all shrink-0">
+                                <ArrowRight size={15} />
+                            </span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
     );

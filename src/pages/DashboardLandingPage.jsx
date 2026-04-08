@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { hasStoredAccessToken } from '../services/authApi';
+import HeroBgImage from '../../dist/assets/Dashboard hero 2 - Copy.png';
 
 const dashboardDestination = { pathname: '/dashboard/app' };
 const pageShell = 'min-h-screen bg-[linear-gradient(180deg,_#f7fdfb_0%,_#ffffff_24%,_#f0f7f9_100%)] text-slate-900';
@@ -271,44 +272,58 @@ const DashboardLandingPage = () => {
 
     return (
         <div className={pageShell}>
-            <section className="relative overflow-hidden border-b border-primary-100 bg-white">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.08),_transparent_30%),radial-gradient(circle_at_70%_20%,_rgba(240,201,77,0.16),_transparent_24%)]" />
-                <div className="container-custom relative flex justify-center py-20 sm:py-24 lg:py-28">
-                    <div className="max-w-4xl text-center">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-700">
-                            <ShieldCheck size={16} />
-                            Your personal financial command centre
+            <section className="relative min-h-[650px] flex flex-col lg:flex-row overflow-hidden border-b border-primary-100">
+                {/* Full Width Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src={HeroBgImage} 
+                        alt="Shilingi Moves Background" 
+                        className="w-full h-full object-cover lg:object-center"
+                    />
+                </div>
+
+                {/* LEFT SIDE: Text and Calls to Action with Glassmorphic Overlay */}
+                <div className="w-full lg:w-[55%] xl:w-[50%] relative z-20 flex flex-col justify-center py-20 px-6 sm:py-24 sm:px-12 lg:px-20 xl:px-24 bg-gradient-to-r from-[#fdf7ee]/95 via-[#fcf3e3]/85 to-transparent backdrop-blur-[2px]">
+                    <div className="max-w-xl mx-auto lg:mx-0 w-full">
+                        {/* Top Tag */}
+                        <div className="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-md px-4 py-2 text-sm font-medium text-emerald-800 border border-white/60 mb-6 shadow-sm">
+                            <ShieldCheck size={16} className="text-emerald-600" />
+                            Your personal financial command centre is waiting
                         </div>
 
-                        <h1 className="mt-6 text-4xl font-[300] leading-[1.05] tracking-tight text-slate-950 sm:text-5xl lg:text-7xl">
+                        <h1 className="mt-2 text-4xl sm:text-5xl lg:text-6xl font-[300] leading-[1.05] tracking-tight text-slate-900 drop-shadow-sm">
                             One Dashboard.
                             <br />
-                            Every <span className="font-[300] text-primary-500">Financial Decision</span>
+                            Every <span className="font-[450] text-emerald-700">Financial Decision.</span>
                         </h1>
 
-                        <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-xl">
+                        <p className="mt-5 text-lg font-medium text-slate-800 leading-relaxed max-w-md drop-shadow-sm">
+                            Experience the Shilingi flow. Your finances in action.
+                        </p>
+
+                        <p className="mt-3 text-base text-slate-700 leading-relaxed max-w-md drop-shadow-sm">
                             Track, plan and grow your finances with a dashboard built for Kenyan realities. Choose the tier that fits your journey and upgrade when you are ready.
                         </p>
 
-                        <div className="mt-8 flex flex-wrap justify-center gap-4">
-                                <Link
-                                    to="/signin"
-                                    state={{ from: dashboardDestination }}
-                                    className="inline-flex min-h-[52px] items-center justify-center gap-3 rounded-xl px-7 py-4 text-base font-semibold text-slate-950 transition-all duration-300 hover:-translate-y-0.5"
-                                    style={{ backgroundColor: brandYellow }}
-                                >
-                                    Start for Free
-                                </Link>
-                                <Link
-                                    to="/signup"
-                                    className="inline-flex min-h-[52px] items-center justify-center rounded-xl border border-slate-300 px-7 py-4 text-base font-medium text-slate-900 transition-colors hover:bg-slate-50"
-                                >
-                                    View Demo
-                                </Link>
-                            </div>
+                        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                            <Link
+                                to="/signin"
+                                state={{ from: dashboardDestination }}
+                                className="inline-flex min-h-[52px] items-center justify-center gap-3 rounded-xl px-8 py-4 text-base font-bold text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg shadow-black/5"
+                                style={{ backgroundColor: brandYellow }}
+                            >
+                                Start for Free
+                            </Link>
+                            <Link
+                                to="/signup"
+                                className="inline-flex min-h-[52px] items-center justify-center rounded-xl border border-white/80 bg-white/70 backdrop-blur-md px-8 py-4 text-base font-bold text-slate-900 transition-all hover:bg-white hover:-translate-y-0.5 hover:shadow-md"
+                            >
+                                View Demo
+                            </Link>
+                        </div>
 
-                        <p className="mt-4 text-sm text-slate-500">
-                            No credit card required. Cancel anytime. KES pricing.
+                        <p className="mt-5 text-xs font-medium text-slate-700 mix-blend-multiply">
+                            Cancel anytime. KES pricing.
                         </p>
                     </div>
                 </div>
