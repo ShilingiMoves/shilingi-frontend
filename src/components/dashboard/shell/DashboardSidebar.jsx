@@ -1,6 +1,5 @@
 import React from 'react';
 import { ChevronLeft, LogOut, X } from 'lucide-react';
-import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 import { dashboardSectionMap, dashboardSidebarGroups } from './dashboardSections';
 
 const DashboardSidebar = ({
@@ -35,38 +34,27 @@ const DashboardSidebar = ({
                     mobileOpen ? 'translate-x-0' : '-translate-x-full'
                 } ${collapsed ? 'lg:w-[96px]' : 'lg:w-[268px]'} lg:translate-x-0`}
             >
-                <div className={`border-b border-white/10 px-4 py-5 ${collapsed ? 'flex flex-col items-center gap-4' : 'flex items-center justify-between gap-4'}`}>
-                    {collapsed ? (
-                        <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-2xl bg-white px-2 py-2 shadow-sm ring-1 ring-white/10">
-                            <img src={animatedLogo} alt="Shilingi Moves" className="max-h-full max-w-full object-contain" />
-                        </div>
-                    ) : (
-                        <div className="flex min-h-[88px] flex-1 items-center rounded-[1.75rem] bg-white px-4 py-3 shadow-sm ring-1 ring-white/10">
-                            <img src={animatedLogo} alt="Shilingi Moves" className="h-[64px] w-full object-contain object-left" />
-                        </div>
-                    )}
+                <button
+                    type="button"
+                    onClick={onToggle}
+                    className="absolute -right-5 top-6 hidden h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-slate-950 shadow-lg lg:inline-flex"
+                    aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                >
+                    <ChevronLeft className={collapsed ? 'rotate-180' : ''} size={18} />
+                </button>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={onToggle}
-                            className="hidden h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-slate-950 lg:inline-flex"
-                            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                        >
-                            <ChevronLeft className={collapsed ? 'rotate-180' : ''} size={18} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onCloseMobile}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white lg:hidden"
-                            aria-label="Close sidebar"
-                        >
-                            <X size={18} />
-                        </button>
-                    </div>
+                <div className="flex items-center justify-end border-b border-white/10 px-4 py-4 lg:hidden">
+                    <button
+                        type="button"
+                        onClick={onCloseMobile}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white"
+                        aria-label="Close sidebar"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto px-3 py-4">
+                <nav className="flex-1 overflow-y-auto px-3 py-5">
                     <div className="space-y-5">
                         {dashboardSidebarGroups.map((group) => (
                             <div key={group.id}>

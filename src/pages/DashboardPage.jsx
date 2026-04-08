@@ -395,34 +395,36 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)] lg:flex">
-            <DashboardSidebar
-                collapsed={sidebarCollapsed}
-                onToggle={() => setSidebarCollapsed((current) => !current)}
-                onSignOut={handleSignOut}
+        <div className="min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)]">
+            <DashboardTopbar
                 activeSection={activeSection}
                 onSelectSection={setActiveSection}
-                mobileOpen={mobileSidebarOpen}
-                onCloseMobile={() => setMobileSidebarOpen(false)}
+                onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+                onSignOut={handleSignOut}
+                user={profile}
             />
 
-            <main className="min-w-0 flex-1 lg:overflow-y-auto">
-                <DashboardTopbar
+            <div className="lg:flex">
+                <DashboardSidebar
+                    collapsed={sidebarCollapsed}
+                    onToggle={() => setSidebarCollapsed((current) => !current)}
+                    onSignOut={handleSignOut}
                     activeSection={activeSection}
                     onSelectSection={setActiveSection}
-                    onOpenMobileMenu={() => setMobileSidebarOpen(true)}
-                    onSignOut={handleSignOut}
-                    user={profile}
+                    mobileOpen={mobileSidebarOpen}
+                    onCloseMobile={() => setMobileSidebarOpen(false)}
                 />
 
-                <div className="hidden border-b border-emerald-100/80 bg-white/80 px-4 py-2.5 text-sm text-slate-500 backdrop-blur lg:block">
-                    <div className="mx-auto max-w-7xl">
-                        {dashboardSectionMap[activeSection]?.helper || 'Private dashboard workspace'}
+                <main className="min-w-0 flex-1 lg:overflow-y-auto">
+                    <div className="hidden border-b border-emerald-100/80 bg-white/80 px-4 py-2.5 text-sm text-slate-500 backdrop-blur lg:block">
+                        <div className="mx-auto max-w-7xl">
+                            {dashboardSectionMap[activeSection]?.helper || 'Private dashboard workspace'}
+                        </div>
                     </div>
-                </div>
 
-                {renderActiveSection()}
-            </main>
+                    {renderActiveSection()}
+                </main>
+            </div>
         </div>
     );
 };

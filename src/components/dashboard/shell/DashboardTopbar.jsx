@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronDown, LogOut, Menu, Search } from 'lucide-react';
+import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 import { dashboardTopTabs } from './dashboardSections';
 
 const notifications = [
@@ -28,9 +29,17 @@ const normalizeTier = (value) => {
         .replace(/\b\w/g, (match) => match.toUpperCase());
 };
 
-const DashboardTopbar = ({ activeSection, onSelectSection, onOpenMobileMenu, onSignOut, user }) => {
+const DashboardTopbar = ({
+    activeSection,
+    onSelectSection,
+    onOpenMobileMenu,
+    onSignOut,
+    user,
+}) => {
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const searchInputRef = useRef(null);
     const firstName = user?.first_name || 'Client';
     const lastName = user?.last_name || '';
     const tierLabel = useMemo(
@@ -39,19 +48,37 @@ const DashboardTopbar = ({ activeSection, onSelectSection, onOpenMobileMenu, onS
     );
     const fullName = `${firstName} ${lastName}`.trim();
 
+    useEffect(() => {
+        if (searchOpen) {
+            searchInputRef.current?.focus();
+        }
+    }, [searchOpen]);
+
     return (
         <header className="sticky top-0 z-20 border-b border-emerald-100 bg-white/96 backdrop-blur-xl">
-            <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-                <button
-                    type="button"
-                    onClick={onOpenMobileMenu}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm lg:hidden"
-                    aria-label="Open dashboard menu"
-                >
-                    <Menu size={18} />
-                </button>
+            <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onOpenMobileMenu}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm lg:hidden"
+                        aria-label="Open dashboard menu"
+                    >
+                        <Menu size={18} />
+                    </button>
 
-                <nav className="hidden items-center gap-1 xl:flex">
+                    <button
+                        type="button"
+                        onClick={() => onSelectSection('overview')}
+                        className="inline-flex h-[84px] w-[190px] items-center justify-center rounded-[1.8rem] border border-emerald-100 bg-white px-4 shadow-sm"
+                    >
+                        <span className="inline-flex h-[62px] w-[148px] items-center justify-center overflow-hidden rounded-xl">
+                            <img src={animatedLogo} alt="Shilingi Moves" className="h-full w-full object-contain" />
+                        </span>
+                    </button>
+                </div>
+
+                <nav className="hidden items-center justify-center gap-1 px-6 xl:flex">
                     {dashboardTopTabs.map((tab) => {
                         const isActive = activeSection === tab.id;
 
@@ -71,24 +98,43 @@ const DashboardTopbar = ({ activeSection, onSelectSection, onOpenMobileMenu, onS
                     })}
                 </nav>
 
-                <div className="hidden min-w-0 flex-1 items-center justify-end lg:flex">
-                    <label className="flex w-full max-w-[230px] items-center gap-2.5 rounded-full border border-emerald-100 bg-[#f6fbf8] px-4 py-2 shadow-sm">
-                        <Search size={16} className="text-slate-400" />
-                        <input
-                            type="search"
-                            placeholder="Search Shilingi Moves."
-                            className="w-full border-none bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                        />
-                    </label>
-                </div>
+                <div className="flex items-center justify-end gap-2 sm:gap-3">
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSearchOpen((current) => !current);
+                                setNotificationsOpen(false);
+                                setAccountOpen(false);
+                            }}
+                            className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-[#f3faf7] text-slate-700 shadow-sm transition-colors hover:text-slate-950"
+                            aria-label="Open search"
+                        >
+                            <Search size={18} />
+                        </button>
 
-                <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                        {searchOpen && (
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(92vw,340px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)]">
+                                <label className="flex w-full items-center gap-2.5 rounded-full border border-emerald-100 bg-[#f6fbf8] px-4 py-2 shadow-sm">
+                                    <Search size={16} className="text-slate-400" />
+                                    <input
+                                        ref={searchInputRef}
+                                        type="search"
+                                        placeholder="Search Shilingi Moves"
+                                        className="w-full border-none bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                                    />
+                                </label>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="relative">
                         <button
                             type="button"
                             onClick={() => {
                                 setNotificationsOpen((current) => !current);
                                 setAccountOpen(false);
+                                setSearchOpen(false);
                             }}
                             className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-[#f3faf7] text-slate-700 shadow-sm transition-colors hover:text-slate-950"
                             aria-label="Open notifications"
@@ -114,16 +160,13 @@ const DashboardTopbar = ({ activeSection, onSelectSection, onOpenMobileMenu, onS
                         )}
                     </div>
 
-                    <div className="hidden rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700 sm:inline-flex">
-                        {tierLabel}
-                    </div>
-
                     <div className="relative">
                         <button
                             type="button"
                             onClick={() => {
                                 setAccountOpen((current) => !current);
                                 setNotificationsOpen(false);
+                                setSearchOpen(false);
                             }}
                             className="inline-flex items-center gap-3 rounded-full border border-emerald-100 bg-[#f3faf7] py-1 pl-1 pr-3 shadow-sm transition-colors hover:border-primary-200"
                         >
