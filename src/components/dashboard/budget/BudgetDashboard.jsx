@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
 import BudgetOverview from './BudgetOverview';
@@ -16,6 +16,8 @@ import {
     getGoals,
     getGoalSummary,
 } from '../../../services/budgetApi';
+import incomeService from '../../../services/incomeService';
+import { getStoredUserProfile } from '../../../services/authApi';
 import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
@@ -30,6 +32,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     const [expenseCount, setExpenseCount] = useState(0);
     const [goals, setGoals] = useState([]);
     const [goalSummary, setGoalSummary] = useState(null);
+    const [totalIncome, setTotalIncome] = useState(0);
     
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -52,12 +55,13 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             setLoading(true);
             setError('');
             
-            const [budgetsData, summaryData, expensesData, goalsData, goalSummaryData] = await Promise.all([
+            const [budgetsData, summaryData, expensesData, goalsData, goalSummaryData, incomeSummaryData] = await Promise.all([
                 getBudgets({ current: 'true' }),
                 getBudgetSummary(),
                 getExpenses({ limit: 10 }),
                 getGoals({ status: 'ACTIVE' }),
                 getGoalSummary(),
+                incomeService.getSummary().catch(() => null),
             ]);
             
             setBudgets(budgetsData);
@@ -67,6 +71,11 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             setExpenseCount(expensesData.count || 0);
             setGoals(goalsData);
             setGoalSummary(goalSummaryData);
+
+            const storedProfile = getStoredUserProfile();
+            const incomeFromManager = Number(incomeSummaryData?.total_income || incomeSummaryData?.monthly_income || 0);
+            const incomeFromProfile = Number(storedProfile?.profile?.monthly_income || 0);
+            setTotalIncome(incomeFromManager > 0 ? incomeFromManager : incomeFromProfile);
         } catch (err) {
             setError(err.message || 'Could not load your budget data right now.');
         } finally {
@@ -174,36 +183,21 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                 </div>
             )}
 
-            {/* Navigation Tabs */}
-            <div className="overflow-x-auto rounded-2xl bg-slate-100 p-1">
-                <div className="flex min-w-max gap-1">
-                    {[
-                        { id: 'overview', label: 'Overview' },
-                        { id: 'goals', label: `Goals`, count: goals.length },
-                        { id: 'budgets', label: `Budgets`, count: budgets.length },
-                        { id: 'expenses', label: `Expenses`, count: expenseCount },
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
-                                activeTab === tab.id
-                                    ? 'bg-white text-slate-900 shadow-sm'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            {tab.label}
-                            {tab.count !== undefined && (
-                                <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
-                                    activeTab === tab.id ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'
-                                }`}>
-                                    {tab.count}
-                                </span>
-                            )}
-                        </button>
-                    ))}
+            {activeTab !== 'overview' && (
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('overview')}
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:underline"
+                    >
+                        <ArrowLeft size={15} />
+                        Back to Budget Overview
+                    </button>
+                    <p className="text-xs font-medium text-slate-500">
+                        Budgets: {budgets.length} | Expenses: {expenseCount} | Goals: {goals.length}
+                    </p>
                 </div>
-            </div>
+            )}
 
             {/* Tab Content */}
             {activeTab === 'overview' && summary && (
@@ -212,6 +206,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                     budgets={budgets}
                     expenses={expenses}
                     expenseTotal={expenseTotal}
+                    totalIncome={totalIncome}
                     goals={goals}
                     goalSummary={goalSummary}
                     budgetHealth={budgetHealth}

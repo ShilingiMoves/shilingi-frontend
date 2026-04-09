@@ -40,8 +40,6 @@ const DashboardPage = () => {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [activeSection, setActiveSection] = useState(getInitialDashboardSection);
-    const [budgetActiveTab, setBudgetActiveTab] = useState('overview');
-    const [debtActionNonce, setDebtActionNonce] = useState(0);
     const [hasIncomeData, setHasIncomeData] = useState(false);
 
     useEffect(() => {
@@ -138,48 +136,16 @@ const DashboardPage = () => {
 
             case 'debt':
                 return standardShell(
-                    <>
-                        <SectionHero
-                            eyebrow="Debt Manager"
-                            title="Reduce what you owe with a clearer repayment picture."
-                            text="Track balances, due dates, and repayment amounts in one place, then compare better options when it is time to refinance or restructure."
-                            primaryAction={{ label: 'Add debt', onClick: () => setDebtActionNonce((current) => current + 1) }}
-                            secondaryAction={{ label: 'Open Compare Hub', onClick: () => setActiveSection('comparehub') }}
-                        />
-                        <HighlightsGrid
-                            items={[
-                                'Track multiple loans and repayment dates',
-                                'Review product options before switching',
-                                'Keep calculators and next-step actions close',
-                            ]}
-                        />
-                        <Suspense fallback={sectionLoader}>
-                            <DebtManagerPanel requestAddDebtSignal={debtActionNonce} />
-                        </Suspense>
-                    </>
+                    <Suspense fallback={sectionLoader}>
+                        <DebtManagerPanel />
+                    </Suspense>
                 );
 
             case 'budget':
                 return standardShell(
-                    <>
-                        <SectionHero
-                            eyebrow="Budget planner"
-                            title="Build a spending plan you can actually keep."
-                            text="See where your money goes, define category limits, and turn budgeting into a clear weekly rhythm instead of a once-a-month scramble."
-                            primaryAction={{ label: 'Add expense', onClick: () => setBudgetActiveTab('expenses') }}
-                            secondaryAction={{ label: 'Add budget', onClick: () => setBudgetActiveTab('budgets') }}
-                        />
-                        <HighlightsGrid
-                            items={[
-                                'Create category budgets and monitor drift early',
-                                'Track spending against goals and priorities',
-                                'Use planners to prepare before major outflows land',
-                            ]}
-                        />
-                        <Suspense fallback={sectionLoader}>
-                            <BudgetDashboard activeTab={budgetActiveTab} onTabChange={setBudgetActiveTab} />
-                        </Suspense>
-                    </>
+                    <Suspense fallback={sectionLoader}>
+                        <BudgetDashboard />
+                    </Suspense>
                 );
 
             case 'networth':
@@ -202,24 +168,9 @@ const DashboardPage = () => {
 
             case 'investments':
                 return standardShell(
-                    <>
-                        <SectionHero
-                            eyebrow="Investment planner"
-                            title="Track growth opportunities with more confidence."
-                            text="See your current positions, monitor performance, and compare what to review next as your savings start working harder."
-                            secondaryAction={{ label: 'Open market watch', onClick: () => setActiveSection('marketwatch') }}
-                        />
-                        <HighlightsGrid
-                            items={[
-                                'Review progress by product and contribution rhythm',
-                                'Use compare and learning spaces before committing',
-                                'Keep investments aligned to your wider goals',
-                            ]}
-                        />
-                        <Suspense fallback={sectionLoader}>
-                            <InvestmentTracker />
-                        </Suspense>
-                    </>
+                    <Suspense fallback={sectionLoader}>
+                        <InvestmentTracker />
+                    </Suspense>
                 );
 
             case 'health':

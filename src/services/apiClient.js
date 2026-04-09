@@ -39,7 +39,10 @@ class ApiClient {
     }
 
     buildURL(endpoint, params = {}) {
-        const url = new URL(`${this.baseURL}${endpoint}`);
+        const endpointPath = String(endpoint || '');
+        const normalizedEndpoint = endpointPath.startsWith('/') ? endpointPath : `/${endpointPath}`;
+        const base = this.baseURL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+        const url = new URL(normalizedEndpoint, base);
         
         Object.entries(params).forEach(([key, value]) => {
             if (value !== null && value !== undefined && value !== '') {

@@ -67,7 +67,7 @@ const plans = [
         annualText: { monthly: 'or KES 239/mo billed annually', annual: 'Save KES 720/yr billed annually' },
         includedTitle: 'Everything in Basic, plus',
         features: [
-            { text: 'Unlimited Budget Accounts', included: true, tone: 'blue' },
+            { text: 'Unlimted Budget Accounts', included: true, tone: 'blue' },
             { text: 'Debt Repayment Planner', included: true, tone: 'blue' },
             { text: 'Savings Goals Tracker', included: true, tone: 'blue' },
             { text: 'Full Learning Hub access', included: true, tone: 'blue' },
@@ -275,9 +275,9 @@ const DashboardLandingPage = () => {
             <section className="relative min-h-[650px] flex flex-col lg:flex-row overflow-hidden border-b border-primary-100">
                 {/* Full Width Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={HeroBgImage} 
-                        alt="Shilingi Moves Background" 
+                    <img
+                        src={HeroBgImage}
+                        alt="Shilingi Moves Background"
                         className="w-full h-full object-cover lg:object-center"
                     />
                 </div>
@@ -356,22 +356,20 @@ const DashboardLandingPage = () => {
                     <button
                         type="button"
                         onClick={() => setBillingMode('monthly')}
-                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                            billingMode === 'monthly'
+                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${billingMode === 'monthly'
                                 ? 'border-primary-600 bg-primary-50 text-primary-700'
                                 : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
-                        }`}
+                            }`}
                     >
                         Monthly
                     </button>
                     <button
                         type="button"
                         onClick={() => setBillingMode('annual')}
-                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                            billingMode === 'annual'
+                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${billingMode === 'annual'
                                 ? 'border-primary-600 bg-primary-50 text-primary-700'
                                 : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
-                        }`}
+                            }`}
                     >
                         Annual
                     </button>
@@ -388,11 +386,10 @@ const DashboardLandingPage = () => {
                         return (
                             <article
                                 key={plan.key}
-                                className={`relative flex flex-col rounded-[1.75rem] border p-6 shadow-sm ${
-                                    plan.featured
+                                className={`relative flex flex-col rounded-[1.75rem] border p-6 shadow-sm ${plan.featured
                                         ? 'border-primary-200 bg-primary-50/70'
                                         : 'border-slate-200 bg-white'
-                                }`}
+                                    }`}
                             >
                                 {plan.badge && (
                                     <div className="absolute left-1/2 top-0 -translate-x-1/2 rounded-b-xl px-4 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-950" style={{ backgroundColor: brandYellow }}>
