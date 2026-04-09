@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowDownRight, ArrowUpRight, Building2, Landmark, LineChart, Loader2, Plus, ShieldCheck, Sparkles, X } from 'lucide-react';
-import { createAsset, createAssetCategory, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
+import { ArrowDownRight, ArrowUpRight, Building2, Landmark, LineChart, Loader2, Plus, ShieldCheck, Sparkles, Trash2, X } from 'lucide-react';
+import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 
@@ -67,6 +67,7 @@ const InvestmentTracker = () => {
     const { triggerHealthRefresh } = useHealthRefresh();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [deletingAssetId, setDeletingAssetId] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [assets, setAssets] = useState([]);
@@ -207,6 +208,26 @@ const InvestmentTracker = () => {
         }
     };
 
+    const handleDeleteInvestment = async (asset) => {
+        if (!asset?.uuid) return;
+        const confirmed = window.confirm(`Delete "${asset.name}"?`);
+        if (!confirmed) return;
+
+        try {
+            setDeletingAssetId(asset.uuid);
+            setError('');
+            setSuccess('');
+            await deleteAsset(asset.uuid);
+            await refreshData();
+            setSuccess('Investment deleted successfully.');
+            triggerHealthRefresh('investment:delete');
+        } catch (err) {
+            setError(err.message || 'Failed to delete investment');
+        } finally {
+            setDeletingAssetId('');
+        }
+    };
+
     return (
         <div className="space-y-4">
             <section className="flex flex-col gap-3 rounded-[1.4rem] bg-gradient-to-r from-[#0f6b5b] via-[#1a7b67] to-[#2b8f78] px-5 py-5 text-white md:flex-row md:items-center md:justify-between">
@@ -268,6 +289,15 @@ const InvestmentTracker = () => {
                                             {asset.gainLoss >= 0 ? '+' : '-'}{formatKES(Math.abs(asset.gainLoss))}
                                         </p>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteInvestment(asset)}
+                                        disabled={deletingAssetId === asset.uuid}
+                                        className="ml-3 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                                        aria-label={`Delete ${asset.name}`}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
                                 </div>
                             ))}
                         </div>

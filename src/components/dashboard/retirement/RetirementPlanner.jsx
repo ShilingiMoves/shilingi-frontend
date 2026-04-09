@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, PiggyBank, Plus, Sparkles, Timer, X } from 'lucide-react';
-import { createAsset, createAssetCategory, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
+import { Loader2, PiggyBank, Plus, Sparkles, Timer, Trash2, X } from 'lucide-react';
+import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 
 const RETIREMENT_CATEGORY_NAME = 'Retirement Account';
@@ -65,6 +65,7 @@ const RetirementPlanner = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [deletingAccountId, setDeletingAccountId] = useState('');
     const [accountForm, setAccountForm] = useState(defaultAccountForm);
     const [calculator, setCalculator] = useState(defaultCalculator);
     const [assets, setAssets] = useState([]);
@@ -182,6 +183,25 @@ const RetirementPlanner = () => {
         }
     };
 
+    const removeRetirementAccount = async (asset) => {
+        if (!asset?.uuid) return;
+        const confirmed = window.confirm(`Delete account "${asset.name}"?`);
+        if (!confirmed) return;
+
+        try {
+            setDeletingAccountId(asset.uuid);
+            setError('');
+            setSuccess('');
+            await deleteAsset(asset.uuid);
+            await loadData();
+            setSuccess('Retirement account deleted successfully.');
+        } catch (err) {
+            setError(err.message || 'Failed to delete retirement account.');
+        } finally {
+            setDeletingAccountId('');
+        }
+    };
+
     return (
         <div className="space-y-5">
             <section className="rounded-[1.5rem] bg-[linear-gradient(135deg,_#165f4f_0%,_#1e735f_70%,_#155246_100%)] px-6 py-6 text-white shadow-sm">
@@ -259,10 +279,23 @@ const RetirementPlanner = () => {
                         <div className="mt-4 space-y-3">
                             {retirementAssets.map((asset) => (
                                 <article key={asset.uuid} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                                    <p className="font-semibold text-slate-900">{asset.name}</p>
-                                    <p className="text-sm text-slate-600">
-                                        Balance: {formatKES(asset.currentValue)} • Monthly: {formatKES(asset.purchaseValue)}
-                                    </p>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className="font-semibold text-slate-900">{asset.name}</p>
+                                            <p className="text-sm text-slate-600">
+                                                Balance: {formatKES(asset.currentValue)} • Monthly: {formatKES(asset.purchaseValue)}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeRetirementAccount(asset)}
+                                            disabled={deletingAccountId === asset.uuid}
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                                            aria-label={`Delete ${asset.name}`}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </article>
                             ))}
                         </div>

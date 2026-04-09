@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { HeartPulse, Loader2, Plus, ShieldAlert, ShieldCheck, X } from 'lucide-react';
-import { createAsset, createAssetCategory, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
+import { HeartPulse, Loader2, Plus, ShieldAlert, ShieldCheck, Trash2, X } from 'lucide-react';
+import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { getDebts } from '../../../services/debtApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 
@@ -58,6 +58,7 @@ const ProtectionPlanner = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [deletingPolicyId, setDeletingPolicyId] = useState('');
     const [policyForm, setPolicyForm] = useState(defaultPolicyForm);
     const [calculator, setCalculator] = useState(defaultCalculator);
     const [assets, setAssets] = useState([]);
@@ -178,6 +179,25 @@ const ProtectionPlanner = () => {
         }
     };
 
+    const removePolicy = async (asset) => {
+        if (!asset?.uuid) return;
+        const confirmed = window.confirm(`Delete policy "${asset.name}"?`);
+        if (!confirmed) return;
+
+        try {
+            setDeletingPolicyId(asset.uuid);
+            setError('');
+            setSuccess('');
+            await deleteAsset(asset.uuid);
+            await loadData();
+            setSuccess('Policy deleted successfully.');
+        } catch (err) {
+            setError(err.message || 'Failed to delete protection policy.');
+        } finally {
+            setDeletingPolicyId('');
+        }
+    };
+
     return (
         <div className="space-y-5">
             <section className="rounded-[1.5rem] bg-[linear-gradient(135deg,_#165f4f_0%,_#1e735f_70%,_#155246_100%)] px-6 py-6 text-white shadow-sm">
@@ -227,11 +247,22 @@ const ProtectionPlanner = () => {
                                                 <p className="font-semibold text-slate-900">{asset.name}</p>
                                                 <p className="text-sm text-slate-600">Cover: {formatKES(asset.currentValue)}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-semibold text-slate-900">{formatKES(asset.purchaseValue)}/mo</p>
-                                                <p className={`text-xs font-semibold ${meta.status === 'ACTIVE' ? 'text-emerald-700' : 'text-slate-500'}`}>
-                                                    {meta.status}
-                                                </p>
+                                            <div className="flex items-start gap-2">
+                                                <div className="text-right">
+                                                    <p className="font-semibold text-slate-900">{formatKES(asset.purchaseValue)}/mo</p>
+                                                    <p className={`text-xs font-semibold ${meta.status === 'ACTIVE' ? 'text-emerald-700' : 'text-slate-500'}`}>
+                                                        {meta.status}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePolicy(asset)}
+                                                    disabled={deletingPolicyId === asset.uuid}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                                                    aria-label={`Delete ${asset.name}`}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </div>
                                     </article>

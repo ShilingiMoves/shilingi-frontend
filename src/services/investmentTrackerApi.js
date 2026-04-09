@@ -96,3 +96,8 @@ export async function createAsset(data) {
     const payload = unwrapPayload(response);
     return normalizeAsset(payload);
 }
+
+export async function deleteAsset(uuid) {
+    await apiClient.delete(`${ASSETS_ENDPOINT}${uuid}/`);
+    return uuid;
+}

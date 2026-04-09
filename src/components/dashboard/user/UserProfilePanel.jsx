@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Button from '../../Button';
 import { getUserAccount, updateUserPreferences } from '../../../services/userApi';
+import incomeService from '../../../services/incomeService';
 import { USER_PROFILE_WORKSPACE_KEY } from './UserGoalsFamilyForm';
 
 const readWorkspace = () => {
@@ -55,12 +56,23 @@ const formatCurrency = (value) => {
 
 const getTierLabel = (user) => (user?.tier || user?.subscription_tier || 'Basic').toString().replace(/_/g, ' ');
 
-const calculateProfileCompletion = (user, workspace) => {
+const resolveIncomeValue = (incomeSummary, profileIncome) => {
+    const managerIncome = Number(
+        incomeSummary?.total_income ??
+            incomeSummary?.monthly_income ??
+            incomeSummary?.current_month?.total_income ??
+            0
+    );
+    if (managerIncome > 0) return managerIncome;
+    return Number(profileIncome || 0);
+};
+
+const calculateProfileCompletion = (user, workspace, resolvedIncome) => {
     const profile = user?.profile || {};
     const checks = [
         Boolean(user?.first_name),
         Boolean(user?.email),
-        Boolean(profile.monthly_income),
+        Boolean(resolvedIncome),
         Boolean(profile.primary_financial_goal),
         Boolean(workspace.shortTermGoal),
         Boolean(workspace.mediumTermGoal),
@@ -87,6 +99,7 @@ const UserProfilePanel = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [incomeSummary, setIncomeSummary] = useState(null);
     const [editingIncome, setEditingIncome] = useState(false);
     const [editingGoals, setEditingGoals] = useState(false);
     const [incomeSubmitting, setIncomeSubmitting] = useState(false);
@@ -110,12 +123,17 @@ const UserProfilePanel = () => {
             try {
                 setLoading(true);
                 setError('');
-                const userResponse = await getUserAccount();
+                const [userResponse, incomeSummaryResponse] = await Promise.all([
+                    getUserAccount(),
+                    incomeService.getSummary().catch(() => null),
+                ]);
                 const storedWorkspace = readWorkspace();
+                const resolvedIncome = resolveIncomeValue(incomeSummaryResponse, userResponse?.profile?.monthly_income);
                 setUser(userResponse);
+                setIncomeSummary(incomeSummaryResponse);
                 setWorkspace(storedWorkspace);
                 setIncomeForm({
-                    monthly_income: userResponse?.profile?.monthly_income || '',
+                    monthly_income: resolvedIncome || '',
                     receive_notifications: userResponse?.profile?.receive_notifications ?? true,
                     receive_weekly_summary: userResponse?.profile?.receive_weekly_summary ?? true,
                 });
@@ -139,7 +157,14 @@ const UserProfilePanel = () => {
 
     const fullName = useMemo(() => `${user?.first_name || 'Member'} ${user?.last_name || ''}`.trim(), [user]);
     const tierLabel = useMemo(() => getTierLabel(user), [user]);
-    const profileCompletion = useMemo(() => calculateProfileCompletion(user, workspace), [user, workspace]);
+    const resolvedIncome = useMemo(
+        () => resolveIncomeValue(incomeSummary, user?.profile?.monthly_income),
+        [incomeSummary, user?.profile?.monthly_income]
+    );
+    const profileCompletion = useMemo(
+        () => calculateProfileCompletion(user, workspace, resolvedIncome),
+        [resolvedIncome, user, workspace]
+    );
     const primaryGoal = user?.profile?.primary_financial_goal
         ? String(user.profile.primary_financial_goal).replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (match) => match.toUpperCase())
         : 'Not added yet';
@@ -170,6 +195,48 @@ const UserProfilePanel = () => {
                 ...incomeForm,
                 primary_financial_goal: user?.profile?.primary_financial_goal || null,
             });
+
+            const incomingIncome = Number(incomeForm.monthly_income || 0);
+            const currentManagerIncome = Number(
+                incomeSummary?.total_income ??
+                    incomeSummary?.monthly_income ??
+                    incomeSummary?.current_month?.total_income ??
+                    0
+            );
+
+            if (incomingIncome > 0 && currentManagerIncome <= 0) {
+                const categoriesResponse = await incomeService.getCategories().catch(() => null);
+                const categories = categoriesResponse?.categories || categoriesResponse || [];
+                let selectedCategory = categories?.[0];
+
+                if (!selectedCategory) {
+                    selectedCategory = await incomeService.createCategory({ name: 'Salary' }).catch(() => null);
+                }
+
+                const categoryUuid =
+                    selectedCategory?.uuid ||
+                    selectedCategory?.id ||
+                    selectedCategory?.data?.uuid ||
+                    selectedCategory?.data?.id;
+
+                if (categoryUuid) {
+                    await incomeService.quickIncome({
+                        category: categoryUuid,
+                        amount: incomingIncome,
+                        description: 'Monthly income baseline (Profile setup)',
+                        source: 'Profile setup',
+                        income_date: new Date().toISOString().split('T')[0],
+                        frequency: 'MONTHLY',
+                        is_recurring: true,
+                        status: 'RECEIVED',
+                        is_taxable: false,
+                        notes: 'Created from profile income setup',
+                    });
+                }
+            }
+
+            const latestIncomeSummary = await incomeService.getSummary().catch(() => null);
+            setIncomeSummary(latestIncomeSummary);
 
             setUser((current) => ({
                 ...current,
@@ -331,7 +398,7 @@ const UserProfilePanel = () => {
                         <>
                             <div className="mt-5 grid gap-4 sm:grid-cols-2">
                                 <ProfileDatum label="Employment status" value="Employed / Active income" />
-                                <ProfileDatum label="Monthly income" value={formatCurrency(user?.profile?.monthly_income)} />
+                                <ProfileDatum label="Monthly income" value={formatCurrency(resolvedIncome)} />
                                 <ProfileDatum label="Default currency" value={user?.default_currency || 'KES'} />
                                 <ProfileDatum label="Weekly summary" value={user?.profile?.receive_weekly_summary ? 'Enabled' : 'Disabled'} />
                             </div>

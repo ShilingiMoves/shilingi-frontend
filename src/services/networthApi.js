@@ -156,11 +156,13 @@ function normaliseHistoryEntry(item, index = 0) {
 
 function normaliseCategory(item, index = 0) {
     const explicitId = item?.id ?? item?.pk ?? item?.category_id;
-    const categoryId = explicitId ?? index + 1;
+    const value = explicitId ?? item?.uuid ?? index + 1;
+    const categoryId = explicitId ?? null;
 
     return {
         id: item?.uuid || `category-${index}`,
         uuid: item?.uuid || '',
+        value,
         categoryId,
         usesDerivedId: explicitId === undefined,
         name: item?.name || `Category ${categoryId}`,
@@ -222,10 +224,19 @@ function normaliseLiability(item, index = 0) {
     };
 }
 
+function resolveCategoryValue(input) {
+    if (input === null || input === undefined || input === '') {
+        return null;
+    }
+
+    const parsed = Number(input);
+    return Number.isNaN(parsed) ? input : parsed;
+}
+
 function prepareAssetPayload(formValues) {
     return {
         name: formValues.name,
-        category: Number(formValues.categoryId),
+        category: resolveCategoryValue(formValues.categoryId ?? formValues.category ?? formValues.categoryUuid),
         current_value: Number(formValues.currentValue).toString(),
         purchase_value: toNullableNumberString(formValues.purchaseValue),
         currency: formValues.currency || 'KES',
@@ -243,7 +254,7 @@ function prepareAssetPayload(formValues) {
 function prepareLiabilityPayload(formValues) {
     return {
         name: formValues.name,
-        category: Number(formValues.categoryId),
+        category: resolveCategoryValue(formValues.categoryId ?? formValues.category ?? formValues.categoryUuid),
         amount: Number(formValues.amount).toString(),
         currency: formValues.currency || 'KES',
         due_date: toNullableString(formValues.dueDate),
