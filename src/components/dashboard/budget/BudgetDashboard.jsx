@@ -22,6 +22,46 @@ import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 
+const resolvePayload = (result, fallback) =>
+    result?.status === 'fulfilled' ? result.value : fallback;
+
+const toNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const getIncomeFromSummary = (incomeSummaryData) => {
+    if (!incomeSummaryData) return 0;
+
+    return toNumber(
+        incomeSummaryData?.total_income ??
+            incomeSummaryData?.monthly_income ??
+            incomeSummaryData?.current_month?.total_income ??
+            incomeSummaryData?.currentMonth?.total_income ??
+            incomeSummaryData?.summary?.total_income ??
+            incomeSummaryData?.summary?.monthly_income ??
+            0
+    );
+};
+
+const deriveSummaryFromBudgets = (budgetsData = [], existingSummary = {}, expensesData = null, goalsData = []) => {
+    const totalBudget = budgetsData.reduce((sum, item) => sum + toNumber(item?.amount), 0);
+    const totalSpent = budgetsData.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
+    const totalRemaining = totalBudget - totalSpent;
+    const expenseCount = toNumber(expensesData?.count ?? existingSummary?.expense_count ?? 0);
+
+    return {
+        ...existingSummary,
+        currency: existingSummary?.currency || budgetsData?.[0]?.currency || 'KES',
+        total_budget: toNumber(existingSummary?.total_budget || totalBudget),
+        total_spent: toNumber(existingSummary?.total_spent || totalSpent),
+        total_remaining: toNumber(existingSummary?.total_remaining || totalRemaining),
+        active_budgets_count: toNumber(existingSummary?.active_budgets_count || budgetsData.length),
+        expense_count: expenseCount,
+        goal_count: toNumber(existingSummary?.goal_count || goalsData.length),
+    };
+};
+
 const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     const { triggerHealthRefresh } = useHealthRefresh();
     // State management
@@ -55,7 +95,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             setLoading(true);
             setError('');
             
-            const [budgetsData, summaryData, expensesData, goalsData, goalSummaryData, incomeSummaryData] = await Promise.all([
+            const [budgetsResult, summaryResult, expensesResult, goalsResult, goalSummaryResult, incomeSummaryResult] = await Promise.allSettled([
                 getBudgets({ current: 'true' }),
                 getBudgetSummary(),
                 getExpenses({ limit: 10 }),
@@ -63,19 +103,33 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                 getGoalSummary(),
                 incomeService.getSummary().catch(() => null),
             ]);
-            
-            setBudgets(budgetsData);
-            setSummary(summaryData);
+
+            const budgetsData = resolvePayload(budgetsResult, []);
+            const summaryData = resolvePayload(summaryResult, {});
+            const expensesData = resolvePayload(expensesResult, { expenses: [], total: 0, count: 0 });
+            const goalsData = resolvePayload(goalsResult, []);
+            const goalSummaryData = resolvePayload(goalSummaryResult, null);
+            const incomeSummaryData = resolvePayload(incomeSummaryResult, null);
+
+            setBudgets(Array.isArray(budgetsData) ? budgetsData : []);
+            setSummary(deriveSummaryFromBudgets(budgetsData, summaryData, expensesData, goalsData));
             setExpenses(expensesData.expenses || []);
             setExpenseTotal(expensesData.total || 0);
             setExpenseCount(expensesData.count || 0);
-            setGoals(goalsData);
+            setGoals(Array.isArray(goalsData) ? goalsData : []);
             setGoalSummary(goalSummaryData);
 
             const storedProfile = getStoredUserProfile();
-            const incomeFromManager = Number(incomeSummaryData?.total_income || incomeSummaryData?.monthly_income || 0);
+            const incomeFromManager = getIncomeFromSummary(incomeSummaryData);
             const incomeFromProfile = Number(storedProfile?.profile?.monthly_income || 0);
             setTotalIncome(incomeFromManager > 0 ? incomeFromManager : incomeFromProfile);
+
+            const failedRequests = [budgetsResult, summaryResult, expensesResult, goalsResult, goalSummaryResult].filter(
+                (result) => result.status === 'rejected'
+            );
+            if (failedRequests.length > 0) {
+                setError('Some dashboard sections could not fully sync. Showing available data.');
+            }
         } catch (err) {
             setError(err.message || 'Could not load your budget data right now.');
         } finally {

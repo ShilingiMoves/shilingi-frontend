@@ -9,7 +9,7 @@ const statusStyles = {
     default: 'bg-slate-100 text-slate-700',
 };
 
-const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
+const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, totalIncome, onNavigate }) => {
     const currency = summary?.currency || 'KES';
     const totalBudgeted = Number(summary?.total_budget || 0);
     const totalSpent = Number(summary?.total_spent || 0);
@@ -38,6 +38,10 @@ const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
     const upcomingBills = sortedBudgets
         .filter((item) => Number(item.remaining || 0) > 0)
         .slice(0, 3);
+
+    const activeGoalsCount = Number(goalSummary?.active_goals ?? summary?.goal_count ?? goals?.length ?? 0);
+    const expenseRecordsCount = Number(summary?.expense_count ?? expenses?.length ?? 0);
+    const totalGoalSaved = Number(goalSummary?.total_saved ?? 0);
 
     return (
         <div className="space-y-4">
@@ -89,7 +93,7 @@ const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
             <section className="grid gap-3 md:grid-cols-3">
                 <QuickActionCard
                     title="Goals"
-                    text={`${summary?.goal_count ?? 0} active goals`}
+                    text={`${activeGoalsCount} active goals`}
                     cta="Track Goals"
                     onClick={() => onNavigate('goals')}
                 />
@@ -101,7 +105,7 @@ const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
                 />
                 <QuickActionCard
                     title="Expenses"
-                    text={`${summary?.expense_count ?? 0} expense records`}
+                    text={`${expenseRecordsCount} expense records`}
                     cta="Add / Manage Expenses"
                     onClick={() => onNavigate('expenses')}
                 />
@@ -181,6 +185,9 @@ const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
                             <p className="mt-1">Needs (50%): {formatCurrency(monthlyNeedsTarget, currency)} - You spend {formatCurrency(needsSpent, currency)}</p>
                             <p>Wants (30%): {formatCurrency(wantsTarget, currency)} - Budgeted {formatCurrency(Math.max(totalBudgeted - needsSpent, 0), currency)}</p>
                             <p>Savings (20%): {formatCurrency(savingsTarget, currency)} - Remaining after spend {formatCurrency(savingsAfterSpend, currency)}</p>
+                            <p className="mt-2 font-medium text-emerald-800">
+                                Goal contributions tracked: {formatCurrency(totalGoalSaved, currency)}
+                            </p>
                         </div>
                     </article>
 
