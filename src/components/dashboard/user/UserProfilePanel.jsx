@@ -258,39 +258,39 @@ const UserProfilePanel = () => {
                 </div>
             )}
 
-            <section className="relative overflow-hidden rounded-[1.8rem] bg-[#0f4f43] p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#176a57]/95 via-[#125a4b]/92 to-[#0b372f]/96" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(240,201,77,0.18),_transparent_22%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.08),_transparent_26%)]" />
+            <section className="relative overflow-hidden rounded-[1.6rem] bg-[#0f5f4f] p-5 text-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0f4f43] via-[#156854] to-[#1f7761]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(240,201,77,0.14),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.06),_transparent_30%)]" />
                 <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#7ea44a_0%,_#f0c94d_100%)] text-3xl font-extrabold text-white ring-4 ring-white/10 shadow-lg shadow-slate-950/20">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#7ea44a_0%,_#f0c94d_100%)] text-3xl font-extrabold text-white ring-2 ring-white/20 shadow-lg shadow-slate-950/20">
                             {(user?.first_name?.charAt(0) || 'M').toUpperCase()}
                             {(user?.last_name?.charAt(0) || '').toUpperCase()}
                         </div>
                         <div>
-                            <h2 className="text-3xl font-extrabold tracking-tight text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.22)]">{fullName}</h2>
-                            <p className="mt-1 text-sm font-medium text-white/90">
+                            <h2 className="text-[2rem] font-extrabold tracking-tight text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.22)]">{fullName}</h2>
+                            <p className="mt-0.5 text-sm font-medium text-white/90">
                                 {user?.email || 'Signed in'} {user?.phone_number ? `• ${user.phone_number}` : ''}
                             </p>
-                            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/45 bg-slate-950/20 px-4 py-2 text-sm font-semibold text-amber-100 backdrop-blur-sm">
+                            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200/45 bg-slate-950/20 px-4 py-1.5 text-sm font-semibold text-amber-100 backdrop-blur-sm">
                                 <ShieldCheck size={15} />
                                 {tierLabel} Member
                             </div>
                         </div>
                     </div>
 
-                    <div className="min-w-[220px] rounded-[1.4rem] border border-white/15 bg-slate-950/22 px-5 py-4 backdrop-blur-sm">
-                        <p className="text-right text-[2.4rem] font-extrabold text-[#F0C94D] [text-shadow:0_1px_10px_rgba(0,0,0,0.18)]">{profileCompletion}%</p>
-                        <p className="text-right text-sm font-medium text-white/90">Profile complete</p>
-                        <div className="mt-3 h-2 rounded-full bg-white/18">
+                    <div className="min-w-[220px] rounded-[1.2rem] border border-white/15 bg-slate-950/20 px-5 py-3.5 backdrop-blur-sm">
+                        <p className="text-right text-[2.25rem] font-extrabold text-[#F0C94D] [text-shadow:0_1px_10px_rgba(0,0,0,0.18)]">{profileCompletion}%</p>
+                        <p className="text-right text-sm font-medium text-white/90">Profile Complete</p>
+                        <div className="mt-2.5 h-2 rounded-full bg-white/18">
                             <div className="h-2 rounded-full bg-[#F0C94D] transition-all" style={{ width: `${profileCompletion}%` }} />
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="grid gap-5 xl:grid-cols-2">
-                <article className="rounded-[1.7rem] border border-emerald-100 bg-white p-5 shadow-sm">
+            <section className="grid gap-4 xl:grid-cols-2">
+                <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                     <div className="flex items-center gap-2 text-slate-950">
                         <Briefcase size={16} className="text-primary-700" />
                         <p className="text-lg font-bold">Employment & Income</p>
@@ -338,7 +338,7 @@ const UserProfilePanel = () => {
                             <button
                                 type="button"
                                 onClick={() => setEditingIncome(true)}
-                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"
+                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.85rem] border border-emerald-200 bg-[#eef8f4] px-4 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"
                             >
                                 <Pencil size={15} className="text-amber-600" />
                                 Edit Income Details
@@ -347,7 +347,7 @@ const UserProfilePanel = () => {
                     )}
                 </article>
 
-                <article className="rounded-[1.7rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                     <div className="flex items-center gap-2 text-slate-950">
                         <Target size={16} className="text-primary-700" />
                         <p className="text-lg font-bold">Goals & Dependents</p>
@@ -397,7 +397,7 @@ const UserProfilePanel = () => {
                             <button
                                 type="button"
                                 onClick={() => setEditingGoals(true)}
-                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"
+                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.85rem] border border-emerald-200 bg-[#eef8f4] px-4 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"
                             >
                                 <Pencil size={15} className="text-amber-600" />
                                 Edit Goals

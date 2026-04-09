@@ -143,4 +143,3 @@ const Panel = ({ title, action, onAction, children }) => (
 );
 
 export default DashboardOverview;
-
