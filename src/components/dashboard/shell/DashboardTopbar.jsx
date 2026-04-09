@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ChevronDown, LogOut, Menu, Search } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Menu, Search, Settings, Smartphone, UserCircle2 } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 import { dashboardTopTabs } from './dashboardSections';
 
@@ -181,23 +181,58 @@ const DashboardTopbar = ({
                         </button>
 
                         {accountOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] w-64 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)]">
-                                <p className="text-sm font-semibold text-slate-950">{fullName}</p>
-                                <p className="mt-1 text-sm text-slate-500">{user?.email || 'Signed in'}</p>
-                                <div className="mt-4 rounded-2xl bg-primary-50 px-4 py-3">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-700">
-                                        Current tier
-                                    </p>
-                                    <p className="mt-2 text-lg font-bold text-slate-950">{tierLabel}</p>
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] w-56 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)]">
+                                <div className="px-3 py-2.5">
+                                    <p className="truncate text-sm font-semibold text-slate-900">{fullName}</p>
+                                    <p className="truncate text-xs text-slate-500">{user?.email || 'Signed in'}</p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={onSignOut}
-                                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-                                >
-                                    <LogOut size={16} />
-                                    Log out
-                                </button>
+                                <div className="border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onSelectSection('user');
+                                            setAccountOpen(false);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                    >
+                                        <UserCircle2 size={15} />
+                                        My Profile
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onSelectSection('settings');
+                                            setAccountOpen(false);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                    >
+                                        <Settings size={15} />
+                                        Settings
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (typeof window !== 'undefined') {
+                                                window.open('https://shilingimoves-nu.vercel.app/', '_blank', 'noopener,noreferrer');
+                                            }
+                                            setAccountOpen(false);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                    >
+                                        <Smartphone size={15} />
+                                        Mobile App
+                                    </button>
+                                </div>
+                                <div className="border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={onSignOut}
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                                    >
+                                        <LogOut size={15} />
+                                        Log Out
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>

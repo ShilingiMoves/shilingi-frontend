@@ -5,6 +5,7 @@ import {
     BookOpen,
     Briefcase,
     CircleUserRound,
+    Cog,
     GraduationCap,
     Landmark,
     LayoutDashboard,
@@ -204,6 +205,16 @@ export const dashboardSections = [
         group: 'main',
     },
     {
+        id: 'settings',
+        label: 'Settings',
+        helper: 'Manage security and preferences',
+        icon: Cog,
+        accent: 'from-emerald-500 to-teal-600',
+        iconBg: 'bg-emerald-100 text-emerald-700',
+        badge: 'Settings',
+        description: 'Update notification, security, and display preferences.',
+    },
+    {
         id: 'advisory',
         label: 'Shilingi Guidance',
         helper: 'Kenyan money tools built around you',
@@ -260,6 +271,7 @@ export const dashboardNavSections = dashboardSections.filter((section) =>
         'marketwatch',
         'health',
         'user',
+        'settings',
     ].includes(section.id)
 );
 

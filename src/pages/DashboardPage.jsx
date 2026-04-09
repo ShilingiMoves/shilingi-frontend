@@ -32,6 +32,7 @@ const InvestmentTracker = lazy(() => import('../components/dashboard/investments
 const FinancialHealthDashboard = lazy(() => import('../components/dashboard/financialhealth/FinancialHealthDashboard'));
 const ProtectionPlanner = lazy(() => import('../components/dashboard/protection/ProtectionPlanner'));
 const RetirementPlanner = lazy(() => import('../components/dashboard/retirement/RetirementPlanner'));
+const SettingsPanel = lazy(() => import('../components/dashboard/settings/SettingsPanel'));
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -251,6 +252,13 @@ const DashboardPage = () => {
                             <UserProfilePanel />
                         </Suspense>
                     </>
+                );
+
+            case 'settings':
+                return standardShell(
+                    <Suspense fallback={sectionLoader}>
+                        <SettingsPanel user={profile} />
+                    </Suspense>
                 );
 
             case 'comparehub':
