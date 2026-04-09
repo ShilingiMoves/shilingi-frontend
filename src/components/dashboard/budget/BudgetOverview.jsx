@@ -51,13 +51,29 @@ const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
                         Set, track, and optimize your monthly spending across all categories.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => onNavigate('budgets')}
-                    className="inline-flex h-10 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[#0f6b5b] shadow-sm"
-                >
-                    + Add Category
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onNavigate('budgets')}
+                        className="inline-flex h-10 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[#0f6b5b] shadow-sm"
+                    >
+                        + Add Category
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onNavigate('expenses')}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur-sm"
+                    >
+                        + Add Expense
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onNavigate('goals')}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur-sm"
+                    >
+                        Goals
+                    </button>
+                </div>
             </section>
 
             <section className="grid gap-3 md:grid-cols-3">
@@ -67,6 +83,27 @@ const BudgetOverview = ({ summary, budgets, totalIncome, onNavigate }) => {
                     title="Remaining"
                     value={formatCurrency(remainingFromIncome, currency)}
                     tone={remainingFromIncome >= 0 ? 'text-amber-600' : 'text-rose-600'}
+                />
+            </section>
+
+            <section className="grid gap-3 md:grid-cols-3">
+                <QuickActionCard
+                    title="Goals"
+                    text={`${summary?.goal_count ?? 0} active goals`}
+                    cta="Track Goals"
+                    onClick={() => onNavigate('goals')}
+                />
+                <QuickActionCard
+                    title="Budget Categories"
+                    text={`${sortedBudgets.length} active categories`}
+                    cta="Manage Categories"
+                    onClick={() => onNavigate('budgets')}
+                />
+                <QuickActionCard
+                    title="Expenses"
+                    text={`${summary?.expense_count ?? 0} expense records`}
+                    cta="Add / Manage Expenses"
+                    onClick={() => onNavigate('expenses')}
                 />
             </section>
 
@@ -188,6 +225,20 @@ const MetricCard = ({ title, value, tone }) => (
     <article className="rounded-[1.1rem] border border-emerald-100 bg-white px-4 py-5 text-center shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{title}</p>
         <p className={`mt-2 text-3xl font-extrabold ${tone}`}>{value}</p>
+    </article>
+);
+
+const QuickActionCard = ({ title, text, cta, onClick }) => (
+    <article className="rounded-[1.1rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm">
+        <p className="text-sm font-bold text-slate-900">{title}</p>
+        <p className="mt-1 text-sm text-slate-600">{text}</p>
+        <button
+            type="button"
+            onClick={onClick}
+            className="mt-3 inline-flex rounded-full border border-primary-200 bg-primary-50 px-3.5 py-1.5 text-xs font-semibold text-primary-700"
+        >
+            {cta}
+        </button>
     </article>
 );
 

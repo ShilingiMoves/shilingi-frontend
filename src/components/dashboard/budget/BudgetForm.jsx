@@ -56,7 +56,7 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
 
         onSubmit({
             ...formData,
-            category: formData.category ? Number(formData.category) : '',
+            category: formData.category || '',
         });
     };
 

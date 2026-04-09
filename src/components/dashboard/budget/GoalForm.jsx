@@ -52,26 +52,26 @@ const GoalForm = ({ onClose, onSuccess }) => {
     ];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/55 backdrop-blur-sm p-4">
             <div
-                className="relative w-full max-w-2xl rounded-[1.75rem] border border-slate-200 bg-white shadow-2xl max-h-[90vh] overflow-y-auto"
+                className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[1.75rem] border border-emerald-200 bg-[#f7fbf9] shadow-2xl shadow-emerald-900/20"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="border-b border-slate-100 px-6 py-5 sticky top-0 bg-white rounded-t-[1.75rem]">
+                <div className="sticky top-0 rounded-t-[1.75rem] border-b border-emerald-400/30 bg-gradient-to-r from-[#0f5f52] via-[#147461] to-[#1e9076] px-6 py-5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100">
-                                <Target className="h-5 w-5 text-primary-600" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+                                <Target className="h-5 w-5 text-[#ffd24a]" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900">Create Financial Goal</h3>
-                                <p className="text-xs text-slate-600">Set a target and track your progress</p>
+                                <h3 className="text-lg font-bold text-white">Create Financial Goal</h3>
+                                <p className="text-xs text-emerald-50/85">Set a target and track your progress</p>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                            className="rounded-lg p-1.5 text-emerald-50/85 transition-colors hover:bg-white/15 hover:text-white"
                         >
                             <X size={20} />
                         </button>
@@ -83,7 +83,7 @@ const GoalForm = ({ onClose, onSuccess }) => {
                     <div className="grid gap-5 sm:grid-cols-2">
                         {/* Goal Name */}
                         <div className="sm:col-span-2">
-                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Goal Name
                             </label>
                             <input
@@ -93,13 +93,13 @@ const GoalForm = ({ onClose, onSuccess }) => {
                                 onChange={handleChange}
                                 required
                                 placeholder="e.g., Emergency Fund, Dream Vacation"
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />
                         </div>
 
                         {/* Goal Type */}
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Goal Type
                             </label>
                             <select
@@ -107,7 +107,7 @@ const GoalForm = ({ onClose, onSuccess }) => {
                                 value={formData.goal_type}
                                 onChange={handleChange}
                                 required
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             >
                                 {goalTypes.map(type => (
                                     <option key={type.value} value={type.value}>
@@ -119,7 +119,7 @@ const GoalForm = ({ onClose, onSuccess }) => {
 
                         {/* Target Amount */}
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Target Amount
                             </label>
                             <input
@@ -131,13 +131,13 @@ const GoalForm = ({ onClose, onSuccess }) => {
                                 min="0"
                                 step="0.01"
                                 placeholder="0.00"
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />
                         </div>
 
                         {/* Target Date */}
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Target Date (Optional)
                             </label>
                             <input
@@ -145,13 +145,13 @@ const GoalForm = ({ onClose, onSuccess }) => {
                                 name="target_date"
                                 value={formData.target_date}
                                 onChange={handleChange}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />
                         </div>
 
                         {/* Monthly Contribution */}
                         <div>
-                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Monthly Contribution (Optional)
                             </label>
                             <input
@@ -162,23 +162,23 @@ const GoalForm = ({ onClose, onSuccess }) => {
                                 min="0"
                                 step="0.01"
                                 placeholder="0.00"
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />
                         </div>
 
                         {/* Priority */}
                         <div className="sm:col-span-2">
-                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-emerald-200 bg-[#edf7f3] p-4">
                                 <input
                                     type="checkbox"
                                     name="is_priority"
                                     checked={formData.is_priority}
                                     onChange={handleChange}
-                                    className="mt-0.5 h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+                                    className="mt-0.5 h-5 w-5 rounded border-emerald-300 text-[#147461] focus:ring-2 focus:ring-[#1a8a72]/20"
                                 />
                                 <div>
                                     <span className="text-sm font-semibold text-slate-900">Priority Goal</span>
-                                    <p className="mt-0.5 text-xs text-slate-600">
+                                    <p className="mt-0.5 text-xs text-slate-700">
                                         Mark this as your main financial priority
                                     </p>
                                 </div>
@@ -187,7 +187,7 @@ const GoalForm = ({ onClose, onSuccess }) => {
 
                         {/* Notes */}
                         <div className="sm:col-span-2">
-                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Notes (Optional)
                             </label>
                             <textarea
@@ -196,7 +196,7 @@ const GoalForm = ({ onClose, onSuccess }) => {
                                 onChange={handleChange}
                                 rows="3"
                                 placeholder="Add any details about this goal..."
-                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />
                         </div>
                     </div>
@@ -207,14 +207,14 @@ const GoalForm = ({ onClose, onSuccess }) => {
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex-1 rounded-xl border border-emerald-200 bg-white px-6 py-3 text-sm font-bold text-[#0f5f52] transition-all hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex-1 rounded-xl bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/30 transition-all hover:bg-primary-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex-1 rounded-xl bg-gradient-to-r from-[#0f5f52] to-[#1a8a72] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/25 transition-all hover:from-[#0c4d43] hover:to-[#167561] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? 'Creating...' : 'Create Goal'}
                         </button>
