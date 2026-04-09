@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { hasStoredAccessToken } from '../services/authApi';
-import HeroBgImage from '../../dist/assets/Dashboard hero 2 - Copy.png';
+import HeroBgImage from '../assets/hero_dashboard_mockup.png';
 
 const dashboardDestination = { pathname: '/dashboard/app' };
 const pageShell = 'min-h-screen bg-[linear-gradient(180deg,_#f7fdfb_0%,_#ffffff_24%,_#f0f7f9_100%)] text-slate-900';
