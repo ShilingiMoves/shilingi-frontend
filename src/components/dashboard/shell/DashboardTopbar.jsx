@@ -56,7 +56,7 @@ const DashboardTopbar = ({
 
     return (
         <header className="sticky top-0 z-20 border-b border-emerald-100 bg-white/96 backdrop-blur-xl">
-            <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+            <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
                 <div className="flex items-center gap-3">
                     <button
                         type="button"
@@ -70,9 +70,9 @@ const DashboardTopbar = ({
                     <button
                         type="button"
                         onClick={() => onSelectSection('overview')}
-                        className="inline-flex h-[84px] w-[190px] items-center justify-center rounded-[1.8rem] border border-emerald-100 bg-white px-4 shadow-sm"
+                        className="inline-flex h-[62px] w-[132px] items-center justify-center rounded-[1.3rem] border border-emerald-100 bg-white px-2 shadow-sm sm:h-[74px] sm:w-[165px] sm:rounded-[1.6rem] sm:px-4"
                     >
-                        <span className="inline-flex h-[62px] w-[148px] items-center justify-center overflow-hidden rounded-xl">
+                        <span className="inline-flex h-[50px] w-[118px] items-center justify-center overflow-hidden rounded-xl sm:h-[58px] sm:w-[138px]">
                             <img src={animatedLogo} alt="Shilingi Moves" className="h-full w-full object-contain" />
                         </span>
                     </button>
@@ -114,7 +114,7 @@ const DashboardTopbar = ({
                         </button>
 
                         {searchOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(92vw,340px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)]">
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(92vw,340px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                 <label className="flex w-full items-center gap-2.5 rounded-full border border-emerald-100 bg-[#f6fbf8] px-4 py-2 shadow-sm">
                                     <Search size={16} className="text-slate-400" />
                                     <input
@@ -144,7 +144,7 @@ const DashboardTopbar = ({
                         </button>
 
                         {notificationsOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(92vw,360px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)]">
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(92vw,360px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary-700">
                                     Notifications
                                 </p>
@@ -177,11 +177,11 @@ const DashboardTopbar = ({
                                 <span className="block truncate text-sm font-semibold text-slate-900">{fullName}</span>
                                 <span className="block truncate text-[11px] text-amber-700">{tierLabel}</span>
                             </span>
-                            <ChevronDown size={16} className="text-slate-500" />
+                            <ChevronDown size={16} className="hidden text-slate-500 sm:block" />
                         </button>
 
                         {accountOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] w-56 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)]">
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-56 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                 <div className="px-3 py-2.5">
                                     <p className="truncate text-sm font-semibold text-slate-900">{fullName}</p>
                                     <p className="truncate text-xs text-slate-500">{user?.email || 'Signed in'}</p>

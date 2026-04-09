@@ -184,7 +184,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             )}
 
             {activeTab !== 'overview' && (
-                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <div className="flex flex-col items-start justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center">
                     <button
                         type="button"
                         onClick={() => setActiveTab('overview')}

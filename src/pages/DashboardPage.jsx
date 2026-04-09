@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
     BarChart3,
@@ -33,6 +33,10 @@ const FinancialHealthDashboard = lazy(() => import('../components/dashboard/fina
 const ProtectionPlanner = lazy(() => import('../components/dashboard/protection/ProtectionPlanner'));
 const RetirementPlanner = lazy(() => import('../components/dashboard/retirement/RetirementPlanner'));
 const SettingsPanel = lazy(() => import('../components/dashboard/settings/SettingsPanel'));
+const ComparisonHubPanel = lazy(() => import('../components/dashboard/explore/ComparisonHubPanel'));
+const ResourcesToolsPanel = lazy(() => import('../components/dashboard/explore/ResourcesToolsPanel'));
+const LearningHubPanel = lazy(() => import('../components/dashboard/explore/LearningHubPanel'));
+const CommunityHubPanel = lazy(() => import('../components/dashboard/explore/CommunityHubPanel'));
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -157,6 +161,7 @@ const DashboardPage = () => {
                                     eyebrow="Net worth planner"
                                     title="Keep the bigger financial picture in view."
                                     text="Bring your assets and liabilities together so every budgeting, debt, and investment decision connects back to your long-term position."
+                                    variant="brand"
                                 />
                                 <Suspense fallback={sectionLoader}>
                                     <NetWorthDashboard />
@@ -214,70 +219,30 @@ const DashboardPage = () => {
 
             case 'comparehub':
                 return standardShell(
-                    <HubPanel
-                        eyebrow="Explore"
-                        title="Compare Hub"
-                        description="Review options side by side before you commit, so every decision sits within the wider Shilingi Moves ecosystem."
-                        cta={{ label: 'Open Compare page', to: '/compare' }}
-                        cards={[
-                            { title: 'Loans', text: 'Personal loans, salary advances, SACCO products, and refinance opportunities.' },
-                            { title: 'Savings and MMFs', text: 'Yield, access, risk, and liquidity comparisons for cash-ready products.' },
-                            { title: 'Investments', text: 'Unit trusts, equities, and other options for different growth goals.' },
-                            { title: 'Banking', text: 'Accounts, fees, transaction experience, and digital convenience.' },
-                            { title: 'Money transfers', text: 'Domestic and cross-border transfer options, speed, and costs.' },
-                            { title: 'Retirement', text: 'Pension and long-term savings products for future income stability.' },
-                            { title: 'Mortgage', text: 'Rates, repayment structures, affordability, and long-horizon fit.' },
-                            { title: 'Insurance', text: 'Health, life, and protection products with practical coverage comparisons.' },
-                        ]}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <ComparisonHubPanel />
+                    </Suspense>
                 );
 
             case 'resourceshub':
                 return standardShell(
-                    <HubPanel
-                        eyebrow="Explore"
-                        title="Resources & Tools"
-                        description="Give users practical support in the moment they need it, with tools for calculation and trusted content for context."
-                        cta={{ label: 'Open Resources page', to: '/tools' }}
-                        cards={[
-                            { title: 'Financial calculators', text: 'Budgeting, debt payoff, savings growth, mortgage, and retirement tools.' },
-                            { title: 'Curated books', text: 'Trusted titles that deepen money habits and long-term decision quality.' },
-                            { title: 'Podcasts', text: 'Short, useful listening options for commutes, chores, and weekly review time.' },
-                        ]}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <ResourcesToolsPanel />
+                    </Suspense>
                 );
 
             case 'learninghub':
                 return standardShell(
-                    <HubPanel
-                        eyebrow="Explore"
-                        title="Learning Hub"
-                        description="Keep knowledge alongside action so the user can learn, decide, and execute without leaving the Shilingi Moves flow."
-                        cta={{ label: 'Open Learning page', to: '/learn' }}
-                        cards={[
-                            { title: 'Learning paths', text: 'Structured journeys for budgeting, debt, investing, and retirement readiness.' },
-                            { title: 'Expert articles', text: 'Clear explainers and practical local context for common money questions.' },
-                            { title: 'Short videos', text: 'Fast lessons that simplify products, terms, and planning concepts.' },
-                            { title: 'Financial games', text: 'Interactive experiences that turn financial literacy into action and memory.' },
-                            { title: 'Quizzes and assessments', text: 'Quick check-ins that help members understand what to learn next.' },
-                        ]}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <LearningHubPanel />
+                    </Suspense>
                 );
 
             case 'communityhub':
                 return standardShell(
-                    <HubPanel
-                        eyebrow="Explore"
-                        title="Community"
-                        description="Make accountability part of the product by showing people where to learn with others, ask questions, and stay consistent."
-                        cta={{ label: 'Open Community page', to: '/community' }}
-                        cards={[
-                            { title: 'Member circles', text: 'Small accountability groups grouped by life stage, goals, or interests.' },
-                            { title: 'Live conversations', text: 'Expert sessions, office hours, and timely discussions around money themes.' },
-                            { title: 'Challenges', text: 'Savings sprints, debt payoff challenges, and habit-building campaigns.' },
-                            { title: 'Shared wins', text: 'Visible member progress to create motivation and positive momentum.' },
-                        ]}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <CommunityHubPanel />
+                    </Suspense>
                 );
 
             case 'protection':
@@ -388,13 +353,19 @@ const DashboardPage = () => {
     );
 };
 
-const SectionHero = ({ eyebrow, title, text, primaryAction, secondaryAction }) => (
-    <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+const SectionHero = ({ eyebrow, title, text, primaryAction, secondaryAction, variant = 'default' }) => (
+    <section
+        className={
+            variant === 'brand'
+                ? 'rounded-[1.4rem] bg-gradient-to-r from-[#0f6b5b] via-[#1a7b67] to-[#2b8f78] px-5 py-5 text-white shadow-sm'
+                : 'rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm'
+        }
+    >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">{eyebrow}</p>
-                <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">{title}</h1>
-                <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">{text}</p>
+                <p className={variant === 'brand' ? 'text-sm font-semibold uppercase tracking-[0.3em] text-emerald-100' : 'text-sm font-semibold uppercase tracking-[0.3em] text-primary-700'}>{eyebrow}</p>
+                <h1 className={variant === 'brand' ? 'mt-3 text-4xl font-extrabold tracking-tight text-white' : 'mt-3 text-4xl font-extrabold tracking-tight text-slate-950'}>{title}</h1>
+                <p className={variant === 'brand' ? 'mt-3 text-sm leading-7 text-white/85 sm:text-base' : 'mt-3 text-sm leading-7 text-slate-600 sm:text-base'}>{text}</p>
             </div>
 
             {(primaryAction || secondaryAction) && (
@@ -431,37 +402,6 @@ const HighlightsGrid = ({ items }) => (
             </article>
         ))}
     </section>
-);
-
-const HubPanel = ({ eyebrow, title, description, cards, cta }) => (
-    <>
-        <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-3xl">
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">{eyebrow}</p>
-                    <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">{title}</h1>
-                    <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">{description}</p>
-                </div>
-
-                <Link
-                    to={cta.to}
-                    className="inline-flex items-center gap-2 self-start rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-colors hover:bg-primary-700"
-                >
-                    {cta.label}
-                    <ArrowRight size={16} />
-                </Link>
-            </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {cards.map((card) => (
-                <article key={card.title} className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-xl font-bold text-slate-950">{card.title}</h2>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">{card.text}</p>
-                </article>
-            ))}
-        </section>
-    </>
 );
 
 const InsightPanel = ({ eyebrow, title, description, sections, primaryAction }) => (

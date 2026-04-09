@@ -176,7 +176,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
                                             <div>
                                                 <p className="text-sm font-semibold text-slate-900">{debt.name}</p>
                                                 <p className="text-xs text-slate-500">
-                                                    {debt.interestRate ? `${debt.interestRate}% p.a.` : 'Rate not set'} · {currency(debt.minimumPayment)}/mo
+                                                    {debt.interestRate ? `${debt.interestRate}% p.a.` : 'Rate not set'} - {currency(debt.minimumPayment)}/mo
                                                 </p>
                                             </div>
                                             <p className="text-lg font-extrabold text-slate-900">{currency(debt.balance)}</p>
@@ -264,7 +264,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0 }) => {
 const StatCard = ({ title, value, valueClass }) => (
     <article className="rounded-[1.1rem] border border-emerald-100 bg-white px-4 py-5 text-center shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{title}</p>
-        <p className={`mt-2 text-3xl font-extrabold ${valueClass}`}>{value}</p>
+        <p className={`mt-2 text-2xl font-extrabold sm:text-3xl ${valueClass}`}>{value}</p>
     </article>
 );
 

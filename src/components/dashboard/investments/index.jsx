@@ -57,10 +57,10 @@ const futureValue = (monthlyContribution, years, expectedReturn) => {
 };
 
 const exploreProducts = [
-    { name: 'CBK Treasury Bills', type: 'Government · Very Low Risk', rate: '16.2% p.a.' },
-    { name: 'Sanlam Unit Trust', type: 'Unit Trust · Low-Medium Risk', rate: '14.1% p.a.' },
-    { name: 'Sima DT SACCO', type: 'SACCO · Low Risk', rate: '12.5% p.a.' },
-    { name: 'NSE Equities', type: 'Stock Market · Medium-High Risk', rate: 'Varies' },
+    { name: 'CBK Treasury Bills', type: 'Government - Very Low Risk', rate: '16.2% p.a.' },
+    { name: 'Sanlam Unit Trust', type: 'Unit Trust - Low-Medium Risk', rate: '14.1% p.a.' },
+    { name: 'Sima DT SACCO', type: 'SACCO - Low Risk', rate: '12.5% p.a.' },
+    { name: 'NSE Equities', type: 'Stock Market - Medium-High Risk', rate: 'Varies' },
 ];
 
 const InvestmentTracker = () => {
@@ -226,10 +226,12 @@ const InvestmentTracker = () => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
-            <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
-                <button type="button" onClick={() => setActiveTab('portfolio')} className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeTab === 'portfolio' ? 'bg-primary-50 text-primary-700' : 'text-slate-600'}`}>My Portfolio</button>
-                <button type="button" onClick={() => setActiveTab('explore')} className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeTab === 'explore' ? 'bg-primary-50 text-primary-700' : 'text-slate-600'}`}>Explore Products</button>
-                <button type="button" onClick={() => setActiveTab('simulator')} className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeTab === 'simulator' ? 'bg-primary-50 text-primary-700' : 'text-slate-600'}`}>Simulator</button>
+            <div className="overflow-x-auto">
+                <div className="inline-flex min-w-max rounded-xl border border-slate-200 bg-white p-1">
+                    <button type="button" onClick={() => setActiveTab('portfolio')} className={`rounded-lg px-4 py-2 text-sm font-semibold whitespace-nowrap ${activeTab === 'portfolio' ? 'bg-primary-50 text-primary-700' : 'text-slate-600'}`}>My Portfolio</button>
+                    <button type="button" onClick={() => setActiveTab('explore')} className={`rounded-lg px-4 py-2 text-sm font-semibold whitespace-nowrap ${activeTab === 'explore' ? 'bg-primary-50 text-primary-700' : 'text-slate-600'}`}>Explore Products</button>
+                    <button type="button" onClick={() => setActiveTab('simulator')} className={`rounded-lg px-4 py-2 text-sm font-semibold whitespace-nowrap ${activeTab === 'simulator' ? 'bg-primary-50 text-primary-700' : 'text-slate-600'}`}>Simulator</button>
+                </div>
             </div>
 
             <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -305,7 +307,7 @@ const InvestmentTracker = () => {
                 </div>
                 <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-amber-700">Projected Value</p>
-                    <p className="mt-1 text-4xl font-extrabold text-primary-700">{formatKES(projectedValue)}</p>
+                    <p className="mt-1 text-3xl font-extrabold text-primary-700 sm:text-4xl">{formatKES(projectedValue)}</p>
                 </div>
             </section>
 
