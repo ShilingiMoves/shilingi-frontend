@@ -42,6 +42,7 @@ const getCategoryIdentifier = (category) => {
         if (candidate === null || candidate === undefined || candidate === '') continue;
         const parsed = Number(candidate);
         if (Number.isFinite(parsed)) return parsed;
+        if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
     }
     return null;
 };

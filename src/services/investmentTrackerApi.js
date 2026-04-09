@@ -24,16 +24,20 @@ function parseAmount(value) {
 }
 
 function normalizeCategory(item, index = 0) {
-    const rawCategoryId = item?.id ?? item?.pk ?? item?.category_id ?? null;
-    const parsedCategoryId = rawCategoryId === null || rawCategoryId === undefined
+    const explicitId = item?.id ?? item?.pk ?? item?.category_id ?? null;
+    const uuid = item?.uuid ?? item?.category_uuid ?? null;
+    const categoryIdentifier = explicitId ?? uuid ?? null;
+    const parsedCategoryId = categoryIdentifier === null || categoryIdentifier === undefined
         ? null
-        : Number(rawCategoryId);
-    const categoryId = Number.isFinite(parsedCategoryId) ? parsedCategoryId : index + 1;
+        : Number(categoryIdentifier);
+    const hasNumericId = Number.isFinite(parsedCategoryId);
+    const categoryId = hasNumericId ? parsedCategoryId : categoryIdentifier;
+    const fallbackId = `derived-${index + 1}`;
 
     return {
-        id: categoryId ?? item?.uuid ?? '',
+        id: categoryId ?? fallbackId,
         categoryId,
-        usesDerivedId: !Number.isFinite(parsedCategoryId),
+        usesDerivedId: categoryIdentifier === null || categoryIdentifier === undefined,
         uuid: item?.uuid || '',
         name: item?.name || 'Asset Category',
         color: item?.color || '#64748b',

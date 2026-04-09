@@ -4,15 +4,19 @@ const BASE_PATH = '/api/v1/budgets';
 
 function normaliseCategory(item, index = 0) {
     const explicitId = item?.id ?? item?.pk ?? item?.category_id;
-    const categoryId = explicitId ?? index + 1;
+    const uuid = item?.uuid ?? item?.category_uuid ?? null;
+    const hasExplicitId = explicitId !== null && explicitId !== undefined && explicitId !== '';
+    const derivedId = index + 1;
+    const categoryId = hasExplicitId ? explicitId : (uuid ?? derivedId);
+    const categoryValue = hasExplicitId ? explicitId : (uuid ?? derivedId);
 
     return {
         ...item,
         id: categoryId,
-        uuid: item?.uuid || '',
-        value: String(categoryId),
+        uuid: uuid || '',
+        value: String(categoryValue),
         name: item?.name || `Category ${categoryId}`,
-        usesDerivedId: explicitId === undefined,
+        usesDerivedId: !hasExplicitId && !uuid,
     };
 }
 
