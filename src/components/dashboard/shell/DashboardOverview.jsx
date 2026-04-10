@@ -49,15 +49,32 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     useEffect(() => {
         let mounted = true;
         (async () => {
-            const settled = await Promise.allSettled([incomeService.getSummary(), incomeService.getIncomes({ limit: 8 }), getBudgetSummary(), getBudgets({ current: 'true' }), getExpenses({ limit: 100 }), getGoals({ status: 'ACTIVE' }), getInvestmentAssets(), getDebts(), getNetWorthSummary()]);
+            const settled = await Promise.allSettled([incomeService.getSummary(), incomeService.getIncomes({ limit: 100 }), getBudgetSummary(), getBudgets({ current: 'true' }), getExpenses({ limit: 100 }), getGoals({ status: 'ACTIVE' }), getInvestmentAssets(), getDebts(), getNetWorthSummary()]);
             const pick = (i, f) => (settled[i]?.status === 'fulfilled' ? settled[i].value : f);
             const incomeSummary = pick(0, {}), incomesPayload = pick(1, {}), budgetSummary = pick(2, {}), budgets = pick(3, []), expensesPayload = pick(4, {}), goals = pick(5, []), inv = pick(6, []), debts = pick(7, []), nw = pick(8, {});
-            const income = toNum(incomeSummary?.total_income || incomeSummary?.monthly_income || user?.profile?.monthly_income);
+            const incomes = incomesPayload?.incomes || incomesPayload?.results || incomesPayload?.data || [];
+            const derivedIncome = (incomes || []).reduce((sum, item) => sum + toNum(item.amount || item.monthly_amount || item.net_amount), 0);
+            const income = toNum(
+                incomeSummary?.total_income ||
+                incomeSummary?.monthly_income ||
+                incomeSummary?.current_month?.total_income ||
+                incomeSummary?.currentMonth?.total_income ||
+                incomeSummary?.summary?.total_income ||
+                incomeSummary?.summary?.monthly_income ||
+                derivedIncome ||
+                user?.profile?.monthly_income
+            );
             const spent = toNum(budgetSummary?.total_spent || expensesPayload?.total);
             const debtTotal = (debts || []).reduce((s, d) => s + toNum(d.balance), 0);
             const invTotal = (inv || []).reduce((s, a) => s + toNum(a.currentValue), 0);
             const netWorth = toNum(nw?.netWorth || invTotal - debtTotal);
-            const savings = toNum(nw?.savingsFromGoals || 0);
+            const savings = toNum(
+                nw?.savingsFromGoals ||
+                nw?.savings ||
+                budgetSummary?.goal_saved_total ||
+                budgetSummary?.total_goal_saved ||
+                goals.reduce((sum, goal) => sum + toNum(goal.current_amount || goal.saved_amount || goal.total_saved || goal.amount_saved), 0)
+            );
             const breakdown = (inv || []).reduce((acc, asset) => {
                 const category = String(asset.categoryName || '').toLowerCase();
                 const value = toNum(asset.currentValue);
@@ -66,12 +83,18 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 else acc.investments += value;
                 return acc;
             }, { cash: 0, investments: 0, property: 0, liabilities: debtTotal });
-            const budget = (budgets || []).slice(0, 4).map((b, i) => {
+            const budget = (budgets || []).slice(0, 5).map((b, i) => {
                 const target = toNum(b.budgeted_amount || b.allocated_amount || b.amount || b.target_amount);
                 const used = toNum(b.spent_amount || b.actual_spent || b.total_spent || b.spent);
                 const pct = target > 0 ? Math.round((used / target) * 100) : 0;
-                const colors = ['bg-emerald-600', 'bg-blue-600', 'bg-amber-500', 'bg-rose-500'];
-                return { label: b.category_name || b.name || `Category ${i + 1}`, percent: pct, amount: fmtKES(used || target), color: colors[i % colors.length] };
+                const colors = ['bg-emerald-600', 'bg-blue-600', 'bg-amber-500', 'bg-violet-600', 'bg-rose-500'];
+                return {
+                    label: b.category_name || b.name || `Category ${i + 1}`,
+                    percent: pct,
+                    amount: fmtKES(used || 0),
+                    rawAmount: used,
+                    color: colors[i % colors.length],
+                };
             });
             const groupedSpending = Object.values((expensesPayload?.expenses || []).reduce((acc, expense) => {
                 const label = expense.category_name || expense.category || expense.description || 'Other';
@@ -91,7 +114,6 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                     color: colors[index % colors.length],
                 };
             });
-            const incomes = incomesPayload?.incomes || incomesPayload?.results || incomesPayload?.data || [];
             const tx = [
                 ...(expensesPayload?.expenses || []).map((e) => ({ date: getDate(e), name: e.description || e.name || e.category_name || 'Expense', category: e.category_name || 'Expense', amount: -Math.abs(toNum(e.amount)) })),
                 ...incomes.map((x) => ({ date: getDate(x), name: x.source_name || x.name || 'Income', category: x.category_name || 'Income', amount: Math.abs(toNum(x.amount || x.monthly_amount)) })),
@@ -133,6 +155,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         { icon: Wallet, label: 'Spent - Current', value: hasData ? fmtKES(live.spent) : 'KES 0', meta: hasData ? 'Budget + expenses' : 'No spending data', tone: 'text-rose-600' },
         { icon: TrendingUp, label: 'Total Savings', value: hasData ? fmtKES(live.savings) : 'KES 0', meta: hasData ? 'Goals progress' : 'No savings progress', tone: 'text-emerald-700' },
     ];
+    const spendingRows = hasData ? (live.budget.length ? live.budget : live.spending) : previewBudget;
 
     return (
         <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
@@ -206,10 +229,10 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                             </div>
                             <div className="grid gap-4 sm:grid-cols-[140px_1fr] sm:items-center">
                                 <div className="flex justify-center">
-                                    <SpendingDonut rows={hasData && live.spending.length ? live.spending : previewBudget} />
+                                    <SpendingDonut rows={spendingRows} />
                                 </div>
                                 <div className="space-y-2">
-                                    {(hasData && live.spending.length ? live.spending : previewBudget).slice(0, 5).map((row) => (
+                                    {spendingRows.slice(0, 5).map((row) => (
                                         <div key={row.label} className="grid grid-cols-[12px_1fr_auto] items-center gap-3">
                                             <span className={`h-3 w-3 rounded-full ${row.color}`} />
                                             <p className="text-sm text-slate-700">{row.label}</p>
