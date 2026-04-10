@@ -111,6 +111,11 @@ const DashboardPage = () => {
         logoutUser();
         navigate('/signin', { replace: true });
     };
+    const handleOpenWebsite = () => {
+        if (typeof window !== 'undefined') {
+            window.location.href = '/';
+        }
+    };
 
     const sectionLoader = (
         <div className="flex min-h-[260px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
@@ -332,7 +337,7 @@ const DashboardPage = () => {
                 <DashboardSidebar
                     collapsed={sidebarCollapsed}
                     onToggle={() => setSidebarCollapsed((current) => !current)}
-                    onSignOut={handleSignOut}
+                    onOpenWebsite={handleOpenWebsite}
                     activeSection={activeSection}
                     onSelectSection={setActiveSection}
                     mobileOpen={mobileSidebarOpen}

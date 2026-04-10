@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings, Smartphone, UserCircle2 } from 'lucide-react';
+import { Bell, ChevronDown, Home, LogOut, Menu, Search, Settings, Smartphone, UserCircle2 } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 import { dashboardTopTabs } from './dashboardSections';
 
@@ -187,6 +187,17 @@ const DashboardTopbar = ({
                                     <p className="truncate text-xs text-slate-500">{user?.email || 'Signed in'}</p>
                                 </div>
                                 <div className="border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onSelectSection('overview');
+                                            setAccountOpen(false);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                    >
+                                        <Home size={15} />
+                                        Dashboard
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => {

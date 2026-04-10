@@ -1,11 +1,11 @@
 import React from 'react';
-import { ChevronLeft, LogOut, X } from 'lucide-react';
+import { ChevronLeft, Globe, X } from 'lucide-react';
 import { dashboardSectionMap, dashboardSidebarGroups } from './dashboardSections';
 
 const DashboardSidebar = ({
     collapsed,
     onToggle,
-    onSignOut,
+    onOpenWebsite,
     activeSection,
     onSelectSection,
     mobileOpen = false,
@@ -113,12 +113,12 @@ const DashboardSidebar = ({
                 <div className={`border-t border-white/10 px-4 py-5 ${collapsed ? 'flex justify-center' : 'flex justify-end'}`}>
                     <button
                         type="button"
-                        onClick={onSignOut}
+                        onClick={onOpenWebsite}
                         className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-300 transition-colors hover:text-white"
-                        title="Sign out"
+                        title="Visit website"
                     >
-                        <LogOut size={18} />
-                        {!collapsed && <span>Log out</span>}
+                        <Globe size={18} />
+                        {!collapsed && <span>Go to Website</span>}
                     </button>
                 </div>
             </aside>
