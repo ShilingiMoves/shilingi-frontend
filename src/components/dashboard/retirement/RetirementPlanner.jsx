@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, PiggyBank, Plus, Sparkles, Timer, Trash2, X } from 'lucide-react';
+import { Loader2, PiggyBank, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 
@@ -11,6 +11,12 @@ const ACCOUNT_OPTIONS = [
     'Individual Pension Plan',
     'Employer Pension Scheme',
     'Retirement Savings Account',
+];
+
+const PENSION_PRODUCTS = [
+    { name: 'Old Mutual Pension', type: 'Managed Fund', rate: '13.2%', tone: 'text-emerald-700' },
+    { name: 'Britam Pension Plan', type: 'Personal Pension', rate: '12.8%', tone: 'text-blue-700' },
+    { name: 'NSSF Tier II', type: 'Government Scheme', rate: 'Fixed', tone: 'text-amber-600' },
 ];
 
 const defaultAccountForm = {
@@ -38,6 +44,26 @@ const toNumber = (value) => {
 };
 const formatKES = (value) => `KES ${Math.round(toNumber(value)).toLocaleString('en-KE')}`;
 
+const getCategoryIdentifier = (category) => {
+    if (!category) return null;
+    const candidates = [
+        category.categoryId,
+        category.id,
+        category.uuid,
+        category.raw?.id,
+        category.raw?.pk,
+        category.raw?.category_id,
+        category.raw?.uuid,
+    ];
+    for (const candidate of candidates) {
+        if (candidate === null || candidate === undefined || candidate === '') continue;
+        const parsed = Number(candidate);
+        if (Number.isFinite(parsed)) return parsed;
+        if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+    }
+    return null;
+};
+
 const monthlyFutureValue = ({ currentSavings, monthlyContribution, expectedReturn, years }) => {
     const rate = toNumber(expectedReturn) / 100 / 12;
     const n = Math.max(Math.round(toNumber(years) * 12), 0);
@@ -55,11 +81,10 @@ const findRetirementCategoryId = (categories) => {
         return name.includes('retirement') || name.includes('pension') || name.includes('nssf');
     });
     if (!matched) return null;
-    const parsed = Number(matched.categoryId ?? matched.id);
-    return Number.isFinite(parsed) ? parsed : null;
+    return getCategoryIdentifier(matched);
 };
 
-const RetirementPlanner = () => {
+const RetirementPlanner = ({ onSelectSection }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -136,11 +161,17 @@ const RetirementPlanner = () => {
         let categoryId = findRetirementCategoryId(resolved);
         if (categoryId) return categoryId;
 
-        await createAssetCategory({
-            name: RETIREMENT_CATEGORY_NAME,
-            color: '#166b5a',
-            is_liquid: false,
-        });
+        try {
+            await createAssetCategory({
+                name: RETIREMENT_CATEGORY_NAME,
+                color: '#166b5a',
+                is_liquid: false,
+            });
+        } catch (err) {
+            const message = String(err?.message || '').toLowerCase();
+            const isDuplicate = message.includes('unique constraint') || message.includes('already exists') || message.includes('duplicate');
+            if (!isDuplicate) throw err;
+        }
         resolved = await getAssetCategories();
         setCategories(resolved);
         categoryId = findRetirementCategoryId(resolved);
@@ -203,21 +234,22 @@ const RetirementPlanner = () => {
     };
 
     return (
-        <div className="space-y-5">
-            <section className="rounded-[1.5rem] bg-[linear-gradient(135deg,_#165f4f_0%,_#1e735f_70%,_#155246_100%)] px-6 py-6 text-white shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-4">
+            <section className="rounded-2xl bg-[linear-gradient(90deg,_#0f5f4f_0%,_#177261_55%,_#24836f_100%)] px-5 py-4 text-white shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-100">Retirement Planner</p>
-                        <h2 className="mt-2 text-3xl font-extrabold">Plan your financial freedom with confidence.</h2>
-                        <p className="mt-2 text-sm text-emerald-50/90">Track retirement accounts and project your future retirement pot.</p>
+                        <p className="inline-flex items-center gap-2 text-[1.7rem] font-extrabold leading-none">
+                            <PiggyBank size={22} className="text-yellow-300" />
+                            Retirement Planner
+                        </p>
+                        <p className="mt-2 text-sm text-emerald-50/90">Plan your financial freedom and calculate your FIRE number.</p>
                     </div>
                     <button
                         type="button"
-                        onClick={() => setShowAddModal(true)}
-                        className="inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-3 text-sm font-semibold text-primary-700"
+                        onClick={() => onSelectSection?.('comparehub')}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-100/70 bg-white/95 px-4 text-sm font-semibold text-primary-700"
                     >
-                        <Plus size={16} />
-                        Add Account
+                        Compare Pension Products
                     </button>
                 </div>
             </section>
@@ -225,94 +257,129 @@ const RetirementPlanner = () => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
-            <section className="grid gap-4 md:grid-cols-3">
-                <MetricCard label="Retirement accounts" value={String(retirementAssets.length)} />
-                <MetricCard label="Current retirement balance" value={formatKES(totalRetirementBalance)} />
-                <MetricCard label="Monthly contribution" value={formatKES(totalMonthlyContribution)} />
-            </section>
-
-            <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-center gap-2">
-                        <PiggyBank size={18} className="text-primary-700" />
-                        <h3 className="text-lg font-bold text-slate-950">Retirement Calculator</h3>
-                    </div>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                        <CalcInput label="Current age" value={calculator.currentAge} onChange={(value) => handleCalcChange('currentAge', value)} />
-                        <CalcInput label="Target retirement age" value={calculator.targetAge} onChange={(value) => handleCalcChange('targetAge', value)} />
-                        <CalcInput label="Current savings (KES)" value={calculator.currentSavings} onChange={(value) => handleCalcChange('currentSavings', value)} />
-                        <CalcInput label="Monthly contribution (KES)" value={calculator.monthlyContribution} onChange={(value) => handleCalcChange('monthlyContribution', value)} />
-                        <CalcInput label="Expected return (% p.a.)" value={calculator.expectedReturn} onChange={(value) => handleCalcChange('expectedReturn', value)} />
-                        <CalcInput label="Monthly expenses at retirement" value={calculator.monthlyExpensesAtRetirement} onChange={(value) => handleCalcChange('monthlyExpensesAtRetirement', value)} />
-                    </div>
-                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Projected retirement pot</p>
-                        <p className="mt-2 text-4xl font-extrabold text-primary-800">{formatKES(projectedPot)}</p>
-                        <p className="mt-2 text-sm text-slate-600">
-                            FIRE number target: {formatKES(fireNumber)} ({Math.round(fireProgress)}% secured)
-                        </p>
-                        <div className="mt-3 h-2 rounded-full bg-slate-200">
-                            <div className="h-2 rounded-full bg-primary-600" style={{ width: `${fireProgress}%` }} />
+            <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
+                <div className="space-y-4">
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                            <h3 className="text-lg font-bold text-slate-950">Retirement Calculator</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddModal(true)}
+                                className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-sm font-semibold text-primary-700"
+                            >
+                                <Plus size={14} />
+                                Add Account
+                            </button>
                         </div>
-                    </div>
-                </div>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <CalcInput label="Current Age" value={calculator.currentAge} onChange={(value) => handleCalcChange('currentAge', value)} />
+                            <CalcInput label="Retirement Age" value={calculator.targetAge} onChange={(value) => handleCalcChange('targetAge', value)} />
+                            <CalcInput label="Current Savings (KES)" value={calculator.currentSavings} onChange={(value) => handleCalcChange('currentSavings', value)} />
+                            <CalcInput label="Monthly Contribution (KES)" value={calculator.monthlyContribution} onChange={(value) => handleCalcChange('monthlyContribution', value)} />
+                            <CalcInput label="Expected Return (% p.a.)" value={calculator.expectedReturn} onChange={(value) => handleCalcChange('expectedReturn', value)} />
+                            <CalcInput label="Monthly Expenses at Retirement" value={calculator.monthlyExpensesAtRetirement} onChange={(value) => handleCalcChange('monthlyExpensesAtRetirement', value)} />
+                        </div>
+                        <div className="mt-4 rounded-xl border border-amber-200 bg-[#f7f3e5] px-4 py-4">
+                            <p className="text-center text-4xl font-extrabold text-primary-800">{formatKES(projectedPot)}</p>
+                            <p className="mt-2 text-center text-sm text-slate-600">
+                                Projected at {calculator.targetAge}. FIRE number: {formatKES(fireNumber)}. You are {Math.round(fireProgress)}% on track.
+                            </p>
+                        </div>
+                    </section>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-slate-950">Retirement Accounts</h3>
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-slate-950">Retirement Accounts</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddModal(true)}
+                                className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-sm font-semibold text-primary-700"
+                            >
+                                <Plus size={14} />
+                                Add Account
+                            </button>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Accounts: <span className="font-semibold text-slate-900">{retirementAssets.length}</span> | Balance: <span className="font-semibold text-primary-700">{formatKES(totalRetirementBalance)}</span> | Monthly: <span className="font-semibold text-primary-700">{formatKES(totalMonthlyContribution)}</span>
+                        </p>
+
+                        {loading ? (
+                            <div className="flex items-center gap-2 py-10 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading retirement accounts...</div>
+                        ) : retirementAssets.length === 0 ? (
+                            <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-600">
+                                Add your first retirement account (e.g. NSSF or pension) to start projection and net worth tracking.
+                            </div>
+                        ) : (
+                            <div className="mt-4 space-y-3">
+                                {retirementAssets.map((asset) => (
+                                    <article key={asset.uuid} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <p className="font-semibold text-slate-900">{asset.name}</p>
+                                                <p className="text-sm text-slate-600">
+                                                    {formatKES(asset.currentValue)} | {formatKES(asset.purchaseValue)}/mo
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeRetirementAccount(asset)}
+                                                disabled={deletingAccountId === asset.uuid}
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                                                aria-label={`Delete ${asset.name}`}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+
                         <button
                             type="button"
                             onClick={() => setShowAddModal(true)}
-                            className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-sm font-semibold text-primary-700"
+                            className="mt-3 w-full rounded-xl border border-dashed border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-primary-700"
                         >
-                            <Plus size={14} />
-                            Add
+                            + Link Another Account
                         </button>
+                    </section>
+                </div>
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={17} className="text-amber-500" />
+                        <h3 className="text-lg font-bold text-slate-950">Explore Pension Products</h3>
+                        <button type="button" className="ml-auto text-sm font-semibold text-primary-700">Compare</button>
                     </div>
-                    {loading ? (
-                        <div className="flex items-center gap-2 py-10 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading retirement accounts...</div>
-                    ) : retirementAssets.length === 0 ? (
-                        <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-600">
-                            Add your first retirement account (e.g. NSSF or pension) to start projection and net worth tracking.
-                        </div>
-                    ) : (
-                        <div className="mt-4 space-y-3">
-                            {retirementAssets.map((asset) => (
-                                <article key={asset.uuid} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div>
-                                            <p className="font-semibold text-slate-900">{asset.name}</p>
-                                            <p className="text-sm text-slate-600">
-                                                Balance: {formatKES(asset.currentValue)} • Monthly: {formatKES(asset.purchaseValue)}
-                                            </p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeRetirementAccount(asset)}
-                                            disabled={deletingAccountId === asset.uuid}
-                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-60"
-                                            aria-label={`Delete ${asset.name}`}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+
+                    <div className="mt-4 space-y-2.5">
+                        {PENSION_PRODUCTS.map((product) => (
+                            <article key={product.name} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <p className="font-semibold text-slate-900">{product.name}</p>
+                                        <p className="text-sm text-slate-500">{product.type}</p>
                                     </div>
-                                </article>
-                            ))}
-                        </div>
-                    )}
+                                    <p className={`text-sm font-bold ${product.tone}`}>{product.rate}</p>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+
                     <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                         <div className="flex items-start gap-2">
                             <Sparkles size={16} className="mt-0.5" />
                             <p>
-                                Increasing monthly contributions has the biggest impact on your retirement timeline.
+                                Adding KES 7,000/mo extra moves your retirement date earlier and raises your projected pot.
                             </p>
                         </div>
                     </div>
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                        <Timer size={13} />
-                        Target in {yearsRemaining} years
+
+                    <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Timeline</p>
+                        <p className="mt-1 text-sm text-slate-700">Target retirement in {yearsRemaining} years with current contribution pattern.</p>
                     </div>
-                </div>
+                </section>
             </section>
 
             {showAddModal && (
@@ -365,13 +432,6 @@ const RetirementPlanner = () => {
     );
 };
 
-const MetricCard = ({ label, value }) => (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
-        <p className="mt-3 text-3xl font-extrabold text-primary-700">{value}</p>
-    </article>
-);
-
 const CalcInput = ({ label, value, onChange }) => (
     <label className="block text-sm font-medium text-slate-700">
         {label}
@@ -379,7 +439,7 @@ const CalcInput = ({ label, value, onChange }) => (
             type="number"
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
         />
     </label>
 );

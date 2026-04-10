@@ -45,14 +45,33 @@ const parseProtectionMeta = (asset) => {
     return { status };
 };
 
+const getCategoryIdentifier = (category) => {
+    if (!category) return null;
+    const candidates = [
+        category.categoryId,
+        category.id,
+        category.uuid,
+        category.raw?.id,
+        category.raw?.pk,
+        category.raw?.category_id,
+        category.raw?.uuid,
+    ];
+    for (const candidate of candidates) {
+        if (candidate === null || candidate === undefined || candidate === '') continue;
+        const parsed = Number(candidate);
+        if (Number.isFinite(parsed)) return parsed;
+        if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+    }
+    return null;
+};
+
 const findCategoryId = (categories) => {
     const matched = categories.find((item) => normalize(item.name).includes('protection') || normalize(item.name).includes('insurance'));
     if (!matched) return null;
-    const parsed = Number(matched.categoryId ?? matched.id);
-    return Number.isFinite(parsed) ? parsed : null;
+    return getCategoryIdentifier(matched);
 };
 
-const ProtectionPlanner = () => {
+const ProtectionPlanner = ({ onSelectSection }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -130,11 +149,17 @@ const ProtectionPlanner = () => {
         let categoryId = findCategoryId(resolvedCategories);
         if (categoryId) return categoryId;
 
-        await createAssetCategory({
-            name: PROTECTION_CATEGORY_NAME,
-            color: '#0e7490',
-            is_liquid: false,
-        });
+        try {
+            await createAssetCategory({
+                name: PROTECTION_CATEGORY_NAME,
+                color: '#0e7490',
+                is_liquid: false,
+            });
+        } catch (err) {
+            const message = String(err?.message || '').toLowerCase();
+            const isDuplicate = message.includes('unique constraint') || message.includes('already exists') || message.includes('duplicate');
+            if (!isDuplicate) throw err;
+        }
         resolvedCategories = await getAssetCategories();
         setCategories(resolvedCategories);
         categoryId = findCategoryId(resolvedCategories);
@@ -199,21 +224,22 @@ const ProtectionPlanner = () => {
     };
 
     return (
-        <div className="space-y-5">
-            <section className="rounded-[1.5rem] bg-[linear-gradient(135deg,_#165f4f_0%,_#1e735f_70%,_#155246_100%)] px-6 py-6 text-white shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-4">
+            <section className="rounded-2xl bg-[linear-gradient(90deg,_#0f5f4f_0%,_#177261_55%,_#24836f_100%)] px-5 py-4 text-white shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-100">Protection Planner</p>
-                        <h2 className="mt-2 text-3xl font-extrabold">Protect your income, health, and family.</h2>
-                        <p className="mt-2 text-sm text-emerald-50/90">Add policies and calculate whether your current cover is enough.</p>
+                        <p className="inline-flex items-center gap-2 text-[1.7rem] font-extrabold leading-none">
+                            <ShieldCheck size={22} className="text-red-300" />
+                            Protection Planner
+                        </p>
+                        <p className="mt-2 text-sm text-emerald-50/90">Protect your income, health, and family with the right cover.</p>
                     </div>
                     <button
                         type="button"
-                        onClick={() => setShowAddModal(true)}
-                        className="inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-3 text-sm font-semibold text-primary-700"
+                        onClick={() => onSelectSection?.('comparehub')}
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-100/70 bg-white/95 px-4 text-sm font-semibold text-primary-700"
                     >
-                        <Plus size={16} />
-                        Add Policy
+                        Compare Insurance Products
                     </button>
                 </div>
             </section>
@@ -231,6 +257,14 @@ const ProtectionPlanner = () => {
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex items-center justify-between gap-2">
                         <h3 className="text-lg font-bold text-slate-950">Current Coverage</h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowAddModal(true)}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700"
+                        >
+                            <Plus size={13} />
+                            Add Policy
+                        </button>
                     </div>
                     {loading ? (
                         <div className="flex items-center gap-2 py-10 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading protection policies...</div>

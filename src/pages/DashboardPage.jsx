@@ -248,14 +248,14 @@ const DashboardPage = () => {
             case 'protection':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ProtectionPlanner />
+                        <ProtectionPlanner onSelectSection={setActiveSection} />
                     </Suspense>
                 );
 
             case 'retirement':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <RetirementPlanner />
+                        <RetirementPlanner onSelectSection={setActiveSection} />
                     </Suspense>
                 );
 
