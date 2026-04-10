@@ -5,12 +5,66 @@ const tools = [
     { id: 'budget', title: 'Budget Builder', subtitle: 'Plan your monthly budget' },
     { id: 'loan', title: 'Loan Calculator', subtitle: 'Monthly repayments and interest' },
     { id: 'compound', title: 'Compound Interest', subtitle: 'Grow your savings over time' },
-    { id: 'paye', title: 'PAYE Calculator', subtitle: 'Kenya income tax estimator' },
+    { id: 'paye', title: 'PAYE / Tax Calculator', subtitle: 'Kenya income tax estimator' },
     { id: 'fx', title: 'FX Converter', subtitle: 'Live currency exchange rates' },
     { id: 'fire', title: 'FIRE Calculator', subtitle: 'Find your financial freedom number' },
     { id: 'debtPayoff', title: 'Debt Payoff Planner', subtitle: 'Avalanche & snowball method' },
     { id: 'netWorth', title: 'Net Worth Tracker', subtitle: 'Assets minus liabilities' },
     { id: 'insurance', title: 'Insurance Calculator', subtitle: 'How much cover do you need?' },
+];
+
+const curatedBooks = [
+    {
+        title: 'The Psychology of Money',
+        author: 'Morgan Housel',
+        blurb: 'Timeless lessons on wealth, greed, and happiness.',
+        tone: 'from-[#2f8f72] to-[#175a4a]',
+        tag: 'Top Pick',
+        tagClass: 'bg-emerald-50 text-emerald-700',
+    },
+    {
+        title: 'Rich Dad Poor Dad',
+        author: 'Robert Kiyosaki',
+        blurb: 'What the rich teach their kids about money.',
+        tone: 'from-[#ffb63d] to-[#f07f18]',
+        tag: 'Beginner',
+        tagClass: 'bg-amber-50 text-amber-700',
+    },
+    {
+        title: 'I Will Teach You to Be Rich',
+        author: 'Ramit Sethi',
+        blurb: 'A practical guide to managing money in your 20s-40s.',
+        tone: 'from-[#5ea5f4] to-[#3474c9]',
+        tag: 'Intermediate',
+        tagClass: 'bg-blue-50 text-blue-700',
+    },
+];
+
+const curatedPodcasts = [
+    {
+        title: 'Pesa Nane',
+        host: 'Kenyan personal finance podcast',
+        blurb: 'Practical money conversations for local savers and planners.',
+        tone: 'from-[#8b6ad9] to-[#6b46c1]',
+        tag: 'KE Local',
+        tagClass: 'bg-violet-50 text-violet-700',
+    },
+    {
+        title: 'Planet Money (NPR)',
+        host: 'How the economy really works',
+        blurb: 'Simple explanations of economic stories and money decisions.',
+        tone: 'from-[#ff8d8d] to-[#ff6464]',
+        tag: 'Global',
+        tagClass: 'bg-blue-50 text-blue-700',
+    },
+    {
+        title: 'We Study Billionaires',
+        host: 'Investing mindset & strategies',
+        blurb: 'Long-form investing conversations and portfolio thinking.',
+        tone: 'from-[#3ba884] to-[#156f5f]',
+        tag: 'Investing',
+        tagClass: 'bg-emerald-50 text-emerald-700',
+    },
 ];
 
 const numberFormatter = new Intl.NumberFormat('en-KE', {
@@ -155,6 +209,54 @@ const ResourcesToolsPanel = () => {
                         <p className="mt-3 text-xs font-semibold text-emerald-700">Open calculator</p>
                     </button>
                 ))}
+            </section>
+
+            <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-[1.35rem] font-bold text-slate-950">Curated Books</h3>
+                    <button type="button" className="text-sm font-semibold text-primary-700">See All -</button>
+                </div>
+                <div className="grid gap-3 xl:grid-cols-3">
+                    {curatedBooks.map((book) => (
+                        <article key={book.title} className="rounded-[1.2rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                            <div className="flex gap-4">
+                                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${book.tone} text-2xl text-white shadow-sm`}>
+                                    <span>▮</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-900">{book.title}</h4>
+                                    <p className="text-sm text-slate-500">{book.author}</p>
+                                    <p className="mt-1.5 text-sm leading-6 text-slate-600">{book.blurb}</p>
+                                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${book.tagClass}`}>{book.tag}</span>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
+
+            <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-[1.35rem] font-bold text-slate-950">Curated Podcasts</h3>
+                    <button type="button" className="text-sm font-semibold text-primary-700">See All -</button>
+                </div>
+                <div className="grid gap-3 xl:grid-cols-3">
+                    {curatedPodcasts.map((podcast) => (
+                        <article key={podcast.title} className="rounded-[1.2rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                            <div className="flex gap-4">
+                                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${podcast.tone} text-2xl text-white shadow-sm`}>
+                                    <span>◔</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-900">{podcast.title}</h4>
+                                    <p className="text-sm text-slate-500">{podcast.host}</p>
+                                    <p className="mt-1.5 text-sm leading-6 text-slate-600">{podcast.blurb}</p>
+                                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${podcast.tagClass}`}>{podcast.tag}</span>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
             </section>
 
             {selectedTool && (
