@@ -144,7 +144,7 @@ const DashboardPage = () => {
             case 'debt':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <DebtManagerPanel />
+                        <DebtManagerPanel onSelectSection={setActiveSection} />
                     </Suspense>
                 );
 
