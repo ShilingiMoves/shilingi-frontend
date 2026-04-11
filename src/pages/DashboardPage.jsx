@@ -20,13 +20,11 @@ import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
 import { getInitialDashboardSection } from '../utils/dashboardDataState';
-import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
 import incomeService from '../services/incomeService';
 
 const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
 const BudgetDashboard = lazy(() => import('../components/dashboard/budget/BudgetDashboard'));
 const UserProfilePanel = lazy(() => import('../components/dashboard/user/UserProfilePanel'));
-const IncomeDashboard = lazy(() => import('../components/dashboard/income'));
 const NetWorthDashboard = lazy(() => import('../components/dashboard/networth'));
 const InvestmentTracker = lazy(() => import('../components/dashboard/investments'));
 const FinancialHealthDashboard = lazy(() => import('../components/dashboard/financialhealth/FinancialHealthDashboard'));
@@ -135,10 +133,10 @@ const DashboardPage = () => {
                 return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={setActiveSection} />;
 
             case 'cashflow':
-                return (
+                return standardShell(
                     <IncomeProvider>
                         <Suspense fallback={sectionLoader}>
-                            <IncomeDashboard />
+                            <UserProfilePanel initialTab="income" />
                         </Suspense>
                     </IncomeProvider>
                 );
@@ -161,17 +159,9 @@ const DashboardPage = () => {
                 return (
                     <NetWorthProvider>
                         {standardShell(
-                            <>
-                                <SectionHero
-                                    eyebrow="Net worth planner"
-                                    title="Keep the bigger financial picture in view."
-                                    text="Bring your assets and liabilities together so every budgeting, debt, and investment decision connects back to your long-term position."
-                                    variant="brand"
-                                />
-                                <Suspense fallback={sectionLoader}>
-                                    <NetWorthDashboard />
-                                </Suspense>
-                            </>
+                            <Suspense fallback={sectionLoader}>
+                                <NetWorthDashboard />
+                            </Suspense>
                         )}
                     </NetWorthProvider>
                 );
@@ -187,32 +177,20 @@ const DashboardPage = () => {
                 return (
                     <FinancialHealthProvider>
                         {standardShell(
-                            <>
-                                <SectionHero
-                                    eyebrow="Planner"
-                                    title="See the areas that need your attention next."
-                                    text="Your planner keeps your financial health visible so you can rebalance cash flow, debt, protection, and long-term goals before small gaps become bigger issues."
-                                />
-                                <Suspense fallback={sectionLoader}>
-                                    <FinancialHealthDashboard />
-                                </Suspense>
-                            </>
+                            <Suspense fallback={sectionLoader}>
+                                <FinancialHealthDashboard />
+                            </Suspense>
                         )}
                     </FinancialHealthProvider>
                 );
 
             case 'user':
                 return standardShell(
-                    <>
-                        <SectionHero
-                            eyebrow="Profile"
-                            title="Shape the planning inputs that power your dashboard."
-                            text="Keep your income manager current, define goals across time horizons, and optionally add dependents or family context."
-                        />
+                    <IncomeProvider>
                         <Suspense fallback={sectionLoader}>
                             <UserProfilePanel />
                         </Suspense>
-                    </>
+                    </IncomeProvider>
                 );
 
             case 'settings':
@@ -345,59 +323,12 @@ const DashboardPage = () => {
                 />
 
                 <main className="min-w-0 flex-1 lg:overflow-y-auto">
-                    <div className="hidden border-b border-emerald-100/80 bg-white/80 px-4 py-2.5 text-sm text-slate-500 backdrop-blur lg:block">
-                        <div className="mx-auto max-w-7xl">
-                            {dashboardSectionMap[activeSection]?.helper || 'Private dashboard workspace'}
-                        </div>
-                    </div>
-
                     {renderActiveSection()}
                 </main>
             </div>
         </div>
     );
 };
-
-const SectionHero = ({ eyebrow, title, text, primaryAction, secondaryAction, variant = 'default' }) => (
-    <section
-        className={
-            variant === 'brand'
-                ? 'rounded-[1.4rem] bg-gradient-to-r from-[#0f6b5b] via-[#1a7b67] to-[#2b8f78] px-5 py-5 text-white shadow-sm'
-                : 'rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm'
-        }
-    >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-3xl">
-                <p className={variant === 'brand' ? 'text-sm font-semibold uppercase tracking-[0.3em] text-emerald-100' : 'text-sm font-semibold uppercase tracking-[0.3em] text-primary-700'}>{eyebrow}</p>
-                <h1 className={variant === 'brand' ? 'mt-3 text-4xl font-extrabold tracking-tight text-white' : 'mt-3 text-4xl font-extrabold tracking-tight text-slate-950'}>{title}</h1>
-                <p className={variant === 'brand' ? 'mt-3 text-sm leading-7 text-white/85 sm:text-base' : 'mt-3 text-sm leading-7 text-slate-600 sm:text-base'}>{text}</p>
-            </div>
-
-            {(primaryAction || secondaryAction) && (
-                <div className="flex flex-wrap gap-3 lg:justify-end">
-                    {primaryAction && (
-                        <button
-                            type="button"
-                            onClick={primaryAction.onClick}
-                            className="inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-colors hover:bg-primary-700"
-                        >
-                            {primaryAction.label}
-                        </button>
-                    )}
-                    {secondaryAction && (
-                        <button
-                            type="button"
-                            onClick={secondaryAction.onClick}
-                            className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/40 transition-colors hover:bg-amber-300"
-                        >
-                            {secondaryAction.label}
-                        </button>
-                    )}
-                </div>
-            )}
-        </div>
-    </section>
-);
 
 const HighlightsGrid = ({ items }) => (
     <section className="grid gap-4 md:grid-cols-3">
@@ -411,7 +342,26 @@ const HighlightsGrid = ({ items }) => (
 
 const InsightPanel = ({ eyebrow, title, description, sections, primaryAction }) => (
     <>
-        <SectionHero eyebrow={eyebrow} title={title} text={description} primaryAction={primaryAction} />
+        <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-700">{eyebrow}</p>
+                    <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">{title}</h1>
+                    <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">{description}</p>
+                </div>
+                {primaryAction && (
+                    <div className="flex flex-wrap gap-3 lg:justify-end">
+                        <button
+                            type="button"
+                            onClick={primaryAction.onClick}
+                            className="inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-colors hover:bg-primary-700"
+                        >
+                            {primaryAction.label}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </section>
         <section className="grid gap-4 lg:grid-cols-3">
             {sections.map(({ icon: Icon, title: cardTitle, text }) => (
                 <article key={cardTitle} className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">

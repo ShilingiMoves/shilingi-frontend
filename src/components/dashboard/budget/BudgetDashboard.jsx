@@ -5,7 +5,6 @@ import BudgetList from './BudgetList';
 import BudgetOverview from './BudgetOverview';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
-import GoalTracker from './GoalTracker';
 import {
     getBudgets,
     getBudgetSummary,
@@ -13,8 +12,6 @@ import {
     updateBudget,
     deleteBudget,
     getExpenses,
-    getGoals,
-    getGoalSummary,
 } from '../../../services/budgetApi';
 import incomeService from '../../../services/incomeService';
 import { getStoredUserProfile } from '../../../services/authApi';
@@ -44,7 +41,7 @@ const getIncomeFromSummary = (incomeSummaryData) => {
     );
 };
 
-const deriveSummaryFromBudgets = (budgetsData = [], existingSummary = {}, expensesData = null, goalsData = []) => {
+const deriveSummaryFromBudgets = (budgetsData = [], existingSummary = {}, expensesData = null) => {
     const totalBudget = budgetsData.reduce((sum, item) => sum + toNumber(item?.amount), 0);
     const totalSpent = budgetsData.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
     const totalRemaining = totalBudget - totalSpent;
@@ -58,7 +55,6 @@ const deriveSummaryFromBudgets = (budgetsData = [], existingSummary = {}, expens
         total_remaining: toNumber(existingSummary?.total_remaining || totalRemaining),
         active_budgets_count: toNumber(existingSummary?.active_budgets_count || budgetsData.length),
         expense_count: expenseCount,
-        goal_count: toNumber(existingSummary?.goal_count || goalsData.length),
     };
 };
 
@@ -70,8 +66,6 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     const [expenses, setExpenses] = useState([]);
     const [expenseTotal, setExpenseTotal] = useState(0);
     const [expenseCount, setExpenseCount] = useState(0);
-    const [goals, setGoals] = useState([]);
-    const [goalSummary, setGoalSummary] = useState(null);
     const [totalIncome, setTotalIncome] = useState(0);
     
     const [loading, setLoading] = useState(true);
@@ -95,36 +89,30 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
             setLoading(true);
             setError('');
             
-            const [budgetsResult, summaryResult, expensesResult, goalsResult, goalSummaryResult, incomeSummaryResult] = await Promise.allSettled([
+            const [budgetsResult, summaryResult, expensesResult, incomeSummaryResult] = await Promise.allSettled([
                 getBudgets({ current: 'true' }),
                 getBudgetSummary(),
                 getExpenses({ limit: 10 }),
-                getGoals({ status: 'ACTIVE' }),
-                getGoalSummary(),
                 incomeService.getSummary().catch(() => null),
             ]);
 
             const budgetsData = resolvePayload(budgetsResult, []);
             const summaryData = resolvePayload(summaryResult, {});
             const expensesData = resolvePayload(expensesResult, { expenses: [], total: 0, count: 0 });
-            const goalsData = resolvePayload(goalsResult, []);
-            const goalSummaryData = resolvePayload(goalSummaryResult, null);
             const incomeSummaryData = resolvePayload(incomeSummaryResult, null);
 
             setBudgets(Array.isArray(budgetsData) ? budgetsData : []);
-            setSummary(deriveSummaryFromBudgets(budgetsData, summaryData, expensesData, goalsData));
+            setSummary(deriveSummaryFromBudgets(budgetsData, summaryData, expensesData));
             setExpenses(expensesData.expenses || []);
             setExpenseTotal(expensesData.total || 0);
             setExpenseCount(expensesData.count || 0);
-            setGoals(Array.isArray(goalsData) ? goalsData : []);
-            setGoalSummary(goalSummaryData);
 
             const storedProfile = getStoredUserProfile();
             const incomeFromManager = getIncomeFromSummary(incomeSummaryData);
             const incomeFromProfile = Number(storedProfile?.profile?.monthly_income || 0);
             setTotalIncome(incomeFromManager > 0 ? incomeFromManager : incomeFromProfile);
 
-            const failedRequests = [budgetsResult, summaryResult, expensesResult, goalsResult, goalSummaryResult].filter(
+            const failedRequests = [budgetsResult, summaryResult, expensesResult].filter(
                 (result) => result.status === 'rejected'
             );
             if (failedRequests.length > 0) {
@@ -206,11 +194,6 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
         }
     };
 
-    const handleGoalUpdate = async () => {
-        await loadData();
-        triggerHealthRefresh('goal:change');
-    };
-
     if (loading) {
         return (
             <div className="flex min-h-[400px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
@@ -248,7 +231,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                         Back to Budget Overview
                     </button>
                     <p className="text-xs font-medium text-slate-500">
-                        Budgets: {budgets.length} | Expenses: {expenseCount} | Goals: {goals.length}
+                        Budgets: {budgets.length} | Expenses: {expenseCount}
                     </p>
                 </div>
             )}
@@ -261,8 +244,6 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                     expenses={expenses}
                     expenseTotal={expenseTotal}
                     totalIncome={totalIncome}
-                    goals={goals}
-                    goalSummary={goalSummary}
                     budgetHealth={budgetHealth}
                     onNavigate={setActiveTab}
                 />
@@ -305,10 +286,6 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                     <ExpenseForm onSuccess={refreshExpenses} />
                     <ExpenseList expenses={expenses} onUpdate={refreshExpenses} />
                 </div>
-            )}
-
-            {activeTab === 'goals' && (
-                <GoalTracker goals={goals} goalSummary={goalSummary} onUpdate={handleGoalUpdate} />
             )}
         </div>
     );

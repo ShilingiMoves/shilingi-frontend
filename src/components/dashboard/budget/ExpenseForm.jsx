@@ -6,6 +6,8 @@ import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
     const [categories, setCategories] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [submitError, setSubmitError] = useState('');
     const [formData, setFormData] = useState({
         category: '',
         amount: '',
@@ -40,20 +42,35 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
 
     const loadCategories = async () => {
         try {
+            setLoadError('');
             const data = await getCategories();
             setCategories(data);
         } catch (error) {
             console.error('Failed to load categories:', error);
+            setLoadError('We could not load budget categories right now. Try again in a moment.');
         }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        setSubmitError('');
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitError('');
+
+        if (!isEditing && !formData.category) {
+            setSubmitError('Choose a budget category before recording the expense.');
+            return;
+        }
+
+        if (!formData.amount || Number(formData.amount) <= 0) {
+            setSubmitError('Enter a valid expense amount greater than zero.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -70,7 +87,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                 // When creating, include category
                 submitData = {
                     ...formData,
-                    category: formData.category ? Number(formData.category) : '',
+                    category: formData.category || '',
                 };
                 
                 console.log('Creating expense:', submitData);
@@ -91,8 +108,17 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
 
             if (onSuccess) onSuccess();
             markDashboardDataExists();
+            setIsSubmitting(false);
         } catch (error) {
             console.error('Failed to save expense:', error);
+            const errorMessage =
+                error?.response?.data?.errors ||
+                error?.response?.data?.detail ||
+                error?.response?.data?.message ||
+                error?.response?.data ||
+                error?.message ||
+                'We could not save this expense right now.';
+            setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
             setIsSubmitting(false);
         }
     };
@@ -113,9 +139,27 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                     {isEditing ? 'Edit Expense' : 'Record Expense'}
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
-                    {isEditing ? 'Update expense details' : 'Track your spending in real-time'}
+                    {isEditing ? 'Update expense details' : 'Track spending against one of your budget categories'}
                 </p>
             </div>
+
+            {!isEditing && categories.length === 0 && !loadError && (
+                <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Create a budget category first, then you can record spending against it here.
+                </div>
+            )}
+
+            {loadError && (
+                <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {loadError}
+                </div>
+            )}
+
+            {submitError && (
+                <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {submitError}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Category */}
@@ -136,6 +180,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                             value={formData.category}
                             onChange={handleChange}
                             required
+                            disabled={categories.length === 0}
                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                         >
                             <option value="">Select category</option>
@@ -276,7 +321,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                     )}
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || (!isEditing && categories.length === 0)}
                         className="flex-1 rounded-xl bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/30 transition-all hover:bg-primary-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isSubmitting ? (isEditing ? 'Updating...' : 'Recording...') : (isEditing ? 'Update Expense' : 'Record Expense')}

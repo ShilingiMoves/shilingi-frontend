@@ -55,13 +55,13 @@ const DashboardTopbar = ({
     }, [searchOpen]);
 
     return (
-        <header className="sticky top-0 z-20 border-b border-emerald-100 bg-white/96 backdrop-blur-xl">
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050807] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
             <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
                 <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={onOpenMobileMenu}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm lg:hidden"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white shadow-sm lg:hidden"
                         aria-label="Open dashboard menu"
                     >
                         <Menu size={18} />
@@ -70,10 +70,10 @@ const DashboardTopbar = ({
                     <button
                         type="button"
                         onClick={() => onSelectSection('overview')}
-                        className="inline-flex h-[62px] w-[132px] items-center justify-center rounded-[1.3rem] border border-emerald-100 bg-white px-2 shadow-sm sm:h-[74px] sm:w-[165px] sm:rounded-[1.6rem] sm:px-4"
+                        className="inline-flex h-[62px] w-[132px] items-center justify-center rounded-[1.3rem] border border-white/10 bg-white/6 px-2 shadow-sm transition-colors hover:bg-white/8 sm:h-[74px] sm:w-[165px] sm:rounded-[1.6rem] sm:px-4"
                     >
-                        <span className="inline-flex h-[50px] w-[118px] items-center justify-center overflow-hidden rounded-xl sm:h-[58px] sm:w-[138px]">
-                            <img src={animatedLogo} alt="Shilingi Moves" className="h-full w-full object-contain" />
+                        <span className="inline-flex h-[50px] w-[118px] items-center justify-center overflow-hidden rounded-[1rem] border border-[#7fb68f]/35 bg-[linear-gradient(180deg,_rgba(127,182,143,0.22)_0%,_rgba(127,182,143,0.08)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:h-[58px] sm:w-[138px] sm:rounded-[1.1rem]">
+                            <img src={animatedLogo} alt="Shilingi Moves" className="h-[86%] w-[86%] object-contain" />
                         </span>
                     </button>
                 </div>
@@ -88,8 +88,8 @@ const DashboardTopbar = ({
                                 type="button"
                                 onClick={() => onSelectSection(tab.id)}
                                 className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${isActive
-                                        ? 'bg-[#eff8f4] text-primary-800 ring-1 ring-primary-100'
-                                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950'
+                                        ? 'bg-[#24362f] text-[#f4c95d] ring-1 ring-[#31483f]'
+                                        : 'text-white/90 hover:bg-white/8 hover:text-white'
                                     }`}
                             >
                                 {tab.topLabel || tab.label}
@@ -107,7 +107,7 @@ const DashboardTopbar = ({
                                 setNotificationsOpen(false);
                                 setAccountOpen(false);
                             }}
-                            className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-[#f3faf7] text-slate-700 shadow-sm transition-colors hover:text-slate-950"
+                            className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-white/85 shadow-sm transition-colors hover:bg-white/10 hover:text-white"
                             aria-label="Open search"
                         >
                             <Search size={18} />
@@ -136,7 +136,7 @@ const DashboardTopbar = ({
                                 setAccountOpen(false);
                                 setSearchOpen(false);
                             }}
-                            className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-[#f3faf7] text-slate-700 shadow-sm transition-colors hover:text-slate-950"
+                            className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/6 text-white/85 shadow-sm transition-colors hover:bg-white/10 hover:text-white"
                             aria-label="Open notifications"
                         >
                             <Bell size={18} />
@@ -168,25 +168,21 @@ const DashboardTopbar = ({
                                 setNotificationsOpen(false);
                                 setSearchOpen(false);
                             }}
-                            className="inline-flex items-center gap-3 rounded-full border border-emerald-100 bg-[#f3faf7] py-1 pl-1 pr-3 shadow-sm transition-colors hover:border-primary-200"
+                            className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/6 py-1 pl-1 pr-3 shadow-sm transition-colors hover:border-white/20 hover:bg-white/10"
                         >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#8c8f3f] text-xs font-bold text-white">
                                 {firstName.charAt(0).toUpperCase()}
                             </span>
                             <span className="hidden min-w-0 text-left md:block">
-                                <span className="block truncate text-sm font-semibold text-slate-900">{fullName}</span>
-                                <span className="block truncate text-[11px] text-amber-700">{tierLabel}</span>
+                                <span className="block truncate text-sm font-semibold text-white">{fullName}</span>
+                                <span className="block truncate text-[11px] text-[#f4c95d]">{tierLabel}</span>
                             </span>
-                            <ChevronDown size={16} className="hidden text-slate-500 sm:block" />
+                            <ChevronDown size={16} className="hidden text-white/60 sm:block" />
                         </button>
 
                         {accountOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-56 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
-                                <div className="px-3 py-2.5">
-                                    <p className="truncate text-sm font-semibold text-slate-900">{fullName}</p>
-                                    <p className="truncate text-xs text-slate-500">{user?.email || 'Signed in'}</p>
-                                </div>
-                                <div className="border-t border-slate-100">
+                            <div className="absolute right-0 top-[calc(100%+0.55rem)] z-30 w-[250px] overflow-hidden rounded-[1.25rem] border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
+                                <div>
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -238,7 +234,7 @@ const DashboardTopbar = ({
                                     <button
                                         type="button"
                                         onClick={onSignOut}
-                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                                        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
                                     >
                                         <LogOut size={15} />
                                         Log Out

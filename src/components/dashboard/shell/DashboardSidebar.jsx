@@ -30,14 +30,14 @@ const DashboardSidebar = ({
             )}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex w-[min(88vw,320px)] flex-col bg-slate-950 text-white shadow-2xl transition-transform duration-300 lg:static lg:z-auto lg:min-h-screen lg:shadow-none ${
+                className={`fixed inset-y-0 left-0 z-40 flex w-[min(88vw,320px)] flex-col border-r border-[#d9ebe3] bg-white text-slate-900 shadow-2xl transition-transform duration-300 lg:static lg:z-auto lg:min-h-screen lg:shadow-none ${
                     mobileOpen ? 'translate-x-0' : '-translate-x-full'
                 } ${collapsed ? 'lg:w-[96px]' : 'lg:w-[268px]'} lg:translate-x-0`}
             >
                 <button
                     type="button"
                     onClick={onToggle}
-                    className="absolute -right-5 top-6 hidden h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-slate-950 shadow-lg lg:inline-flex"
+                    className="absolute -right-5 top-6 hidden h-10 w-10 items-center justify-center rounded-full bg-[#f4c95d] text-slate-950 shadow-lg lg:inline-flex"
                     aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
                     <ChevronLeft className={collapsed ? 'rotate-180' : ''} size={18} />
@@ -47,7 +47,7 @@ const DashboardSidebar = ({
                     <button
                         type="button"
                         onClick={onCloseMobile}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-900"
                         aria-label="Close sidebar"
                     >
                         <X size={18} />
@@ -59,7 +59,7 @@ const DashboardSidebar = ({
                         {dashboardSidebarGroups.map((group) => (
                             <div key={group.id}>
                                 {!collapsed && (
-                                    <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                                    <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-400">
                                         {group.label}
                                     </p>
                                 )}
@@ -80,25 +80,18 @@ const DashboardSidebar = ({
                                                 onClick={() => handleSelectSection(item.id)}
                                                 className={`flex w-full items-center rounded-2xl text-left transition-all ${
                                                     isActive
-                                                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30'
-                                                        : 'bg-white/5 text-slate-200 hover:bg-white/10'
+                                                        ? 'bg-[#e8f6ef] text-[#11473c] shadow-lg shadow-[#0f3e34]/15'
+                                                        : 'bg-transparent text-slate-700 hover:bg-[#f3faf7] hover:text-slate-950'
                                                 } ${collapsed ? 'justify-center px-0 py-4' : 'gap-3 px-4 py-2.5'}`}
                                             >
                                                 <span className={`inline-flex items-center justify-center rounded-xl ${
-                                                    isActive ? 'bg-white/15' : 'bg-white/10'
+                                                    isActive ? 'bg-[#cfe7dc] text-[#11473c]' : 'bg-slate-100 text-slate-600'
                                                 } ${collapsed ? 'h-12 w-12' : 'h-9 w-9'}`}>
                                                     <Icon size={18} />
                                                 </span>
                                                 {!collapsed && (
                                                     <span className="min-w-0">
                                                         <span className="block truncate text-sm font-semibold">{item.label}</span>
-                                                        {item.helper && (
-                                                            <span className={`block truncate text-xs ${
-                                                                isActive ? 'text-emerald-100' : 'text-slate-400'
-                                                            }`}>
-                                                                {item.helper}
-                                                            </span>
-                                                        )}
                                                     </span>
                                                 )}
                                             </button>
@@ -110,11 +103,11 @@ const DashboardSidebar = ({
                     </div>
                 </nav>
 
-                <div className={`border-t border-white/10 px-4 py-5 ${collapsed ? 'flex justify-center' : 'flex justify-end'}`}>
+                <div className={`border-t border-slate-200 px-4 py-5 ${collapsed ? 'flex justify-center' : 'flex justify-end'}`}>
                     <button
                         type="button"
                         onClick={onOpenWebsite}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-300 transition-colors hover:text-white"
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-950"
                         title="Visit website"
                     >
                         <Globe size={18} />

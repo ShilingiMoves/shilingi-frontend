@@ -235,7 +235,7 @@ export const dashboardSidebarGroups = [
     {
         id: 'planning',
         label: 'Planning tools',
-        items: ['cashflow', 'budget', 'debt', 'investments', 'protection', 'retirement', 'networth'],
+        items: ['budget', 'debt', 'investments', 'protection', 'retirement', 'networth'],
     },
     {
         id: 'explore',

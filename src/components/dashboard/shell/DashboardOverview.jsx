@@ -144,8 +144,8 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     const currentScore = hasData ? live.completion : 0;
     const streakDays = hasData ? Math.max(1, Math.min(30, (live.tx?.length || 0) + (live.goals?.length || 0) + (live.inv?.length || 0))) : 0;
     const ctaButtons = useMemo(() => {
-        if (shouldShowNewUserHero) return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'income', label: 'Add Income', target: 'cashflow', primary: false }, { id: 'plan', label: 'Start planning', target: 'budget', primary: false }];
-        if (!hasIncomeData) return [{ id: 'income', label: 'Add Income', target: 'cashflow', primary: true }, { id: 'plan', label: 'Continue Planning', target: 'budget', primary: false }];
+        if (shouldShowNewUserHero) return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'income', label: 'Add Income', target: 'user', primary: false }, { id: 'plan', label: 'Start planning', target: 'budget', primary: false }];
+        if (!hasIncomeData) return [{ id: 'income', label: 'Add Income', target: 'user', primary: true }, { id: 'plan', label: 'Continue Planning', target: 'budget', primary: false }];
         return [{ id: 'plan', label: 'Continue Planning', target: 'budget', primary: true }];
     }, [shouldShowNewUserHero, hasIncomeData]);
 
@@ -267,7 +267,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 </section>
 
                 <section className="grid gap-4 xl:grid-cols-2">
-                    <Panel title="Recent Transactions" action="View All -" onAction={() => onSelectSection('cashflow')}>{(hasData ? live.tx : previewTx).map((r, i) => <div key={`${r.name}-${i}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2"><div><p className="text-sm font-semibold text-slate-900">{r.name}</p><p className="text-xs text-slate-500">{r.category}</p></div><div className="text-right"><p className={`text-sm font-bold ${r.tone}`}>{r.amount}</p><p className="text-xs text-slate-400">{r.when}</p></div></div>)}</Panel>
+                    <Panel title="Recent Transactions" action="View In Profile -" onAction={() => onSelectSection('user')}>{(hasData ? live.tx : previewTx).map((r, i) => <div key={`${r.name}-${i}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2"><div><p className="text-sm font-semibold text-slate-900">{r.name}</p><p className="text-xs text-slate-500">{r.category}</p></div><div className="text-right"><p className={`text-sm font-bold ${r.tone}`}>{r.amount}</p><p className="text-xs text-slate-400">{r.when}</p></div></div>)}</Panel>
                     <Panel title="Investment Portfolio" action="Full View -" onAction={() => onSelectSection('investments')}>{(hasData ? live.inv : previewInv).map((r) => <div key={r.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2"><div><p className="text-sm font-semibold text-slate-900">{r.name}</p><p className="text-xs text-slate-500">{r.type}</p></div><div className="text-right"><p className="text-sm font-bold text-slate-900">{r.value}</p><p className={`text-xs font-semibold ${r.tone}`}>{r.change}</p></div></div>)}</Panel>
                 </section>
             </div>
