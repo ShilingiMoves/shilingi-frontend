@@ -169,7 +169,7 @@ const DashboardPage = () => {
             case 'investments':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <InvestmentTracker />
+                        <InvestmentTracker onSelectSection={setActiveSection} />
                     </Suspense>
                 );
 
