@@ -180,6 +180,13 @@ const InvestmentTracker = ({ onSelectSection }) => {
             })),
         [investmentAssets]
     );
+    const ecosystemLinks = [
+        { title: 'Net Worth', subtitle: 'Portfolio added to assets', action: 'View ->', icon: WalletCards, onClick: () => onSelectSection && onSelectSection('networth') },
+        { title: 'Budget Planner', subtitle: 'Top-ups sync to budget', action: 'Open ->', icon: LineChart, onClick: () => onSelectSection && onSelectSection('budget') },
+        { title: 'Compare Hub', subtitle: 'Find better-returning products', action: 'Compare ->', icon: Sparkles, onClick: () => onSelectSection && onSelectSection('comparehub') },
+        { title: 'Retirement Planner', subtitle: 'Investments fund your FIRE goal', action: 'Plan ->', icon: Landmark, onClick: () => onSelectSection && onSelectSection('retirement') },
+        { title: 'Buddy AI', subtitle: 'Personalised investment advice', action: 'Chat ->', icon: Trophy, onClick: () => onSelectSection && onSelectSection('buddy') },
+    ];
 
     const findCategoryForType = (type) => categories.find((category) => type.keywords.some((keyword) => normalize(category.name).includes(keyword))) || null;
 
@@ -298,15 +305,15 @@ const InvestmentTracker = ({ onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
-            <section className="overflow-hidden rounded-[1.6rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-5 py-5 text-white shadow-sm">
+            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-4 py-4 text-white shadow-sm sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
-                        <p className="inline-flex items-center gap-3 text-[1.9rem] font-extrabold leading-none"><span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-900"><LineChart size={18} /></span>Investment Planner</p>
-                        <p className="mt-2 text-sm text-white/85">Grow your wealth with curated Kenyan and global investment options. Track, rebalance, and simulate your portfolio.</p>
+                        <p className="inline-flex items-center gap-3 dashboard-display-title text-[1.38rem] font-extrabold leading-none sm:text-[1.55rem]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-900"><LineChart size={16} /></span>Investment Planner</p>
+                        <p className="mt-2 max-w-[31rem] text-[0.85rem] leading-5 text-white/80 sm:text-[0.9rem]">Grow your wealth with curated Kenyan and global investment options. Track, rebalance, and simulate your portfolio.</p>
                     </div>
                     <div className="flex flex-row flex-wrap items-center gap-3 sm:flex-nowrap">
-                        <button type="button" onClick={openRebalanceModal} className="inline-flex h-11 min-w-[190px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm"><Sparkles size={15} />Rebalance Portfolio</button>
-                        <button type="button" onClick={() => setShowTypeModal(true)} className="inline-flex h-11 min-w-[158px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-[#0f5d50]">+ New Investment</button>
+                        <button type="button" onClick={openRebalanceModal} className="inline-flex h-10 min-w-[190px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-4 text-[0.84rem] font-semibold text-white backdrop-blur-sm"><Sparkles size={14} />Rebalance Portfolio</button>
+                        <button type="button" onClick={() => setShowTypeModal(true)} className="inline-flex h-10 min-w-[158px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[0.84rem] font-semibold text-[#0f5d50]">+ New Investment</button>
                     </div>
                 </div>
             </section>
@@ -367,6 +374,24 @@ const InvestmentTracker = ({ onSelectSection }) => {
                     </section>
 
                     <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><PanelHeading icon={WalletCards} title="Recent Investment Activity" noMargin /><button type="button" className="text-sm font-semibold text-[#175f54]">Export</button></div><div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr className="border-b border-emerald-100 text-left text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]"><th className="py-3 pr-4 font-semibold">Date</th><th className="py-3 pr-4 font-semibold">Asset</th><th className="py-3 pr-4 font-semibold">Type</th><th className="py-3 pr-4 font-semibold">Amount</th><th className="py-3 pr-4 font-semibold">Units / Details</th><th className="py-3 font-semibold">Status</th></tr></thead><tbody>{activityRows.length > 0 ? activityRows.map((row) => <tr key={row.id} className="border-b border-slate-100 last:border-b-0"><td className="py-3 pr-4 text-slate-500">{formatDate(row.date)}</td><td className="py-3 pr-4 font-medium text-slate-900">{row.asset}</td><td className="py-3 pr-4"><span className="inline-flex rounded-full bg-[#eef8f3] px-2.5 py-1 text-xs font-semibold text-[#175f54]">{row.type}</span></td><td className="py-3 pr-4 font-semibold text-[#175f54]">{row.amount}</td><td className="py-3 pr-4 text-slate-700">{row.details}</td><td className="py-3"><span className="inline-flex rounded-full bg-[#eef8f3] px-2.5 py-1 text-xs font-semibold text-[#175f54]">{row.status}</span></td></tr>) : <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-500">No activity yet. Add or update investments to populate this table.</td></tr>}</tbody></table></div></section>
+
+                    <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#165747] via-[#1f6d5d] to-[#2f7f6a] p-5 text-white shadow-sm">
+                        <p className="text-[1.3rem] font-extrabold">Your Investments Power the Whole Ecosystem</p>
+                        <p className="mt-2 text-sm text-white/80">Portfolio data flows into your net worth, budget, and Buddy AI recommendations automatically.</p>
+                        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                            {ecosystemLinks.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <button key={item.title} type="button" onClick={item.onClick} className="rounded-[1rem] border border-white/15 bg-white/5 p-4 text-left transition hover:bg-white/10">
+                                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-[#f4c95d]"><Icon size={18} /></span>
+                                        <p className="mt-4 font-semibold text-white">{item.title}</p>
+                                        <p className="mt-2 text-sm text-white/70">{item.subtitle}</p>
+                                        <p className="mt-3 text-sm font-semibold text-[#f4c95d]">{item.action}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </section>
                 </div>
             )}
 
@@ -390,12 +415,12 @@ const InvestmentTracker = ({ onSelectSection }) => {
     );
 };
 
-const StatCard = ({ title, value, helper, valueClass, featured = false, progress = 0 }) => (<article className={`rounded-[1.2rem] border border-emerald-100 px-5 py-5 shadow-sm ${featured ? 'bg-[#165747] text-white' : 'bg-white'}`}><p className={`text-xs font-semibold uppercase tracking-[0.18em] ${featured ? 'text-white/70' : 'text-[#9bb8af]'}`}>{title}</p><p className={`mt-2 text-[2rem] font-extrabold leading-none ${featured ? 'text-[#f4c95d]' : valueClass}`}>{value}</p><p className={`mt-2 text-sm ${featured ? 'text-white/85' : 'text-slate-500'}`}>{helper}</p>{featured ? <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-[#f4c95d]" style={{ width: `${Math.min(progress, 100)}%` }} /></div> : null}</article>);
-const MetricCard = ({ title, value, valueClass }) => (<article className="rounded-[1.2rem] border border-emerald-100 bg-white px-5 py-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9bb8af]">{title}</p><p className={`mt-2 text-[2rem] font-extrabold leading-none ${valueClass}`}>{value}</p></article>);
+const StatCard = ({ title, value, helper, valueClass, featured = false, progress = 0 }) => (<article className={`rounded-[1.2rem] border border-emerald-100 px-4 py-4 shadow-sm ${featured ? 'bg-[#165747] text-white' : 'bg-white'}`}><p className={`text-[11px] font-semibold uppercase tracking-[0.17em] ${featured ? 'text-white/70' : 'text-[#9bb8af]'}`}>{title}</p><p className={`dashboard-metric-value mt-2 text-[1.42rem] font-extrabold leading-none sm:text-[1.58rem] ${featured ? 'text-[#f4c95d]' : valueClass}`}>{value}</p><p className={`mt-2 text-[0.82rem] ${featured ? 'text-white/85' : 'text-slate-500'}`}>{helper}</p>{featured ? <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-[#f4c95d]" style={{ width: `${Math.min(progress, 100)}%` }} /></div> : null}</article>);
+const MetricCard = ({ title, value, valueClass }) => (<article className="rounded-[1.2rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm"><p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-[#9bb8af]">{title}</p><p className={`dashboard-metric-value mt-2 text-[1.42rem] font-extrabold leading-none sm:text-[1.58rem] ${valueClass}`}>{value}</p></article>);
 const TabButton = ({ active, onClick, children }) => (<button type="button" onClick={onClick} className={`rounded-[0.9rem] px-4 py-2.5 text-sm font-semibold transition-colors ${active ? 'bg-[#0f5d50] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>{children}</button>);
-const PanelHeading = ({ icon: Icon, title, noMargin = false }) => (<div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef8f3] text-[#175f54]"><Icon size={18} /></span><h3 className="text-[1.15rem] font-bold text-slate-950">{title}</h3></div>);
-const InfoMiniCard = ({ label, value, helper, valueClass }) => (<div className="rounded-[1rem] border border-slate-200 bg-[#f8fcfa] p-4"><p className="text-xs uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className={`mt-2 text-[1.55rem] font-extrabold leading-none ${valueClass}`}>{value}</p><p className="mt-2 text-sm text-slate-500">{helper}</p></div>);
-const MetricPanel = ({ label, value, valueClass }) => (<div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`text-xl font-extrabold ${valueClass}`}>{value}</span></div></div>);
+const PanelHeading = ({ icon: Icon, title, noMargin = false }) => (<div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef8f3] text-[#175f54]"><Icon size={18} /></span><h3 className="dashboard-display-title text-[1.05rem] font-bold text-slate-950">{title}</h3></div>);
+const InfoMiniCard = ({ label, value, helper, valueClass }) => (<div className="rounded-[1rem] border border-slate-200 bg-[#f8fcfa] p-4"><p className="text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className={`dashboard-metric-value mt-2 text-[1.38rem] font-extrabold leading-none sm:text-[1.5rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{helper}</p></div>);
+const MetricPanel = ({ label, value, valueClass }) => (<div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${valueClass}`}>{value}</span></div></div>);
 const LegendRow = ({ color, label, value }) => (<div className="flex items-center justify-between text-sm"><div className="flex items-center gap-3"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} /><span className="text-slate-700">{label}</span></div><span className="font-semibold text-slate-900">{value}</span></div>);
 const AssetReturnRow = ({ label, color, value, width }) => (<div><div className="mb-1 flex items-center justify-between text-sm"><span className="text-slate-700">{label}</span><span style={{ color }} className="font-semibold">{value}</span></div><div className="h-2.5 rounded-full bg-[#eef5f2]"><div className="h-2.5 rounded-full" style={{ width: `${width}%`, backgroundColor: color }} /></div></div>);
 const InsightCard = ({ title, text, tone }) => (<div className={`rounded-[1rem] border p-4 text-sm ${tone}`}><p className="font-semibold">{title}</p><p className="mt-1">{text}</p></div>);

@@ -1,5 +1,7 @@
 import React from 'react';
 
+const CHUNK_RELOAD_KEY = 'sm_chunk_reload_once';
+
 class AppErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -15,11 +17,43 @@ class AppErrorBoundary extends React.Component {
 
     componentDidCatch(error, errorInfo) {
         console.error('AppErrorBoundary caught an error:', error, errorInfo);
+
+        const message = String(error?.message || '');
+        const isChunkLoadFailure =
+            message.includes('Failed to fetch dynamically imported module') ||
+            message.includes('Importing a module script failed') ||
+            message.includes('Loading chunk');
+
+        if (isChunkLoadFailure) {
+            try {
+                const alreadyReloaded = sessionStorage.getItem(CHUNK_RELOAD_KEY) === '1';
+                if (!alreadyReloaded) {
+                    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+                    window.location.reload();
+                    return;
+                }
+            } catch (storageError) {
+                console.warn('Chunk reload recovery state unavailable:', storageError);
+            }
+        }
     }
 
     handleReload = () => {
+        try {
+            sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+        } catch (error) {
+            console.warn('Could not clear chunk reload state:', error);
+        }
         window.location.reload();
     };
+
+    componentDidMount() {
+        try {
+            sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+        } catch (error) {
+            console.warn('Could not reset chunk reload state:', error);
+        }
+    }
 
     render() {
         if (this.state.hasError) {

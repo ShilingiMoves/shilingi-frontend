@@ -18,7 +18,7 @@
   }
 
   h1, h2, h3 {
-    font-family: 'Inter', system-ui, sans-serif !important;
+    font-family: 'DM Sans', system-ui, sans-serif !important;
     @apply tracking-tight;
   }
 
@@ -36,6 +36,22 @@
 @layer components {
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .dashboard-display-title {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .dashboard-metric-value {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+
+  .dashboard-toolbar-row {
+    @apply flex flex-nowrap items-center gap-3 overflow-x-auto scrollbar-hide;
   }
 
   /* Touch-friendly button minimum sizes */

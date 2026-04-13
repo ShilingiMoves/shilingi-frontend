@@ -216,6 +216,12 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             }),
         [orderedDebts, simulatorExtraPayment]
     );
+    const ecosystemLinks = [
+        { title: 'Budget Planner', subtitle: 'Debt payments auto-sync to your monthly budget', action: 'Open ->', icon: CalendarDays, onClick: () => onSelectSection?.('budget') },
+        { title: 'Comparison Hub', subtitle: 'Find better rates to refinance your debts', action: 'Compare ->', icon: Sparkles, onClick: () => onSelectSection?.('comparehub') },
+        { title: 'Net Worth Calculator', subtitle: 'Debts are subtracted from your net worth automatically', action: 'View ->', icon: Coins, onClick: () => onSelectSection?.('networth') },
+        { title: 'Shilingi Buddy AI', subtitle: 'Get personalised debt reduction advice', action: 'Chat ->', icon: Target, onClick: () => onSelectSection?.('buddy') },
+    ];
 
     const getDebtPaidThisMonth = (debtId) => monthPayments.filter((entry) => String(entry.debtId) === String(debtId)).reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
 
@@ -357,17 +363,17 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle size={15} className="mr-2 inline" />{error}</div>}
             {submitError && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{submitError}</div>}
 
-            <section className="overflow-hidden rounded-[1.6rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-5 py-5 text-white shadow-sm">
+            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-4 py-4 text-white shadow-sm sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
-                        <p className="inline-flex items-center gap-3 text-[1.9rem] font-extrabold leading-none"><span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4c95d] text-slate-950"><WalletCards size={18} /></span>Debt Manager</p>
-                        <p className="mt-2 text-sm text-white/85">Track, manage, and create a payoff plan for all your debts. Compare refinancing options and simulate savings.</p>
+                        <p className="inline-flex items-center gap-3 dashboard-display-title text-[1.38rem] font-extrabold leading-none sm:text-[1.55rem]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#f4c95d] text-slate-950"><WalletCards size={16} /></span>Debt Manager</p>
+                        <p className="mt-2 max-w-[31rem] text-[0.85rem] leading-5 text-white/80 sm:text-[0.9rem]">Track, manage, and create a payoff plan for all your debts. Compare refinancing options and simulate savings.</p>
                     </div>
                     <div className="flex flex-row flex-wrap items-center gap-3 sm:flex-nowrap">
                         <button
                             type="button"
                             onClick={() => setShowCompareRatesModal(true)}
-                            className="inline-flex h-11 min-w-[170px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm"
+                            className="inline-flex h-10 min-w-[170px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-4 text-[0.84rem] font-semibold text-white backdrop-blur-sm"
                         >
                             <Sparkles size={15} />
                             Compare Loan Rates
@@ -375,7 +381,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                         <button
                             type="button"
                             onClick={() => { setEditingDebt(null); setIsModalOpen(true); }}
-                            className="inline-flex h-11 min-w-[138px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-[#0f5d50]"
+                            className="inline-flex h-10 min-w-[138px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[0.84rem] font-semibold text-[#0f5d50]"
                         >
                             + Add Debt
                         </button>
@@ -507,6 +513,24 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                             <div className="space-y-3"><MetricPanel label="Interest-bearing debts" value={currency(interestBearingTotal)} valueClass="text-rose-500" /><MetricPanel label="Zero-interest debts" value={currency(zeroInterestTotal)} valueClass="text-[#175f54]" /><MetricPanel label="Total Liabilities" value={currency(totalDebtWithLiabilities)} valueClass="text-rose-500" strong /></div>
                         </div>
                     </section>
+
+                    <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#165747] via-[#1f6d5d] to-[#2f7f6a] p-5 text-white shadow-sm">
+                        <p className="text-[1.3rem] font-extrabold">Connected to Your Shilingi Moves Ecosystem</p>
+                        <p className="mt-2 text-sm text-white/80">Your debt profile powers personalised recommendations across all planning tools.</p>
+                        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            {ecosystemLinks.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <button key={item.title} type="button" onClick={item.onClick} className="rounded-[1rem] border border-white/15 bg-white/5 p-4 text-left transition hover:bg-white/10">
+                                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-[#f4c95d]"><Icon size={18} /></span>
+                                        <p className="mt-4 font-semibold text-white">{item.title}</p>
+                                        <p className="mt-2 text-sm text-white/70">{item.subtitle}</p>
+                                        <p className="mt-3 text-sm font-semibold text-[#f4c95d]">{item.action}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </section>
                 </div>
             )}
 
@@ -547,12 +571,12 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     );
 };
 
-const StatCard = ({ title, subtitle, value, valueClass }) => (<article className="rounded-[1.2rem] border border-emerald-100 bg-white px-5 py-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9bb8af]">{title}</p><p className={`mt-2 text-[2rem] font-extrabold leading-none ${valueClass}`}>{value}</p><p className="mt-2 text-sm text-slate-500">{subtitle}</p></article>);
+const StatCard = ({ title, subtitle, value, valueClass }) => (<article className="rounded-[1.2rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm"><p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-[#9bb8af]">{title}</p><p className={`dashboard-metric-value mt-2 text-[1.42rem] font-extrabold leading-none sm:text-[1.58rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{subtitle}</p></article>);
 const TabButton = ({ active, onClick, children }) => (<button type="button" onClick={onClick} className={`rounded-[0.9rem] px-4 py-2.5 text-sm font-semibold transition-colors ${active ? 'bg-[#0f5d50] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>{children}</button>);
-const PanelHeading = ({ icon: Icon, title, noMargin = false }) => (<div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef8f3] text-[#175f54]"><Icon size={18} /></span><h3 className="text-[1.15rem] font-bold text-slate-950">{title}</h3></div>);
-const InfoMiniCard = ({ label, value, helper, valueClass }) => (<div className="rounded-[1rem] border border-slate-200 bg-[#f8fcfa] p-4"><p className="text-xs uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className={`mt-2 text-[1.55rem] font-extrabold leading-none ${valueClass}`}>{value}</p><p className="mt-2 text-sm text-slate-500">{helper}</p></div>);
-const MetricRow = ({ label, value, valueClass }) => (<div className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-b-0"><span>{label}</span><span className={`font-semibold ${valueClass}`}>{value}</span></div>);
-const MetricPanel = ({ label, value, valueClass, strong = false }) => (<div className={`rounded-[1rem] border ${strong ? 'border-emerald-200 bg-[#eef8f3]' : 'border-slate-100 bg-[#f7fbf9]'} px-4 py-3`}><div className="flex items-center justify-between gap-4"><span className={`text-sm ${strong ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{label}</span><span className={`text-xl font-extrabold ${valueClass}`}>{value}</span></div></div>);
+const PanelHeading = ({ icon: Icon, title, noMargin = false }) => (<div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef8f3] text-[#175f54]"><Icon size={18} /></span><h3 className="dashboard-display-title text-[1.05rem] font-bold text-slate-950">{title}</h3></div>);
+const InfoMiniCard = ({ label, value, helper, valueClass }) => (<div className="rounded-[1rem] border border-slate-200 bg-[#f8fcfa] p-4"><p className="text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className={`dashboard-metric-value mt-2 text-[1.38rem] font-extrabold leading-none sm:text-[1.5rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{helper}</p></div>);
+const MetricRow = ({ label, value, valueClass }) => (<div className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-b-0"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value font-semibold ${valueClass}`}>{value}</span></div>);
+const MetricPanel = ({ label, value, valueClass, strong = false }) => (<div className={`rounded-[1rem] border ${strong ? 'border-emerald-200 bg-[#eef8f3]' : 'border-slate-100 bg-[#f7fbf9]'} px-4 py-3`}><div className="flex items-center justify-between gap-4"><span className={`text-sm ${strong ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${valueClass}`}>{value}</span></div></div>);
 const ChecklistRow = ({ text }) => (<div className="flex items-start gap-3 rounded-[0.95rem] border border-slate-100 bg-[#f8fcfa] px-4 py-3 text-sm text-slate-700"><CircleDot size={16} className="mt-0.5 text-[#175f54]" /><span>{text}</span></div>);
 const formatDebtType = (value) => String(value || 'OTHER').toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, (match) => match.toUpperCase());
 

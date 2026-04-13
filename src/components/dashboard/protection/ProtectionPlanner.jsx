@@ -9,11 +9,13 @@ import {
     FolderOpen,
     Heart,
     Loader2,
+    PiggyBank,
     ShieldAlert,
     ShieldCheck,
     ShieldPlus,
     Sparkles,
     Stethoscope,
+    User,
     WalletCards,
     X,
 } from 'lucide-react';
@@ -193,6 +195,13 @@ const ProtectionPlanner = ({ onSelectSection }) => {
         status: index === 2 ? 'Expiring' : 'Active',
         contact: index === 0 ? '0800 724 888' : index === 1 ? '0709 099 000' : '0711 060 600',
     })), [activePolicies]);
+    const ecosystemLinks = [
+        { title: 'My Profile', subtitle: 'Dependants shape your cover needs', action: 'View ->', icon: User, onClick: () => onSelectSection?.('profile') },
+        { title: 'Net Worth', subtitle: 'Policies count as protection assets', action: 'View ->', icon: PiggyBank, onClick: () => onSelectSection?.('networth') },
+        { title: 'Compare Hub', subtitle: 'Find better insurance rates', action: 'Compare ->', icon: Sparkles, onClick: () => onSelectSection?.('comparehub') },
+        { title: 'Retirement Planner', subtitle: 'Life cover funds retirement gap', action: 'Plan ->', icon: WalletCards, onClick: () => onSelectSection?.('retirement') },
+        { title: 'Buddy AI', subtitle: 'Personalised cover advice', action: 'Chat ->', icon: ShieldPlus, onClick: () => onSelectSection?.('buddy') },
+    ];
 
     const handleCalcChange = (key, value) => setCalculator((current) => ({ ...current, [key]: value }));
     const handleFormChange = (key, value) => setPolicyForm((current) => ({ ...current, [key]: value }));
@@ -274,16 +283,18 @@ const ProtectionPlanner = ({ onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
-            <section className="overflow-hidden rounded-[1.6rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-5 py-5 text-white shadow-sm">
+            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-4 py-4 text-white shadow-sm sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
-                        <p className="inline-flex items-center gap-3 text-[1.9rem] font-extrabold leading-none"><span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#b91c1c]"><ShieldCheck size={18} /></span>Protection Planner</p>
-                        <p className="mt-2 text-sm text-white/85">Protect your income, health, family and legacy with the right cover, tailored to your life stage.</p>
+                        <p className="inline-flex items-center gap-3 dashboard-display-title text-[1.38rem] font-extrabold leading-none sm:text-[1.55rem]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#b91c1c]"><ShieldCheck size={16} /></span>Protection Planner</p>
+                        <p className="mt-2 max-w-[31rem] text-[0.85rem] leading-5 text-white/80 sm:text-[0.9rem]">Protect your income, health, family and legacy with the right cover, tailored to your life stage.</p>
                     </div>
-                    <div className="flex flex-row flex-wrap items-center gap-3">
-                        <button type="button" onClick={() => setShowCoverageHealthModal(true)} className="inline-flex h-11 min-w-[198px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm"><Calculator size={15} />Review Coverage Health</button>
-                        <button type="button" onClick={() => setShowCompareModal(true)} className="inline-flex h-11 min-w-[188px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm"><Sparkles size={15} />Compare Insurance</button>
-                        <button type="button" onClick={() => setShowAddModal(true)} className="inline-flex h-11 min-w-[146px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-[#0f5d50]">+ Add Policy</button>
+                    <div className="flex flex-col gap-2 lg:items-center">
+                        <div className="flex flex-row flex-wrap items-center justify-center gap-3">
+                            <button type="button" onClick={() => setShowCoverageHealthModal(true)} className="inline-flex h-10 min-w-[198px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-4 text-[0.84rem] font-semibold text-white backdrop-blur-sm"><Calculator size={14} />Review Coverage Health</button>
+                            <button type="button" onClick={() => setShowCompareModal(true)} className="inline-flex h-10 min-w-[188px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/22 bg-white/10 px-4 text-[0.84rem] font-semibold text-white backdrop-blur-sm"><Sparkles size={14} />Compare Insurance</button>
+                        </div>
+                        <button type="button" onClick={() => setShowAddModal(true)} className="inline-flex h-10 min-w-[146px] self-center items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[0.84rem] font-semibold text-[#0f5d50]">+ Add Policy</button>
                     </div>
                 </div>
             </section>
@@ -358,6 +369,24 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                         <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="Policy Documents & Contacts" noMargin /><button type="button" className="text-sm font-semibold text-[#175f54]">+ Upload Doc</button></div>
                         <div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr className="border-b border-emerald-100 text-left text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]"><th className="py-3 pr-4 font-semibold">Policy</th><th className="py-3 pr-4 font-semibold">Insurer</th><th className="py-3 pr-4 font-semibold">Policy No.</th><th className="py-3 pr-4 font-semibold">Start Date</th><th className="py-3 pr-4 font-semibold">Renewal Date</th><th className="py-3 pr-4 font-semibold">Status</th><th className="py-3 font-semibold">Contact</th></tr></thead><tbody>{documents.length > 0 ? documents.map((item) => <tr key={item.id} className="border-b border-slate-100 last:border-b-0"><td className="py-3 pr-4 font-medium text-slate-900">{item.policy}</td><td className="py-3 pr-4 text-slate-700">{item.insurer}</td><td className="py-3 pr-4 text-slate-700">{item.number}</td><td className="py-3 pr-4 text-slate-500">{item.startDate}</td><td className="py-3 pr-4 text-slate-500">{item.renewal}</td><td className="py-3 pr-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.status === 'Expiring' ? 'bg-amber-100 text-amber-700' : 'bg-[#eef8f3] text-[#175f54]'}`}>{item.status}</span></td><td className="py-3 text-slate-700">{item.contact}</td></tr>) : <tr><td colSpan={7} className="py-8 text-center text-sm text-slate-500">Add policies to populate documents and contacts.</td></tr>}</tbody></table></div>
                     </section>
+
+                    <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#165747] via-[#1f6d5d] to-[#2f7f6a] p-5 text-white shadow-sm">
+                        <p className="text-[1.3rem] font-extrabold">Your Protection Links to the Full Ecosystem</p>
+                        <p className="mt-2 text-sm text-white/80">Protection data shapes your net worth, dependants' planning, retirement cover, and Buddy AI recommendations.</p>
+                        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                            {ecosystemLinks.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <button key={item.title} type="button" onClick={item.onClick} className="rounded-[1rem] border border-white/15 bg-white/5 p-4 text-left transition hover:bg-white/10">
+                                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-[#f4c95d]"><Icon size={18} /></span>
+                                        <p className="mt-4 font-semibold text-white">{item.title}</p>
+                                        <p className="mt-2 text-sm text-white/70">{item.subtitle}</p>
+                                        <p className="mt-3 text-sm font-semibold text-[#f4c95d]">{item.action}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </section>
                 </div>
             )}
 
@@ -388,15 +417,15 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     );
 };
 
-const MetricCard = ({ title, value, helper, valueClass, cardTone = 'bg-white' }) => <article className={`rounded-[1.2rem] border border-emerald-100 px-5 py-5 shadow-sm ${cardTone}`}><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9bb8af]">{title}</p><p className={`mt-2 text-[2rem] font-extrabold leading-none ${valueClass}`}>{value}</p><p className="mt-2 text-sm text-slate-500">{helper}</p></article>;
+const MetricCard = ({ title, value, helper, valueClass, cardTone = 'bg-white' }) => <article className={`rounded-[1.2rem] border border-emerald-100 px-4 py-4 shadow-sm ${cardTone}`}><p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-[#9bb8af]">{title}</p><p className={`dashboard-metric-value mt-2 text-[1.42rem] font-extrabold leading-none sm:text-[1.58rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{helper}</p></article>;
 const ScoreRing = ({ value }) => <div className="relative flex h-24 w-24 items-center justify-center"><div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#2aa38a ${value * 3.6}deg, #e8f3ef 0deg)` }} /><div className="absolute inset-[8px] rounded-full bg-white" /><div className="relative text-center"><p className="text-[1.6rem] font-extrabold leading-none text-[#175f54]">{value}</p><p className="text-xs text-slate-500">/100</p></div></div>;
 const TabButton = ({ active, onClick, children }) => <button type="button" onClick={onClick} className={`rounded-[0.9rem] px-4 py-2.5 text-sm font-semibold transition-colors ${active ? 'bg-[#0f5d50] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>{children}</button>;
-const PanelHeading = ({ icon: Icon, title, noMargin = false }) => <div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef8f3] text-[#175f54]"><Icon size={18} /></span><h3 className="text-[1.15rem] font-bold text-slate-950">{title}</h3></div>;
+const PanelHeading = ({ icon: Icon, title, noMargin = false }) => <div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef8f3] text-[#175f54]"><Icon size={18} /></span><h3 className="dashboard-display-title text-[1.05rem] font-bold text-slate-950">{title}</h3></div>;
 const InfoCell = ({ label, value }) => <div><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>;
 const InsightCard = ({ title, text, tone }) => <div className={`rounded-[1rem] border p-4 text-sm ${tone}`}><p className="font-semibold">{title}</p><p className="mt-1">{text}</p></div>;
 const ClaimRow = ({ item }) => <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0"><div><p className="text-sm font-semibold text-slate-900">{item.title}</p><p className="text-xs text-slate-500">{item.month}</p></div><div className="text-right"><p className={`text-sm font-extrabold ${item.status === 'Processing' ? 'text-amber-700' : 'text-[#175f54]'}`}>{item.amount}</p><p className={`text-xs font-semibold ${item.status === 'Processing' ? 'text-amber-700' : 'text-[#175f54]'}`}>{item.status}</p></div></div>;
 const PaymentRow = ({ item }) => <div className={`rounded-xl border px-4 py-3 ${item.tone}`}><div className="flex items-center justify-between gap-3"><div><p className="font-semibold">{item.name} - {item.provider}</p><p className="text-sm opacity-80">{item.note}</p></div><p className="text-xl font-extrabold">{item.amount}</p></div></div>;
-const GuidanceRow = ({ label, value, tone }) => <div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`text-xl font-extrabold ${tone}`}>{value}</span></div></div>;
+const GuidanceRow = ({ label, value, tone }) => <div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${tone}`}>{value}</span></div></div>;
 const CalcInput = ({ label, value, onChange }) => <label className="block text-sm font-medium text-slate-700">{label}<input type="number" value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" /></label>;
 const Input = ({ label, value, onChange, ...props }) => <label className="block text-sm font-medium text-slate-700">{label}<input {...props} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" /></label>;
 const EmptyState = ({ text }) => <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-600">{text}</div>;

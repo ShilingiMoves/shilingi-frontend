@@ -26,6 +26,21 @@ const FinancialHealthDashboard = () => {
     const [selectedComponent, setSelectedComponent] = useState(null);
     const [lastTriggerTimestamp, setLastTriggerTimestamp] = useState(null);
 
+    const healthScoreValue = Number(healthScore?.overall_score ?? 0);
+    const healthStatus = healthScore?.status || 'unknown';
+    const healthStatusDisplay = healthScore?.status_display || 'Data pending';
+    const healthScoreChange = Number(healthScore?.change_from_previous ?? 0);
+    const healthScoreDate = healthScore?.score_date || null;
+    const breakdownComponents = Array.isArray(scoreBreakdown?.components) ? scoreBreakdown.components : [];
+    const breakdownOverallScore = Number(scoreBreakdown?.overall?.score ?? healthScoreValue);
+    const historyItems = Array.isArray(scoreHistory?.history) ? scoreHistory.history : [];
+    const historyTrend = scoreHistory?.trend || null;
+    const historyStats = scoreHistory?.stats || null;
+    const insightItems = Array.isArray(insights?.insights) ? insights.insights : [];
+    const priorityActions = Array.isArray(insights?.priority_actions) ? insights.priority_actions : [];
+    const insightSummary = insights?.summary || null;
+    const insightsScore = Number(insights?.score ?? healthScoreValue);
+
     // Initial data load
     useEffect(() => {
         const loadInitialData = async () => {
@@ -194,39 +209,39 @@ const FinancialHealthDashboard = () => {
                     {/* Main Score Card */}
                     {healthScore && (
                         <HealthScoreCard
-                            score={healthScore.overall_score}
-                            status={healthScore.status}
-                            statusDisplay={healthScore.status_display}
-                            change={healthScore.change_from_previous}
-                            scoreDate={healthScore.score_date}
+                            score={healthScoreValue}
+                            status={healthStatus}
+                            statusDisplay={healthStatusDisplay}
+                            change={healthScoreChange}
+                            scoreDate={healthScoreDate}
                         />
                     )}
 
                     {/* Components Breakdown Grid */}
-                    {scoreBreakdown && (
+                    {scoreBreakdown && breakdownComponents.length > 0 && (
                         <ComponentBreakdown
-                            components={scoreBreakdown.components}
-                            overallScore={scoreBreakdown.overall.score}
+                            components={breakdownComponents}
+                            overallScore={breakdownOverallScore}
                             onComponentClick={setSelectedComponent}
                         />
                     )}
 
                     {/* History Chart and Insights Side by Side */}
                     <div className="grid gap-6 lg:grid-cols-2">
-                        {scoreHistory && (
+                        {scoreHistory && historyItems.length > 0 && (
                             <ScoreHistoryChart
-                                history={scoreHistory.history}
-                                trend={scoreHistory.trend}
-                                stats={scoreHistory.stats}
+                                history={historyItems}
+                                trend={historyTrend}
+                                stats={historyStats}
                             />
                         )}
 
-                        {insights && (
+                        {insights && (insightItems.length > 0 || priorityActions.length > 0 || insightSummary) && (
                             <InsightsPanel
-                                insights={insights.insights}
-                                priorityActions={insights.priority_actions}
-                                summary={insights.summary}
-                                score={insights.score}
+                                insights={insightItems}
+                                priorityActions={priorityActions}
+                                summary={insightSummary}
+                                score={insightsScore}
                             />
                         )}
                     </div>
