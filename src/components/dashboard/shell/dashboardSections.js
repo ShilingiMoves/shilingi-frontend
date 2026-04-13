@@ -184,7 +184,7 @@ export const dashboardSections = [
     },
     {
         id: 'health',
-        label: 'Planner',
+        label: 'Financial Health Overview',
         helper: 'Monitor your financial readiness',
         icon: Activity,
         accent: 'from-teal-500 to-emerald-600',
