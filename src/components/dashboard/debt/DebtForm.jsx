@@ -19,6 +19,21 @@ const emptyForm = {
     currency: 'KES',
 };
 
+const debtTypeLabels = {
+    PERSONAL_LOAN: 'Personal Loan',
+    CREDIT_CARD: 'Credit Card',
+    MOBILE_LOAN: 'Mobile Loan',
+    SACCO_LOAN: 'SACCO Loan',
+    BANK_LOAN: 'Bank Loan',
+    MORTGAGE: 'Mortgage',
+    CAR_LOAN: 'Car Loan',
+    STUDENT_LOAN: 'Student Loan',
+    BUSINESS_LOAN: 'Business Loan',
+    FAMILY_FRIEND: 'Family or Friend',
+    HIRE_PURCHASE: 'Hire Purchase',
+    OTHER: 'Other Debt',
+};
+
 const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = 'card' }) => {
     const [formValues, setFormValues] = useState(emptyForm);
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -66,7 +81,11 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        onSubmit(formValues);
+        const fallbackDebtName = debtTypeLabels[formValues.debtType] || 'Debt Account';
+        onSubmit({
+            ...formValues,
+            name: formValues.name?.trim() || fallbackDebtName,
+        });
     };
 
     return (
@@ -104,9 +123,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
             )}
 
             <div className={`grid ${isModal ? 'gap-2.5 md:grid-cols-2' : 'gap-4 md:grid-cols-2'}`}>
-                <Field label="Debt name" name="name" value={formValues.name} onChange={handleChange} placeholder="Student loan" required className={inputClasses} />
-                
-                <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
+                <label className="flex flex-col gap-2 text-sm font-medium text-gray-700 md:col-span-2">
                     Debt type
                     <select
                         name="debtType"
@@ -114,15 +131,15 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                         onChange={handleChange}
                         className={inputClasses}
                     >
-                        <option value="PERSONAL_LOAN">Personal Loan</option>
-                        <option value="CREDIT_CARD">Credit Card</option>
                         <option value="MOBILE_LOAN">Mobile Loan</option>
+                        <option value="PERSONAL_LOAN">Personal Loan</option>
                         <option value="SACCO_LOAN">SACCO Loan</option>
                         <option value="BANK_LOAN">Bank Loan</option>
                         <option value="MORTGAGE">Mortgage</option>
+                        <option value="BUSINESS_LOAN">Business Loan</option>
+                        <option value="CREDIT_CARD">Credit Card</option>
                         <option value="CAR_LOAN">Car Loan</option>
                         <option value="STUDENT_LOAN">Student Loan</option>
-                        <option value="BUSINESS_LOAN">Business Loan</option>
                         <option value="FAMILY_FRIEND">Family or Friend</option>
                         <option value="HIRE_PURCHASE">Hire Purchase</option>
                         <option value="OTHER">Other</option>
@@ -131,8 +148,8 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
 
                 <Field label="Current balance" name="balance" type="number" min="0" step="0.01" value={formValues.balance} onChange={handleChange} placeholder="35000" required className={inputClasses} />
                 <Field label="Interest rate (%)" name="interestRate" type="number" min="0" step="0.01" value={formValues.interestRate} onChange={handleChange} placeholder="13.5" className={inputClasses} />
-                <Field label="Minimum payment" name="minimumPayment" type="number" min="0" step="0.01" value={formValues.minimumPayment} onChange={handleChange} placeholder="5000" className={inputClasses} />
-                <Field label="Due date" name="dueDate" type="date" value={formValues.dueDate} onChange={handleChange} className={inputClasses} />
+                <Field label="Monthly repayment" name="minimumPayment" type="number" min="0" step="0.01" value={formValues.minimumPayment} onChange={handleChange} placeholder="5000" className={inputClasses} />
+                <Field label="Monthly due date" name="dueDate" type="date" value={formValues.dueDate} onChange={handleChange} className={inputClasses} />
 
                 <div className="flex items-center gap-3 py-2">
                     <input
