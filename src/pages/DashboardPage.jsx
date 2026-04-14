@@ -19,8 +19,9 @@ import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/au
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
-import { getInitialDashboardSection } from '../utils/dashboardDataState';
+import { DEFAULT_DASHBOARD_SECTION, getInitialDashboardSection, persistDashboardSection } from '../utils/dashboardDataState';
 import incomeService from '../services/incomeService';
+import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
 
 const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
 const BudgetDashboard = lazy(() => import('../components/dashboard/budget/BudgetDashboard'));
@@ -82,6 +83,21 @@ const DashboardPage = () => {
     }, [activeSection]);
 
     useEffect(() => {
+        if (activeSection === 'buddy') {
+            setActiveSection('overview');
+        }
+    }, [activeSection]);
+
+    useEffect(() => {
+        if (!dashboardSectionMap[activeSection] || activeSection === 'buddy') {
+            setActiveSection(DEFAULT_DASHBOARD_SECTION);
+            return;
+        }
+
+        persistDashboardSection(activeSection);
+    }, [activeSection]);
+
+    useEffect(() => {
         if (typeof window === 'undefined') {
             return undefined;
         }
@@ -136,7 +152,7 @@ const DashboardPage = () => {
                 return standardShell(
                     <IncomeProvider>
                         <Suspense fallback={sectionLoader}>
-                            <UserProfilePanel initialTab="income" />
+                            <UserProfilePanel initialTab="income" onSelectSection={setActiveSection} />
                         </Suspense>
                     </IncomeProvider>
                 );
@@ -188,7 +204,7 @@ const DashboardPage = () => {
                 return standardShell(
                     <IncomeProvider>
                         <Suspense fallback={sectionLoader}>
-                            <UserProfilePanel />
+                            <UserProfilePanel onSelectSection={setActiveSection} />
                         </Suspense>
                     </IncomeProvider>
                 );
@@ -302,7 +318,7 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)]">
+        <div className="dashboard-brand-theme min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)] lg:h-screen lg:overflow-hidden">
             <DashboardTopbar
                 activeSection={activeSection}
                 onSelectSection={setActiveSection}
@@ -311,7 +327,7 @@ const DashboardPage = () => {
                 user={profile}
             />
 
-            <div className="lg:flex">
+            <div className="lg:flex lg:h-[calc(100vh-92px)]">
                 <DashboardSidebar
                     collapsed={sidebarCollapsed}
                     onToggle={() => setSidebarCollapsed((current) => !current)}
@@ -322,7 +338,7 @@ const DashboardPage = () => {
                     onCloseMobile={() => setMobileSidebarOpen(false)}
                 />
 
-                <main className="min-w-0 flex-1 lg:overflow-y-auto">
+                <main className="min-w-0 flex-1 lg:h-full lg:overflow-y-auto lg:[scrollbar-gutter:stable]">
                     {renderActiveSection()}
                 </main>
             </div>

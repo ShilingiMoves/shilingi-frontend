@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertCircle,
+    ArrowRight,
     Bell,
+    BarChart3,
     Briefcase,
+    GraduationCap,
+    Home,
     KeyRound,
     Link as LinkIcon,
     Loader2,
@@ -12,6 +16,7 @@ import {
     UserRound,
     Users,
     Wallet,
+    WalletCards,
     X,
 } from 'lucide-react';
 import { getUserAccount, updateUserPreferences } from '../../../services/userApi';
@@ -22,9 +27,63 @@ import QuickIncomeModal from '../income/QuickIncomeModal';
 import { USER_PROFILE_WORKSPACE_KEY } from './UserGoalsFamilyForm';
 
 const GOAL_META = {
-    short: { key: 'shortTermGoal', detailKey: 'shortTermGoalDetails', label: 'Short-Term', helper: 'Under 12 months', color: 'bg-[#37c837]' },
-    medium: { key: 'mediumTermGoal', detailKey: 'mediumTermGoalDetails', label: 'Medium-Term', helper: '1 - 5 years', color: 'bg-[#f6da1a]' },
-    long: { key: 'longTermGoal', detailKey: 'longTermGoalDetails', label: 'Long-Term', helper: '5+ years', color: 'bg-[#8a63df]' },
+    short: {
+        key: 'shortTermGoal',
+        detailKey: 'shortTermGoalDetails',
+        label: 'Short-Term',
+        helper: 'Under 12 months',
+        color: 'bg-[#37c837]',
+        barColor: '#40b58f',
+        softBg: 'bg-[#eef8f4]',
+        softBorder: 'border-[#9ed7c1]',
+        softText: 'text-[#1c6b57]',
+        sectionLine: 'bg-[#b7ddd0]',
+        cardBg: 'bg-[linear-gradient(180deg,_#f2fbf7_0%,_#ebf7f1_100%)]',
+        badgeBg: 'bg-[#e1f5eb]',
+        iconTile: 'bg-[#f5fffb]',
+        iconTone: 'text-[#1b7c60]',
+        addCardBg: 'bg-[#fbfffd]',
+        addTone: 'bg-[#fff6e7] text-[#9a6200]',
+        icon: ShieldCheck,
+    },
+    medium: {
+        key: 'mediumTermGoal',
+        detailKey: 'mediumTermGoalDetails',
+        label: 'Medium-Term',
+        helper: '1 - 5 years',
+        color: 'bg-[#f6da1a]',
+        barColor: '#4b8ee8',
+        softBg: 'bg-[#f5f9ff]',
+        softBorder: 'border-[#cfe0ff]',
+        softText: 'text-[#2b6fd6]',
+        sectionLine: 'bg-[#d8e7ff]',
+        cardBg: 'bg-[linear-gradient(180deg,_#f8fbff_0%,_#eef5ff_100%)]',
+        badgeBg: 'bg-[#eaf2ff]',
+        iconTile: 'bg-[#f7fbff]',
+        iconTone: 'text-[#2b6fd6]',
+        addCardBg: 'bg-[#fcfdff]',
+        addTone: 'bg-[#fff6e7] text-[#9a6200]',
+        icon: Home,
+    },
+    long: {
+        key: 'longTermGoal',
+        detailKey: 'longTermGoalDetails',
+        label: 'Long-Term',
+        helper: '5+ years',
+        color: 'bg-[#8a63df]',
+        barColor: '#9a77eb',
+        softBg: 'bg-[#f7f1ff]',
+        softBorder: 'border-[#ddd0ff]',
+        softText: 'text-[#7a57d1]',
+        sectionLine: 'bg-[#e5d8ff]',
+        cardBg: 'bg-[linear-gradient(180deg,_#fbf8ff_0%,_#f4efff_100%)]',
+        badgeBg: 'bg-[#f0e9ff]',
+        iconTile: 'bg-[#fcfaff]',
+        iconTone: 'text-[#7a57d1]',
+        addCardBg: 'bg-[#fdfbff]',
+        addTone: 'bg-[#fff6e7] text-[#9a6200]',
+        icon: GraduationCap,
+    },
 };
 
 const defaults = {
@@ -68,6 +127,36 @@ const fmtKES = (v) => Number(v || 0) > 0 ? `KES ${Number(v).toLocaleString('en-K
 const goalLabel = (v) => v ? String(v).replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) : 'Not added yet';
 const tierLabel = (u) => (u?.tier || u?.subscription_tier || 'Basic').toString().replace(/_/g, ' ');
 const resolvedIncome = (s, p) => Number(s?.total_income ?? s?.monthly_income ?? s?.current_month?.total_income ?? 0) || Number(p || 0);
+const formatGoalDate = (value) => {
+    if (!value) return 'No target date';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? value
+        : date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+};
+const goalProgress = (currentSavings, targetAmount) => {
+    const current = Number(currentSavings || 0);
+    const target = Number(targetAmount || 0);
+    if (target <= 0) return 0;
+    return Math.max(0, Math.min((current / target) * 100, 100));
+};
+const incomeAmount = (income) => Number(income?.monthly_equivalent || income?.amount || 0);
+const incomeHint = (income) => `${String(income?.description || '')} ${String(income?.category_name || '')} ${String(income?.source || '')}`.toLowerCase();
+const estimatePAYE = (amount) => Number(amount || 0) > 0 ? Math.round(Number(amount || 0) * 0.2333) : 0;
+const incomeNote = (income) => {
+    if (income?.source) return income.source;
+    if (income?.is_recurring && income?.frequency_display) return `${income.frequency_display} income`;
+    return income?.category_name || 'Income source';
+};
+const goalIconForName = (name, fallbackIcon) => {
+    const value = String(name || '').toLowerCase();
+    if (value.includes('emergency') || value.includes('protect')) return ShieldCheck;
+    if (value.includes('home') || value.includes('house')) return Home;
+    if (value.includes('retire') || value.includes('skill') || value.includes('learn')) return GraduationCap;
+    if (value.includes('debt') || value.includes('credit') || value.includes('card')) return WalletCards;
+    if (value.includes('invest') || value.includes('wealth')) return BarChart3;
+    return fallbackIcon || Target;
+};
 
 const Input = ({ label, ...props }) => (
     <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -99,7 +188,7 @@ const CheckRow = ({ label, ...props }) => (
     </label>
 );
 
-const PrimaryButton = ({ className = '', ...props }) => <button {...props} className={`inline-flex items-center justify-center gap-2 rounded-[1rem] bg-[#0f5f4f] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0b4e41] disabled:cursor-not-allowed disabled:opacity-60 ${className}`} />;
+const PrimaryButton = ({ className = '', ...props }) => <button {...props} className={`inline-flex items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60 ${className}`} />;
 const SecondaryButton = ({ className = '', ...props }) => <button {...props} className={`inline-flex items-center justify-center gap-2 rounded-[1rem] border border-emerald-100 bg-[#f6fbf8] px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-[#eef8f4] ${className}`} />;
 const Datum = ({ label, value }) => <div><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</p><p className="mt-1.5 text-base font-semibold text-slate-950">{value}</p></div>;
 const SummaryCard = ({ label, value, subtitle, accent = '', dark = false, compact = false, onClick }) => { const Component = onClick ? 'button' : 'div'; return <Component type={onClick ? 'button' : undefined} onClick={onClick} className={`w-full rounded-[1.15rem] border border-emerald-100 bg-white px-4 ${compact ? 'py-4' : 'py-5'} text-left shadow-sm transition-all ${onClick ? 'hover:-translate-y-0.5 hover:shadow-md' : ''} ${accent}`}><p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${dark ? 'text-white/70' : 'text-slate-400'}`}>{label}</p><p className={`mt-2 ${compact ? 'text-2xl' : 'text-3xl'} font-extrabold ${dark ? 'text-white' : 'text-slate-950'}`}>{value}</p><p className={`mt-1.5 text-sm ${dark ? 'text-white/75' : 'text-slate-500'}`}>{subtitle}</p></Component>; };
@@ -107,8 +196,432 @@ const GoalActionCard = ({ label, helper, color, active, onClick }) => <button ty
 const SecurityCard = ({ icon: Icon, title, subtitle }) => <div className="rounded-[1.2rem] border border-slate-200 bg-[linear-gradient(180deg,_#fbfdfc_0%,_#f4f8f6_100%)] px-4 py-5 text-center shadow-sm"><div className="mx-auto inline-flex rounded-2xl bg-white p-3 text-primary-700 shadow-sm ring-1 ring-slate-200"><Icon size={20} /></div><p className="mt-4 text-base font-bold text-slate-950">{title}</p><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div>;
 const ModalShell = ({ title, icon: Icon, onClose, children }) => <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/38 p-3 backdrop-blur-[3px] sm:p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.35rem] border border-emerald-100 bg-white shadow-[0_22px_60px_rgba(15,23,42,0.14)] sm:rounded-[1.5rem]"><div className="sticky top-0 z-10 flex items-center justify-between border-b border-emerald-100 bg-white/96 px-4 py-3 backdrop-blur sm:px-5 sm:py-4"><div className="flex items-center gap-2.5 sm:gap-3"><div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eef8f4] text-primary-700 sm:h-10 sm:w-10"><Icon size={17} /></div><h3 className="text-[1.2rem] font-extrabold tracking-tight text-slate-950 sm:text-[1.45rem]">{title}</h3></div><button type="button" onClick={onClose} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-[#f6fbf8] text-slate-500 transition-colors hover:text-slate-900"><X size={17} /></button></div><div className="p-4 sm:p-5">{children}</div></div></div>;
 const GoalTypeCard = ({ active, label, helper, color, onClick }) => <button type="button" onClick={onClick} className={`rounded-[1rem] border px-3 py-4 text-center transition-all sm:px-4 sm:py-4 ${active ? 'border-primary-500 bg-[#eef8f4] shadow-sm' : 'border-emerald-100 bg-white hover:border-primary-300 hover:bg-[#f9fcfa]'}`}><span className={`mx-auto inline-flex h-7 w-7 rounded-full border-2 border-slate-950/70 ${color}`} /><p className="mt-3 text-sm font-semibold text-slate-900 sm:text-base">{label}</p><p className="mt-1 text-xs text-slate-500 sm:text-sm">{helper}</p></button>;
+const GoalProgressCard = ({ goal, meta, onClick }) => {
+    const progress = goalProgress(goal.currentSavings, goal.targetAmount);
+    const Icon = goalIconForName(goal.name, meta.icon);
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`w-full rounded-[1.2rem] border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${meta.softBorder} ${meta.cardBg}`}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl shadow-sm ring-1 ${meta.softBorder} ${meta.iconTile} ${meta.iconTone}`}>
+                    <Icon size={18} />
+                </div>
+                <span className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ring-1 ${meta.softBorder} ${meta.softText} ${meta.badgeBg}`}>
+                    {Math.round(progress)}%
+                </span>
+            </div>
+            <p className="mt-4 text-[1.05rem] font-bold text-slate-950">{goal.name || 'Untitled goal'}</p>
+            <p className="mt-1 text-sm font-medium text-slate-700">
+                {fmtKES(goal.currentSavings)} / {fmtKES(goal.targetAmount)}
+            </p>
+            <div className="mt-4 h-2.5 rounded-full bg-white/80">
+                <div className="h-2.5 rounded-full" style={{ width: `${progress}%`, backgroundColor: meta.barColor }} />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                <span>Due {formatGoalDate(goal.targetDate)}</span>
+                <span>{goal.linkedProduct ? `${goal.linkedProduct} linked` : 'Planning in profile'}</span>
+            </div>
+        </button>
+    );
+};
+const AddGoalCard = ({ label, meta, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`flex min-h-[206px] w-full items-center justify-center rounded-[1.2rem] border border-dashed text-center transition-all hover:shadow-sm ${meta.softBorder} ${meta.addCardBg} ${meta.softText}`}
+    >
+        <span className="text-base font-semibold">+ Add {label} Goal</span>
+    </button>
+);
+const GoalBucketSection = ({ title, helper, meta, goals, onAdd, onEdit }) => (
+    <article className="rounded-[1.5rem] border border-[#cfe8dc] bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.softBg} ${meta.softText}`}>
+                    <span className={`mr-2 inline-flex h-3 w-3 rounded-full ${meta.color}`} />
+                    {title} Goals
+                </span>
+                <span className="text-sm text-slate-400">{helper}</span>
+                <span className={`hidden h-px flex-1 rounded-full lg:block ${meta.sectionLine}`} />
+            </div>
+            <button
+                type="button"
+                onClick={onAdd}
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${meta.addTone}`}
+            >
+                + Add {title}
+            </button>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {goals.map((goal, index) => (
+                <GoalProgressCard
+                    key={`${goal.name || title}-${index}`}
+                    goal={goal}
+                    meta={meta}
+                    onClick={() => onEdit()}
+                />
+            ))}
+            {goals.length < 3 && <AddGoalCard label={title} meta={meta} onClick={onAdd} />}
+        </div>
+    </article>
+);
+const IncomeMetricCard = ({ label, value, subtitle, accent = 'text-[#1f7f63]', featured = false }) => (
+    <div className={`rounded-[1.35rem] border border-emerald-100 px-5 py-4 shadow-sm ${featured ? 'bg-[#1f6f5a] text-white' : 'bg-white text-slate-950'}`}>
+        <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${featured ? 'text-white/70' : 'text-slate-400'}`}>{label}</p>
+        <p className={`mt-2 text-[2rem] font-extrabold tracking-tight ${featured ? 'text-[#f0c94d]' : accent}`}>{value}</p>
+        <p className={`mt-1 text-sm ${featured ? 'text-white/80' : 'text-slate-500'}`}>{subtitle}</p>
+    </div>
+);
+const IncomeSourceRow = ({ icon: Icon, title, note, amount, subnote, accent = 'text-[#1f7f63]', bg = 'bg-[#f5fbf8]' }) => (
+    <div className="flex items-start justify-between gap-3 border-b border-emerald-100 py-4 last:border-b-0 last:pb-0">
+        <div className="flex items-start gap-3">
+            <div className={`inline-flex h-12 w-12 items-center justify-center rounded-[1rem] ${bg} ${accent}`}>
+                <Icon size={19} />
+            </div>
+            <div>
+                <p className="text-base font-bold text-slate-950">{title}</p>
+                <p className="mt-1 text-sm text-slate-500">{note}</p>
+            </div>
+        </div>
+        <div className="text-right">
+            <p className={`text-xl font-extrabold ${accent}`}>{amount}</p>
+            <p className="mt-1 text-sm text-slate-400">{subnote}</p>
+        </div>
+    </div>
+);
+const AllocationBarRow = ({ label, percent, color }) => (
+    <div className="grid grid-cols-[92px_minmax(0,1fr)_44px] items-center gap-3">
+        <span className="text-sm text-slate-700">{label}</span>
+        <div className="h-2.5 rounded-full bg-[#edf5f1]">
+            <div className="h-2.5 rounded-full" style={{ width: `${percent}%`, backgroundColor: color }} />
+        </div>
+        <span className="text-right text-sm font-semibold" style={{ color }}>{percent}%</span>
+    </div>
+);
+const RuleHealthCard = ({ title, amount, target, tone, status, note }) => (
+    <div className={`rounded-[1.15rem] border-l-4 p-4 ${tone}`}>
+        <p className="text-base font-semibold">{title} <span className="font-medium">{status}</span></p>
+        <p className="mt-1 text-sm"><span className="font-extrabold text-slate-950">{amount}</span> of {target}</p>
+        {note ? <p className="mt-1 text-sm">{note}</p> : null}
+    </div>
+);
+const ProfileEcosystemSection = ({ ecosystemCards }) => (
+    <div className="overflow-hidden rounded-[1.5rem] bg-[#1f9c72] px-5 py-5 text-white shadow-[0_18px_40px_rgba(31,156,114,0.22)]">
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <p className="text-[1.45rem] font-extrabold tracking-tight">Your Profile Powers The Entire Ecosystem</p>
+                <p className="max-w-3xl text-sm leading-6 text-white/80">Everything you&apos;ve added here personalises your planning tools, comparisons, and recommendations.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {ecosystemCards.map(({ title, helper, icon: Icon, cta, action }) => (
+                    <button key={title} type="button" onClick={action} className="rounded-[1.15rem] border border-white/18 bg-white/8 px-4 py-5 text-left transition-all hover:bg-white/12 hover:shadow-lg">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#1f9c72] shadow-sm">
+                            <Icon size={20} />
+                        </div>
+                        <p className="mt-4 text-base font-bold text-white">{title}</p>
+                        <p className="mt-1 text-sm text-white/72">{helper}</p>
+                        <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#F0C94D]">{cta}<ArrowRight size={14} /></span>
+                    </button>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+const DependantsSummaryCard = ({ value, label, accent = 'text-[#166a55]' }) => (
+    <div className="rounded-[1.2rem] border border-emerald-100 bg-white px-5 py-4 text-center shadow-sm">
+        <p className={`text-[2rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
+        <p className="mt-1 text-sm text-slate-500">{label}</p>
+    </div>
+);
+const DependantMemberCard = ({ initials, name, role, age, tag, tagTone }) => (
+    <div className="rounded-[1.2rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fcfb_0%,_#f1f8f5_100%)] px-5 py-4 text-center shadow-sm">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#2e9275] text-xl font-extrabold text-white">
+            {initials}
+        </div>
+        <p className="mt-4 text-lg font-bold text-slate-950">{name}</p>
+        <p className="mt-1 text-sm text-slate-500">{role}</p>
+        <p className="mt-3 text-sm font-medium text-[#166a55]">{age}</p>
+        <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tagTone}`}>{tag}</span>
+    </div>
+);
+const AddDependantCard = ({ onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className="flex min-h-[220px] w-full flex-col items-center justify-center rounded-[1.2rem] border border-dashed border-[#b7ddd0] bg-white text-[#166a55] transition-colors hover:bg-[#f6fbf8]"
+    >
+        <Users size={26} />
+        <span className="mt-4 text-lg font-semibold">Add Dependant</span>
+    </button>
+);
+const PlanningImpactCard = ({ icon: Icon, title, body, badge, badgeTone, cta, onClick }) => (
+    <div className="rounded-[1.2rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fcfb_0%,_#f1f8f5_100%)] px-5 py-5 shadow-sm">
+        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]">
+            <Icon size={18} />
+        </div>
+        <p className="mt-4 text-[1.15rem] font-bold text-slate-950">{title}</p>
+        <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
+        <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeTone}`}>{badge}</span>
+        <button type="button" onClick={onClick} className="mt-4 block text-sm font-semibold text-[#166a55]">
+            {cta}
+        </button>
+    </div>
+);
+const SecurityStatusCard = ({ icon: Icon, title, subtitle, badge, badgeTone = 'bg-[#e7f6f1] text-[#166a55]', accent = false, actionText }) => (
+    <div className={`rounded-[1.2rem] border px-5 py-6 text-center shadow-sm ${accent ? 'border-[#b7ddd0] bg-[linear-gradient(180deg,_#eef8f4_0%,_#e6f4ee_100%)]' : 'border-emerald-100 bg-white'}`}>
+        <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#eef8f4] text-[#1f7f63]">
+            <Icon size={22} />
+        </div>
+        <p className="mt-5 text-[1.15rem] font-bold text-slate-950">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p>
+        <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeTone}`}>{badge}</span>
+        {actionText ? <p className="mt-4 text-sm font-semibold text-[#2f74db]">{actionText}</p> : null}
+    </div>
+);
+const SettingsToggleRow = ({ title, subtitle, enabled = false }) => (
+    <div className="flex items-center justify-between gap-4 border-b border-emerald-100 py-4 last:border-b-0 last:pb-0">
+        <div>
+            <p className="text-base font-semibold text-slate-950">{title}</p>
+            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+        </div>
+        <span className={`relative inline-flex h-8 w-14 rounded-full transition-colors ${enabled ? 'bg-[#1f7f63]' : 'bg-[#d7ece4]'}`}>
+            <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-sm transition-all ${enabled ? 'left-7' : 'left-1'}`} />
+        </span>
+    </div>
+);
+const LinkedAccountRow = ({ icon: Icon, title, status, action, tone = 'connect', detail }) => {
+    const actionClass = tone === 'disconnect'
+        ? 'border-[#f5c6c6] bg-[#fff7f7] text-[#dd5a5a]'
+        : tone === 'verify'
+            ? 'border-[#b7ddd0] bg-[#eef8f4] text-[#166a55]'
+            : 'border-[#b7ddd0] bg-white text-[#166a55]';
+    return (
+        <div className="flex items-center justify-between gap-4 border-b border-emerald-100 py-4 last:border-b-0 last:pb-0">
+            <div className="flex items-center gap-3">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[#f6fbf8] text-[#1f7f63]">
+                    <Icon size={19} />
+                </div>
+                <div>
+                    <p className="text-base font-bold text-slate-950">{title}</p>
+                    <p className="mt-1 text-sm text-slate-500">{status}</p>
+                    {detail ? <p className="mt-0.5 text-xs text-slate-400">{detail}</p> : null}
+                </div>
+            </div>
+            <button type="button" className={`rounded-full border px-4 py-2 text-sm font-semibold ${actionClass}`}>{action}</button>
+        </div>
+    );
+};
+const PreferenceDatum = ({ label, value, helper, toggle = false, enabled = false, action }) => (
+    <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">{label}</p>
+        <div className="mt-3 flex items-start justify-between gap-4">
+            <div>
+                <p className="text-[1.15rem] font-semibold text-slate-950">{value}</p>
+                {helper ? <p className="mt-1 text-sm text-slate-500">{helper}</p> : null}
+                {action ? <button type="button" className="mt-3 rounded-[0.9rem] border border-[#f0d39a] bg-[#fff6e7] px-4 py-2 text-sm font-semibold text-[#9a6200]">{action}</button> : null}
+            </div>
+            {toggle ? (
+                <span className={`relative inline-flex h-8 w-14 rounded-full transition-colors ${enabled ? 'bg-[#1f7f63]' : 'bg-[#d7ece4]'}`}>
+                    <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-sm transition-all ${enabled ? 'left-7' : 'left-1'}`} />
+                </span>
+            ) : null}
+        </div>
+    </div>
+);
+const ProfileIncomeOverview = ({ incomes, totalIncome, recurringIncome, currentMonth, summary, user, prefsForm, onAddIncome, onEditBaseline, onOpenBudget, onEditIncome }) => {
+    const sortedIncomes = [...(incomes || [])].sort((a, b) => incomeAmount(b) - incomeAmount(a));
+    const salaryIncomes = sortedIncomes.filter((income) => {
+        const hint = incomeHint(income);
+        return hint.includes('salary') || hint.includes('employ') || hint.includes('payroll') || hint.includes('paye') || hint.includes('wage');
+    });
+    const investmentIncomes = sortedIncomes.filter((income) => {
+        const hint = incomeHint(income);
+        return hint.includes('dividend') || hint.includes('interest') || hint.includes('t-bill') || hint.includes('treasury') || hint.includes('bond') || hint.includes('invest');
+    });
+    const primarySalaryIncome = salaryIncomes[0] || sortedIncomes[0] || null;
+    const primarySalary = incomeAmount(primarySalaryIncome);
+    const sideIncomeTotal = Math.max(sortedIncomes.reduce((sum, income) => sum + incomeAmount(income), 0) - primarySalary, 0);
+    const investmentIncomeTotal = investmentIncomes.reduce((sum, income) => sum + incomeAmount(income), 0);
+    const displayedTotal = Number(currentMonth?.total_income || totalIncome || primarySalary || 0);
+    const savingsRate = Math.round(Number(currentMonth?.savings_rate || 0));
+    const needsPercent = Math.min(65, Math.round(Math.max(0, 100 - savingsRate) * 0.62));
+    const wantsPercent = Math.max(0, 100 - savingsRate - needsPercent);
+    const savingsPercent = Math.max(0, savingsRate);
+    const needsAmount = Math.round((displayedTotal * needsPercent) / 100);
+    const wantsAmount = Math.round((displayedTotal * wantsPercent) / 100);
+    const savingsAmount = Math.round((displayedTotal * savingsPercent) / 100);
+    const sourceRows = [
+        primarySalaryIncome ? {
+            icon: Briefcase,
+            title: primarySalaryIncome.source || primarySalaryIncome.description || 'Primary Salary',
+            note: `${primarySalaryIncome.category_name || 'Primary income'} · ${incomeNote(primarySalaryIncome)}`,
+            amount: fmtKES(primarySalary),
+            subnote: primarySalaryIncome.is_recurring ? 'Monthly net' : 'Current entry',
+            accent: 'text-[#1f7f63]',
+            bg: 'bg-[#eef8f4]',
+        } : null,
+        sideIncomeTotal > 0 ? {
+            icon: WalletCards,
+            title: 'Side Income',
+            note: 'Freelance, business, and other extra income',
+            amount: fmtKES(sideIncomeTotal),
+            subnote: 'Monthly average',
+            accent: 'text-[#df8a11]',
+            bg: 'bg-[#fff6e7]',
+        } : null,
+        investmentIncomeTotal > 0 ? {
+            icon: BarChart3,
+            title: 'Investment Returns',
+            note: 'Dividends, interest, and treasury income',
+            amount: fmtKES(investmentIncomeTotal),
+            subnote: 'Monthly estimate',
+            accent: 'text-[#2f74db]',
+            bg: 'bg-[#eef4ff]',
+        } : null,
+    ].filter(Boolean);
+    const topRows = sourceRows.length ? sourceRows : sortedIncomes.slice(0, 3).map((income, index) => ({
+        icon: index === 0 ? Briefcase : index === 1 ? WalletCards : BarChart3,
+        title: income.description || income.source || `Income ${index + 1}`,
+        note: `${income.category_name || 'Tracked source'} · ${incomeNote(income)}`,
+        amount: fmtKES(incomeAmount(income)),
+        subnote: income.is_recurring ? 'Monthly equivalent' : 'Recorded amount',
+        accent: index === 1 ? 'text-[#df8a11]' : index === 2 ? 'text-[#2f74db]' : 'text-[#1f7f63]',
+        bg: index === 1 ? 'bg-[#fff6e7]' : index === 2 ? 'bg-[#eef4ff]' : 'bg-[#eef8f4]',
+    }));
+    const incomeMix = [
+        { label: 'Primary Salary', percent: displayedTotal > 0 ? Math.round((primarySalary / displayedTotal) * 100) : 0, color: '#1f7f63' },
+        { label: 'Side Income', percent: displayedTotal > 0 ? Math.round((sideIncomeTotal / displayedTotal) * 100) : 0, color: '#46b78f' },
+        { label: 'Investments', percent: displayedTotal > 0 ? Math.round((investmentIncomeTotal / displayedTotal) * 100) : 0, color: '#3b82f6' },
+        { label: 'Recurring', percent: displayedTotal > 0 ? Math.round((Number(recurringIncome || 0) / displayedTotal) * 100) : 0, color: '#7b61d9' },
+        { label: 'Flexible', percent: displayedTotal > 0 ? Math.max(0, 100 - Math.round((Number(recurringIncome || 0) / displayedTotal) * 100) - Math.round((investmentIncomeTotal / displayedTotal) * 100)) : 0, color: '#ef4444' },
+    ];
 
-const UserProfilePanel = ({ initialTab }) => {
+    return (
+        <section className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <IncomeMetricCard label="Total Monthly Income" value={fmtKES(displayedTotal)} subtitle={currentMonth?.period_display || 'Current period'} featured />
+                <IncomeMetricCard label="Primary Salary" value={fmtKES(primarySalary)} subtitle={primarySalaryIncome ? 'Net of PAYE' : 'Add salary income'} />
+                <IncomeMetricCard label="Side Income" value={fmtKES(sideIncomeTotal)} subtitle={sideIncomeTotal > 0 ? 'Freelance / other' : 'Add extra income'} />
+                <IncomeMetricCard label="Savings Rate" value={`${savingsRate}%`} subtitle={savingsRate >= 20 ? 'Goal achieved' : 'Goal: 20%'} accent="text-[#7a57d1]" />
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.1fr)]">
+                <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]">
+                            <Wallet size={18} />
+                        </div>
+                        <p className="text-[1.45rem] font-bold tracking-tight text-slate-950">Income Sources</p>
+                    </div>
+                    <div className="mt-5 space-y-1">
+                        {topRows.map((row) => (
+                            <IncomeSourceRow key={`${row.title}-${row.amount}`} {...row} />
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onAddIncome}
+                        className="mt-5 flex w-full items-center justify-center rounded-[1.1rem] border border-dashed border-[#b7ddd0] bg-[#fbfffd] px-4 py-4 text-[#166a55] transition-colors hover:bg-[#f4fbf7]"
+                    >
+                        <span className="text-base font-semibold">+ Add Another Income Source</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onEditIncome}
+                        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e5f5ee]"
+                    >
+                        <Pencil size={15} className="text-[#9a6200]" />
+                        Edit Income Details
+                    </button>
+                </article>
+
+                <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]">
+                            <Briefcase size={18} />
+                        </div>
+                        <p className="text-[1.45rem] font-bold tracking-tight text-slate-950">Employment Details</p>
+                    </div>
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
+                        <Datum label="Employment status" value={primarySalaryIncome ? 'Income Sources Active' : 'Add income details'} />
+                        <Datum label="Employer" value={primarySalaryIncome?.source || primarySalaryIncome?.description || 'Not added yet'} />
+                        <Datum label="Job title" value={user?.profile?.job_title || primarySalaryIncome?.category_name || 'Not added yet'} />
+                        <Datum label="Years employed" value={user?.profile?.years_employed || 'Not added yet'} />
+                        <Datum label="Default currency" value={`${summary?.currency || 'KES'} - Kenyan Shilling`} />
+                        <Datum label="Weekly summary" value={prefsForm.receive_weekly_summary ? 'Enabled' : 'Disabled'} />
+                        <Datum label="Gross monthly salary" value={fmtKES(displayedTotal)} />
+                        <Datum label="PAYE (estimated)" value={estimatePAYE(primarySalary) ? fmtKES(estimatePAYE(primarySalary)) : 'Not available yet'} />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onEditBaseline}
+                        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-[#f0d39a] bg-[#fff6e7] px-4 py-3 text-sm font-semibold text-[#9a6200] transition-colors hover:bg-[#fff0d8]"
+                    >
+                        <Pencil size={15} />
+                        Edit Employment Details
+                    </button>
+                </article>
+            </div>
+
+            <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#2f74db]">
+                        <BarChart3 size={18} />
+                    </div>
+                    <p className="text-[1.45rem] font-bold tracking-tight text-slate-950">Income & Allocation Breakdown</p>
+                </div>
+                <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]">
+                    <div className="space-y-4">
+                        <p className="text-lg font-semibold text-slate-900">Your income mix this month</p>
+                        <div className="space-y-3">
+                            {incomeMix.map((item) => <AllocationBarRow key={item.label} label={item.label} percent={item.percent} color={item.color} />)}
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        <p className="text-lg font-semibold text-slate-900">50/30/20 Rule Health Check</p>
+                        <RuleHealthCard
+                            title="Needs (50%)"
+                            status={needsPercent <= 50 ? ' - On Track' : ' - Watch Level'}
+                            amount={fmtKES(needsAmount)}
+                            target={fmtKES(Math.round(displayedTotal * 0.5))}
+                            note={needsPercent <= 50 ? '' : 'A tighter budget can create more breathing room.'}
+                            tone={needsPercent <= 50 ? 'border-[#1f9c72] bg-[#edf8f3] text-[#166a55]' : 'border-[#df8a11] bg-[#fff6e7] text-[#9a6200]'}
+                        />
+                        <RuleHealthCard
+                            title="Wants (30%)"
+                            status={wantsPercent <= 30 ? ' - On Track' : ' - Review'}
+                            amount={fmtKES(wantsAmount)}
+                            target={fmtKES(Math.round(displayedTotal * 0.3))}
+                            note={wantsPercent <= 30 ? '' : 'You may want to trim flexible spending next month.'}
+                            tone={wantsPercent <= 30 ? 'border-[#1f9c72] bg-[#edf8f3] text-[#166a55]' : 'border-[#df8a11] bg-[#fff6e7] text-[#9a6200]'}
+                        />
+                        <RuleHealthCard
+                            title="Savings (20%)"
+                            status={savingsPercent >= 20 ? ' - Healthy' : ' - Nearly There'}
+                            amount={fmtKES(savingsAmount)}
+                            target={fmtKES(Math.round(displayedTotal * 0.2))}
+                            note={savingsPercent >= 20 ? 'Your savings pace is in a strong place.' : `Add ${fmtKES(Math.max(Math.round(displayedTotal * 0.2) - savingsAmount, 0))} to hit 20%.`}
+                            tone={savingsPercent >= 20 ? 'border-[#1f9c72] bg-[#edf8f3] text-[#166a55]' : 'border-[#df8a11] bg-[#fff6e7] text-[#9a6200]'}
+                        />
+                        <button
+                            type="button"
+                            onClick={onOpenBudget}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-[#166a55] transition-colors hover:bg-[#e5f5ee]"
+                        >
+                            <BarChart3 size={16} />
+                            Open Full Budget Planner
+                        </button>
+                    </div>
+                </div>
+            </article>
+        </section>
+    );
+};
+
+const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const { categories, incomes, summary, loading: incomeLoading, error: incomeError, fetchIncomes, fetchSummary, deleteIncome, createCategory, addQuickIncome } = useIncome();
     const [user, setUser] = useState(null);
     const [workspace, setWorkspace] = useState(readWorkspace);
@@ -176,6 +689,78 @@ const UserProfilePanel = ({ initialTab }) => {
     const completion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
     const remaining = sections.filter((s) => !s.complete).length;
     const fullName = `${user?.first_name || 'Member'} ${user?.last_name || ''}`.trim();
+    const dependantCount = Number(workspace.dependentsCount || 0);
+    const primaryMemberName = user?.first_name ? `${user.first_name} Household` : 'Family Member';
+    const familyMembers = useMemo(() => {
+        const notes = (workspace.familyNotes || '').trim();
+        if (dependantCount <= 0) return [];
+        return Array.from({ length: dependantCount }).map((_, index) => {
+            const relation = index === 0 ? 'Spouse / Partner' : index === 1 ? 'Child' : 'Other Dependant';
+            const name = index === 0 ? primaryMemberName : relation === 'Child' ? `Child ${index}` : `Dependant ${index + 1}`;
+            const badgeTone = index === 0 ? 'bg-[#e7f6f1] text-[#166a55]' : relation === 'Child' ? 'bg-[#eef4ff] text-[#2f74db]' : 'bg-[#f3ecff] text-[#7a57d1]';
+            const badge = index === 0 ? 'Household support' : relation === 'Child' ? 'Education needs' : 'Care planning';
+            return {
+                initials: name.split(' ').map((part) => part.charAt(0)).join('').slice(0, 2).toUpperCase(),
+                name,
+                role: relation,
+                age: notes ? 'Saved in household notes' : 'Add details in notes',
+                tag: badge,
+                tagTone: badgeTone,
+            };
+        });
+    }, [dependantCount, primaryMemberName, workspace.familyNotes]);
+    const spouseCount = dependantCount > 0 ? 1 : 0;
+    const childrenCount = dependantCount > 1 ? 1 : 0;
+    const otherDependantsCount = Math.max(dependantCount - spouseCount - childrenCount, 0);
+    const estimatedProtectionCover = dependantCount > 0 ? dependantCount * 3800000 : 0;
+    const estimatedEmergencyFund = dependantCount > 0 ? dependantCount * 190000 : 0;
+    const goalBuckets = useMemo(() => (
+        Object.entries(GOAL_META).map(([type, meta]) => {
+            const detail = workspace[meta.detailKey] || defaults[meta.detailKey];
+            const hasGoal = Boolean(detail?.name || workspace[meta.key]);
+            return {
+                type,
+                meta,
+                goals: hasGoal ? [{
+                    name: detail.name || workspace[meta.key],
+                    targetAmount: detail.targetAmount,
+                    currentSavings: detail.currentSavings,
+                    targetDate: detail.targetDate,
+                    linkedProduct: detail.linkedProduct,
+                }] : [],
+            };
+        })
+    ), [workspace]);
+    const ecosystemCards = [
+        {
+            title: 'Budget Planner',
+            helper: 'Powered by your income & goals',
+            icon: BarChart3,
+            cta: 'Open',
+            action: () => onSelectSection?.('budget'),
+        },
+        {
+            title: 'Investment Planner',
+            helper: 'Tailored to your risk appetite',
+            icon: WalletCards,
+            cta: 'Open',
+            action: () => onSelectSection?.('investments'),
+        },
+        {
+            title: 'Protection Planner',
+            helper: 'Based on your dependants',
+            icon: ShieldCheck,
+            cta: 'Open',
+            action: () => onSelectSection?.('protection'),
+        },
+        {
+            title: 'Compare Hub',
+            helper: 'Personalised product comparisons',
+            icon: Wallet,
+            cta: 'Open',
+            action: () => onSelectSection?.('comparehub'),
+        },
+    ];
 
     useEffect(() => {
         if (initialTab) {
@@ -337,10 +922,10 @@ const UserProfilePanel = ({ initialTab }) => {
     return (
         <div className="space-y-6">
             {(error || incomeError) && <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm"><div className="flex items-start gap-3"><AlertCircle size={18} className="mt-0.5 shrink-0" /><div><p className="font-semibold">We could not finish that update.</p><p className="mt-1">{error || incomeError}</p></div></div></div>}
-            {success && <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-800 shadow-sm">{success}</div>}
+            {success && <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-sm text-primary-800 shadow-sm">{success}</div>}
 
-            <section className="relative overflow-hidden rounded-[1.65rem] bg-[#0f5f4f] p-5 text-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0f4f43] via-[#156854] to-[#1f7761]" />
+            <section className="relative overflow-hidden rounded-[1.65rem] bg-primary-600 p-5 text-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(240,201,77,0.14),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.06),_transparent_30%)]" />
                 <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-4">
@@ -354,15 +939,15 @@ const UserProfilePanel = ({ initialTab }) => {
                 </div>
             </section>
 
-            <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-2 shadow-sm"><div className="flex flex-wrap gap-2">{tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActiveTab(id)} className={`inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold transition-all ${activeTab === id ? 'bg-[#0f5f4f] text-white shadow-md shadow-primary-900/20' : 'text-slate-600 hover:bg-[#f4faf7] hover:text-slate-950'}`}><Icon size={16} />{label}</button>)}</div></section>
+            <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-2 shadow-sm"><div className="flex flex-wrap gap-2">{tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActiveTab(id)} className={`inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold transition-all ${activeTab === id ? 'bg-primary-600 text-white shadow-md shadow-primary-900/20' : 'text-slate-600 hover:bg-[#f4faf7] hover:text-slate-950'}`}><Icon size={16} />{label}</button>)}</div></section>
 
-            {activeTab === 'goals' && <section className="space-y-5"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><SummaryCard label="Active Goals" value={String(goalCount)} subtitle="Across all horizons" accent="bg-[#0f5f4f]" dark compact onClick={() => openGoalModal(goalForm.selectedType || 'short')} /><GoalActionCard label={workspace.shortTermGoal ? workspace.shortTermGoal : 'Add Short-Term Goal'} helper={workspace.shortTermGoalDetails?.name || 'Under 12 months'} color="bg-[#37c837]" active={Boolean(workspace.shortTermGoal)} onClick={() => openGoalModal('short')} /><GoalActionCard label={workspace.mediumTermGoal ? workspace.mediumTermGoal : 'Add Medium-Term Goal'} helper={workspace.mediumTermGoalDetails?.name || '1 - 5 years'} color="bg-[#f6da1a]" active={Boolean(workspace.mediumTermGoal)} onClick={() => openGoalModal('medium')} /><GoalActionCard label={workspace.longTermGoal ? workspace.longTermGoal : 'Add Long-Term Goal'} helper={workspace.longTermGoalDetails?.name || '5+ years'} color="bg-[#8a63df]" active={Boolean(workspace.longTermGoal)} onClick={() => openGoalModal('long')} /></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-slate-950"><Target size={16} className="text-primary-700" /><p className="text-lg font-bold">Primary Financial Goal & Preferences</p></div><div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4"><Datum label="Primary financial goal" value={goalLabel(user?.profile?.primary_financial_goal)} /><Datum label="Risk appetite" value={workspace.riskAppetite || defaults.riskAppetite} /><Datum label="Investment horizon" value={workspace.investmentHorizon || defaults.investmentHorizon} /><Datum label="Preferred products" value={workspace.preferredProducts || defaults.preferredProducts} /></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Datum label="Financial motivation" value={workspace.financialMotivation || 'Add your motivation to personalize guidance'} /><Datum label="Goal coverage" value={`${goalCount} horizons active`} /></div><button type="button" onClick={() => setPreferencesModalOpen(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-amber-200 bg-[#fff6e7] px-4 py-3 text-sm font-semibold text-[#9a6200] transition-colors hover:bg-[#fff0d8]"><Pencil size={15} />Edit Primary Goal & Preferences</button></article></section>}
+            {activeTab === 'goals' && <section className="space-y-5"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><SummaryCard label="Active Goals" value={String(goalCount)} subtitle="Across all horizons" accent="bg-primary-600" dark compact onClick={() => openGoalModal(goalForm.selectedType || 'short')} /><GoalActionCard label={workspace.shortTermGoal ? workspace.shortTermGoal : 'Add Short-Term Goal'} helper={workspace.shortTermGoalDetails?.name || 'Under 12 months'} color="bg-[#37c837]" active={Boolean(workspace.shortTermGoal)} onClick={() => openGoalModal('short')} /><GoalActionCard label={workspace.mediumTermGoal ? workspace.mediumTermGoal : 'Add Medium-Term Goal'} helper={workspace.mediumTermGoalDetails?.name || '1 - 5 years'} color="bg-[#f6da1a]" active={Boolean(workspace.mediumTermGoal)} onClick={() => openGoalModal('medium')} /><GoalActionCard label={workspace.longTermGoal ? workspace.longTermGoal : 'Add Long-Term Goal'} helper={workspace.longTermGoalDetails?.name || '5+ years'} color="bg-[#8a63df]" active={Boolean(workspace.longTermGoal)} onClick={() => openGoalModal('long')} /></div>{goalBuckets.map(({ type, meta, goals }) => <GoalBucketSection key={type} title={meta.label} helper={meta.helper} meta={meta} goals={goals} onAdd={() => openGoalModal(type)} onEdit={() => openGoalModal(type)} />)}<article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-slate-950"><Target size={16} className="text-primary-700" /><p className="text-lg font-bold">Primary Financial Goal & Preferences</p></div><div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4"><Datum label="Primary financial goal" value={goalLabel(user?.profile?.primary_financial_goal)} /><Datum label="Risk appetite" value={workspace.riskAppetite || defaults.riskAppetite} /><Datum label="Investment horizon" value={workspace.investmentHorizon || defaults.investmentHorizon} /><Datum label="Preferred products" value={workspace.preferredProducts || defaults.preferredProducts} /></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Datum label="Financial motivation" value={workspace.financialMotivation || 'Add your motivation to personalize guidance'} /><Datum label="Goal coverage" value={`${goalCount} horizons active`} /></div><button type="button" onClick={() => setPreferencesModalOpen(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-amber-200 bg-[#fff6e7] px-4 py-3 text-sm font-semibold text-[#9a6200] transition-colors hover:bg-[#fff0d8]"><Pencil size={15} />Edit Primary Goal & Preferences</button><div className="mt-5"><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></div></article></section>}
 
-            {activeTab === 'income' && <section className="space-y-5"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-lg font-bold text-slate-950">Income Manager inside your profile</p><p className="mt-1 text-sm text-slate-600">Capture your income baseline, manage current sources, and keep your planning inputs fresh.</p></div><div className="flex flex-wrap gap-3"><SecondaryButton type="button" onClick={() => setShowQuickIncome(true)}>Quick Add</SecondaryButton><PrimaryButton type="button" onClick={() => { setSelectedIncome(null); setShowIncomeForm(true); }}>Add Income</PrimaryButton></div></div>{editingBaseline ? <form onSubmit={saveBaseline} className="mt-5 grid gap-4 rounded-[1.2rem] border border-emerald-100 bg-[#f7fcfa] p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end"><Input label="Monthly income baseline" name="monthly_income" type="number" value={baselineForm.monthly_income} onChange={(e) => setBaselineForm({ monthly_income: e.target.value })} placeholder="120000" /><div className="flex flex-wrap gap-3"><PrimaryButton type="submit" disabled={submitting.baseline}>{submitting.baseline ? 'Saving...' : 'Save Baseline'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingBaseline(false)}>Cancel</SecondaryButton></div></form> : <div className="mt-5 rounded-[1.2rem] border border-emerald-100 bg-[#f7fcfa] p-4"><div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Household Income Baseline</p><p className="mt-1 text-2xl font-extrabold text-slate-950">{fmtKES(user?.profile?.monthly_income)}</p><p className="mt-1 text-sm text-slate-600">Used when you are still setting up or before full income records are added.</p></div><SecondaryButton type="button" onClick={() => setEditingBaseline(true)}><Pencil size={15} />Edit Baseline</SecondaryButton></div></div>}</article><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><SummaryCard label="Current Income" value={fmtKES(currentMonth.total_income || incomeValue)} subtitle={currentMonth.period_display || 'Current period'} /><SummaryCard label="Recurring Income" value={fmtKES(summary?.monthly_recurring_income)} subtitle="Reliable monthly earnings" /><SummaryCard label="Income Sources" value={String(summary?.income_sources_count || incomes.length || 0)} subtitle="Tracked categories" /><SummaryCard label="Savings Rate" value={`${Math.round(Number(currentMonth.savings_rate || 0))}%`} subtitle={currentMonth.is_surplus ? 'Healthy surplus month' : 'Track against spending'} /></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div><p className="text-lg font-bold text-slate-950">Recent income activity</p><p className="mt-1 text-sm text-slate-600">Returning users can adjust, tidy, or add new income without leaving the profile workspace.</p></div><div className="mt-5"><IncomeList incomes={incomes.slice(0, 6)} loading={incomeLoading} onEdit={(income) => { setSelectedIncome(income); setShowIncomeForm(true); }} onDelete={deleteIncome} currency={summary?.currency || 'KES'} /></div></article></section>}
+            {activeTab === 'income' && <section className="space-y-5"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-sm text-slate-600">Capture your income baseline, manage current sources, and keep your planning inputs fresh.</p></div><div className="flex flex-wrap gap-3"><SecondaryButton type="button" onClick={() => setShowQuickIncome(true)}>Quick Add</SecondaryButton><PrimaryButton type="button" onClick={() => { setSelectedIncome(null); setShowIncomeForm(true); }}>Add Income</PrimaryButton></div></div></article><ProfileIncomeOverview incomes={incomes} totalIncome={incomeValue} recurringIncome={summary?.monthly_recurring_income} currentMonth={currentMonth} summary={summary} user={user} prefsForm={prefsForm} onAddIncome={() => { setSelectedIncome(null); setShowIncomeForm(true); }} onEditBaseline={() => setEditingBaseline(true)} onOpenBudget={() => onSelectSection?.('budget')} onEditIncome={() => { setSelectedIncome(null); setShowIncomeForm(true); }} /><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div><p className="text-lg font-bold text-slate-950">Recent income activity</p><p className="mt-1 text-sm text-slate-600">Returning users can adjust, tidy, or add new income without leaving the profile workspace.</p></div><div className="mt-5"><IncomeList incomes={incomes.slice(0, 6)} loading={incomeLoading} onEdit={(income) => { setSelectedIncome(income); setShowIncomeForm(true); }} onDelete={deleteIncome} currency={summary?.currency || 'KES'} /></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
 
-            {activeTab === 'dependents' && <section className="space-y-5"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"><SummaryCard label="Dependants" value={dependentsForm.dependentsCount || workspace.dependentsCount || '0'} subtitle="Household members you support" /><SummaryCard label="Household Context" value={workspace.familyNotes ? 'Added' : 'Optional'} subtitle={workspace.familyNotes ? 'Notes available for planning' : 'Add notes for more tailored guidance'} /><SummaryCard label="Profile Impact" value={sections.find((s) => s.id === 'dependents')?.complete ? 'Ready' : 'Pending'} subtitle="Used across recommendations" /></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-slate-950"><Users size={16} className="text-primary-700" /><p className="text-lg font-bold">Dependants & Household Notes</p></div>{editingDependents ? <form onSubmit={saveDependents} className="mt-5 space-y-4"><Input label="Number of dependants" name="dependentsCount" type="number" value={dependentsForm.dependentsCount} onChange={(e) => setDependentsForm((c) => ({ ...c, dependentsCount: e.target.value }))} placeholder="0" /><TextArea label="Family notes" name="familyNotes" value={dependentsForm.familyNotes} onChange={(e) => setDependentsForm((c) => ({ ...c, familyNotes: e.target.value }))} rows={5} /><div className="flex flex-wrap gap-3"><PrimaryButton type="submit" disabled={submitting.dependents}>{submitting.dependents ? 'Saving...' : 'Save Dependants'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingDependents(false)}>Cancel</SecondaryButton></div></form> : <><div className="mt-5 grid gap-5 md:grid-cols-2"><Datum label="Dependants count" value={workspace.dependentsCount || 'Not added yet'} /><Datum label="Household notes" value={workspace.familyNotes || 'Add household context to personalize recommendations'} /></div><button type="button" onClick={() => setEditingDependents(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"><Pencil size={15} className="text-amber-600" />Edit Dependants & Notes</button></>}</article></section>}
+            {activeTab === 'dependents' && <section className="space-y-5"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5"><DependantsSummaryCard value={dependantCount} label="Total Dependants" /><DependantsSummaryCard value={spouseCount} label="Spouse / Partner" /><DependantsSummaryCard value={childrenCount} label="Children" /><DependantsSummaryCard value={otherDependantsCount} label="Other Dependants" /><DependantsSummaryCard value={dependantCount > 0 ? 'Ready' : 'Update'} label="Planning Status" accent={dependantCount > 0 ? 'text-[#166a55]' : 'text-[#df8a11]'} /></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><Users size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Family Members</p><span className="rounded-full bg-[#fff6e7] px-3 py-1 text-xs font-semibold text-[#9a6200]">Optional</span></div>{editingDependents ? <form onSubmit={saveDependents} className="mt-5 space-y-4"><Input label="Number of dependants" name="dependentsCount" type="number" value={dependentsForm.dependentsCount} onChange={(e) => setDependentsForm((c) => ({ ...c, dependentsCount: e.target.value }))} placeholder="0" /><TextArea label="Family notes" name="familyNotes" value={dependentsForm.familyNotes} onChange={(e) => setDependentsForm((c) => ({ ...c, familyNotes: e.target.value }))} rows={5} /><div className="flex flex-wrap gap-3"><PrimaryButton type="submit" disabled={submitting.dependents}>{submitting.dependents ? 'Saving...' : 'Save Dependants'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingDependents(false)}>Cancel</SecondaryButton></div></form> : <><div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{familyMembers.map((member) => <DependantMemberCard key={`${member.name}-${member.role}`} {...member} />)}<AddDependantCard onClick={() => setEditingDependents(true)} /></div><div className="mt-4 rounded-[1.1rem] border-l-4 border-[#1f9c72] bg-[#edf8f3] px-5 py-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">Why this matters:</span> {dependantCount > 0 ? `Your ${dependantCount} dependants shape your protection cover, emergency fund target, and long-term planning.` : 'Add your household details so we can personalise protection, savings, and retirement planning for you.'} <button type="button" onClick={() => onSelectSection?.('protection')} className="font-semibold text-[#166a55]">View Protection Planner</button></div><button type="button" onClick={() => setEditingDependents(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"><Pencil size={15} className="text-amber-600" />Edit Dependants & Notes</button></>}</article><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><LinkIcon size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">How Your Family Profile Shapes Your Planning</p></div><div className="mt-5 grid gap-4 xl:grid-cols-3"><PlanningImpactCard icon={ShieldCheck} title="Protection Planner" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended life cover starts around ${fmtKES(estimatedProtectionCover)}.` : 'Add dependants to estimate the right cover for your household.'} badge={dependantCount > 0 ? `Cover target: ${fmtKES(estimatedProtectionCover)}` : 'Awaiting dependant details'} badgeTone={dependantCount > 0 ? 'bg-[#ffe8e8] text-[#d94d4d]' : 'bg-[#eef8f4] text-[#166a55]'} cta="View Planner" onClick={() => onSelectSection?.('protection')} /><PlanningImpactCard icon={Wallet} title="Retirement Planner" body={dependantCount > 0 ? `Supporting ${dependantCount} people in retirement means your income plan needs a stronger buffer and clearer milestones.` : 'Household details help shape a more realistic retirement target.'} badge={dependantCount > 0 ? 'Family target in focus' : 'Add dependants first'} badgeTone="bg-[#fff6e7] text-[#9a6200]" cta="View Planner" onClick={() => onSelectSection?.('retirement')} /><PlanningImpactCard icon={BarChart3} title="Emergency Fund Target" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended emergency fund is about ${fmtKES(estimatedEmergencyFund)}.` : 'Your emergency fund target becomes clearer once household size is added.'} badge={goalCount > 0 ? 'Goal set in profile' : 'Update goal'} badgeTone="bg-[#e7f6f1] text-[#166a55]" cta="Update Goal" onClick={() => setActiveTab('goals')} /></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
 
-            {activeTab === 'security' && <section className="space-y-5"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-slate-950"><UserRound size={16} className="text-primary-700" /><p className="text-lg font-bold">Account Security & Preferences</p></div><div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><SecurityCard icon={KeyRound} title="Change Password" subtitle="Update your sign-in password" /><SecurityCard icon={ShieldCheck} title="Two-Factor Auth" subtitle="Recommended for stronger security" /><SecurityCard icon={Bell} title="Notifications" subtitle={prefsForm.receive_notifications ? 'Enabled' : 'Disabled'} /><SecurityCard icon={LinkIcon} title="Linked Accounts" subtitle="M-Pesa, bank, and future connections" /></div></article><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-slate-950"><Bell size={16} className="text-primary-700" /><p className="text-lg font-bold">Notification Preferences</p></div>{editingPrefs ? <form onSubmit={savePrefs} className="mt-5 space-y-4"><CheckRow label="Receive dashboard reminders" name="receive_notifications" checked={prefsForm.receive_notifications} onChange={(e) => setPrefsForm((c) => ({ ...c, receive_notifications: e.target.checked }))} /><CheckRow label="Receive weekly money summary" name="receive_weekly_summary" checked={prefsForm.receive_weekly_summary} onChange={(e) => setPrefsForm((c) => ({ ...c, receive_weekly_summary: e.target.checked }))} /><div className="flex flex-wrap gap-3"><PrimaryButton type="submit" disabled={submitting.prefs}>{submitting.prefs ? 'Saving...' : 'Save Preferences'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingPrefs(false)}>Cancel</SecondaryButton></div></form> : <><div className="mt-5 grid gap-5 md:grid-cols-2"><Datum label="Dashboard reminders" value={prefsForm.receive_notifications ? 'Enabled' : 'Disabled'} /><Datum label="Weekly summary emails" value={prefsForm.receive_weekly_summary ? 'Enabled' : 'Disabled'} /></div><button type="button" onClick={() => setEditingPrefs(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-amber-200 bg-[#fff6e7] px-4 py-3 text-sm font-semibold text-[#9a6200] transition-colors hover:bg-[#fff0d8]"><Pencil size={15} />Edit Security & Preferences</button></>}</article></section>}
+            {activeTab === 'security' && <section className="space-y-5"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-lg font-bold text-slate-950">Complete your profile to unlock personalised recommendations</p><p className="mt-1 text-sm text-slate-600">Add your dependants and long-term goals to get tailored planning across all tools.</p></div><div className="flex flex-wrap gap-2"><span className="rounded-full bg-[#e7f6f1] px-3 py-1 text-xs font-semibold text-[#166a55]">✓ Income</span><span className="rounded-full bg-[#e7f6f1] px-3 py-1 text-xs font-semibold text-[#166a55]">✓ Goals</span><span className="rounded-full bg-[#fff6e7] px-3 py-1 text-xs font-semibold text-[#9a6200]">{dependantCount > 0 ? '✓ Dependants' : 'Dependants'}</span><span className="rounded-full bg-[#f1f5f3] px-3 py-1 text-xs font-semibold text-slate-400">{workspace.longTermGoal ? '✓ Long-term' : 'Long-term'}</span></div></div></article><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-2 shadow-sm"><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setActiveTab('goals')} className="inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-600 transition-all hover:bg-[#f4faf7] hover:text-slate-950"><Target size={16} />Financial Goals</button><button type="button" onClick={() => setActiveTab('income')} className="inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-600 transition-all hover:bg-[#f4faf7] hover:text-slate-950"><Briefcase size={16} />Income Manager</button><button type="button" onClick={() => setActiveTab('dependents')} className="inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-600 transition-all hover:bg-[#f4faf7] hover:text-slate-950"><Users size={16} />Dependants</button><div className="inline-flex items-center gap-2 rounded-[1rem] bg-[#0f4d40] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#0f4d40]/20"><ShieldCheck size={16} />Security & Prefs</div></div></article><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]"><ShieldCheck size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Account Security & Preferences</p></div><div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4"><SecurityStatusCard icon={KeyRound} title="Change Password" subtitle="Update your sign-in password" badge="Update Now" badgeTone="bg-[#eef4ff] text-[#2f74db]" actionText="→ Update now" /><SecurityStatusCard icon={ShieldCheck} title="Two-Factor Auth" subtitle="Recommended for stronger security" badge="✓ Enabled" accent /><SecurityStatusCard icon={Bell} title="Notifications" subtitle="Manage your alert preferences" badge={prefsForm.receive_notifications ? '✓ Enabled' : 'Inactive'} /><SecurityStatusCard icon={LinkIcon} title="Linked Accounts" subtitle="M-Pesa, bank, and future connections" badge="2 Connected" badgeTone="bg-[#eef4ff] text-[#2f74db]" /></div></article><div className="grid gap-5 xl:grid-cols-2"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><Bell size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Notification Preferences</p></div>{editingPrefs ? <form onSubmit={savePrefs} className="mt-5 space-y-2"><CheckRow label="Receive dashboard reminders" name="receive_notifications" checked={prefsForm.receive_notifications} onChange={(e) => setPrefsForm((c) => ({ ...c, receive_notifications: e.target.checked }))} /><CheckRow label="Receive weekly money summary" name="receive_weekly_summary" checked={prefsForm.receive_weekly_summary} onChange={(e) => setPrefsForm((c) => ({ ...c, receive_weekly_summary: e.target.checked }))} /><div className="flex flex-wrap gap-3 pt-3"><PrimaryButton type="submit" disabled={submitting.prefs}>{submitting.prefs ? 'Saving...' : 'Save Preferences'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingPrefs(false)}>Cancel</SecondaryButton></div></form> : <><div className="mt-5"><SettingsToggleRow title="Budget Alerts" subtitle="Notify when spending exceeds category limits" enabled={prefsForm.receive_notifications} /><SettingsToggleRow title="Goal Milestones" subtitle="Celebrate when you hit savings targets" enabled={Boolean(goalCount)} /><SettingsToggleRow title="Market Updates" subtitle="NSE, T-Bill rates and market news" enabled={false} /><SettingsToggleRow title="Community Replies" subtitle="When someone responds to your posts" enabled={true} /><SettingsToggleRow title="Weekly Digest" subtitle="Sunday summary of your financial week" enabled={prefsForm.receive_weekly_summary} /><SettingsToggleRow title="AI Buddy Insights" subtitle="Personalised tips from your assistant" enabled={false} /></div><button type="button" onClick={() => setEditingPrefs(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-amber-200 bg-[#fff6e7] px-4 py-3 text-sm font-semibold text-[#9a6200] transition-colors hover:bg-[#fff0d8]"><Pencil size={15} />Edit Security & Preferences</button></>}</article><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><LinkIcon size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Linked Accounts</p></div><div className="mt-5"><LinkedAccountRow icon={Wallet} title="M-Pesa" status="Connected" detail="+254 727 005 993" action="Disconnect" tone="disconnect" /><LinkedAccountRow icon={Briefcase} title="KCB Bank" status="Connected" detail="...4521" action="Disconnect" tone="disconnect" /><LinkedAccountRow icon={Home} title="Equity Bank" status="Not connected" action="+ Connect" /><LinkedAccountRow icon={BarChart3} title="NSE / CDS Account" status="Pending verification" action="Verify" tone="verify" /><LinkedAccountRow icon={ShieldCheck} title="KRA iTax" status="Not connected" action="+ Connect" /></div><div className="mt-4 rounded-[1.05rem] border-l-4 border-[#1f7f63] bg-[#edf8f3] px-4 py-4 text-sm leading-6 text-slate-700">All connections use bank-grade encryption. Shilingi Moves can only read data, never move funds.</div></article></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#f3ecff] text-[#7a57d1]"><UserRound size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Account Preferences</p></div><div className="mt-5 grid gap-8 md:grid-cols-2 xl:grid-cols-3"><div className="space-y-6"><PreferenceDatum label="Display currency" value={`${summary?.currency || 'KES'} KES`} /><PreferenceDatum label="Date format" value="DD/MM/YYYY" /></div><div className="space-y-6"><PreferenceDatum label="Language" value="English" /><PreferenceDatum label="Membership" value={`${tierLabel(user)} - KES 499/mo`} helper="Current plan" action="Upgrade to Pro" /></div><div className="space-y-6"><PreferenceDatum label="Data & Privacy" value="Share anonymised data" helper="Helps improve Shilingi Moves" toggle enabled /><PreferenceDatum label="Personalised recommendations" value="AI-powered product suggestions" toggle enabled /></div></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
 
             {goalModalOpen && <ModalShell title="Add New Goal" icon={Target} onClose={() => setGoalModalOpen(false)}><form onSubmit={saveGoalModal} className="space-y-4 sm:space-y-5"><div><p className="text-sm font-medium text-slate-700">Goal Horizon</p><div className="mt-3 grid gap-2 sm:gap-3 md:grid-cols-3">{Object.entries(GOAL_META).map(([type, meta]) => <GoalTypeCard key={type} active={goalForm.selectedType === type} label={meta.label} helper={meta.helper} color={meta.color} onClick={() => setGoalForm((current) => ({ ...current, selectedType: type }))} />)}</div></div><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Primary Financial Goal" value={goalForm.primary_financial_goal} onChange={(e) => setGoalForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><Input label="Goal Name" value={goalForm.name} onChange={(e) => setGoalForm((current) => ({ ...current, name: e.target.value }))} placeholder="e.g. Emergency Fund, Holiday, Retirement..." /><Input label="Target Amount (KES)" value={goalForm.targetAmount} onChange={(e) => setGoalForm((current) => ({ ...current, targetAmount: e.target.value }))} placeholder="e.g. 100,000" /><Input label="Current Savings (KES)" value={goalForm.currentSavings} onChange={(e) => setGoalForm((current) => ({ ...current, currentSavings: e.target.value }))} placeholder="e.g. 25,000" /><Input label="Target Date" type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm((current) => ({ ...current, targetDate: e.target.value }))} /><Input label="Monthly Contribution (KES)" value={goalForm.monthlyContribution} onChange={(e) => setGoalForm((current) => ({ ...current, monthlyContribution: e.target.value }))} placeholder="e.g. 5,000" /></div><Select label="Link to Product (Optional)" value={goalForm.linkedProduct} onChange={(e) => setGoalForm((current) => ({ ...current, linkedProduct: e.target.value }))}><option value="">-- Select a savings vehicle --</option><option value="MMF">Money Market Fund</option><option value="SACCO">SACCO</option><option value="Savings Account">Savings Account</option><option value="Fixed Deposit">Fixed Deposit</option></Select><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setGoalModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.goal}>{submitting.goal ? 'Saving...' : 'Save Goal'}</PrimaryButton></div></form></ModalShell>}
 

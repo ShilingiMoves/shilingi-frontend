@@ -25,9 +25,9 @@ const ExpenseList = ({ expenses, onUpdate, compact = false }) => {
 
     const getPaymentMethodBadge = (method) => {
         const badges = {
-            CASH: { label: 'Cash', color: 'emerald' },
+            CASH: { label: 'Cash', color: 'primary' },
             CARD: { label: 'Card', color: 'indigo' },
-            MOBILE_MONEY: { label: 'M-Pesa', color: 'green' },
+            MOBILE_MONEY: { label: 'M-Pesa', color: 'primary' },
             BANK_TRANSFER: { label: 'Bank', color: 'blue' },
             OTHER: { label: 'Other', color: 'slate' },
         };

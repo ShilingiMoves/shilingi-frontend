@@ -44,7 +44,7 @@ const LearningHubPanel = () => {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-[1.4rem] bg-gradient-to-r from-[#0f6b5b] via-[#1a7b67] to-[#2b8f78] px-5 py-5 text-white shadow-sm">
+            <section className="rounded-[1.4rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-5 py-5 text-white shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h2 className="text-[2rem] font-extrabold tracking-tight">Learning Hub</h2>
@@ -63,7 +63,7 @@ const LearningHubPanel = () => {
                 </div>
             </section>
 
-            <div className="flex flex-wrap gap-2 rounded-[1rem] border border-emerald-100 bg-white p-1.5 shadow-sm">
+            <div className="flex flex-wrap gap-2 rounded-[1rem] border border-primary-100 bg-white p-1.5 shadow-sm">
                 {tabs.map((tab) => (
                     <button
                         key={tab}
@@ -86,7 +86,7 @@ const LearningHubPanel = () => {
                         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600">Continue where you left off</p>
                         <h3 className="mt-2 text-[1.45rem] font-bold text-slate-950">Unit 3: Investing In the NSE</h3>
                         <div className="mt-3 h-2.5 max-w-md rounded-full bg-[#dcece6]">
-                            <div className="h-2.5 w-[68%] rounded-full bg-[#43b39a]" />
+                            <div className="h-2.5 w-[68%] rounded-full bg-primary-500" />
                         </div>
                         <p className="mt-2 text-xs text-slate-500">68% - 12 mins left</p>
                     </div>
@@ -101,7 +101,7 @@ const LearningHubPanel = () => {
                 <h3 className="text-[1.35rem] font-bold text-slate-950">Learning Paths</h3>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {visibleCards.map((course) => (
-                        <article key={course.title} className="rounded-[1.25rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                        <article key={course.title} className="rounded-[1.25rem] border border-primary-100 bg-white p-4 shadow-sm">
                             <div className={`mb-4 flex h-20 items-center justify-center rounded-[1rem] ${course.accent}`}>
                                 <span className="text-3xl text-primary-700">▣</span>
                             </div>
@@ -125,7 +125,7 @@ const LearningHubPanel = () => {
                 </div>
                 <div className="grid gap-4 xl:grid-cols-2">
                     {expertArticles.map((article) => (
-                        <article key={article.title} className="rounded-[1.2rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                        <article key={article.title} className="rounded-[1.2rem] border border-primary-100 bg-white p-4 shadow-sm">
                             <div className="flex items-start gap-4">
                                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#eef8f5] text-2xl text-primary-700">✎</div>
                                 <div>
@@ -145,7 +145,7 @@ const LearningHubPanel = () => {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {assessments.map((item) => (
-                        <article key={item.title} className="rounded-[1.2rem] border border-emerald-100 bg-white p-5 text-center shadow-sm">
+                        <article key={item.title} className="rounded-[1.2rem] border border-primary-100 bg-white p-5 text-center shadow-sm">
                             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#eef8f5] text-3xl text-primary-700">◎</div>
                             <h4 className="mt-4 text-lg font-bold text-slate-900">{item.title}</h4>
                             <p className="mt-1 text-sm text-slate-500">{item.meta}</p>

@@ -283,7 +283,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
         { title: 'Budget Planner', subtitle: 'Monthly surplus builds NW', cta: 'Open', key: 'budget', icon: '📊' },
         { title: 'Retirement Planner', subtitle: 'FIRE number vs NW', cta: 'Plan', key: 'retirement', icon: '👵' },
         { title: 'Protection', subtitle: 'Insurance assets included', cta: 'View', key: 'protection', icon: '🛡️' },
-        { title: 'Buddy AI', subtitle: 'Wealth growth advice', cta: 'Chat', key: 'buddy', icon: '🤖' },
+        { title: 'Market Watch', subtitle: 'Track signals that affect wealth growth', cta: 'Open', key: 'marketwatch', icon: '📊' },
     ];
 
     return (
@@ -303,12 +303,12 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                 {error ? <Banner tone="danger" icon={<AlertCircle size={18} />} message={error} /> : null}
                 {submitError ? <Banner tone="warning" icon={<AlertCircle size={18} />} message={submitError} /> : null}
 
-                <div className="overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#0b3d2f] via-[#17634f] to-[#2d7b64] p-6 text-white shadow-[0_18px_55px_rgba(8,51,39,0.18)] lg:p-8">
+                <div className="overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-6 text-white shadow-[0_18px_55px_rgba(8,51,39,0.18)] lg:p-8">
                     <div className="dashboard-toolbar-row flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
                             <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-2xl shadow-inner shadow-white/10">💎</div>
                             <div className="space-y-2">
-                                <h1 className="dashboard-display-title text-white">Net Worth Overview</h1>
+                                <h1 className="dashboard-display-title text-white">Net Worth Tracker</h1>
                                 <p className="max-w-xl text-sm leading-6 text-white/78 lg:text-base">
                                     Your complete financial picture. Every asset, every liability, your true wealth score.
                                 </p>
@@ -344,7 +344,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     <StatCard label="Wealth Score" value={`${wealthScore} / 100`} accent="text-[#7c3aed]" helper={`${percentileLabel} of Shilingi users`} />
                 </div>
 
-                <div className="overflow-hidden rounded-[1.8rem] bg-gradient-to-r from-[#0f4a3a] via-[#155f4b] to-[#1f755d] p-6 text-white shadow-[0_16px_42px_rgba(8,51,39,0.18)]">
+                <div className="overflow-hidden rounded-[1.8rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-6 text-white shadow-[0_16px_42px_rgba(8,51,39,0.18)]">
                     <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <h2 className="dashboard-display-title text-white">Assets vs Liabilities - Visual Breakdown</h2>
@@ -612,7 +612,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[1.8rem] bg-gradient-to-r from-[#0f4a3a] via-[#165e4a] to-[#22725a] p-6 text-white shadow-[0_18px_40px_rgba(8,51,39,0.18)] lg:p-8">
+                <div className="overflow-hidden rounded-[1.8rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-6 text-white shadow-[0_18px_40px_rgba(8,51,39,0.18)] lg:p-8">
                     <div className="mb-5 max-w-3xl">
                         <h2 className="dashboard-display-title text-white">Net Worth Connects Everything in Your Financial Life</h2>
                         <p className="mt-2 text-sm text-white/72">

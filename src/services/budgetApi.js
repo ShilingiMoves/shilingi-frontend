@@ -21,15 +21,25 @@ function normaliseCategory(item, index = 0) {
 }
 
 function prepareCategoryPayload(data) {
-    if (!data || data.category === null || data.category === undefined || data.category === '') {
+    if (!data) {
         return data;
     }
 
-    const numericCategory = Number(data.category);
+    const nextData = { ...data };
+
+    if (nextData.payment_method === 'MOBILE_MONEY') {
+        nextData.payment_method = 'MPESA';
+    }
+
+    if (nextData.category === null || nextData.category === undefined || nextData.category === '') {
+        return nextData;
+    }
+
+    const numericCategory = Number(nextData.category);
 
     return {
-        ...data,
-        category: Number.isNaN(numericCategory) ? data.category : numericCategory,
+        ...nextData,
+        category: Number.isNaN(numericCategory) ? nextData.category : numericCategory,
     };
 }
 
@@ -91,7 +101,7 @@ export async function quickExpense(data) {
 }
 
 export async function updateExpense(uuid, data) {
-    const response = await apiClient.patch(`${BASE_PATH}/expenses/${uuid}/`, data);
+    const response = await apiClient.patch(`${BASE_PATH}/expenses/${uuid}/`, prepareCategoryPayload(data));
     return response?.data || response;
 }
 

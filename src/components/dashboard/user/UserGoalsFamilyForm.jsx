@@ -97,7 +97,7 @@ const UserGoalsFamilyForm = () => {
                     <Button type="submit" variant="primary" className="justify-center">
                         Save goals
                     </Button>
-                    {saved && <p className="text-sm text-emerald-700">Saved to this device for your dashboard workspace.</p>}
+                    {saved && <p className="text-sm text-primary-700">Saved to this device for your dashboard workspace.</p>}
                 </div>
             </form>
 
@@ -139,7 +139,7 @@ const UserGoalsFamilyForm = () => {
                     <Button type="submit" variant="secondary" className="justify-center">
                         Save family context
                     </Button>
-                    {saved && <p className="text-sm text-emerald-700">Saved to this device for your dashboard workspace.</p>}
+                    {saved && <p className="text-sm text-primary-700">Saved to this device for your dashboard workspace.</p>}
                 </div>
             </form>
         </div>

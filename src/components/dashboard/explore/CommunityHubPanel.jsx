@@ -814,11 +814,11 @@ const LeaderboardView = ({ identity, openActionModal, communityState }) => {
 };
 
 const SectionHeader = ({ title, description, actionLabel, onAction }) => (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="dashboard-display-title text-slate-900">{title}</h2><p className="mt-2 text-sm text-slate-500">{description}</p></div><button type="button" onClick={onAction} className="rounded-full bg-[#1c6c5d] px-5 py-3 text-sm font-semibold text-white">{actionLabel}{actionLabel.includes('Create') || actionLabel.includes('Ask') ? ' →' : ''}</button></div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="dashboard-display-title text-slate-900">{title}</h2><p className="mt-2 text-sm text-slate-500">{description}</p></div><button type="button" onClick={onAction} className="rounded-full bg-primary-700 px-5 py-3 text-sm font-semibold text-white">{actionLabel}{actionLabel.includes('Create') || actionLabel.includes('Ask') ? ' →' : ''}</button></div>
 );
 
 const HeroMetric = ({ value, label, icon = null }) => (<div className="min-w-[110px] border-r border-white/18 pr-6 last:border-r-0 last:pr-0"><p className="flex items-center gap-2 text-[2rem] font-extrabold leading-none text-amber-300">{icon}{value}</p><p className="mt-1 text-sm text-white/65">{label}</p></div>);
-const HeroButton = ({ children, solid = false, ...props }) => (<button type="button" className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${solid ? 'bg-[#fff5e8] text-[#0f5132]' : 'border border-white/25 bg-white/10 text-white hover:bg-white/16'}`} {...props}>{children}</button>);
+const HeroButton = ({ children, solid = false, ...props }) => (<button type="button" className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${solid ? 'bg-[#fff5e8] text-primary-700' : 'border border-white/25 bg-white/10 text-white hover:bg-white/16'}`} {...props}>{children}</button>);
 const ActionPill = ({ icon, label }) => (<button type="button" className="inline-flex items-center gap-2 rounded-full border border-[#dbeee5] bg-[#f8fcfa] px-4 py-2 text-sm font-semibold text-slate-700">{icon}{label}</button>);
 const SidebarCard = ({ title, icon, tone = 'default', children }) => (<section className={`rounded-[1.8rem] border p-5 shadow-[0_14px_30px_rgba(15,76,58,0.08)] ${tone === 'warm' ? 'border-amber-200 bg-[#fffaf0]' : 'border-[#dbeee5] bg-white'}`}><div className="mb-4 flex items-center gap-2 text-slate-900"><span className="text-lg">{icon}</span><h3 className="dashboard-display-title text-slate-900">{title}</h3></div>{children}</section>);
 const MiniStat = ({ label, value }) => (<div className="rounded-[0.9rem] bg-[#f8fcfa] px-3 py-2"><p className="text-xs text-slate-400">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div>);
@@ -845,7 +845,7 @@ const ActionModal = ({ config, draft, onChangeDraft, onClose, onSubmit }) => (
                             onChange={(event) => onChangeDraft(event.target.value)}
                             rows={5}
                             placeholder={config.placeholder || 'Add details here...'}
-                            className="mt-2 w-full rounded-[1rem] border border-[#dbeee5] bg-[#f8fcfa] px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-[#9ed7c1] focus:ring-2 focus:ring-[#e6f5ee]"
+                            className="mt-2 w-full rounded-[1rem] border border-[#dbeee5] bg-[#f8fcfa] px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
                         />
                     </label>
                 ) : null}
@@ -853,7 +853,7 @@ const ActionModal = ({ config, draft, onChangeDraft, onClose, onSubmit }) => (
                     <button type="button" onClick={onClose} className="rounded-[0.95rem] border border-[#dbeee5] bg-[#f8fcfa] px-5 py-3 text-sm font-semibold text-slate-700">
                         Cancel
                     </button>
-                    <button type="button" onClick={onSubmit} className="rounded-[0.95rem] bg-[#1c6c5d] px-6 py-3 text-sm font-semibold text-white">
+                    <button type="button" onClick={onSubmit} className="rounded-[0.95rem] bg-primary-700 px-6 py-3 text-sm font-semibold text-white">
                         {config.primaryLabel || 'Save'}
                     </button>
                 </div>

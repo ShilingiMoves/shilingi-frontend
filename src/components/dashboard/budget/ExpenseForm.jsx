@@ -32,7 +32,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                 amount: initialValues.amount || '',
                 description: initialValues.description || '',
                 expense_date: initialValues.expense_date || new Date().toISOString().split('T')[0],
-                payment_method: initialValues.payment_method || 'CASH',
+                payment_method: initialValues.payment_method === 'MOBILE_MONEY' ? 'MPESA' : (initialValues.payment_method || 'CASH'),
                 merchant: initialValues.merchant || '',
                 notes: initialValues.notes || '',
                 currency: initialValues.currency || 'KES',
@@ -269,7 +269,7 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
                         >
                             <option value="CASH">Cash</option>
                             <option value="CARD">Card</option>
-                            <option value="MOBILE_MONEY">Mobile Money</option>
+                            <option value="MPESA">Mobile Money</option>
                             <option value="BANK_TRANSFER">Bank Transfer</option>
                             <option value="OTHER">Other</option>
                         </select>

@@ -9,12 +9,12 @@ const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) 
         switch (status) {
             case 'ON_TRACK':
                 return {
-                    color: 'emerald',
+                    color: 'primary',
                     icon: CheckCircle2,
                     label: 'On Track',
-                    bgClass: 'bg-emerald-50',
-                    borderClass: 'border-emerald-200',
-                    textClass: 'text-emerald-700',
+                    bgClass: 'bg-primary-50',
+                    borderClass: 'border-primary-200',
+                    textClass: 'text-primary-700',
                 };
             case 'WARNING':
                 return {

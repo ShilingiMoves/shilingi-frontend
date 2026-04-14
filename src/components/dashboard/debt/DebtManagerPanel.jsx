@@ -25,7 +25,7 @@ const PERFORMANCE_SNAPSHOT_KEY = 'shilingi_debt_performance_snapshot_v1';
 const DEBT_PAYMENTS_LOG_KEY = 'shilingi_debt_payments_log_v1';
 
 const toneByType = {
-    MORTGAGE: { bar: 'bg-[#19725f]', pill: 'bg-rose-100 text-rose-600', label: 'High Priority' },
+    MORTGAGE: { bar: 'bg-primary-600', pill: 'bg-rose-100 text-rose-600', label: 'High Priority' },
     CAR_LOAN: { bar: 'bg-amber-400', pill: 'bg-amber-100 text-amber-700', label: 'Medium Priority' },
     MOBILE_LOAN: { bar: 'bg-sky-500', pill: 'bg-emerald-100 text-emerald-700', label: 'Low Priority' },
     CREDIT_CARD: { bar: 'bg-rose-500', pill: 'bg-rose-100 text-rose-600', label: 'High Priority' },
@@ -199,7 +199,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
         }, {});
 
         return Object.values(grouped)
-            .map((item, index) => ({ ...item, percent: (item.amount / total) * 100, color: index === 0 ? 'bg-[#19725f]' : index === 1 ? 'bg-amber-400' : 'bg-sky-500' }))
+            .map((item, index) => ({ ...item, percent: (item.amount / total) * 100, color: index === 0 ? 'bg-primary-600' : index === 1 ? 'bg-amber-400' : 'bg-sky-500' }))
             .sort((a, b) => b.amount - a.amount);
     }, [debts, totalDebtWithLiabilities]);
 
@@ -219,8 +219,8 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     const ecosystemLinks = [
         { title: 'Budget Planner', subtitle: 'Debt payments auto-sync to your monthly budget', action: 'Open ->', icon: CalendarDays, onClick: () => onSelectSection?.('budget') },
         { title: 'Comparison Hub', subtitle: 'Find better rates to refinance your debts', action: 'Compare ->', icon: Sparkles, onClick: () => onSelectSection?.('comparehub') },
-        { title: 'Net Worth Calculator', subtitle: 'Debts are subtracted from your net worth automatically', action: 'View ->', icon: Coins, onClick: () => onSelectSection?.('networth') },
-        { title: 'Shilingi Buddy AI', subtitle: 'Get personalised debt reduction advice', action: 'Chat ->', icon: Target, onClick: () => onSelectSection?.('buddy') },
+        { title: 'Net Worth Tracker', subtitle: 'Debts are subtracted from your net worth automatically', action: 'View ->', icon: Coins, onClick: () => onSelectSection?.('networth') },
+        { title: 'Market Watch', subtitle: 'Track rates that affect repayments', action: 'Open ->', icon: Target, onClick: () => onSelectSection?.('marketwatch') },
     ];
 
     const getDebtPaidThisMonth = (debtId) => monthPayments.filter((entry) => String(entry.debtId) === String(debtId)).reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
@@ -363,7 +363,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle size={15} className="mr-2 inline" />{error}</div>}
             {submitError && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{submitError}</div>}
 
-            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0f5d50] via-[#1d7a67] to-[#36947a] px-4 py-4 text-white shadow-sm sm:px-5">
+            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] px-4 py-4 text-white shadow-sm sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
                         <p className="inline-flex items-center gap-3 dashboard-display-title text-[1.38rem] font-extrabold leading-none sm:text-[1.55rem]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#f4c95d] text-slate-950"><WalletCards size={16} /></span>Debt Manager</p>
@@ -514,7 +514,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                         </div>
                     </section>
 
-                    <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#165747] via-[#1f6d5d] to-[#2f7f6a] p-5 text-white shadow-sm">
+                    <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-5 text-white shadow-sm">
                         <p className="text-[1.3rem] font-extrabold">Connected to Your Shilingi Moves Ecosystem</p>
                         <p className="mt-2 text-sm text-white/80">Your debt profile powers personalised recommendations across all planning tools.</p>
                         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">

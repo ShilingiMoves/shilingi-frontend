@@ -401,6 +401,11 @@ const Footer = () => {
                         <span className="text-white font-semibold">Prospect Pilot AI</span>
                     </p>
                 </div>
+                <div className="container-custom mt-4">
+                    <p className="max-w-5xl text-xs leading-6 text-white/80">
+                        Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions. Regulated under the applicable laws of Kenya.
+                    </p>
+                </div>
             </div>
         </footer>
     );

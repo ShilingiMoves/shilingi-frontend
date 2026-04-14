@@ -30,7 +30,7 @@ const DashboardSidebar = ({
             )}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-40 flex w-[min(88vw,320px)] flex-col border-r border-[#d9ebe3] bg-white text-slate-900 shadow-2xl transition-transform duration-300 lg:static lg:z-auto lg:min-h-screen lg:shadow-none ${
+                className={`fixed inset-y-0 left-0 z-40 flex w-[min(88vw,320px)] flex-col border-r border-[#d9ebe3] bg-white text-slate-900 shadow-2xl transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:shadow-none ${
                     mobileOpen ? 'translate-x-0' : '-translate-x-full'
                 } ${collapsed ? 'lg:w-[96px]' : 'lg:w-[268px]'} lg:translate-x-0`}
             >
@@ -54,7 +54,7 @@ const DashboardSidebar = ({
                     </button>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto px-3 py-5">
+                <nav className="flex-1 overflow-y-auto px-3 py-5 [scrollbar-gutter:stable]">
                     <div className="space-y-5">
                         {dashboardSidebarGroups.map((group) => (
                             <div key={group.id}>
@@ -80,12 +80,12 @@ const DashboardSidebar = ({
                                                 onClick={() => handleSelectSection(item.id)}
                                                 className={`flex w-full items-center rounded-2xl text-left transition-all ${
                                                     isActive
-                                                        ? 'bg-[#e8f6ef] text-[#11473c] shadow-lg shadow-[#0f3e34]/15'
+                                                        ? 'bg-[#edf9f4] text-[#0d6648] shadow-lg shadow-[#14986b]/15'
                                                         : 'bg-transparent text-slate-700 hover:bg-[#f3faf7] hover:text-slate-950'
                                                 } ${collapsed ? 'justify-center px-0 py-4' : 'gap-3 px-4 py-2.5'}`}
                                             >
                                                 <span className={`inline-flex items-center justify-center rounded-xl ${
-                                                    isActive ? 'bg-[#cfe7dc] text-[#11473c]' : 'bg-slate-100 text-slate-600'
+                                                    isActive ? 'bg-[#d4f0e4] text-[#0d6648]' : 'bg-slate-100 text-slate-600'
                                                 } ${collapsed ? 'h-12 w-12' : 'h-9 w-9'}`}>
                                                     <Icon size={18} />
                                                 </span>

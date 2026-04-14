@@ -112,7 +112,7 @@ const ComparisonHubPanel = () => {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-[1.4rem] bg-gradient-to-r from-[#0f6b5b] via-[#1a7b67] to-[#2b8f78] px-5 py-5 text-white shadow-sm">
+            <section className="rounded-[1.4rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-5 py-5 text-white shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h2 className="text-[2rem] font-extrabold tracking-tight">Comparison Hub</h2>
@@ -132,8 +132,8 @@ const ComparisonHubPanel = () => {
                             onClick={() => setActiveTab(id)}
                             className={
                                 active
-                                    ? 'inline-flex items-center gap-2 rounded-full bg-[#0f4439] px-4 py-2.5 text-sm font-semibold text-white shadow-sm'
-                                    : 'inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-primary-200 hover:text-primary-700'
+                                    ? 'inline-flex items-center gap-2 rounded-full bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm'
+                                    : 'inline-flex items-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-primary-200 hover:text-primary-700'
                             }
                         >
                             <Icon size={15} />
@@ -143,7 +143,7 @@ const ComparisonHubPanel = () => {
                 })}
             </div>
 
-            <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-4 shadow-sm">
+            <section className="rounded-[1.35rem] border border-primary-100 bg-white p-4 shadow-sm">
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-[1.35rem] font-bold text-slate-950">{current.title}</h3>
                     <p className="text-xs font-medium text-slate-400">{current.subtitle}</p>
@@ -164,7 +164,7 @@ const ComparisonHubPanel = () => {
                             {current.rows.map((row, index) => (
                                 <tr
                                     key={`${row.provider}-${row.product}-${index}`}
-                                    className={`border-b border-emerald-100 last:border-b-0 ${row.featured ? 'bg-amber-50/45' : 'bg-white'}`}
+                                    className={`border-b border-primary-100 last:border-b-0 ${row.featured ? 'bg-amber-50/45' : 'bg-white'}`}
                                 >
                                     <td className="px-4 py-4 font-bold text-slate-900">{row.provider}</td>
                                     <td className="px-4 py-4 text-slate-800">{row.product}</td>
@@ -184,7 +184,7 @@ const ComparisonHubPanel = () => {
                                                     ? 'inline-flex items-center gap-1 rounded-lg bg-primary-700 px-3 py-2 text-xs font-semibold text-white'
                                                     : row.action === 'Best Rate'
                                                     ? 'inline-flex items-center gap-1 rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-slate-950'
-                                                    : 'inline-flex items-center gap-1 rounded-lg border border-emerald-100 bg-[#f8fcfb] px-3 py-2 text-xs font-semibold text-slate-700'
+                                                    : 'inline-flex items-center gap-1 rounded-lg border border-primary-100 bg-[#f8fcfb] px-3 py-2 text-xs font-semibold text-slate-700'
                                             }
                                         >
                                             {row.action}

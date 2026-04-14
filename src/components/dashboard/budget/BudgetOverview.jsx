@@ -13,9 +13,9 @@ import { formatCurrency } from '../../../utils/budgetHelpers';
 
 const statusStyles = {
     ON_TRACK: {
-        pill: 'bg-emerald-100 text-emerald-700',
-        bar: 'from-emerald-400 to-emerald-600',
-        text: 'text-emerald-700',
+        pill: 'bg-primary-100 text-primary-700',
+        bar: 'from-primary-400 to-primary-600',
+        text: 'text-primary-700',
         label: 'On track',
     },
     WARNING: {
@@ -83,7 +83,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
         return {
             title: 'Your spending is on track',
             text: `${healthyCount} categor${healthyCount === 1 ? 'y is' : 'ies are'} pacing well against the plan. Keep logging expenses to stay accurate.`,
-            tone: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+            tone: 'border-primary-200 bg-primary-50 text-primary-700',
             icon: CheckCircle2,
         };
     })();
@@ -92,7 +92,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
 
     return (
         <div className="space-y-4">
-            <section className="overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-[#0f5b4f] via-[#176c5d] to-[#2a8671] px-5 py-5 text-white shadow-sm">
+            <section className="overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-5 py-5 text-white shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-2xl">
                         <p className="inline-flex items-center gap-2 text-xl font-extrabold">
@@ -107,7 +107,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                         <button
                             type="button"
                             onClick={() => onNavigate('budgets')}
-                            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-[#0f5b4f] shadow-sm"
+                            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-primary-700 shadow-sm"
                         >
                             <Plus size={15} />
                             Add Category
@@ -141,7 +141,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                     title={totalRemaining >= 0 ? 'Left In Budget' : 'Over Budget'}
                     value={formatCurrency(Math.abs(totalRemaining), currency)}
                     helper={totalRemaining >= 0 ? 'Available inside your budget' : 'Needs immediate attention'}
-                    tone={totalRemaining >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+                    tone={totalRemaining >= 0 ? 'text-primary-600' : 'text-rose-600'}
                 />
                 <MetricCard
                     title="Cash Left After Spend"
@@ -152,7 +152,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
             </section>
 
             <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                <article className="rounded-[1.3rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                <article className="rounded-[1.3rem] border border-primary-100 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <h3 className="text-base font-bold text-slate-950">Budget vs Spending</h3>
@@ -163,7 +163,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                         <button
                             type="button"
                             onClick={() => onNavigate('expenses')}
-                            className="inline-flex items-center gap-2 self-start rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
+                            className="inline-flex items-center gap-2 self-start rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700"
                         >
                             Review expenses
                             <ArrowUpRight size={13} />
@@ -182,7 +182,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                                         ? 'from-rose-400 to-rose-600'
                                         : totalTracked >= 80
                                         ? 'from-amber-400 to-amber-500'
-                                        : 'from-emerald-400 to-emerald-600'
+                                        : 'from-primary-400 to-primary-600'
                                 }`}
                                 style={{ width: `${Math.min(totalTracked, 100)}%` }}
                             />
@@ -206,7 +206,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                     </div>
                 </article>
 
-                <article className="rounded-[1.3rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                <article className="rounded-[1.3rem] border border-primary-100 bg-white p-4 shadow-sm">
                     <h3 className="text-base font-bold text-slate-950">Spending Breakdown</h3>
                     <p className="mt-1 text-sm text-slate-500">
                         Where most of your budget is currently going.
@@ -253,7 +253,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
             </section>
 
             <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-                <article className="rounded-[1.25rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                <article className="rounded-[1.25rem] border border-primary-100 bg-white p-4 shadow-sm">
                     <div className="mb-3 flex items-center justify-between">
                         <div>
                             <h3 className="text-base font-bold text-slate-950">Budget Categories</h3>
@@ -293,7 +293,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                                                 <td className={`py-3 pr-3 ${item.status === 'OVER_BUDGET' ? 'text-rose-600' : 'text-slate-700'}`}>
                                                     {formatCurrency(item.total_spent, item.currency || currency)}
                                                 </td>
-                                                <td className={`py-3 pr-3 ${leftAmount < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                                <td className={`py-3 pr-3 ${leftAmount < 0 ? 'text-rose-600' : 'text-primary-700'}`}>
                                                     {formatCurrency(Math.abs(leftAmount), item.currency || currency)}
                                                     <span className="ml-1 text-xs text-slate-400">{leftAmount < 0 ? 'over' : 'left'}</span>
                                                 </td>
@@ -318,12 +318,12 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                 </article>
 
                 <div className="space-y-4">
-                    <article className="rounded-[1.25rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                    <article className="rounded-[1.25rem] border border-primary-100 bg-white p-4 shadow-sm">
                         <h3 className="flex items-center gap-2 text-base font-bold text-slate-950">
                             <Lightbulb size={15} className="text-amber-500" />
                             Budget Insight
                         </h3>
-                        <div className="mt-3 rounded-xl border border-emerald-100 bg-[#f4faf7] p-3 text-sm text-slate-700">
+                        <div className="mt-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3 text-sm text-slate-700">
                             <p className="font-semibold text-slate-900">What this means this month</p>
                             <p className="mt-1">
                                 You have recorded {expenseRecordsCount} expense{expenseRecordsCount === 1 ? '' : 's'} across {summary?.active_budgets_count || budgets.length} budget categor{(summary?.active_budgets_count || budgets.length) === 1 ? 'y' : 'ies'}.
@@ -336,7 +336,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
                         </div>
                     </article>
 
-                    <article className="rounded-[1.25rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                    <article className="rounded-[1.25rem] border border-primary-100 bg-white p-4 shadow-sm">
                         <h3 className="flex items-center gap-2 text-base font-bold text-slate-950">
                             <CalendarDays size={15} className="text-primary-700" />
                             Next Best Actions
@@ -363,7 +363,7 @@ const BudgetOverview = ({ summary, budgets, expenses, expenseTotal, totalIncome,
 };
 
 const MetricCard = ({ title, value, helper, tone }) => (
-    <article className="rounded-[1.1rem] border border-emerald-100 bg-white px-4 py-5 shadow-sm">
+    <article className="rounded-[1.1rem] border border-primary-100 bg-white px-4 py-5 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{title}</p>
         <p className={`mt-2 text-3xl font-extrabold ${tone}`}>{value}</p>
         <p className="mt-2 text-sm text-slate-500">{helper}</p>
@@ -372,7 +372,7 @@ const MetricCard = ({ title, value, helper, tone }) => (
 
 const MiniStatusCard = ({ label, value, tone }) => {
     const tones = {
-        emerald: 'bg-emerald-50 text-emerald-700',
+        emerald: 'bg-primary-50 text-primary-700',
         amber: 'bg-amber-50 text-amber-700',
         rose: 'bg-rose-50 text-rose-700',
     };

@@ -74,7 +74,7 @@ const numberFormatter = new Intl.NumberFormat('en-KE', {
 });
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500';
-const inputClass = 'mt-2 w-full rounded-xl border border-emerald-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100';
+const inputClass = 'mt-2 w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100';
 
 const ResourcesToolsPanel = () => {
     const [selectedTool, setSelectedTool] = useState(null);
@@ -186,7 +186,7 @@ const ResourcesToolsPanel = () => {
 
     return (
         <div className="space-y-4">
-            <section className="rounded-[1.4rem] bg-gradient-to-r from-[#0f6b5b] via-[#1a7b67] to-[#2b8f78] px-5 py-5 text-white shadow-sm">
+            <section className="rounded-[1.4rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-5 py-5 text-white shadow-sm">
                 <h2 className="text-3xl font-extrabold tracking-tight">Resources & Tools</h2>
                 <p className="mt-1 text-sm text-white/85">Financial calculators and tools to help you make smarter decisions.</p>
             </section>
@@ -197,16 +197,16 @@ const ResourcesToolsPanel = () => {
                         type="button"
                         key={tool.id}
                         onClick={() => setSelectedTool(tool.id)}
-                        className="rounded-[1rem] border border-emerald-100 bg-white px-4 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+                        className="rounded-[1rem] border border-primary-100 bg-white px-4 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md"
                     >
                         <div className="flex items-center gap-2">
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
                                 <Calculator size={16} />
                             </span>
                             <p className="text-base font-bold text-slate-900">{tool.title}</p>
                         </div>
                         <p className="mt-2 text-xs text-slate-500">{tool.subtitle}</p>
-                        <p className="mt-3 text-xs font-semibold text-emerald-700">Open calculator</p>
+                        <p className="mt-3 text-xs font-semibold text-primary-700">Open calculator</p>
                     </button>
                 ))}
             </section>
@@ -218,7 +218,7 @@ const ResourcesToolsPanel = () => {
                 </div>
                 <div className="grid gap-3 xl:grid-cols-3">
                     {curatedBooks.map((book) => (
-                        <article key={book.title} className="rounded-[1.2rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                        <article key={book.title} className="rounded-[1.2rem] border border-primary-100 bg-white p-4 shadow-sm">
                             <div className="flex gap-4">
                                 <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${book.tone} text-2xl text-white shadow-sm`}>
                                     <span>▮</span>
@@ -242,7 +242,7 @@ const ResourcesToolsPanel = () => {
                 </div>
                 <div className="grid gap-3 xl:grid-cols-3">
                     {curatedPodcasts.map((podcast) => (
-                        <article key={podcast.title} className="rounded-[1.2rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                        <article key={podcast.title} className="rounded-[1.2rem] border border-primary-100 bg-white p-4 shadow-sm">
                             <div className="flex gap-4">
                                 <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${podcast.tone} text-2xl text-white shadow-sm`}>
                                     <span>◔</span>
@@ -261,15 +261,15 @@ const ResourcesToolsPanel = () => {
 
             {selectedTool && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]">
-                    <div className="w-full max-w-3xl rounded-2xl border border-emerald-100 bg-slate-50 shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-emerald-100 px-5 py-4">
+                    <div className="w-full max-w-3xl rounded-2xl border border-primary-100 bg-slate-50 shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-primary-100 px-5 py-4">
                             <h3 className="text-lg font-bold text-slate-900">
                                 {tools.find((tool) => tool.id === selectedTool)?.title}
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setSelectedTool(null)}
-                                className="rounded-lg border border-emerald-100 bg-white p-2 text-slate-600 transition hover:text-slate-900"
+                                className="rounded-lg border border-primary-100 bg-white p-2 text-slate-600 transition hover:text-slate-900"
                                 aria-label="Close calculator"
                             >
                                 <X size={16} />
