@@ -1,26 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
-import Home from './pages/Home';
-import LearnPage from './pages/LearnPage';
-import ComparePage from './pages/ComparePage';
-import ToolsPage from './pages/ToolsPage';
-import CommunityPage from './pages/CommunityPage';
-import AdvisoryPage from './pages/AdvisoryPage';
-import PartnershipsPage from './pages/PartnershipsPage';
-import AboutPage from './pages/AboutPage';
-import FAQPage from './pages/FAQPage';
-import PrivacyPage from './pages/PrivacyPage';
-import TermsPage from './pages/TermsPage';
-import ReferPage from './pages/ReferPage';
-import DashboardPage from './pages/DashboardPage';
-import DashboardLandingPage from './pages/DashboardLandingPage';
-import SignInPage from './pages/SignInPage';
-import SignUpPage from './pages/SignUpPage';
-import { TrustPage } from './pages/PlaceholderPages';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppErrorBoundary from './components/AppErrorBoundary';
+
+const Home = lazy(() => import('./pages/Home'));
+const LearnPage = lazy(() => import('./pages/LearnPage'));
+const ComparePage = lazy(() => import('./pages/ComparePage'));
+const ToolsPage = lazy(() => import('./pages/ToolsPage'));
+const CommunityPage = lazy(() => import('./pages/CommunityPage'));
+const AdvisoryPage = lazy(() => import('./pages/AdvisoryPage'));
+const PartnershipsPage = lazy(() => import('./pages/PartnershipsPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const ReferPage = lazy(() => import('./pages/ReferPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const DashboardLandingPage = lazy(() => import('./pages/DashboardLandingPage'));
+const SignInPage = lazy(() => import('./pages/SignInPage'));
+const SignUpPage = lazy(() => import('./pages/SignUpPage'));
+const TrustPage = lazy(() =>
+    import('./pages/PlaceholderPages').then((module) => ({ default: module.TrustPage }))
+);
 
 function getSplashSeen() {
     try {
@@ -49,6 +52,16 @@ function ScrollToTop() {
     return null;
 }
 
+function RouteLoader() {
+    return (
+        <div className="flex min-h-[40vh] items-center justify-center px-6">
+            <div className="rounded-[1.25rem] border border-[#d8ece3] bg-white px-6 py-4 text-sm font-medium text-slate-600 shadow-sm">
+                Loading page...
+            </div>
+        </div>
+    );
+}
+
 function AppLayout() {
     const location = useLocation();
     const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts';
@@ -57,40 +70,42 @@ function AppLayout() {
         <div className="min-h-screen flex flex-col">
             {!hidePublicNavbar && <Navbar />}
             <main className="flex-grow">
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/dashboard" element={<DashboardLandingPage />} />
-                    <Route
-                        path="/dashboard/app"
-                        element={
-                            <ProtectedRoute>
-                                <DashboardPage />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/debts"
-                        element={
-                            <ProtectedRoute>
-                                <Navigate to="/dashboard/app" replace />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route path="/learn" element={<LearnPage />} />
-                    <Route path="/compare" element={<ComparePage />} />
-                    <Route path="/tools" element={<ToolsPage />} />
-                    <Route path="/community" element={<CommunityPage />} />
-                    <Route path="/advisors" element={<AdvisoryPage />} />
-                    <Route path="/partnerships" element={<PartnershipsPage />} />
-                    <Route path="/about" element={<AboutPage />} />
-                    <Route path="/faqs" element={<FAQPage />} />
-                    <Route path="/trust" element={<TrustPage />} />
-                    <Route path="/signin" element={<SignInPage />} />
-                    <Route path="/signup" element={<SignUpPage />} />
-                    <Route path="/privacy" element={<PrivacyPage />} />
-                    <Route path="/terms" element={<TermsPage />} />
-                    <Route path="/refer" element={<ReferPage />} />
-                </Routes>
+                <Suspense fallback={<RouteLoader />}>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/dashboard" element={<DashboardLandingPage />} />
+                        <Route
+                            path="/dashboard/app"
+                            element={
+                                <ProtectedRoute>
+                                    <DashboardPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/debts"
+                            element={
+                                <ProtectedRoute>
+                                    <Navigate to="/dashboard/app" replace />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="/learn" element={<LearnPage />} />
+                        <Route path="/compare" element={<ComparePage />} />
+                        <Route path="/tools" element={<ToolsPage />} />
+                        <Route path="/community" element={<CommunityPage />} />
+                        <Route path="/advisors" element={<AdvisoryPage />} />
+                        <Route path="/partnerships" element={<PartnershipsPage />} />
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/faqs" element={<FAQPage />} />
+                        <Route path="/trust" element={<TrustPage />} />
+                        <Route path="/signin" element={<SignInPage />} />
+                        <Route path="/signup" element={<SignUpPage />} />
+                        <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/terms" element={<TermsPage />} />
+                        <Route path="/refer" element={<ReferPage />} />
+                    </Routes>
+                </Suspense>
             </main>
         </div>
     );

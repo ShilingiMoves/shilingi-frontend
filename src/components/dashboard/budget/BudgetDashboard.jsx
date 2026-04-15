@@ -5,6 +5,7 @@ import BudgetList from './BudgetList';
 import BudgetOverview from './BudgetOverview';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
+import GoalTracker from './GoalTracker';
 import {
     getBudgets,
     getBudgetSummary,
@@ -12,6 +13,8 @@ import {
     updateBudget,
     deleteBudget,
     getExpenses,
+    getGoals,
+    getGoalSummary,
 } from '../../../services/budgetApi';
 import incomeService from '../../../services/incomeService';
 import { getStoredUserProfile } from '../../../services/authApi';
@@ -58,7 +61,7 @@ const deriveSummaryFromBudgets = (budgetsData = [], existingSummary = {}, expens
     };
 };
 
-const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
+const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelectSection }) => {
     const { triggerHealthRefresh } = useHealthRefresh();
     // State management
     const [budgets, setBudgets] = useState([]);
@@ -66,6 +69,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     const [expenses, setExpenses] = useState([]);
     const [expenseTotal, setExpenseTotal] = useState(0);
     const [expenseCount, setExpenseCount] = useState(0);
+    const [goals, setGoals] = useState([]);
+    const [goalSummary, setGoalSummary] = useState(null);
     const [totalIncome, setTotalIncome] = useState(0);
     
     const [loading, setLoading] = useState(true);
@@ -84,28 +89,36 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
     const budgetHealth = useMemo(() => calculateBudgetHealth(budgets), [budgets]);
 
     // Load all data
+    // Pull the planner's linked data together in one pass so the overview, expenses,
+    // and goals tabs all render from the same fresh snapshot.
     const loadData = async () => {
         try {
             setLoading(true);
             setError('');
             
-            const [budgetsResult, summaryResult, expensesResult, incomeSummaryResult] = await Promise.allSettled([
+            const [budgetsResult, summaryResult, expensesResult, incomeSummaryResult, goalsResult, goalSummaryResult] = await Promise.allSettled([
                 getBudgets({ current: 'true' }),
                 getBudgetSummary(),
                 getExpenses({ limit: 10 }),
                 incomeService.getSummary().catch(() => null),
+                getGoals({ status: 'ACTIVE' }),
+                getGoalSummary(),
             ]);
 
             const budgetsData = resolvePayload(budgetsResult, []);
             const summaryData = resolvePayload(summaryResult, {});
             const expensesData = resolvePayload(expensesResult, { expenses: [], total: 0, count: 0 });
             const incomeSummaryData = resolvePayload(incomeSummaryResult, null);
+            const goalsData = resolvePayload(goalsResult, []);
+            const goalSummaryData = resolvePayload(goalSummaryResult, null);
 
             setBudgets(Array.isArray(budgetsData) ? budgetsData : []);
             setSummary(deriveSummaryFromBudgets(budgetsData, summaryData, expensesData));
             setExpenses(expensesData.expenses || []);
             setExpenseTotal(expensesData.total || 0);
             setExpenseCount(expensesData.count || 0);
+            setGoals(Array.isArray(goalsData) ? goalsData : []);
+            setGoalSummary(goalSummaryData);
 
             const storedProfile = getStoredUserProfile();
             const incomeFromManager = getIncomeFromSummary(incomeSummaryData);
@@ -175,6 +188,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
         }
     };
 
+    // Expense changes affect both recent transactions and budget health, so we refresh
+    // the expense list together with the budget summary after quick-adds or edits.
     const refreshExpenses = async () => {
         try {
             const expensesData = await getExpenses({ limit: 10 });
@@ -242,10 +257,14 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                     summary={summary}
                     budgets={budgets}
                     expenses={expenses}
+                    goals={goals}
+                    goalSummary={goalSummary}
                     expenseTotal={expenseTotal}
                     totalIncome={totalIncome}
                     budgetHealth={budgetHealth}
                     onNavigate={setActiveTab}
+                    onSelectSection={onSelectSection}
+                    onQuickExpenseAdded={refreshExpenses}
                 />
             )}
 
@@ -286,6 +305,14 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange }) => {
                     <ExpenseForm onSuccess={refreshExpenses} />
                     <ExpenseList expenses={expenses} onUpdate={refreshExpenses} />
                 </div>
+            )}
+
+            {activeTab === 'goals' && (
+                <GoalTracker
+                    goals={goals}
+                    goalSummary={goalSummary}
+                    onUpdate={loadData}
+                />
             )}
         </div>
     );

@@ -167,7 +167,7 @@ const DashboardPage = () => {
             case 'budget':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <BudgetDashboard />
+                        <BudgetDashboard onSelectSection={setActiveSection} />
                     </Suspense>
                 );
 
