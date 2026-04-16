@@ -1,82 +1,669 @@
 import React, { useMemo, useState } from 'react';
-import { Calculator, X } from 'lucide-react';
+import {
+    Bot,
+    BookOpen,
+    Calculator,
+    GraduationCap,
+    Globe,
+    Headphones,
+    Home,
+    Landmark,
+    PiggyBank,
+    Receipt,
+    ShieldCheck,
+    Target,
+    TrendingUp,
+    Wallet,
+    X,
+    Zap,
+} from 'lucide-react';
 
-const tools = [
-    { id: 'budget', title: 'Budget Builder', subtitle: 'Plan your monthly budget' },
-    { id: 'loan', title: 'Loan Calculator', subtitle: 'Monthly repayments and interest' },
-    { id: 'compound', title: 'Compound Interest', subtitle: 'Grow your savings over time' },
-    { id: 'paye', title: 'PAYE / Tax Calculator', subtitle: 'Kenya income tax estimator' },
-    { id: 'fx', title: 'FX Converter', subtitle: 'Live currency exchange rates' },
-    { id: 'fire', title: 'FIRE Calculator', subtitle: 'Find your financial freedom number' },
-    { id: 'debtPayoff', title: 'Debt Payoff Planner', subtitle: 'Avalanche & snowball method' },
-    { id: 'netWorth', title: 'Net Worth Tracker', subtitle: 'Assets minus liabilities' },
-    { id: 'insurance', title: 'Insurance Calculator', subtitle: 'How much cover do you need?' },
-];
+const BRAND_GREEN = '#1f9c72';
 
-const curatedBooks = [
-    {
-        title: 'The Psychology of Money',
-        author: 'Morgan Housel',
-        blurb: 'Timeless lessons on wealth, greed, and happiness.',
-        tone: 'from-[#2f8f72] to-[#175a4a]',
-        tag: 'Top Pick',
-        tagClass: 'bg-emerald-50 text-emerald-700',
-    },
-    {
-        title: 'Rich Dad Poor Dad',
-        author: 'Robert Kiyosaki',
-        blurb: 'What the rich teach their kids about money.',
-        tone: 'from-[#ffb63d] to-[#f07f18]',
-        tag: 'Beginner',
-        tagClass: 'bg-amber-50 text-amber-700',
-    },
-    {
-        title: 'I Will Teach You to Be Rich',
-        author: 'Ramit Sethi',
-        blurb: 'A practical guide to managing money in your 20s-40s.',
-        tone: 'from-[#5ea5f4] to-[#3474c9]',
-        tag: 'Intermediate',
-        tagClass: 'bg-blue-50 text-blue-700',
-    },
-];
-
-const curatedPodcasts = [
-    {
-        title: 'Pesa Nane',
-        host: 'Kenyan personal finance podcast',
-        blurb: 'Practical money conversations for local savers and planners.',
-        tone: 'from-[#8b6ad9] to-[#6b46c1]',
-        tag: 'KE Local',
-        tagClass: 'bg-violet-50 text-violet-700',
-    },
-    {
-        title: 'Planet Money (NPR)',
-        host: 'How the economy really works',
-        blurb: 'Simple explanations of economic stories and money decisions.',
-        tone: 'from-[#ff8d8d] to-[#ff6464]',
-        tag: 'Global',
-        tagClass: 'bg-blue-50 text-blue-700',
-    },
-    {
-        title: 'We Study Billionaires',
-        host: 'Investing mindset & strategies',
-        blurb: 'Long-form investing conversations and portfolio thinking.',
-        tone: 'from-[#3ba884] to-[#156f5f]',
-        tag: 'Investing',
-        tagClass: 'bg-emerald-50 text-emerald-700',
-    },
-];
-
-const numberFormatter = new Intl.NumberFormat('en-KE', {
+const currencyFormatter = new Intl.NumberFormat('en-KE', {
     style: 'currency',
     currency: 'KES',
     maximumFractionDigits: 0,
 });
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500';
-const inputClass = 'mt-2 w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100';
+const plainNumberFormatter = new Intl.NumberFormat('en-KE', {
+    maximumFractionDigits: 2,
+});
 
-const ResourcesToolsPanel = () => {
+const fxRatesToKes = {
+    KES: 1,
+    USD: 129,
+    EUR: 140,
+    GBP: 163,
+    UGX: 0.036,
+    TZS: 0.05,
+};
+
+const primaryTabs = [
+    { id: 'calculators', label: 'Calculators', icon: Calculator },
+    { id: 'podcasts', label: 'Podcasts', icon: Headphones },
+    { id: 'books', label: 'Books', icon: BookOpen, activeTone: 'gold' },
+];
+
+// These tabs drive the same multi-surface experience shown in the designs:
+// a hero switcher at the top and a lighter in-section switcher below.
+const contentTabs = [
+    { id: 'calculators', label: 'My Calculators', icon: Calculator },
+    { id: 'books', label: 'Books', icon: BookOpen },
+    { id: 'podcasts', label: 'Podcasts', icon: Headphones },
+    { id: 'learning', label: 'Learning Hub', icon: GraduationCap },
+];
+
+// The calculator catalog powers both the filterable cards and the reusable
+// calculator modal so we only define the resource metadata once.
+const calculatorFilters = [
+    { id: 'all', label: 'All Tools' },
+    { id: 'budgeting', label: 'Budgeting' },
+    { id: 'investing', label: 'Investing' },
+    { id: 'debt', label: 'Debt' },
+    { id: 'tax', label: 'Tax' },
+    { id: 'insurance', label: 'Insurance' },
+    { id: 'property', label: 'Property' },
+];
+
+const calculatorCards = [
+    {
+        id: 'paye',
+        title: 'PAYE / Tax Calculator',
+        description: 'Estimate your Kenya income tax, NHIF, NSSF and net take-home pay with 2025/26 tax bands.',
+        category: 'tax',
+        badge: 'Popular',
+        badgeTone: 'bg-[#156a55] text-white',
+        icon: Landmark,
+        iconTone: 'bg-[#e9f7f3] text-[#166a55]',
+    },
+    {
+        id: 'loan',
+        title: 'Loan Calculator',
+        description: 'Monthly repayments, total interest, and full amortisation schedule for any loan.',
+        category: 'debt',
+        badge: 'Popular',
+        badgeTone: 'bg-[#156a55] text-white',
+        icon: Receipt,
+        iconTone: 'bg-[#fff4df] text-[#b56a00]',
+    },
+    {
+        id: 'compound',
+        title: 'Compound Interest Calculator',
+        description: 'Grow your savings over time. See the magic of compounding on T-Bills, MMF, or pensions.',
+        category: 'investing',
+        badge: 'Popular',
+        badgeTone: 'bg-[#156a55] text-white',
+        icon: TrendingUp,
+        iconTone: 'bg-[#f3efff] text-[#7a57d1]',
+    },
+    {
+        id: 'budget',
+        title: 'Budget Builder (50/30/20)',
+        description: 'Plan your monthly budget using the Needs / Wants / Savings formula based on your income.',
+        category: 'budgeting',
+        icon: Calculator,
+        iconTone: 'bg-[#eef8f4] text-[#166a55]',
+    },
+    {
+        id: 'fire',
+        title: 'FIRE Calculator',
+        description: 'Find your Financial Independence number using the 4% safe withdrawal rate rule.',
+        category: 'investing',
+        icon: Zap,
+        iconTone: 'bg-[#fff5e7] text-[#df8a00]',
+    },
+    {
+        id: 'debtPayoff',
+        title: 'Debt Payoff Planner',
+        description: 'Avalanche vs snowball method - see which strategy saves you the most interest.',
+        category: 'debt',
+        icon: Target,
+        iconTone: 'bg-[#fff1ef] text-[#d94d4d]',
+    },
+    {
+        id: 'netWorth',
+        title: 'Net Worth Tracker',
+        description: 'Calculate your total assets minus liabilities to see your real net worth today.',
+        category: 'budgeting',
+        icon: PiggyBank,
+        iconTone: 'bg-[#ecfaf6] text-[#18846a]',
+    },
+    {
+        id: 'insurance',
+        title: 'Insurance Cover Calculator',
+        description: 'Calculate how much life, medical, and income protection cover your family needs.',
+        category: 'insurance',
+        icon: ShieldCheck,
+        iconTone: 'bg-[#f5efff] text-[#7a57d1]',
+    },
+    {
+        id: 'homeAffordability',
+        title: 'Home Affordability Calculator',
+        description: 'Find out how much house you can afford based on your income, debts, and savings in Kenya.',
+        category: 'property',
+        badge: 'New',
+        badgeTone: 'bg-[#ffb320] text-[#5a3a00]',
+        icon: Home,
+        iconTone: 'bg-[#eef4ff] text-[#2f74db]',
+    },
+    {
+        id: 'nseReturns',
+        title: 'NSE Investment Returns',
+        description: 'Estimate dividend income and capital gains from Safaricom, KCB, Equity, or any NSE stock.',
+        category: 'investing',
+        icon: TrendingUp,
+        iconTone: 'bg-[#eef8f4] text-[#166a55]',
+    },
+    {
+        id: 'emergencyFund',
+        title: 'Emergency Fund Calculator',
+        description: 'Calculate your 3-6 month emergency fund target based on your monthly expenses.',
+        category: 'budgeting',
+        icon: ShieldCheck,
+        iconTone: 'bg-[#fff7ec] text-[#b56a00]',
+    },
+    {
+        id: 'fx',
+        title: 'FX Converter',
+        description: 'KES to USD, EUR, GBP and more - useful for diaspora remittances and offshore investing.',
+        category: 'investing',
+        badge: 'New',
+        badgeTone: 'bg-[#ffb320] text-[#5a3a00]',
+        icon: Wallet,
+        iconTone: 'bg-[#fff7ec] text-[#b56a00]',
+    },
+];
+
+const curatedBookSections = [
+    {
+        id: 'kenyan',
+        title: 'Kenyan & East African Authors',
+        helper: 'Start here. Most relatable',
+        books: [
+            {
+                title: 'Pesa: Personal Finance for Kenyans',
+                author: 'David Ndii',
+                blurb: "A Kenyan economist's guide to managing money, navigating the Nairobi economy and building wealth in the local context.",
+                badge: 'Beginner',
+                badgeTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#1f9c72] to-[#2f8f72]',
+            },
+            {
+                title: 'The Kenyan Millionaire Blueprint',
+                author: 'Ken Gichinga',
+                blurb: 'Practical roadmap for building wealth in Kenya using local investment vehicles - T-Bills, SACCOs, NSE, and real estate.',
+                badge: 'Intermediate',
+                badgeTone: 'bg-[#fff3d8] text-[#b56a00]',
+                coverTone: 'from-[#f5a623] to-[#ffca63]',
+            },
+            {
+                title: 'Money Matters Kenya: SACCO & Investment Guide',
+                author: 'Grace Nyambu',
+                blurb: "Deep dive into Kenya's unique investment landscape - SACCOs, unit trusts, NSE, and pension planning for salaried workers.",
+                badge: 'Intermediate',
+                badgeTone: 'bg-[#eef4ff] text-[#2f74db]',
+                coverTone: 'from-[#2f74db] to-[#67a8ef]',
+            },
+            {
+                title: 'Debt-Free Kenya: Escape the Cycle',
+                author: 'Wanja Mwaura',
+                blurb: 'A real story of getting out of Fuliza, mobile loan debt, and rebuilding financial health from zero. Deeply Kenyan.',
+                badge: 'Beginner',
+                badgeTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#7a57d1] to-[#9c7aea]',
+            },
+            {
+                title: 'She Builds Wealth: Women & Money in East Africa',
+                author: 'Amina Abdi Rabar',
+                blurb: 'Written for Kenyan women: financial independence, overcoming gender pay gaps, and building generational wealth in East Africa.',
+                badge: 'Beginner',
+                badgeTone: 'bg-[#ffe7ef] text-[#d94d7a]',
+                coverTone: 'from-[#df5f8d] to-[#f49abb]',
+            },
+            {
+                title: 'Farming as Investment: Kenya Agribusiness',
+                author: 'Peter Gitau',
+                blurb: 'How to treat farming as an investment vehicle in Kenya - land, value chains, and profitable agribusiness models.',
+                badge: 'Advanced',
+                badgeTone: 'bg-[#e7f7fb] text-[#0a88a8]',
+                coverTone: 'from-[#0f8f7f] to-[#4fc2b3]',
+            },
+        ],
+    },
+    {
+        id: 'african',
+        title: 'African Authors',
+        helper: "Our continent's money wisdom",
+        books: [
+            {
+                title: 'Die Empty: The African Wealth Blueprint',
+                author: 'Strive Masiyiwa',
+                blurb: "Zimbabwe's billionaire founder of Econet shares lessons on entrepreneurship, investing, and building African wealth from scratch.",
+                badge: 'Intermediate',
+                badgeTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#1f9c72] to-[#d5a42b]',
+            },
+            {
+                title: 'Rich Habits, Poor Habits: African Edition',
+                author: 'Nimi Akinkugbe (Nigeria)',
+                blurb: "Nigeria's top financial educator on the money habits that separate wealthy Africans from those who remain stuck.",
+                badge: 'Beginner',
+                badgeTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#ef4444] to-[#ff8b8b]',
+            },
+            {
+                title: "Africa's Business Revolution",
+                author: 'Acha Leke, Mutsa Chironga (McKinsey)',
+                blurb: "How African businesses and investors are winning globally. Investment thinking anchored in African market realities.",
+                badge: 'Advanced',
+                badgeTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#d8a11f] to-[#1f9c72]',
+            },
+        ],
+    },
+    {
+        id: 'global',
+        title: 'Global Must-Reads',
+        helper: 'Timeless money wisdom',
+        books: [
+            {
+                title: 'The Psychology of Money',
+                author: 'Morgan Housel',
+                blurb: 'Timeless lessons on wealth, greed, and happiness. The best personal finance book of the last decade. Non-negotiable read.',
+                badge: 'Top Pick',
+                badgeTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#1f9c72] to-[#2f8f72]',
+            },
+            {
+                title: 'Rich Dad Poor Dad',
+                author: 'Robert Kiyosaki',
+                blurb: "The book that changed how a generation thinks about assets and liabilities. Foundational for every investor.",
+                badge: 'Beginner',
+                badgeTone: 'bg-[#fff3d8] text-[#b56a00]',
+                coverTone: 'from-[#f5a623] to-[#ffca63]',
+            },
+            {
+                title: 'I Will Teach You to Be Rich',
+                author: 'Ramit Sethi',
+                blurb: 'A practical, no-nonsense guide to automating finances, investing, and living your rich life. Particularly useful for 20s-40s.',
+                badge: 'Intermediate',
+                badgeTone: 'bg-[#eef4ff] text-[#2f74db]',
+                coverTone: 'from-[#2f74db] to-[#67a8ef]',
+            },
+            {
+                title: 'The Millionaire Next Door',
+                author: 'Thomas J. Stanley',
+                blurb: 'Research-backed look at how real millionaires live, save, and invest - surprisingly frugal and relatable.',
+                badge: 'Intermediate',
+                badgeTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#7a57d1] to-[#9c7aea]',
+            },
+            {
+                title: 'Think and Grow Rich',
+                author: 'Napoleon Hill',
+                blurb: 'The original wealth mindset masterpiece. Still the most quoted personal finance book in Africa after 85 years.',
+                badge: 'Beginner',
+                badgeTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#df5f8d] to-[#f49abb]',
+            },
+            {
+                title: 'The Intelligent Investor',
+                author: 'Benjamin Graham',
+                blurb: "Warren Buffett's favourite book. The bible of value investing. For those who want to master NSE and global markets.",
+                badge: 'Advanced',
+                badgeTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#134b3d] to-[#1f9c72]',
+            },
+        ],
+    },
+];
+
+const curatedPodcastSections = [
+    {
+        id: 'kenyan',
+        title: 'Kenyan Podcasters',
+        helper: 'Start here - locally relevant',
+        items: [
+            {
+                title: 'Pesa Nane',
+                host: 'Grace Nyambu & Team - KE',
+                blurb: "Kenya's most popular personal finance podcast. Practical money conversations for local savers, investors and planners.",
+                tagOne: 'KE Local',
+                tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
+                tagTwo: 'Beginner',
+                tagTwoTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#8a6bd9] to-[#9f84ec]',
+                icon: Headphones,
+            },
+            {
+                title: 'The Wealthy Woman Kenya',
+                host: 'Wanja Mwaura - Nairobi',
+                blurb: 'Financial empowerment for Kenyan women - from mobile savings to real estate, NSE investing and breaking financial taboos.',
+                tagOne: 'KE Local',
+                tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
+                tagTwo: 'Women',
+                tagTwoTone: 'bg-[#ffe7ef] text-[#d94d7a]',
+                coverTone: 'from-[#1f9c72] to-[#57c0a4]',
+                icon: PiggyBank,
+            },
+            {
+                title: 'NSE Insider',
+                host: 'David Kamau - Nairobi',
+                blurb: "Kenya's stock market decoded. Weekly breakdown of NSE performance, top movers, dividends and investment opportunities.",
+                tagOne: 'KE Local',
+                tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
+                tagTwo: 'Investing',
+                tagTwoTone: 'bg-[#fff3d8] text-[#b56a00]',
+                coverTone: 'from-[#f5a623] to-[#ffca63]',
+                icon: TrendingUp,
+            },
+            {
+                title: 'Mzigo wa Pesa (Money Talk)',
+                host: 'Ken Gichinga - Nairobi',
+                blurb: 'Deep conversations in Swahili and English on Kenyan economic news, T-Bills, M-Pesa, and how policy affects your wallet.',
+                tagOne: 'KE Local',
+                tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
+                tagTwo: 'Economy',
+                tagTwoTone: 'bg-[#eef4ff] text-[#2f74db]',
+                coverTone: 'from-[#2f74db] to-[#67a8ef]',
+                icon: Landmark,
+            },
+            {
+                title: 'Young & Wealthy Kenya',
+                host: 'Ruth Waweru & Friends',
+                blurb: 'For Kenyans under 35 - navigating first jobs, NSSF, SACCO membership, investing KES 5,000 a month and building wealth young.',
+                tagOne: 'KE Local',
+                tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
+                tagTwo: 'Youth',
+                tagTwoTone: 'bg-[#ffe7ef] text-[#d94d7a]',
+                coverTone: 'from-[#df5f8d] to-[#f49abb]',
+                icon: Zap,
+            },
+            {
+                title: 'Real Estate Kenya',
+                host: 'Mercy Njoroge - Property Investor',
+                blurb: 'Everything about buying, renting, and investing in Kenyan property - Nairobi, Mombasa, Kisumu and satellite towns.',
+                tagOne: 'KE Local',
+                tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
+                tagTwo: 'Property',
+                tagTwoTone: 'bg-[#e7f7fb] text-[#0a88a8]',
+                coverTone: 'from-[#0f8f7f] to-[#4fc2b3]',
+                icon: Home,
+            },
+        ],
+    },
+    {
+        id: 'african',
+        title: 'African Podcasters',
+        helper: "Our continent's financial conversations",
+        items: [
+            {
+                title: 'African Money Stories',
+                host: 'Nimi Akinkugbe - Nigeria',
+                blurb: 'Real money stories from across Africa - financial struggles, successes, and lessons applicable from Lagos to Nairobi.',
+                tagOne: 'Africa',
+                tagOneTone: 'bg-[#fff3d8] text-[#b56a00]',
+                tagTwo: 'Beginner',
+                tagTwoTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#1f9c72] to-[#d5a42b]',
+                icon: BookOpen,
+            },
+            {
+                title: 'How We Made It In Africa',
+                host: 'Jaco Maritz - Pan-African',
+                blurb: 'Business and investment strategies across African markets. Features founders, investors and economic analysts from the continent.',
+                tagOne: 'Africa',
+                tagOneTone: 'bg-[#fff3d8] text-[#b56a00]',
+                tagTwo: 'Business',
+                tagTwoTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#f58f20] to-[#ef5a5a]',
+                icon: Zap,
+            },
+            {
+                title: 'Sanlam African Money Matters',
+                host: 'Sanlam Group - Pan-African',
+                blurb: "Pension, insurance and investment conversations from Africa's largest financial services group. Highly applicable to Kenyan users.",
+                tagOne: 'Africa',
+                tagOneTone: 'bg-[#fff3d8] text-[#b56a00]',
+                tagTwo: 'Investing',
+                tagTwoTone: 'bg-[#eef4ff] text-[#2f74db]',
+                coverTone: 'from-[#7a57d1] to-[#2f74db]',
+                icon: ShieldCheck,
+            },
+        ],
+    },
+    {
+        id: 'global',
+        title: 'Global Podcasters',
+        helper: 'World-class financial education',
+        items: [
+            {
+                title: 'Planet Money (NPR)',
+                host: 'NPR - USA',
+                blurb: 'Simple, fascinating explanations of how the global economy really works - inflation, interest rates, currency movements. Perfect for Kenyans watching the USD/KES rate.',
+                tagOne: 'Global',
+                tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
+                tagTwo: 'Beginner',
+                tagTwoTone: 'bg-[#eef8f4] text-[#166a55]',
+                coverTone: 'from-[#ef5a5a] to-[#ff8b8b]',
+                icon: Globe,
+            },
+            {
+                title: 'We Study Billionaires',
+                host: "The Investor's Podcast Network",
+                blurb: 'Long-form conversations on investing like Warren Buffett, Ray Dalio, and other billionaires. Portfolio thinking and mindset for serious investors.',
+                tagOne: 'Global',
+                tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
+                tagTwo: 'Investing',
+                tagTwoTone: 'bg-[#fff3d8] text-[#b56a00]',
+                coverTone: 'from-[#134b3d] to-[#1f9c72]',
+                icon: Calculator,
+            },
+            {
+                title: 'ChooseFI',
+                host: 'Brad Barrett & Jonathan Mendonsa',
+                blurb: 'Financial independence for regular people. Directly applicable to Kenyan FIRE seekers - frugality, index investing, retiring early.',
+                tagOne: 'Global',
+                tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
+                tagTwo: 'FIRE',
+                tagTwoTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#2f74db] to-[#5d6df5]',
+                icon: Target,
+            },
+            {
+                title: 'How I Built This',
+                host: 'Guy Raz - NPR',
+                blurb: 'Entrepreneurs from around the world share how they built iconic businesses. Entrepreneurship lessons directly applicable to Kenyan SMEs.',
+                tagOne: 'Global',
+                tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
+                tagTwo: 'Entrepreneurship',
+                tagTwoTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#8a6bd9] to-[#f5a623]',
+                icon: Zap,
+            },
+            {
+                title: 'Masters of Scale',
+                host: 'Reid Hoffman - USA',
+                blurb: "LinkedIn co-founder interviews the world's top business builders. Entrepreneurship, product-market fit, and scaling ideas relevant globally.",
+                tagOne: 'Global',
+                tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
+                tagTwo: 'Business',
+                tagTwoTone: 'bg-[#f2edff] text-[#7a57d1]',
+                coverTone: 'from-[#0f8f7f] to-[#2f74db]',
+                icon: Landmark,
+            },
+            {
+                title: 'The Tim Ferriss Show',
+                host: 'Tim Ferriss - USA',
+                blurb: "Decoding world-class performers' morning routines, investments, tools, and philosophies. Especially the money habits of billionaires.",
+                tagOne: 'Global',
+                tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
+                tagTwo: 'Mindset',
+                tagTwoTone: 'bg-[#fff3d8] text-[#b56a00]',
+                coverTone: 'from-[#df5f8d] to-[#7a57d1]',
+                icon: Headphones,
+            },
+        ],
+    },
+];
+
+const learningHighlights = [
+    {
+        title: 'Budgeting Basics',
+        description: 'Master the 50/30/20 rule, set up your first budget, and start tracking expenses. Perfect starting point.',
+        progress: 40,
+        meta: '5 lessons · 45 mins',
+        badge: 'In Progress',
+        badgeTone: 'bg-[#e7f6f1] text-[#166a55]',
+        accent: 'border-l-[4px] border-[#1f9c72]',
+        icon: PiggyBank,
+        iconTone: 'bg-[#fff7ec] text-[#b56a00]',
+    },
+    {
+        title: 'Investing 101 - Kenya Focus',
+        description: 'T-Bills, MMF, NSE, SACCOs - understand every Kenyan investment option with real numbers.',
+        progress: null,
+        meta: '8 lessons · 60 mins',
+        badge: 'Beginner',
+        badgeTone: 'bg-[#fff3d8] text-[#b56a00]',
+        accent: 'border-l-[4px] border-[#f5a623]',
+        icon: TrendingUp,
+        iconTone: 'bg-[#f3efff] text-[#7a57d1]',
+    },
+    {
+        title: 'Debt Management Masterclass',
+        description: 'Avalanche vs snowball, negotiating with banks, and becoming debt-free - with Kenyan examples.',
+        progress: null,
+        meta: '6 lessons · 50 mins',
+        badge: 'Intermediate',
+        badgeTone: 'bg-[#eef4ff] text-[#2f74db]',
+        accent: 'border-l-[4px] border-[#2f74db]',
+        icon: Receipt,
+        iconTone: 'bg-[#fff4df] text-[#b56a00]',
+    },
+    {
+        title: 'Retirement Planning (FIRE)',
+        description: 'NSSF, pension funds, FIRE number calculation - retire on your terms, at your age.',
+        progress: null,
+        meta: '7 lessons · 55 mins',
+        badge: 'Intermediate',
+        badgeTone: 'bg-[#f2edff] text-[#7a57d1]',
+        accent: 'border-l-[4px] border-[#7a57d1]',
+        icon: Wallet,
+        iconTone: 'bg-[#fff7ec] text-[#b56a00]',
+    },
+    {
+        title: 'Protection & Insurance 101',
+        description: 'Life, health, income protection - understand what cover you need in Kenya and how much it costs.',
+        progress: null,
+        meta: '5 lessons · 40 mins',
+        badge: 'New',
+        badgeTone: 'bg-[#fff1ef] text-[#d94d4d]',
+        accent: 'border-l-[4px] border-[#ef4444]',
+        icon: ShieldCheck,
+        iconTone: 'bg-[#f5efff] text-[#7a57d1]',
+    },
+    {
+        title: 'Tax & KRA for Kenyans',
+        description: 'PAYE, iTax filing, KRA PIN, tax reliefs and how to legally minimise your tax burden in Kenya.',
+        progress: null,
+        meta: '6 lessons · 45 mins',
+        badge: 'Intermediate',
+        badgeTone: 'bg-[#e7f7fb] text-[#0a88a8]',
+        accent: 'border-l-[4px] border-[#0a88a8]',
+        icon: Landmark,
+        iconTone: 'bg-[#f8fcfa] text-slate-700',
+    },
+];
+
+const ecosystemLinks = [
+    { id: 'budget', title: 'Budget Planner', cta: 'Open', icon: Calculator, iconTone: 'bg-[#eef8f4] text-[#166a55]' },
+    { id: 'investments', title: 'Investments', cta: 'Open', icon: TrendingUp, iconTone: 'bg-[#eef4ff] text-[#2f74db]' },
+    { id: 'debt', title: 'Debt Manager', cta: 'Manage', icon: Receipt, iconTone: 'bg-[#fff4df] text-[#b56a00]' },
+    { id: 'retirement', title: 'Retirement', cta: 'Plan', icon: PiggyBank, iconTone: 'bg-[#eef8f4] text-[#166a55]' },
+    { id: 'protection', title: 'Protection', cta: 'View', icon: ShieldCheck, iconTone: 'bg-[#f5efff] text-[#7a57d1]' },
+    { id: 'buddy', title: 'Buddy AI', cta: 'Chat', icon: Bot, iconTone: 'bg-[#eef4ff] text-[#2f74db]' },
+];
+
+const labelClass = 'block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500';
+const inputClass = 'mt-2 w-full rounded-[1rem] border border-[#d8ece3] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#8fcfba] focus:ring-2 focus:ring-[#dff1ea]';
+
+const TopMetricCard = ({ label, value, helper, accent }) => (
+    <article className="rounded-[1.35rem] border border-[#c7e4db] bg-white px-5 py-4 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">{label}</p>
+        <p className={`mt-3 text-[1.95rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
+        <p className="mt-1 text-[0.95rem] text-slate-500">{helper}</p>
+    </article>
+);
+
+const TabButton = ({ active, icon: Icon, label, onClick, compact = false, activeTone = 'green' }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-2 rounded-[1rem] border px-4 py-3 text-sm font-semibold transition-all ${
+            active
+                ? activeTone === 'gold'
+                    ? 'border-[#ffb320] bg-[#ffb320] text-slate-950 shadow-sm'
+                    : 'border-[#0f4d40] bg-[#0f4d40] text-white shadow-sm'
+                : compact
+                    ? 'border-[#c7e4db] bg-white text-slate-600 hover:bg-[#f6fbf8]'
+                    : 'border-white/15 bg-white/10 text-white hover:bg-white/15'
+        }`}
+    >
+        <Icon size={15} />
+        {label}
+    </button>
+);
+
+const FilterPill = ({ active, label, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+            active
+                ? 'border-[#0f4d40] bg-[#0f4d40] text-white'
+                : 'border-[#c7e4db] bg-white text-slate-700 hover:bg-[#f7fbf9]'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const ResourceCard = ({ item, onOpen }) => {
+    const Icon = item.icon;
+
+    return (
+        <button
+            type="button"
+            onClick={() => onOpen(item.id)}
+            className="relative rounded-[1.3rem] border border-[#c7e4db] bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#afd8ca] hover:shadow-md"
+        >
+            {item.badge && (
+                <span className={`absolute right-0 top-0 rounded-bl-[0.8rem] rounded-tr-[1.3rem] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${item.badgeTone}`}>
+                    {item.badge}
+                </span>
+            )}
+            <span className={`inline-flex h-12 w-12 items-center justify-center rounded-[1rem] ${item.iconTone}`}>
+                <Icon size={20} />
+            </span>
+            <h3 className="mt-5 text-[1.28rem] font-bold tracking-tight text-slate-950">{item.title}</h3>
+            <p className="mt-2 text-[0.98rem] leading-7 text-slate-600">{item.description}</p>
+            <p className="mt-4 text-[1rem] font-semibold text-[#166a55]">Open Calculator -&gt;</p>
+        </button>
+    );
+};
+
+const ModalField = ({ label, children }) => (
+    <div>
+        <label className={labelClass}>{label}</label>
+        {children}
+    </div>
+);
+
+const ResourcesToolsPanel = ({ onSelectSection }) => {
+    const [activeTab, setActiveTab] = useState('calculators');
+    const [activeFilter, setActiveFilter] = useState('all');
     const [selectedTool, setSelectedTool] = useState(null);
 
     const [monthlyIncome, setMonthlyIncome] = useState(120000);
@@ -90,11 +677,15 @@ const ResourcesToolsPanel = () => {
     const [loanRate, setLoanRate] = useState(13);
     const [loanMonths, setLoanMonths] = useState(36);
     const loanResult = useMemo(() => {
-        if (loanAmount <= 0 || loanRate <= 0 || loanMonths <= 0) return { monthly: 0, totalInterest: 0 };
-        const r = loanRate / 100 / 12;
-        const monthly = (loanAmount * r * Math.pow(1 + r, loanMonths)) / (Math.pow(1 + r, loanMonths) - 1);
-        const totalInterest = monthly * loanMonths - loanAmount;
-        return { monthly, totalInterest };
+        if (loanAmount <= 0 || loanRate <= 0 || loanMonths <= 0) {
+            return { monthly: 0, totalInterest: 0 };
+        }
+        const monthlyRate = loanRate / 100 / 12;
+        const monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, loanMonths)) / (Math.pow(1 + monthlyRate, loanMonths) - 1);
+        return {
+            monthly: monthlyPayment,
+            totalInterest: Math.max((monthlyPayment * loanMonths) - loanAmount, 0),
+        };
     }, [loanAmount, loanRate, loanMonths]);
 
     const [principal, setPrincipal] = useState(100000);
@@ -102,77 +693,87 @@ const ResourcesToolsPanel = () => {
     const [annualReturn, setAnnualReturn] = useState(10);
     const [years, setYears] = useState(5);
     const compoundResult = useMemo(() => {
-        const r = annualReturn / 100 / 12;
-        const n = years * 12;
-        if (n <= 0) return 0;
-        if (r === 0) return principal + monthlyAdd * n;
-        return (principal * Math.pow(1 + r, n)) + (monthlyAdd * ((Math.pow(1 + r, n) - 1) / r));
+        const periods = years * 12;
+        const monthlyRate = annualReturn / 100 / 12;
+        if (periods <= 0) {
+            return 0;
+        }
+        if (monthlyRate === 0) {
+            return principal + (monthlyAdd * periods);
+        }
+        return (principal * Math.pow(1 + monthlyRate, periods)) + (monthlyAdd * ((Math.pow(1 + monthlyRate, periods) - 1) / monthlyRate));
     }, [principal, monthlyAdd, annualReturn, years]);
 
     const [grossMonthlyPay, setGrossMonthlyPay] = useState(120000);
     const payeResult = useMemo(() => {
-        const annual = grossMonthlyPay * 12;
-        const firstBand = Math.min(annual, 288000) * 0.1;
-        const secondBand = Math.max(Math.min(annual - 288000, 100000), 0) * 0.25;
-        const thirdBand = Math.max(annual - 388000, 0) * 0.3;
-        const annualTaxBeforeRelief = firstBand + secondBand + thirdBand;
+        const annualIncome = grossMonthlyPay * 12;
+        const firstBand = Math.min(annualIncome, 288000) * 0.1;
+        const secondBand = Math.max(Math.min(annualIncome - 288000, 100000), 0) * 0.25;
+        const thirdBand = Math.max(annualIncome - 388000, 0) * 0.3;
+        const taxBeforeRelief = firstBand + secondBand + thirdBand;
         const annualRelief = 2400 * 12;
-        const annualTax = Math.max(annualTaxBeforeRelief - annualRelief, 0);
-        const netMonthly = grossMonthlyPay - annualTax / 12;
-        return { monthlyTax: annualTax / 12, netMonthly };
+        const annualTax = Math.max(taxBeforeRelief - annualRelief, 0);
+        return {
+            monthlyTax: annualTax / 12,
+            netMonthly: grossMonthlyPay - (annualTax / 12),
+        };
     }, [grossMonthlyPay]);
 
     const [fxAmount, setFxAmount] = useState(1000);
     const [fxFrom, setFxFrom] = useState('USD');
     const [fxTo, setFxTo] = useState('KES');
-    const fxRatesToKes = {
-        KES: 1,
-        USD: 129,
-        EUR: 140,
-        GBP: 163,
-        UGX: 0.036,
-        TZS: 0.05,
-    };
     const fxConvertedAmount = useMemo(() => {
         const fromRate = fxRatesToKes[fxFrom] ?? 1;
         const toRate = fxRatesToKes[fxTo] ?? 1;
-        if (fxAmount <= 0 || fromRate <= 0 || toRate <= 0) return 0;
-        const kesValue = fxAmount * fromRate;
-        return kesValue / toRate;
+        if (fxAmount <= 0 || fromRate <= 0 || toRate <= 0) {
+            return 0;
+        }
+        return (fxAmount * fromRate) / toRate;
     }, [fxAmount, fxFrom, fxTo]);
 
     const [yearlyExpense, setYearlyExpense] = useState(1200000);
     const [safeRate, setSafeRate] = useState(4);
     const fireNumber = useMemo(() => {
-        if (safeRate <= 0) return 0;
+        if (safeRate <= 0) {
+            return 0;
+        }
         return yearlyExpense / (safeRate / 100);
     }, [yearlyExpense, safeRate]);
 
     const [annualIncome, setAnnualIncome] = useState(1440000);
     const [dependants, setDependants] = useState(2);
     const [debtBalance, setDebtBalance] = useState(300000);
-    const insuranceCover = useMemo(() => (annualIncome * 10) + debtBalance + (dependants * 250000), [annualIncome, dependants, debtBalance]);
+    const insuranceCover = useMemo(() => {
+        return (annualIncome * 10) + debtBalance + (dependants * 250000);
+    }, [annualIncome, dependants, debtBalance]);
 
     const [payoffBalance, setPayoffBalance] = useState(300000);
     const [payoffRate, setPayoffRate] = useState(14);
     const [payoffMonthly, setPayoffMonthly] = useState(20000);
     const debtPayoffResult = useMemo(() => {
-        if (payoffBalance <= 0 || payoffMonthly <= 0) return { months: 0, totalInterest: 0, totalPaid: 0 };
+        if (payoffBalance <= 0 || payoffMonthly <= 0) {
+            return { months: 0, totalInterest: 0, totalPaid: 0 };
+        }
+
         const monthlyRate = payoffRate / 100 / 12;
         if (monthlyRate > 0 && payoffMonthly <= payoffBalance * monthlyRate) {
             return { months: 999, totalInterest: 0, totalPaid: 0 };
         }
+
         let months = 0;
         let balance = payoffBalance;
         let totalPaid = 0;
         while (balance > 0.01 && months < 600) {
             const interest = balance * monthlyRate;
             const principalPaid = Math.min(Math.max(payoffMonthly - interest, 0), balance);
-            if (principalPaid <= 0) break;
+            if (principalPaid <= 0) {
+                break;
+            }
             balance -= principalPaid;
             totalPaid += payoffMonthly;
             months += 1;
         }
+
         return {
             months,
             totalInterest: Math.max(totalPaid - payoffBalance, 0),
@@ -184,295 +785,563 @@ const ResourcesToolsPanel = () => {
     const [manualLiabilities, setManualLiabilities] = useState(120000);
     const netWorthResult = useMemo(() => manualAssets - manualLiabilities, [manualAssets, manualLiabilities]);
 
-    return (
-        <div className="space-y-4">
-            <section className="rounded-[1.4rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-5 py-5 text-white shadow-sm">
-                <h2 className="text-3xl font-extrabold tracking-tight">Resources & Tools</h2>
-                <p className="mt-1 text-sm text-white/85">Financial calculators and tools to help you make smarter decisions.</p>
-            </section>
+    const [monthlyExpenses, setMonthlyExpenses] = useState(60000);
+    const [monthsCovered, setMonthsCovered] = useState(6);
+    const emergencyTarget = useMemo(() => monthlyExpenses * monthsCovered, [monthlyExpenses, monthsCovered]);
 
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {tools.map((tool) => (
-                    <button
-                        type="button"
-                        key={tool.id}
-                        onClick={() => setSelectedTool(tool.id)}
-                        className="rounded-[1rem] border border-primary-100 bg-white px-4 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md"
-                    >
-                        <div className="flex items-center gap-2">
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
-                                <Calculator size={16} />
-                            </span>
-                            <p className="text-base font-bold text-slate-900">{tool.title}</p>
+    const [nseInvestment, setNseInvestment] = useState(100000);
+    const [dividendYield, setDividendYield] = useState(6);
+    const [capitalGainRate, setCapitalGainRate] = useState(12);
+    const nseReturns = useMemo(() => {
+        const dividendIncome = nseInvestment * (dividendYield / 100);
+        const capitalGain = nseInvestment * (capitalGainRate / 100);
+        return {
+            dividendIncome,
+            capitalGain,
+            totalValue: nseInvestment + dividendIncome + capitalGain,
+        };
+    }, [nseInvestment, dividendYield, capitalGainRate]);
+
+    const [housingIncome, setHousingIncome] = useState(120000);
+    const [housingDebt, setHousingDebt] = useState(20000);
+    const [housingSavings, setHousingSavings] = useState(800000);
+    const homeAffordability = useMemo(() => {
+        const availableMonthly = Math.max((housingIncome * 0.3) - housingDebt, 0);
+        const estimatedLoan = availableMonthly * 120;
+        return {
+            monthlyBudget: availableMonthly,
+            estimatedLoan,
+            estimatedHomePrice: estimatedLoan + housingSavings,
+        };
+    }, [housingIncome, housingDebt, housingSavings]);
+
+    const selectedToolMeta = useMemo(() => {
+        return calculatorCards.find((item) => item.id === selectedTool);
+    }, [selectedTool]);
+
+    const filteredCalculators = useMemo(() => {
+        if (activeFilter === 'all') {
+            return calculatorCards;
+        }
+        return calculatorCards.filter((item) => item.category === activeFilter);
+    }, [activeFilter]);
+
+    const readingProgress = '3 Books';
+
+    // Buddy stays non-interactive for now so the footer can mirror the design
+    // system without exposing a route the dashboard is currently hiding.
+    const handleEcosystemNavigate = (sectionId) => {
+        if (sectionId === 'buddy') {
+            return;
+        }
+        onSelectSection?.(sectionId);
+    };
+
+    // Each calculator body swaps into the same modal shell so the catalog,
+    // tests, and interactions stay consistent as we add more tools later.
+    const renderCalculatorModalBody = () => {
+        switch (selectedTool) {
+            case 'budget':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Monthly income (KES)">
+                            <input aria-label="Monthly income (KES)" className={inputClass} type="number" min={0} value={monthlyIncome} onChange={(event) => setMonthlyIncome(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">50/30/20 split</p>
+                            <p className="mt-3 text-sm text-slate-600">Needs (50%): <span className="font-semibold text-[#166a55]">{currencyFormatter.format(budgetSplit.needs)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Wants (30%): <span className="font-semibold text-[#b56a00]">{currencyFormatter.format(budgetSplit.wants)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Savings (20%): <span className="font-semibold text-[#2f74db]">{currencyFormatter.format(budgetSplit.savings)}</span></p>
                         </div>
-                        <p className="mt-2 text-xs text-slate-500">{tool.subtitle}</p>
-                        <p className="mt-3 text-xs font-semibold text-primary-700">Open calculator</p>
-                    </button>
-                ))}
+                    </div>
+                );
+            case 'loan':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Loan amount (KES)">
+                            <input aria-label="Loan amount (KES)" className={inputClass} type="number" min={0} value={loanAmount} onChange={(event) => setLoanAmount(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Annual interest (%)">
+                            <input aria-label="Annual interest (%)" className={inputClass} type="number" min={0} step="0.1" value={loanRate} onChange={(event) => setLoanRate(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Repayment months">
+                            <input aria-label="Repayment months" className={inputClass} type="number" min={1} value={loanMonths} onChange={(event) => setLoanMonths(Number(event.target.value || 1))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Estimated monthly payment</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(loanResult.monthly)}</p>
+                            <p className="mt-2 text-sm text-slate-600">Total interest: <span className="font-semibold text-slate-900">{currencyFormatter.format(loanResult.totalInterest)}</span></p>
+                        </div>
+                    </div>
+                );
+            case 'compound':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Current savings (KES)">
+                            <input className={inputClass} type="number" min={0} value={principal} onChange={(event) => setPrincipal(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Monthly contribution (KES)">
+                            <input className={inputClass} type="number" min={0} value={monthlyAdd} onChange={(event) => setMonthlyAdd(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Annual return (%)">
+                            <input className={inputClass} type="number" min={0} step="0.1" value={annualReturn} onChange={(event) => setAnnualReturn(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Years">
+                            <input className={inputClass} type="number" min={1} value={years} onChange={(event) => setYears(Number(event.target.value || 1))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
+                            <p className="text-sm font-semibold text-slate-900">Projected future value</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(compoundResult)}</p>
+                        </div>
+                    </div>
+                );
+            case 'paye':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Gross monthly pay (KES)">
+                            <input className={inputClass} type="number" min={0} value={grossMonthlyPay} onChange={(event) => setGrossMonthlyPay(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Estimated PAYE (monthly)</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(payeResult.monthlyTax)}</p>
+                            <p className="mt-2 text-sm text-slate-600">Estimated net pay: <span className="font-semibold text-slate-900">{currencyFormatter.format(payeResult.netMonthly)}</span></p>
+                        </div>
+                    </div>
+                );
+            case 'fx':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Amount">
+                            <input aria-label="FX amount" className={inputClass} type="number" min={0} value={fxAmount} onChange={(event) => setFxAmount(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="From currency">
+                            <select aria-label="From currency" className={inputClass} value={fxFrom} onChange={(event) => setFxFrom(event.target.value)}>
+                                {Object.keys(fxRatesToKes).map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+                            </select>
+                        </ModalField>
+                        <ModalField label="To currency">
+                            <select aria-label="To currency" className={inputClass} value={fxTo} onChange={(event) => setFxTo(event.target.value)}>
+                                {Object.keys(fxRatesToKes).map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+                            </select>
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Converted amount</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{plainNumberFormatter.format(fxConvertedAmount)} {fxTo}</p>
+                            <p className="mt-2 text-xs text-slate-500">Indicative rates for planning preview.</p>
+                        </div>
+                    </div>
+                );
+            case 'fire':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Annual expense (KES)">
+                            <input className={inputClass} type="number" min={0} value={yearlyExpense} onChange={(event) => setYearlyExpense(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Safe withdrawal rate (%)">
+                            <input className={inputClass} type="number" min={0.5} step="0.1" value={safeRate} onChange={(event) => setSafeRate(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
+                            <p className="text-sm font-semibold text-slate-900">FIRE number (target portfolio)</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(fireNumber)}</p>
+                        </div>
+                    </div>
+                );
+            case 'debtPayoff':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Total debt balance (KES)">
+                            <input aria-label="Total debt balance (KES)" className={inputClass} type="number" min={0} value={payoffBalance} onChange={(event) => setPayoffBalance(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Average annual interest (%)">
+                            <input aria-label="Average annual interest (%)" className={inputClass} type="number" min={0} step="0.1" value={payoffRate} onChange={(event) => setPayoffRate(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Monthly payment (KES)">
+                            <input aria-label="Monthly payment (KES)" className={inputClass} type="number" min={0} value={payoffMonthly} onChange={(event) => setPayoffMonthly(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Debt-free timeline</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{debtPayoffResult.months >= 999 ? 'Increase payment' : `${debtPayoffResult.months} months`}</p>
+                            {debtPayoffResult.months < 999 && (
+                                <>
+                                    <p className="mt-2 text-sm text-slate-600">Total paid: <span className="font-semibold text-slate-900">{currencyFormatter.format(debtPayoffResult.totalPaid)}</span></p>
+                                    <p className="mt-1 text-sm text-slate-600">Total interest: <span className="font-semibold text-slate-900">{currencyFormatter.format(debtPayoffResult.totalInterest)}</span></p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                );
+            case 'netWorth':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Total assets (KES)">
+                            <input aria-label="Total assets (KES)" className={inputClass} type="number" min={0} value={manualAssets} onChange={(event) => setManualAssets(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Total liabilities (KES)">
+                            <input aria-label="Total liabilities (KES)" className={inputClass} type="number" min={0} value={manualLiabilities} onChange={(event) => setManualLiabilities(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
+                            <p className="text-sm font-semibold text-slate-900">Estimated net worth</p>
+                            <p className={`mt-2 text-2xl font-extrabold ${netWorthResult >= 0 ? 'text-[#166a55]' : 'text-[#d94d4d]'}`}>{currencyFormatter.format(netWorthResult)}</p>
+                        </div>
+                    </div>
+                );
+            case 'insurance':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Annual income (KES)">
+                            <input className={inputClass} type="number" min={0} value={annualIncome} onChange={(event) => setAnnualIncome(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Dependants">
+                            <input className={inputClass} type="number" min={0} value={dependants} onChange={(event) => setDependants(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Outstanding debt (KES)">
+                            <input className={inputClass} type="number" min={0} value={debtBalance} onChange={(event) => setDebtBalance(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Suggested cover amount</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(insuranceCover)}</p>
+                        </div>
+                    </div>
+                );
+            case 'emergencyFund':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Monthly expenses (KES)">
+                            <input className={inputClass} type="number" min={0} value={monthlyExpenses} onChange={(event) => setMonthlyExpenses(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Months to cover">
+                            <input className={inputClass} type="number" min={1} max={12} value={monthsCovered} onChange={(event) => setMonthsCovered(Number(event.target.value || 1))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
+                            <p className="text-sm font-semibold text-slate-900">Emergency fund target</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(emergencyTarget)}</p>
+                        </div>
+                    </div>
+                );
+            case 'nseReturns':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Investment amount (KES)">
+                            <input className={inputClass} type="number" min={0} value={nseInvestment} onChange={(event) => setNseInvestment(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Dividend yield (%)">
+                            <input className={inputClass} type="number" min={0} step="0.1" value={dividendYield} onChange={(event) => setDividendYield(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Expected capital gain (%)">
+                            <input className={inputClass} type="number" min={0} step="0.1" value={capitalGainRate} onChange={(event) => setCapitalGainRate(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Estimated first-year outcome</p>
+                            <p className="mt-2 text-sm text-slate-600">Dividends: <span className="font-semibold text-slate-900">{currencyFormatter.format(nseReturns.dividendIncome)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Capital gain: <span className="font-semibold text-slate-900">{currencyFormatter.format(nseReturns.capitalGain)}</span></p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(nseReturns.totalValue)}</p>
+                        </div>
+                    </div>
+                );
+            case 'homeAffordability':
+                return (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <ModalField label="Monthly income (KES)">
+                            <input className={inputClass} type="number" min={0} value={housingIncome} onChange={(event) => setHousingIncome(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Existing monthly debt (KES)">
+                            <input className={inputClass} type="number" min={0} value={housingDebt} onChange={(event) => setHousingDebt(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <ModalField label="Available savings / deposit (KES)">
+                            <input className={inputClass} type="number" min={0} value={housingSavings} onChange={(event) => setHousingSavings(Number(event.target.value || 0))} />
+                        </ModalField>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
+                            <p className="text-sm font-semibold text-slate-900">Affordability estimate</p>
+                            <p className="mt-2 text-sm text-slate-600">Safe monthly housing budget: <span className="font-semibold text-slate-900">{currencyFormatter.format(homeAffordability.monthlyBudget)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Estimated loan size: <span className="font-semibold text-slate-900">{currencyFormatter.format(homeAffordability.estimatedLoan)}</span></p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(homeAffordability.estimatedHomePrice)}</p>
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="space-y-5">
+            <section className="rounded-[1.8rem] bg-[linear-gradient(135deg,_#0d3d33_0%,_#156a55_55%,_#2b7b68_100%)] px-5 py-6 text-white shadow-sm sm:px-8">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="max-w-3xl">
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#ef4444] text-white">
+                                <Wallet size={18} />
+                            </div>
+                            <h2 className="text-[2.1rem] font-extrabold tracking-tight">Resources &amp; Tools</h2>
+                        </div>
+                        <p className="mt-3 max-w-2xl text-base leading-7 text-white/85">
+                            Financial calculators, curated books and podcasts tailored for the Kenyan market - to help you make smarter money decisions every day.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 xl:justify-end">
+                        {primaryTabs.map((tab) => (
+                            <TabButton
+                                key={tab.id}
+                                active={activeTab === tab.id}
+                                activeTone={tab.activeTone}
+                                icon={tab.icon}
+                                label={tab.label}
+                                onClick={() => setActiveTab(tab.id)}
+                            />
+                        ))}
+                    </div>
+                </div>
             </section>
 
-            <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-[1.35rem] font-bold text-slate-950">Curated Books</h3>
-                    <button type="button" className="text-sm font-semibold text-primary-700">See All -</button>
-                </div>
-                <div className="grid gap-3 xl:grid-cols-3">
-                    {curatedBooks.map((book) => (
-                        <article key={book.title} className="rounded-[1.2rem] border border-primary-100 bg-white p-4 shadow-sm">
-                            <div className="flex gap-4">
-                                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${book.tone} text-2xl text-white shadow-sm`}>
-                                    <span>▮</span>
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-900">{book.title}</h4>
-                                    <p className="text-sm text-slate-500">{book.author}</p>
-                                    <p className="mt-1.5 text-sm leading-6 text-slate-600">{book.blurb}</p>
-                                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${book.tagClass}`}>{book.tag}</span>
-                                </div>
-                            </div>
-                        </article>
+            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <TopMetricCard label="Calculators Available" value="12" helper="3 favourited - Click to open" accent="text-[#166a55]" />
+                <TopMetricCard label="Curated Books" value="18" helper="KE - Africa - Global editions" accent="text-[#b56a00]" />
+                <TopMetricCard label="Curated Podcasts" value="15" helper="KE - Africa - Global voices" accent="text-[#2f74db]" />
+                <TopMetricCard label="Your Reading Progress" value={readingProgress} helper="1 in progress - 2 completed" accent="text-[#7a57d1]" />
+            </section>
+
+            <section className="rounded-[1.35rem] border border-[#c7e4db] bg-white p-2 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                    {contentTabs.map((tab) => (
+                        <TabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} label={tab.label} compact onClick={() => setActiveTab(tab.id)} />
                     ))}
                 </div>
             </section>
 
-            <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-[1.35rem] font-bold text-slate-950">Curated Podcasts</h3>
-                    <button type="button" className="text-sm font-semibold text-primary-700">See All -</button>
-                </div>
-                <div className="grid gap-3 xl:grid-cols-3">
-                    {curatedPodcasts.map((podcast) => (
-                        <article key={podcast.title} className="rounded-[1.2rem] border border-primary-100 bg-white p-4 shadow-sm">
-                            <div className="flex gap-4">
-                                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${podcast.tone} text-2xl text-white shadow-sm`}>
-                                    <span>◔</span>
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-900">{podcast.title}</h4>
-                                    <p className="text-sm text-slate-500">{podcast.host}</p>
-                                    <p className="mt-1.5 text-sm leading-6 text-slate-600">{podcast.blurb}</p>
-                                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${podcast.tagClass}`}>{podcast.tag}</span>
-                                </div>
+            {activeTab === 'calculators' && (
+                <>
+                    <section className="flex flex-wrap gap-2">
+                        {calculatorFilters.map((filter) => (
+                            <FilterPill key={filter.id} active={activeFilter === filter.id} label={filter.label} onClick={() => setActiveFilter(filter.id)} />
+                        ))}
+                    </section>
+
+                    <section className="grid gap-4 xl:grid-cols-3">
+                        {filteredCalculators.map((item) => (
+                            <ResourceCard key={item.id} item={item} onOpen={setSelectedTool} />
+                        ))}
+                    </section>
+                </>
+            )}
+
+            {activeTab === 'books' && (
+                <section className="space-y-7">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#fff4df] text-[#b56a00]">
+                                    <BookOpen size={18} />
+                                </span>
+                                <h3 className="text-[2rem] font-extrabold tracking-tight text-slate-950">Curated Financial Books</h3>
                             </div>
-                        </article>
+                            <p className="mt-2 text-base text-slate-600">
+                                Build your money mindset - from Nairobi to the world. Start local, grow global.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                            style={{ backgroundColor: BRAND_GREEN }}
+                        >
+                            + Suggest a Book
+                        </button>
+                    </div>
+
+                    {curatedBookSections.map((section) => (
+                        <div key={section.id} className="space-y-4">
+                            <div className="flex items-center justify-between gap-4 border-b border-[#cfe8df] pb-3">
+                                <h4 className="text-[1.85rem] font-extrabold tracking-tight text-slate-950">{section.title}</h4>
+                                <p className="text-sm text-slate-400">{section.helper}</p>
+                            </div>
+
+                            <div className="grid gap-4 xl:grid-cols-3">
+                                {section.books.map((book) => (
+                                    <article key={book.title} className="rounded-[1.35rem] border border-[#c7e4db] bg-white p-5 shadow-sm">
+                                        <div className="flex gap-4">
+                                            <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br ${book.coverTone} shadow-sm`}>
+                                                <div className="flex h-7 w-6 items-center justify-center rounded-[0.35rem] border-2 border-slate-950 bg-white text-[10px] text-slate-950">
+                                                    <span className="block h-4 w-3 rounded-[0.15rem] bg-[#69d74f]" />
+                                                </div>
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h5 className="text-[1.22rem] font-bold leading-7 text-slate-950">{book.title}</h5>
+                                                <p className="mt-1 text-sm text-slate-400">{book.author}</p>
+                                                <p className="mt-3 text-[0.96rem] leading-7 text-slate-600">{book.blurb}</p>
+                                                <div className="mt-4 flex items-center justify-between gap-3">
+                                                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${book.badgeTone}`}>{book.badge}</span>
+                                                    <button type="button" className="text-[1rem] font-semibold text-[#166a55]">
+                                                        Read More -&gt;
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </div>
                     ))}
+                </section>
+            )}
+
+            {activeTab === 'podcasts' && (
+                <section className="space-y-7">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#f5efff] text-[#7a57d1]">
+                                    <Headphones size={18} />
+                                </span>
+                                <h3 className="text-[2rem] font-extrabold tracking-tight text-slate-950">Curated Financial Podcasts</h3>
+                            </div>
+                            <p className="mt-2 text-base text-slate-600">
+                                Learn money on the move - Kenyan voices first, then the world&apos;s best.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                            style={{ backgroundColor: BRAND_GREEN }}
+                        >
+                            + Suggest a Podcast
+                        </button>
+                    </div>
+
+                    {curatedPodcastSections.map((section) => (
+                        <div key={section.id} className="space-y-4">
+                            <div className="flex items-center justify-between gap-4 border-b border-[#cfe8df] pb-3">
+                                <h4 className="text-[1.85rem] font-extrabold tracking-tight text-slate-950">{section.title}</h4>
+                                <p className="text-sm text-slate-400">{section.helper}</p>
+                            </div>
+
+                            <div className="grid gap-4 xl:grid-cols-3">
+                                {section.items.map((podcast) => {
+                                    const Icon = podcast.icon;
+
+                                    return (
+                                        <article key={podcast.title} className="rounded-[1.35rem] border border-[#c7e4db] bg-white p-5 shadow-sm">
+                                            <div className="flex gap-4">
+                                                <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br ${podcast.coverTone} shadow-sm text-white`}>
+                                                    <Icon size={24} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                <h5 className="text-[1.22rem] font-bold leading-7 text-slate-950">{podcast.title}</h5>
+                                                <p className="mt-1 text-sm text-slate-400">{podcast.host}</p>
+                                                <p className="mt-3 text-[0.96rem] leading-7 text-slate-600">{podcast.blurb}</p>
+                                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${podcast.tagOneTone}`}>{podcast.tagOne}</span>
+                                                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${podcast.tagTwoTone}`}>{podcast.tagTwo}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="ml-auto inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white"
+                                                            style={{ backgroundColor: BRAND_GREEN }}
+                                                        >
+                                                            Listen
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </section>
+            )}
+
+            {activeTab === 'learning' && (
+                <section className="space-y-6">
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#f8f1df] text-[#6e5a1b]">
+                                <GraduationCap size={18} />
+                            </span>
+                            <h3 className="text-[2rem] font-extrabold tracking-tight text-slate-950">Learning Hub</h3>
+                        </div>
+                        <p className="mt-2 text-base text-slate-600">Structured financial education for every stage of your money journey.</p>
+                    </div>
+
+                    <div className="grid gap-4 xl:grid-cols-3">
+                        {learningHighlights.map((item) => {
+                            const Icon = item.icon;
+
+                            return (
+                                <article key={item.title} className={`rounded-[1.35rem] border border-[#c7e4db] bg-white p-5 shadow-sm ${item.accent}`}>
+                                    <div className={`inline-flex h-12 w-12 items-center justify-center rounded-[1rem] ${item.iconTone}`}>
+                                        <Icon size={20} />
+                                    </div>
+                                    <h4 className="mt-5 text-[1.22rem] font-bold text-slate-950">{item.title}</h4>
+                                    <p className="mt-2 text-[0.96rem] leading-7 text-slate-600">{item.description}</p>
+
+                                    {item.progress !== null && (
+                                        <div className="mt-4">
+                                            <div className="flex items-center justify-between text-sm text-slate-400">
+                                                <span>Your progress</span>
+                                                <span className="font-semibold text-[#166a55]">{item.progress}%</span>
+                                            </div>
+                                            <div className="mt-2 h-2 rounded-full bg-[#edf5f1]">
+                                                <div className="h-2 rounded-full" style={{ width: `${item.progress}%`, backgroundColor: BRAND_GREEN }} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                        <p className="text-sm text-slate-400">{item.meta}</p>
+                                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${item.badgeTone}`}>{item.badge}</span>
+                                    </div>
+                                </article>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            <section className="rounded-[1.7rem] bg-[linear-gradient(135deg,_#134b3d_0%,_#1f6f5e_55%,_#1f9c72_100%)] p-6 text-white shadow-sm">
+                <div className="max-w-3xl">
+                    <h3 className="text-[1.7rem] font-extrabold tracking-tight">Resources Connect to Your Full Financial Journey</h3>
+                    <p className="mt-2 text-sm leading-6 text-white/80">
+                        Every calculator links to the relevant pillar. Apply what you learn directly to your budget, investments, and planning tools.
+                    </p>
+                </div>
+
+                <div className="mt-5 grid gap-3 lg:grid-cols-3 xl:grid-cols-6">
+                    {ecosystemLinks.map((item) => {
+                        const Icon = item.icon;
+                        const isDisabled = item.id === 'buddy';
+
+                        return (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleEcosystemNavigate(item.id)}
+                                disabled={isDisabled}
+                                className="rounded-[1.2rem] border border-white/12 bg-white/6 px-4 py-5 text-left transition hover:bg-white/10 disabled:cursor-default"
+                            >
+                                <span className={`inline-flex h-11 w-11 items-center justify-center rounded-[0.95rem] ${item.iconTone}`}>
+                                    <Icon size={18} />
+                                </span>
+                                <p className="mt-4 text-base font-bold text-white">{item.title}</p>
+                                <p className="mt-1 text-sm font-semibold text-[#ffcf5a]">{item.cta} -&gt;</p>
+                            </button>
+                        );
+                    })}
                 </div>
             </section>
 
             {selectedTool && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]">
-                    <div className="w-full max-w-3xl rounded-2xl border border-primary-100 bg-slate-50 shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-primary-100 px-5 py-4">
-                            <h3 className="text-lg font-bold text-slate-900">
-                                {tools.find((tool) => tool.id === selectedTool)?.title}
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedTool(null)}
-                                className="rounded-lg border border-primary-100 bg-white p-2 text-slate-600 transition hover:text-slate-900"
-                                aria-label="Close calculator"
-                            >
-                                <X size={16} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[1px]">
+                    <div className="w-full max-w-3xl rounded-[1.5rem] border border-[#c7e4db] bg-white shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-[#e2f1eb] px-5 py-4">
+                            <h3 className="text-xl font-bold text-slate-950">{selectedToolMeta?.title}</h3>
+                            <button type="button" onClick={() => setSelectedTool(null)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#c7e4db] text-slate-500 transition hover:bg-[#f8fcfa]" aria-label="Close calculator">
+                                <X size={18} />
                             </button>
                         </div>
 
                         <div className="space-y-4 px-5 py-5">
-                            {selectedTool === 'budget' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Monthly income (KES)</label>
-                                        <input aria-label="Monthly income (KES)" className={inputClass} type="number" min={0} value={monthlyIncome} onChange={(event) => setMonthlyIncome(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4">
-                                        <p className="text-sm font-semibold text-slate-900">50/30/20 split</p>
-                                        <p className="mt-2 text-sm text-slate-600">Needs (50%): <span className="font-semibold text-emerald-700">{numberFormatter.format(budgetSplit.needs)}</span></p>
-                                        <p className="mt-1 text-sm text-slate-600">Wants (30%): <span className="font-semibold text-blue-700">{numberFormatter.format(budgetSplit.wants)}</span></p>
-                                        <p className="mt-1 text-sm text-slate-600">Savings (20%): <span className="font-semibold text-amber-700">{numberFormatter.format(budgetSplit.savings)}</span></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'loan' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Loan amount (KES)</label>
-                                        <input aria-label="Loan amount (KES)" className={inputClass} type="number" min={0} value={loanAmount} onChange={(event) => setLoanAmount(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Annual interest (%)</label>
-                                        <input aria-label="Annual interest (%)" className={inputClass} type="number" min={0} step="0.1" value={loanRate} onChange={(event) => setLoanRate(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Repayment months</label>
-                                        <input aria-label="Repayment months" className={inputClass} type="number" min={1} value={loanMonths} onChange={(event) => setLoanMonths(Number(event.target.value || 1))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4">
-                                        <p className="text-sm font-semibold text-slate-900">Estimated monthly payment</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">{numberFormatter.format(loanResult.monthly)}</p>
-                                        <p className="mt-2 text-sm text-slate-600">Total interest: <span className="font-semibold text-slate-900">{numberFormatter.format(loanResult.totalInterest)}</span></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'compound' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Current savings (KES)</label>
-                                        <input className={inputClass} type="number" min={0} value={principal} onChange={(event) => setPrincipal(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Monthly contribution (KES)</label>
-                                        <input className={inputClass} type="number" min={0} value={monthlyAdd} onChange={(event) => setMonthlyAdd(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Annual return (%)</label>
-                                        <input className={inputClass} type="number" min={0} step="0.1" value={annualReturn} onChange={(event) => setAnnualReturn(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Years</label>
-                                        <input className={inputClass} type="number" min={1} value={years} onChange={(event) => setYears(Number(event.target.value || 1))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4 md:col-span-2">
-                                        <p className="text-sm font-semibold text-slate-900">Projected future value</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">{numberFormatter.format(compoundResult)}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'paye' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Gross monthly pay (KES)</label>
-                                        <input className={inputClass} type="number" min={0} value={grossMonthlyPay} onChange={(event) => setGrossMonthlyPay(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4">
-                                        <p className="text-sm font-semibold text-slate-900">Estimated PAYE (monthly)</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">{numberFormatter.format(payeResult.monthlyTax)}</p>
-                                        <p className="mt-2 text-sm text-slate-600">Estimated net pay: <span className="font-semibold text-slate-900">{numberFormatter.format(payeResult.netMonthly)}</span></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'fx' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Amount</label>
-                                        <input aria-label="FX amount" className={inputClass} type="number" min={0} value={fxAmount} onChange={(event) => setFxAmount(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>From currency</label>
-                                        <select aria-label="From currency" className={inputClass} value={fxFrom} onChange={(event) => setFxFrom(event.target.value)}>
-                                            {Object.keys(fxRatesToKes).map((currency) => (
-                                                <option key={currency} value={currency}>{currency}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>To currency</label>
-                                        <select aria-label="To currency" className={inputClass} value={fxTo} onChange={(event) => setFxTo(event.target.value)}>
-                                            {Object.keys(fxRatesToKes).map((currency) => (
-                                                <option key={currency} value={currency}>{currency}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4">
-                                        <p className="text-sm font-semibold text-slate-900">Converted amount</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">
-                                            {new Intl.NumberFormat('en-KE', { maximumFractionDigits: 2 }).format(fxConvertedAmount)} {fxTo}
-                                        </p>
-                                        <p className="mt-2 text-xs text-slate-500">Indicative rates for planning preview.</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'fire' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Annual expense (KES)</label>
-                                        <input className={inputClass} type="number" min={0} value={yearlyExpense} onChange={(event) => setYearlyExpense(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Safe withdrawal rate (%)</label>
-                                        <input className={inputClass} type="number" min={0.5} step="0.1" value={safeRate} onChange={(event) => setSafeRate(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4 md:col-span-2">
-                                        <p className="text-sm font-semibold text-slate-900">FIRE number (target portfolio)</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">{numberFormatter.format(fireNumber)}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'debtPayoff' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Total debt balance (KES)</label>
-                                        <input aria-label="Total debt balance (KES)" className={inputClass} type="number" min={0} value={payoffBalance} onChange={(event) => setPayoffBalance(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Average annual interest (%)</label>
-                                        <input aria-label="Average annual interest (%)" className={inputClass} type="number" min={0} step="0.1" value={payoffRate} onChange={(event) => setPayoffRate(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Monthly payment (KES)</label>
-                                        <input aria-label="Monthly payment (KES)" className={inputClass} type="number" min={0} value={payoffMonthly} onChange={(event) => setPayoffMonthly(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4">
-                                        <p className="text-sm font-semibold text-slate-900">Debt-free timeline</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">
-                                            {debtPayoffResult.months >= 999 ? 'Increase payment' : `${debtPayoffResult.months} months`}
-                                        </p>
-                                        {debtPayoffResult.months < 999 && (
-                                            <>
-                                                <p className="mt-2 text-sm text-slate-600">Total paid: <span className="font-semibold text-slate-900">{numberFormatter.format(debtPayoffResult.totalPaid)}</span></p>
-                                                <p className="mt-1 text-sm text-slate-600">Total interest: <span className="font-semibold text-slate-900">{numberFormatter.format(debtPayoffResult.totalInterest)}</span></p>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'netWorth' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Total assets (KES)</label>
-                                        <input aria-label="Total assets (KES)" className={inputClass} type="number" min={0} value={manualAssets} onChange={(event) => setManualAssets(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Total liabilities (KES)</label>
-                                        <input aria-label="Total liabilities (KES)" className={inputClass} type="number" min={0} value={manualLiabilities} onChange={(event) => setManualLiabilities(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4 md:col-span-2">
-                                        <p className="text-sm font-semibold text-slate-900">Estimated net worth</p>
-                                        <p className={`mt-2 text-2xl font-extrabold ${netWorthResult >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-                                            {numberFormatter.format(netWorthResult)}
-                                        </p>
-                                        <p className="mt-2 text-sm text-slate-600">
-                                            {netWorthResult >= 0 ? 'Healthy positive position. Keep compounding.' : 'Negative position. Prioritize debt reduction and saving.'}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedTool === 'insurance' && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <label className={labelClass}>Annual income (KES)</label>
-                                        <input className={inputClass} type="number" min={0} value={annualIncome} onChange={(event) => setAnnualIncome(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Dependants</label>
-                                        <input className={inputClass} type="number" min={0} value={dependants} onChange={(event) => setDependants(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Outstanding debt (KES)</label>
-                                        <input className={inputClass} type="number" min={0} value={debtBalance} onChange={(event) => setDebtBalance(Number(event.target.value || 0))} />
-                                    </div>
-                                    <div className="rounded-xl border border-emerald-100 bg-white p-4">
-                                        <p className="text-sm font-semibold text-slate-900">Suggested cover amount</p>
-                                        <p className="mt-2 text-2xl font-extrabold text-emerald-700">{numberFormatter.format(insuranceCover)}</p>
-                                    </div>
-                                </div>
-                            )}
+                            <p className="text-sm leading-6 text-slate-600">{selectedToolMeta?.description}</p>
+                            {renderCalculatorModalBody()}
                         </div>
                     </div>
                 </div>

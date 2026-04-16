@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import ResourcesToolsPanel from '../ResourcesToolsPanel';
 
 const extractNumericValue = (text) => {
     const parsed = Number(String(text || '').replace(/[^\d]/g, ''));
     return Number.isNaN(parsed) ? 0 : parsed;
 };
+
+const getLatestHeading = (name) => screen.getAllByRole('heading', { name }).at(-1);
 
 describe('ResourcesToolsPanel', () => {
     it('opens budget calculator modal and shows 50/30/20 values', async () => {
@@ -14,7 +17,7 @@ describe('ResourcesToolsPanel', () => {
 
         await user.click(screen.getByRole('button', { name: /budget builder/i }));
 
-        expect(screen.getByRole('heading', { name: /budget builder/i })).toBeInTheDocument();
+        expect(getLatestHeading(/budget builder/i)).toBeInTheDocument();
         expect(screen.getByText(/50\/30\/20 split/i)).toBeInTheDocument();
         expect(screen.getByText(/60,000/)).toBeInTheDocument();
         expect(screen.getByText(/36,000/)).toBeInTheDocument();
@@ -47,10 +50,10 @@ describe('ResourcesToolsPanel', () => {
         render(<ResourcesToolsPanel />);
 
         await user.click(screen.getByRole('button', { name: /fire calculator/i }));
-        expect(screen.getByRole('heading', { name: /fire calculator/i })).toBeInTheDocument();
+        expect(getLatestHeading(/fire calculator/i)).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: /close calculator/i }));
-        expect(screen.queryByRole('heading', { name: /fire calculator/i })).not.toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { name: /fire calculator/i })).toHaveLength(1);
     });
 
     it('opens fx converter and recalculates when currency pair changes', async () => {
@@ -58,7 +61,7 @@ describe('ResourcesToolsPanel', () => {
         render(<ResourcesToolsPanel />);
 
         await user.click(screen.getByRole('button', { name: /fx converter/i }));
-        expect(screen.getByRole('heading', { name: /fx converter/i })).toBeInTheDocument();
+        expect(getLatestHeading(/fx converter/i)).toBeInTheDocument();
 
         const resultCard = screen.getByText(/converted amount/i).closest('div');
         const before = extractNumericValue(resultCard?.querySelector('p.text-2xl')?.textContent);
@@ -75,7 +78,35 @@ describe('ResourcesToolsPanel', () => {
         render(<ResourcesToolsPanel />);
 
         await user.click(screen.getByRole('button', { name: /debt payoff planner/i }));
-        expect(screen.getByRole('heading', { name: /debt payoff planner/i })).toBeInTheDocument();
+        expect(getLatestHeading(/debt payoff planner/i)).toBeInTheDocument();
         expect(screen.getByText(/debt-free timeline/i)).toBeInTheDocument();
+    });
+
+    it('switches into books, podcasts, and learning hub tabs', async () => {
+        const user = userEvent.setup();
+        render(<ResourcesToolsPanel />);
+
+        await user.click(screen.getAllByRole('button', { name: /^books$/i })[0]);
+        expect(screen.getByRole('heading', { name: /curated financial books/i })).toBeInTheDocument();
+
+        await user.click(screen.getAllByRole('button', { name: /^podcasts$/i })[0]);
+        expect(screen.getByRole('heading', { name: /curated financial podcasts/i })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: /learning hub/i }));
+        expect(screen.getByRole('heading', { name: /^learning hub$/i })).toBeInTheDocument();
+        expect(screen.getByText(/structured financial education/i)).toBeInTheDocument();
+    });
+
+    it('filters calculators and routes ecosystem cards through dashboard navigation', async () => {
+        const user = userEvent.setup();
+        const onSelectSection = vi.fn();
+        render(<ResourcesToolsPanel onSelectSection={onSelectSection} />);
+
+        await user.click(screen.getByRole('button', { name: /^tax$/i }));
+        expect(screen.getByRole('button', { name: /paye \/ tax calculator/i })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /loan calculator/i })).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: /debt manager/i }));
+        expect(onSelectSection).toHaveBeenCalledWith('debt');
     });
 });

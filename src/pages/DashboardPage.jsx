@@ -226,7 +226,7 @@ const DashboardPage = () => {
             case 'resourceshub':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ResourcesToolsPanel />
+                        <ResourcesToolsPanel onSelectSection={setActiveSection} />
                     </Suspense>
                 );
 
