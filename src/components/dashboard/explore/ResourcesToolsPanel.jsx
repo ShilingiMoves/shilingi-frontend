@@ -18,7 +18,9 @@ import {
     Zap,
 } from 'lucide-react';
 
-const BRAND_GREEN = '#1f9c72';
+const BRAND_GREEN = '#24a06f';
+const BRAND_GREEN_DARK = '#167a53';
+const BRAND_GREEN_LIGHT = '#e6f5ef';
 
 const currencyFormatter = new Intl.NumberFormat('en-KE', {
     style: 'currency',
@@ -73,7 +75,7 @@ const calculatorCards = [
         description: 'Estimate your Kenya income tax, NHIF, NSSF and net take-home pay with 2025/26 tax bands.',
         category: 'tax',
         badge: 'Popular',
-        badgeTone: 'bg-[#156a55] text-white',
+        badgeTone: 'text-white',
         icon: Landmark,
         iconTone: 'bg-[#e9f7f3] text-[#166a55]',
     },
@@ -83,7 +85,7 @@ const calculatorCards = [
         description: 'Monthly repayments, total interest, and full amortisation schedule for any loan.',
         category: 'debt',
         badge: 'Popular',
-        badgeTone: 'bg-[#156a55] text-white',
+        badgeTone: 'text-white',
         icon: Receipt,
         iconTone: 'bg-[#fff4df] text-[#b56a00]',
     },
@@ -93,7 +95,7 @@ const calculatorCards = [
         description: 'Grow your savings over time. See the magic of compounding on T-Bills, MMF, or pensions.',
         category: 'investing',
         badge: 'Popular',
-        badgeTone: 'bg-[#156a55] text-white',
+        badgeTone: 'text-white',
         icon: TrendingUp,
         iconTone: 'bg-[#f3efff] text-[#7a57d1]',
     },
@@ -187,7 +189,7 @@ const curatedBookSections = [
                 blurb: "A Kenyan economist's guide to managing money, navigating the Nairobi economy and building wealth in the local context.",
                 badge: 'Beginner',
                 badgeTone: 'bg-[#eef8f4] text-[#166a55]',
-                coverTone: 'from-[#1f9c72] to-[#2f8f72]',
+                coverTone: 'from-[#24a06f] to-[#2f8f72]',
             },
             {
                 title: 'The Kenyan Millionaire Blueprint',
@@ -242,7 +244,7 @@ const curatedBookSections = [
                 blurb: "Zimbabwe's billionaire founder of Econet shares lessons on entrepreneurship, investing, and building African wealth from scratch.",
                 badge: 'Intermediate',
                 badgeTone: 'bg-[#eef8f4] text-[#166a55]',
-                coverTone: 'from-[#1f9c72] to-[#d5a42b]',
+                coverTone: 'from-[#24a06f] to-[#d5a42b]',
             },
             {
                 title: 'Rich Habits, Poor Habits: African Edition',
@@ -258,7 +260,7 @@ const curatedBookSections = [
                 blurb: "How African businesses and investors are winning globally. Investment thinking anchored in African market realities.",
                 badge: 'Advanced',
                 badgeTone: 'bg-[#f2edff] text-[#7a57d1]',
-                coverTone: 'from-[#d8a11f] to-[#1f9c72]',
+                coverTone: 'from-[#d8a11f] to-[#24a06f]',
             },
         ],
     },
@@ -273,7 +275,7 @@ const curatedBookSections = [
                 blurb: 'Timeless lessons on wealth, greed, and happiness. The best personal finance book of the last decade. Non-negotiable read.',
                 badge: 'Top Pick',
                 badgeTone: 'bg-[#eef8f4] text-[#166a55]',
-                coverTone: 'from-[#1f9c72] to-[#2f8f72]',
+                coverTone: 'from-[#24a06f] to-[#2f8f72]',
             },
             {
                 title: 'Rich Dad Poor Dad',
@@ -313,7 +315,7 @@ const curatedBookSections = [
                 blurb: "Warren Buffett's favourite book. The bible of value investing. For those who want to master NSE and global markets.",
                 badge: 'Advanced',
                 badgeTone: 'bg-[#f2edff] text-[#7a57d1]',
-                coverTone: 'from-[#134b3d] to-[#1f9c72]',
+                coverTone: 'from-[#134b3d] to-[#24a06f]',
             },
         ],
     },
@@ -344,7 +346,7 @@ const curatedPodcastSections = [
                 tagOneTone: 'bg-[#eef8f4] text-[#166a55]',
                 tagTwo: 'Women',
                 tagTwoTone: 'bg-[#ffe7ef] text-[#d94d7a]',
-                coverTone: 'from-[#1f9c72] to-[#57c0a4]',
+                coverTone: 'from-[#24a06f] to-[#57c0a4]',
                 icon: PiggyBank,
             },
             {
@@ -406,7 +408,7 @@ const curatedPodcastSections = [
                 tagOneTone: 'bg-[#fff3d8] text-[#b56a00]',
                 tagTwo: 'Beginner',
                 tagTwoTone: 'bg-[#eef8f4] text-[#166a55]',
-                coverTone: 'from-[#1f9c72] to-[#d5a42b]',
+                coverTone: 'from-[#24a06f] to-[#d5a42b]',
                 icon: BookOpen,
             },
             {
@@ -457,7 +459,7 @@ const curatedPodcastSections = [
                 tagOneTone: 'bg-[#eef4ff] text-[#2f74db]',
                 tagTwo: 'Investing',
                 tagTwoTone: 'bg-[#fff3d8] text-[#b56a00]',
-                coverTone: 'from-[#134b3d] to-[#1f9c72]',
+                coverTone: 'from-[#134b3d] to-[#24a06f]',
                 icon: Calculator,
             },
             {
@@ -516,7 +518,7 @@ const learningHighlights = [
         meta: '5 lessons · 45 mins',
         badge: 'In Progress',
         badgeTone: 'bg-[#e7f6f1] text-[#166a55]',
-        accent: 'border-l-[4px] border-[#1f9c72]',
+        accent: 'border-l-[4px] border-[#24a06f]',
         icon: PiggyBank,
         iconTone: 'bg-[#fff7ec] text-[#b56a00]',
     },
@@ -601,11 +603,12 @@ const TabButton = ({ active, icon: Icon, label, onClick, compact = false, active
     <button
         type="button"
         onClick={onClick}
+        style={active && activeTone !== 'gold' ? { backgroundColor: BRAND_GREEN, borderColor: BRAND_GREEN } : undefined}
         className={`inline-flex items-center gap-2 rounded-[1rem] border px-4 py-3 text-sm font-semibold transition-all ${
             active
                 ? activeTone === 'gold'
                     ? 'border-[#ffb320] bg-[#ffb320] text-slate-950 shadow-sm'
-                    : 'border-[#0f4d40] bg-[#0f4d40] text-white shadow-sm'
+                    : 'text-white shadow-sm'
                 : compact
                     ? 'border-[#c7e4db] bg-white text-slate-600 hover:bg-[#f6fbf8]'
                     : 'border-white/15 bg-white/10 text-white hover:bg-white/15'
@@ -620,9 +623,10 @@ const FilterPill = ({ active, label, onClick }) => (
     <button
         type="button"
         onClick={onClick}
+        style={active ? { backgroundColor: BRAND_GREEN, borderColor: BRAND_GREEN } : undefined}
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
             active
-                ? 'border-[#0f4d40] bg-[#0f4d40] text-white'
+                ? 'text-white'
                 : 'border-[#c7e4db] bg-white text-slate-700 hover:bg-[#f7fbf9]'
         }`}
     >
@@ -632,6 +636,7 @@ const FilterPill = ({ active, label, onClick }) => (
 
 const ResourceCard = ({ item, onOpen }) => {
     const Icon = item.icon;
+    const badgeUsesBrandGreen = item.badgeTone === 'text-white';
 
     return (
         <button
@@ -640,7 +645,10 @@ const ResourceCard = ({ item, onOpen }) => {
             className="relative rounded-[1.3rem] border border-[#c7e4db] bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#afd8ca] hover:shadow-md"
         >
             {item.badge && (
-                <span className={`absolute right-0 top-0 rounded-bl-[0.8rem] rounded-tr-[1.3rem] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${item.badgeTone}`}>
+                <span
+                    className={`absolute right-0 top-0 rounded-bl-[0.8rem] rounded-tr-[1.3rem] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${item.badgeTone}`}
+                    style={badgeUsesBrandGreen ? { backgroundColor: BRAND_GREEN_DARK } : undefined}
+                >
                     {item.badge}
                 </span>
             )}
@@ -1065,7 +1073,10 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
 
     return (
         <div className="space-y-5">
-            <section className="rounded-[1.8rem] bg-[linear-gradient(135deg,_#0d3d33_0%,_#156a55_55%,_#2b7b68_100%)] px-5 py-6 text-white shadow-sm sm:px-8">
+            <section
+                className="rounded-[1.8rem] px-5 py-6 text-white shadow-sm sm:px-8"
+                style={{ background: `linear-gradient(135deg, ${BRAND_GREEN_DARK} 0%, ${BRAND_GREEN} 55%, #38b180 100%)` }}
+            >
                 <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                     <div className="max-w-3xl">
                         <div className="flex items-center gap-3">
@@ -1297,7 +1308,10 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 </section>
             )}
 
-            <section className="rounded-[1.7rem] bg-[linear-gradient(135deg,_#134b3d_0%,_#1f6f5e_55%,_#1f9c72_100%)] p-6 text-white shadow-sm">
+            <section
+                className="rounded-[1.7rem] p-6 text-white shadow-sm"
+                style={{ background: `linear-gradient(135deg, ${BRAND_GREEN_DARK} 0%, #1b8a61 55%, ${BRAND_GREEN} 100%)` }}
+            >
                 <div className="max-w-3xl">
                     <h3 className="text-[1.7rem] font-extrabold tracking-tight">Resources Connect to Your Full Financial Journey</h3>
                     <p className="mt-2 text-sm leading-6 text-white/80">
@@ -1351,3 +1365,4 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
 };
 
 export default ResourcesToolsPanel;
+

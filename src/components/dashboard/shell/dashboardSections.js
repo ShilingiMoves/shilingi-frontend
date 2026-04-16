@@ -233,7 +233,7 @@ export const dashboardSidebarGroups = [
     {
         id: 'insights',
         label: 'Insights',
-        items: ['marketwatch', 'health'],
+        items: ['marketwatch'],
     },
 ];
 
