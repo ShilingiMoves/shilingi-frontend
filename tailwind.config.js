@@ -8,16 +8,16 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    50: '#edf9f4',
-                    100: '#d2f0e4',
-                    200: '#a5dfca',
-                    300: '#74cda9',
-                    400: '#40bb87',
-                    500: '#179b6e', // Main dashboard brand green
-                    600: '#14875f',
-                    700: '#116f4e',
-                    800: '#0c563c',
-                    900: '#093f2c',
+                    50: '#edf8f4',
+                    100: '#d4ede2',
+                    200: '#a9dbc5',
+                    300: '#78c6a5',
+                    400: '#43b184',
+                    500: '#1f9871', // Updated dashboard brand green
+                    600: '#1a8663',
+                    700: '#166d52',
+                    800: '#125642',
+                    900: '#0d3e31',
                 },
             },
             fontFamily: {

@@ -55,7 +55,7 @@ const DashboardTopbar = ({
     }, [searchOpen]);
 
     return (
-        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050807] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-[#050807] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
             <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
                 <div className="flex items-center gap-3">
                     <button
@@ -114,7 +114,7 @@ const DashboardTopbar = ({
                         </button>
 
                         {searchOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(92vw,340px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(92vw,340px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                 <label className="flex w-full items-center gap-2.5 rounded-full border border-emerald-100 bg-[#f6fbf8] px-4 py-2 shadow-sm">
                                     <Search size={16} className="text-slate-400" />
                                     <input
@@ -144,7 +144,7 @@ const DashboardTopbar = ({
                         </button>
 
                         {notificationsOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(92vw,360px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
+                            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(92vw,360px)] rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.16)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary-700">
                                     Notifications
                                 </p>
@@ -181,7 +181,7 @@ const DashboardTopbar = ({
                         </button>
 
                         {accountOpen && (
-                            <div className="absolute right-0 top-[calc(100%+0.55rem)] z-30 w-[250px] overflow-hidden rounded-[1.25rem] border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
+                            <div className="absolute right-0 top-[calc(100%+0.55rem)] z-50 w-[220px] overflow-hidden rounded-[1rem] border border-emerald-100 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.12)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                 <div>
                                     <button
                                         type="button"
@@ -189,7 +189,7 @@ const DashboardTopbar = ({
                                             onSelectSection('overview');
                                             setAccountOpen(false);
                                         }}
-                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
                                     >
                                         <Home size={15} />
                                         Dashboard
@@ -200,7 +200,7 @@ const DashboardTopbar = ({
                                             onSelectSection('user');
                                             setAccountOpen(false);
                                         }}
-                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
                                     >
                                         <UserCircle2 size={15} />
                                         My Profile
@@ -211,7 +211,7 @@ const DashboardTopbar = ({
                                             onSelectSection('settings');
                                             setAccountOpen(false);
                                         }}
-                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
                                     >
                                         <Settings size={15} />
                                         Settings
@@ -224,7 +224,7 @@ const DashboardTopbar = ({
                                             }
                                             setAccountOpen(false);
                                         }}
-                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
+                                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-800 transition-colors hover:bg-emerald-50"
                                     >
                                         <Smartphone size={15} />
                                         Mobile App
@@ -234,7 +234,7 @@ const DashboardTopbar = ({
                                     <button
                                         type="button"
                                         onClick={onSignOut}
-                                        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
                                     >
                                         <LogOut size={15} />
                                         Log Out

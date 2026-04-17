@@ -592,10 +592,10 @@ const labelClass = 'block text-xs font-semibold uppercase tracking-[0.16em] text
 const inputClass = 'mt-2 w-full rounded-[1rem] border border-[#d8ece3] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#8fcfba] focus:ring-2 focus:ring-[#dff1ea]';
 
 const TopMetricCard = ({ label, value, helper, accent }) => (
-    <article className="rounded-[1.35rem] border border-[#c7e4db] bg-white px-5 py-4 shadow-sm">
+    <article className="rounded-[1rem] border border-[#d0ddd9] bg-white px-4 py-3.5 shadow-sm">
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">{label}</p>
-        <p className={`mt-3 text-[1.95rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
-        <p className="mt-1 text-[0.95rem] text-slate-500">{helper}</p>
+        <p className={`mt-2 text-[1.55rem] font-bold tracking-tight ${accent}`}>{value}</p>
+        <p className="mt-1 text-sm text-slate-500">{helper}</p>
     </article>
 );
 
@@ -604,7 +604,7 @@ const TabButton = ({ active, icon: Icon, label, onClick, compact = false, active
         type="button"
         onClick={onClick}
         style={active && activeTone !== 'gold' ? { backgroundColor: BRAND_GREEN, borderColor: BRAND_GREEN } : undefined}
-        className={`inline-flex items-center gap-2 rounded-[1rem] border px-4 py-3 text-sm font-semibold transition-all ${
+        className={`inline-flex items-center gap-2 rounded-[0.8rem] border px-3.5 py-2.5 text-sm font-semibold transition-all ${
             active
                 ? activeTone === 'gold'
                     ? 'border-[#ffb320] bg-[#ffb320] text-slate-950 shadow-sm'
@@ -624,10 +624,10 @@ const FilterPill = ({ active, label, onClick }) => (
         type="button"
         onClick={onClick}
         style={active ? { backgroundColor: BRAND_GREEN, borderColor: BRAND_GREEN } : undefined}
-        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold tracking-tight transition-colors ${
             active
                 ? 'text-white'
-                : 'border-[#c7e4db] bg-white text-slate-700 hover:bg-[#f7fbf9]'
+                : 'border-[#d0ddd9] bg-white text-slate-700 hover:bg-[#f7fbf9] hover:text-[#166a55]'
         }`}
     >
         {label}
@@ -642,22 +642,29 @@ const ResourceCard = ({ item, onOpen }) => {
         <button
             type="button"
             onClick={() => onOpen(item.id)}
-            className="relative rounded-[1.3rem] border border-[#c7e4db] bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#afd8ca] hover:shadow-md"
+            className="relative flex h-full flex-col rounded-[1rem] border border-[#d0ddd9] bg-white p-4.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#afd8ca] hover:shadow-md"
         >
             {item.badge && (
                 <span
-                    className={`absolute right-0 top-0 rounded-bl-[0.8rem] rounded-tr-[1.3rem] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${item.badgeTone}`}
+                    className={`absolute right-0 top-0 rounded-bl-[0.7rem] rounded-tr-[1rem] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${item.badgeTone}`}
                     style={badgeUsesBrandGreen ? { backgroundColor: BRAND_GREEN_DARK } : undefined}
                 >
                     {item.badge}
                 </span>
             )}
-            <span className={`inline-flex h-12 w-12 items-center justify-center rounded-[1rem] ${item.iconTone}`}>
-                <Icon size={20} />
-            </span>
-            <h3 className="mt-5 text-[1.28rem] font-bold tracking-tight text-slate-950">{item.title}</h3>
-            <p className="mt-2 text-[0.98rem] leading-7 text-slate-600">{item.description}</p>
-            <p className="mt-4 text-[1rem] font-semibold text-[#166a55]">Open Calculator -&gt;</p>
+            <div className="pl-2 sm:pl-3">
+                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] ${item.iconTone}`}>
+                    <Icon size={18} />
+                </span>
+                <h3 className="mt-4 max-w-[16rem] text-[1.06rem] font-bold leading-6 tracking-tight text-slate-950">{item.title}</h3>
+                <p className="mt-2 max-w-[18rem] text-[0.95rem] leading-7 text-slate-600">{item.description}</p>
+                <div className="mt-auto pt-4">
+                    <span className="inline-flex items-center gap-2 border-b border-[#9ed7c1] pb-1 text-sm font-semibold text-[#166a55]">
+                        Open Calculator
+                        <span aria-hidden="true">-&gt;</span>
+                    </span>
+                </div>
+            </div>
         </button>
     );
 };
@@ -1072,20 +1079,23 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
     };
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4 pb-20">
             <section
-                className="rounded-[1.8rem] px-5 py-6 text-white shadow-sm sm:px-8"
+                className="rounded-[1rem] px-5 py-4 text-white shadow-sm sm:px-6"
                 style={{ background: `linear-gradient(135deg, ${BRAND_GREEN_DARK} 0%, ${BRAND_GREEN} 55%, #38b180 100%)` }}
             >
-                <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                     <div className="max-w-3xl">
                         <div className="flex items-center gap-3">
-                            <div className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#ef4444] text-white">
+                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.85rem] bg-[#ef4444] text-white">
                                 <Wallet size={18} />
                             </div>
-                            <h2 className="text-[2.1rem] font-extrabold tracking-tight">Resources &amp; Tools</h2>
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Resources &amp; Tools</h2>
+                                <p className="text-sm text-white/70">Shilingi Moves</p>
+                            </div>
                         </div>
-                        <p className="mt-3 max-w-2xl text-base leading-7 text-white/85">
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/85">
                             Financial calculators, curated books and podcasts tailored for the Kenyan market - to help you make smarter money decisions every day.
                         </p>
                     </div>
@@ -1112,7 +1122,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 <TopMetricCard label="Your Reading Progress" value={readingProgress} helper="1 in progress - 2 completed" accent="text-[#7a57d1]" />
             </section>
 
-            <section className="rounded-[1.35rem] border border-[#c7e4db] bg-white p-2 shadow-sm">
+            <section className="rounded-[1rem] border border-[#d0ddd9] bg-white p-2 shadow-sm">
                 <div className="flex flex-wrap gap-2">
                     {contentTabs.map((tab) => (
                         <TabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} label={tab.label} compact onClick={() => setActiveTab(tab.id)} />
@@ -1122,13 +1132,13 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
 
             {activeTab === 'calculators' && (
                 <>
-                    <section className="flex flex-wrap gap-2">
+                    <section className="flex flex-wrap gap-2 rounded-[1rem] border border-[#d0ddd9] bg-[#f8fbfa] p-2">
                         {calculatorFilters.map((filter) => (
                             <FilterPill key={filter.id} active={activeFilter === filter.id} label={filter.label} onClick={() => setActiveFilter(filter.id)} />
                         ))}
                     </section>
 
-                    <section className="grid gap-4 xl:grid-cols-3">
+                    <section className="grid gap-3 xl:grid-cols-3">
                         {filteredCalculators.map((item) => (
                             <ResourceCard key={item.id} item={item} onOpen={setSelectedTool} />
                         ))}
@@ -1137,22 +1147,22 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
             )}
 
             {activeTab === 'books' && (
-                <section className="space-y-7">
+                <section className="space-y-6">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <div className="flex items-center gap-3">
                                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#fff4df] text-[#b56a00]">
                                     <BookOpen size={18} />
                                 </span>
-                                <h3 className="text-[2rem] font-extrabold tracking-tight text-slate-950">Curated Financial Books</h3>
+                                <h3 className="text-[1.35rem] font-bold tracking-tight text-slate-950">Curated Financial Books</h3>
                             </div>
-                            <p className="mt-2 text-base text-slate-600">
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
                                 Build your money mindset - from Nairobi to the world. Start local, grow global.
                             </p>
                         </div>
                         <button
                             type="button"
-                            className="inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                            className="inline-flex items-center rounded-[0.8rem] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
                             style={{ backgroundColor: BRAND_GREEN }}
                         >
                             + Suggest a Book
@@ -1162,26 +1172,26 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                     {curatedBookSections.map((section) => (
                         <div key={section.id} className="space-y-4">
                             <div className="flex items-center justify-between gap-4 border-b border-[#cfe8df] pb-3">
-                                <h4 className="text-[1.85rem] font-extrabold tracking-tight text-slate-950">{section.title}</h4>
+                                <h4 className="text-[1.15rem] font-bold tracking-tight text-slate-950">{section.title}</h4>
                                 <p className="text-sm text-slate-400">{section.helper}</p>
                             </div>
 
-                            <div className="grid gap-4 xl:grid-cols-3">
+                            <div className="grid gap-3 xl:grid-cols-3">
                                 {section.books.map((book) => (
-                                    <article key={book.title} className="rounded-[1.35rem] border border-[#c7e4db] bg-white p-5 shadow-sm">
+                                    <article key={book.title} className="rounded-[1rem] border border-[#d0ddd9] bg-white p-4 shadow-sm">
                                         <div className="flex gap-4">
-                                            <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br ${book.coverTone} shadow-sm`}>
+                                            <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-[0.85rem] bg-gradient-to-br ${book.coverTone} shadow-sm`}>
                                                 <div className="flex h-7 w-6 items-center justify-center rounded-[0.35rem] border-2 border-slate-950 bg-white text-[10px] text-slate-950">
                                                     <span className="block h-4 w-3 rounded-[0.15rem] bg-[#69d74f]" />
                                                 </div>
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <h5 className="text-[1.22rem] font-bold leading-7 text-slate-950">{book.title}</h5>
+                                                <h5 className="text-base font-bold leading-6 text-slate-950">{book.title}</h5>
                                                 <p className="mt-1 text-sm text-slate-400">{book.author}</p>
-                                                <p className="mt-3 text-[0.96rem] leading-7 text-slate-600">{book.blurb}</p>
+                                                <p className="mt-3 text-sm leading-6 text-slate-600">{book.blurb}</p>
                                                 <div className="mt-4 flex items-center justify-between gap-3">
                                                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${book.badgeTone}`}>{book.badge}</span>
-                                                    <button type="button" className="text-[1rem] font-semibold text-[#166a55]">
+                                                    <button type="button" className="text-sm font-semibold text-[#166a55]">
                                                         Read More -&gt;
                                                     </button>
                                                 </div>
@@ -1196,22 +1206,22 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
             )}
 
             {activeTab === 'podcasts' && (
-                <section className="space-y-7">
+                <section className="space-y-6">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <div className="flex items-center gap-3">
                                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#f5efff] text-[#7a57d1]">
                                     <Headphones size={18} />
                                 </span>
-                                <h3 className="text-[2rem] font-extrabold tracking-tight text-slate-950">Curated Financial Podcasts</h3>
+                                <h3 className="text-[1.35rem] font-bold tracking-tight text-slate-950">Curated Financial Podcasts</h3>
                             </div>
-                            <p className="mt-2 text-base text-slate-600">
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
                                 Learn money on the move - Kenyan voices first, then the world&apos;s best.
                             </p>
                         </div>
                         <button
                             type="button"
-                            className="inline-flex items-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                            className="inline-flex items-center rounded-[0.8rem] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
                             style={{ backgroundColor: BRAND_GREEN }}
                         >
                             + Suggest a Podcast
@@ -1221,30 +1231,30 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                     {curatedPodcastSections.map((section) => (
                         <div key={section.id} className="space-y-4">
                             <div className="flex items-center justify-between gap-4 border-b border-[#cfe8df] pb-3">
-                                <h4 className="text-[1.85rem] font-extrabold tracking-tight text-slate-950">{section.title}</h4>
+                                <h4 className="text-[1.15rem] font-bold tracking-tight text-slate-950">{section.title}</h4>
                                 <p className="text-sm text-slate-400">{section.helper}</p>
                             </div>
 
-                            <div className="grid gap-4 xl:grid-cols-3">
+                            <div className="grid gap-3 xl:grid-cols-3">
                                 {section.items.map((podcast) => {
                                     const Icon = podcast.icon;
 
                                     return (
-                                        <article key={podcast.title} className="rounded-[1.35rem] border border-[#c7e4db] bg-white p-5 shadow-sm">
+                                        <article key={podcast.title} className="rounded-[1rem] border border-[#d0ddd9] bg-white p-4 shadow-sm">
                                             <div className="flex gap-4">
-                                                <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br ${podcast.coverTone} shadow-sm text-white`}>
-                                                    <Icon size={24} />
+                                                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-[0.85rem] bg-gradient-to-br ${podcast.coverTone} shadow-sm text-white`}>
+                                                    <Icon size={20} />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                <h5 className="text-[1.22rem] font-bold leading-7 text-slate-950">{podcast.title}</h5>
+                                                <h5 className="text-base font-bold leading-6 text-slate-950">{podcast.title}</h5>
                                                 <p className="mt-1 text-sm text-slate-400">{podcast.host}</p>
-                                                <p className="mt-3 text-[0.96rem] leading-7 text-slate-600">{podcast.blurb}</p>
+                                                <p className="mt-3 text-sm leading-6 text-slate-600">{podcast.blurb}</p>
                                                     <div className="mt-4 flex flex-wrap items-center gap-3">
                                                         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${podcast.tagOneTone}`}>{podcast.tagOne}</span>
                                                         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${podcast.tagTwoTone}`}>{podcast.tagTwo}</span>
                                                         <button
                                                             type="button"
-                                                            className="ml-auto inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white"
+                                                            className="ml-auto inline-flex items-center rounded-[0.75rem] px-3.5 py-2 text-sm font-semibold text-white"
                                                             style={{ backgroundColor: BRAND_GREEN }}
                                                         >
                                                             Listen
@@ -1268,22 +1278,22 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                             <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#f8f1df] text-[#6e5a1b]">
                                 <GraduationCap size={18} />
                             </span>
-                            <h3 className="text-[2rem] font-extrabold tracking-tight text-slate-950">Learning Hub</h3>
+                            <h3 className="text-[1.35rem] font-bold tracking-tight text-slate-950">Learning Hub</h3>
                         </div>
-                        <p className="mt-2 text-base text-slate-600">Structured financial education for every stage of your money journey.</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">Structured financial education for every stage of your money journey.</p>
                     </div>
 
-                    <div className="grid gap-4 xl:grid-cols-3">
+                    <div className="grid gap-3 xl:grid-cols-3">
                         {learningHighlights.map((item) => {
                             const Icon = item.icon;
 
                             return (
-                                <article key={item.title} className={`rounded-[1.35rem] border border-[#c7e4db] bg-white p-5 shadow-sm ${item.accent}`}>
-                                    <div className={`inline-flex h-12 w-12 items-center justify-center rounded-[1rem] ${item.iconTone}`}>
-                                        <Icon size={20} />
+                                <article key={item.title} className={`rounded-[1rem] border border-[#d0ddd9] bg-white p-4 shadow-sm ${item.accent}`}>
+                                    <div className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] ${item.iconTone}`}>
+                                        <Icon size={18} />
                                     </div>
-                                    <h4 className="mt-5 text-[1.22rem] font-bold text-slate-950">{item.title}</h4>
-                                    <p className="mt-2 text-[0.96rem] leading-7 text-slate-600">{item.description}</p>
+                                    <h4 className="mt-4 text-base font-bold text-slate-950">{item.title}</h4>
+                                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
 
                                     {item.progress !== null && (
                                         <div className="mt-4">
@@ -1309,17 +1319,17 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
             )}
 
             <section
-                className="rounded-[1.7rem] p-6 text-white shadow-sm"
+                className="rounded-[1rem] p-5 text-white shadow-sm"
                 style={{ background: `linear-gradient(135deg, ${BRAND_GREEN_DARK} 0%, #1b8a61 55%, ${BRAND_GREEN} 100%)` }}
             >
                 <div className="max-w-3xl">
-                    <h3 className="text-[1.7rem] font-extrabold tracking-tight">Resources Connect to Your Full Financial Journey</h3>
+                    <h3 className="text-lg font-bold tracking-tight">Resources Connect to Your Full Financial Journey</h3>
                     <p className="mt-2 text-sm leading-6 text-white/80">
                         Every calculator links to the relevant pillar. Apply what you learn directly to your budget, investments, and planning tools.
                     </p>
                 </div>
 
-                <div className="mt-5 grid gap-3 lg:grid-cols-3 xl:grid-cols-6">
+                <div className="mt-4 grid gap-3 lg:grid-cols-3 xl:grid-cols-6">
                     {ecosystemLinks.map((item) => {
                         const Icon = item.icon;
                         const isDisabled = item.id === 'buddy';
@@ -1330,12 +1340,12 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                                 type="button"
                                 onClick={() => handleEcosystemNavigate(item.id)}
                                 disabled={isDisabled}
-                                className="rounded-[1.2rem] border border-white/12 bg-white/6 px-4 py-5 text-left transition hover:bg-white/10 disabled:cursor-default"
+                                className="rounded-[0.95rem] border border-white/12 bg-white/6 px-4 py-4 text-left transition hover:bg-white/10 disabled:cursor-default"
                             >
-                                <span className={`inline-flex h-11 w-11 items-center justify-center rounded-[0.95rem] ${item.iconTone}`}>
+                                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.8rem] ${item.iconTone}`}>
                                     <Icon size={18} />
                                 </span>
-                                <p className="mt-4 text-base font-bold text-white">{item.title}</p>
+                                <p className="mt-3 text-sm font-bold text-white">{item.title}</p>
                                 <p className="mt-1 text-sm font-semibold text-[#ffcf5a]">{item.cta} -&gt;</p>
                             </button>
                         );

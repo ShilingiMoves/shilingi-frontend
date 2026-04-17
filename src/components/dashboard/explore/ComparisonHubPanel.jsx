@@ -101,6 +101,18 @@ const compareModules = [
                 ],
             },
             {
+                id: 'microfinance',
+                label: 'Microfinance',
+                columns: ['Provider', 'Type', 'Limits', 'APR', 'Term', 'Speed', 'Action'],
+                rows: [
+                    ['Faulu Microfinance', 'Personal / Business', '50K - 6M', '16.5 - 19.5%', '6-48 mo', '24-72 hrs', 'Apply'],
+                    ['KWFT (Women)', 'Salary / Asset', '30K - 3M', '17.0 - 20.0%', '6-36 mo', '48 hrs', 'Apply'],
+                    ['Rafiki Microfinance', 'Personal / Trade', '20K - 2M', '17.5 - 21.0%', '3-36 mo', '24-48 hrs', 'Apply'],
+                    ['SMEP Microfinance', 'Micro Enterprise', '10K - 1.5M', '18.0 - 22.0%', '3-24 mo', '24-72 hrs', 'Apply'],
+                    ['Sumac Microfinance', 'Personal / Emergency', '15K - 1M', '18.5 - 23.0%', '3-24 mo', '<24 hrs', 'Apply'],
+                ],
+            },
+            {
                 id: 'digital',
                 label: 'Digital Lenders',
                 columns: ['Provider', 'Type', 'Limits', 'Effective APR', 'Term', 'Speed', 'Action'],
@@ -127,6 +139,8 @@ const compareModules = [
                     ['Nabo Africa MMF', '~12.9%', 'KES 1,000', '0.8-1.2%', 'Same-day / 24 hrs', 'Low Risk', 'Invest'],
                     ['Cytonn MMF', '11.1 - 11.6%', 'KES 1,000', '0.75-1.0%', 'Same-day', 'Low Risk', 'Invest'],
                     ['Gulfcap MMF', '10.8 - 11.4%', 'KES 5,000', '0.9-1.3%', 'Same-day / 24 hrs', 'Low Risk', 'Invest'],
+                    ['Etica MMF', '10.9 - 11.3%', 'KES 1,000', '1.0-1.4%', '24-48 hrs', 'Low Risk', 'Invest'],
+                    ['Lofty-Corban MMF', '10.5 - 11.1%', 'KES 1,000', '0.8-1.2%', '24-72 hrs', 'Low Risk', 'Invest'],
                 ],
             },
             {
@@ -136,6 +150,9 @@ const compareModules = [
                 rows: [
                     ['Sanlam Unit Trust', 'Equity, Balanced, Fixed Income', 'KES 1,000', '1.5-2.0%', 'CMA', 'Broad diversification', 'Invest'],
                     ['Britam Unit Trusts', 'Equity, Balanced, Fixed Income', 'KES 1,000', '1.5-2.0%', 'CMA', 'Medium-to-long term growth', 'Invest'],
+                    ['CIC Unit Trust', 'Equity, Balanced & Special', 'KES 5,000', '1.8-2.2%', 'CMA', 'Family, education & retirement', 'Invest'],
+                    ['Standard Investment Trust', 'Multi-asset & Balanced', 'KES 5,000', '1.7-2.1%', 'CMA', 'Conservative-to-moderate growth', 'Invest'],
+                    ['Old Mutual / ICEA Lion', 'Equity & Balanced Funds', 'KES 5,000', '1.6-2.2%', 'CMA', 'Higher equity exposure for growth', 'Invest'],
                 ],
             },
         ],
@@ -192,6 +209,18 @@ const compareModules = [
                 rows: [
                     ['Stima DT SACCO', 'Ordinary / Alpha Savings', 'KES 0', 'Up to 10-12%', 'App + USSD', 'Energy sector savers', 'Join'],
                     ['Mwalimu National', 'Teachers Savings', 'Low (0-100)', '10-13%', 'Mobile app + payroll deduction', 'Teachers', 'Join'],
+                ],
+            },
+            {
+                id: 'microfinance',
+                label: 'Microfinance',
+                columns: ['Provider', 'Account Type', 'Monthly Fee', 'Interest', 'Digital Features', 'Ideal For', 'Action'],
+                rows: [
+                    ['Faulu Microfinance', 'Current + Savings', 'KES 0-100', '4-8%', 'Mobile banking + agent network', 'SMEs and personal banking', 'Open'],
+                    ['KWFT', 'Women Savings Account', 'KES 0', '5-9%', 'Mobile banking + branch access', 'Women savers and groups', 'Open'],
+                    ['Rafiki Microfinance', 'Savings Account', 'KES 0-50', '4-7%', 'App + branch support', 'Daily savers and traders', 'Open'],
+                    ['SMEP Microfinance', 'Business + Savings', 'KES 0-100', '5-8%', 'Digital banking + SME tools', 'Micro and small businesses', 'Open'],
+                    ['Sumac Microfinance', 'Current / Deposit Account', 'KES 0-50', '4-7%', 'Mobile access + relationship support', 'Professionals and SMEs', 'Open'],
                 ],
             },
         ],
@@ -366,28 +395,28 @@ const ComparisonHubPanel = () => {
     };
     return (
         <div className="space-y-4 pb-20">
-            <section className="rounded-[1rem] border border-[#d0ddd9] bg-white px-5 py-4 shadow-sm">
+            <section className="rounded-[1rem] bg-[linear-gradient(135deg,_#166d52_0%,_#1f9871_55%,_#43b184_100%)] px-5 py-4 text-white shadow-sm">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-[0.85rem] bg-[#e8f5f3] text-[#145f57]">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-[0.85rem] bg-white/15 text-white">
                             <Sparkles size={18} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-950">Compare Hub</h2>
-                            <p className="text-sm text-slate-500">Shilingi Moves</p>
+                            <h2 className="text-lg font-bold text-white">Compare Hub</h2>
+                            <p className="text-sm text-white/70">Shilingi Moves</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <span className="rounded-full border border-[#f5d080] bg-[#fef6e8] px-3 py-1 text-[11px] font-semibold text-[#a0700f]">Basic Tier</span>
-                        <button type="button" className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: BRAND_GREEN }}>
+                        <span className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-[11px] font-semibold text-white">Basic Tier</span>
+                        <button type="button" className="rounded-lg bg-[#fff5e8] px-4 py-2 text-sm font-semibold text-[#166d52]">
                             Upgrade Plan ?
                         </button>
                     </div>
                 </div>
             </section>
 
-            <nav className="sticky top-2 z-30 flex gap-2 overflow-x-auto rounded-[1rem] border border-[#d0ddd9] bg-white p-2 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <nav className="sticky top-[5.25rem] z-20 flex gap-2 overflow-x-auto rounded-[1rem] border border-[#d0ddd9] bg-white/95 p-2 shadow-sm backdrop-blur-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {compareTabs.map((tab) => {
                     const Icon = tab.icon;
                     const active = activeTab === tab.id;

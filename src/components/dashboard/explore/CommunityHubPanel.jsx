@@ -486,20 +486,22 @@ const CommunityHubPanel = () => {
 
     return (
         <div className="space-y-6">
-            <section className="overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#0d4736] via-[#1d6a53] to-[#2b7b63] p-6 text-white shadow-[0_18px_50px_rgba(7,45,35,0.15)] lg:p-8">
-                <div className="dashboard-toolbar-row flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <section className="overflow-hidden rounded-[1rem] bg-gradient-to-r from-primary-900 via-primary-700 to-primary-600 px-5 py-4 text-white shadow-sm lg:px-6 lg:py-5">
+                <div className="dashboard-toolbar-row flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
-                        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 text-2xl">👥</div>
-                        <h1 className="dashboard-display-title text-white">Shilingi Moves Community</h1>
-                        <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">Learn from fellow Kenyans on their financial journey. Share wins, ask questions, join challenges, and build wealth together.</p>
-                        <div className="mt-6 flex flex-wrap gap-6 text-amber-300">
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.85rem] bg-white/12 text-xl">👥</div>
+                            <h1 className="text-lg font-bold text-white">Shilingi Moves Community</h1>
+                        </div>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/80">Learn from fellow Kenyans on their financial journey. Share wins, ask questions, join challenges, and build wealth together.</p>
+                        <div className="mt-4 flex flex-wrap gap-4 text-amber-300">
                             <HeroMetric value="12,847" label="Members" />
                             <HeroMetric value="3,241" label="Posts this week" />
                             <HeroMetric value="486" label="Active challenges" />
                             <HeroMetric value="14" label="Your streak" icon={<Flame size={18} className="text-amber-300" />} />
                         </div>
                     </div>
-                    <div className="flex flex-wrap gap-3 lg:justify-end">
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
                         <HeroButton onClick={() => { setSelectedType('Win'); setComposerOpen(true); }}><PenLine size={15} />Share a Win</HeroButton>
                         <HeroButton solid onClick={() => setComposerOpen(true)}>+ New Post</HeroButton>
                     </div>
@@ -581,17 +583,17 @@ const CommunityHubPanel = () => {
 const FeedView = ({ identity, posts, activeFilter, setActiveFilter, setComposerOpen, setSelectedType, openActionModal }) => (
     <div className="grid gap-6 xl:grid-cols-[1.6fr_0.62fr]">
         <div className="space-y-4">
-            <section className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-5 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
+            <section className="rounded-[1rem] border border-[#dbeee5] bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-4">
-                    <button type="button" onClick={() => setComposerOpen(true)} className="flex w-full items-center gap-4 rounded-full border border-[#cfe8dc] px-4 py-3 text-left transition-colors hover:bg-[#f8fcfa]">
-                        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#2b7f67] to-[#d6a828] text-sm font-bold text-white">{identity.initials}</span>
+                    <button type="button" onClick={() => setComposerOpen(true)} className="flex w-full items-center gap-4 rounded-[0.9rem] border border-[#cfe8dc] px-4 py-3 text-left transition-colors hover:bg-[#f8fcfa]">
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary-700 to-[#d6a828] text-sm font-bold text-white">{identity.initials}</span>
                         <p className="text-sm text-slate-400 sm:text-base">Share a win, ask a question, or start a discussion...</p>
                     </button>
                     <div className="flex flex-wrap items-center gap-3">
                         {composerTypes.map((type) => (
                             <button key={type} type="button" onClick={() => { setSelectedType(type); setComposerOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-[#dbeee5] bg-white px-4 py-2 text-sm font-semibold text-slate-700">{type === 'Win' ? '🏆' : type === 'Question' ? '❓' : type === 'Tip' ? '💡' : '🎯'}{type}</button>
                         ))}
-                        <button type="button" onClick={() => setComposerOpen(true)} className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#1c6c5d] px-6 py-3 text-sm font-semibold text-white"><Send size={14} />Post</button>
+                        <button type="button" onClick={() => setComposerOpen(true)} className="ml-auto inline-flex items-center gap-2 rounded-[0.8rem] bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white"><Send size={14} />Post</button>
                     </div>
                 </div>
             </section>
@@ -602,7 +604,7 @@ const FeedView = ({ identity, posts, activeFilter, setActiveFilter, setComposerO
             </div>
             <div className="space-y-4">
                 {posts.map((post) => (
-                    <article key={post.id} className={`rounded-[1.8rem] border border-[#dbeee5] bg-white p-5 shadow-[0_14px_30px_rgba(15,76,58,0.08)] ${post.borderAccent}`}>
+                    <article key={post.id} className={`rounded-[1rem] border border-[#dbeee5] bg-white p-4 shadow-sm ${post.borderAccent}`}>
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex min-w-0 gap-4">
                                 <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${post.avatarTone} text-sm font-bold text-white`}>{post.initials}</span>
@@ -630,9 +632,9 @@ const FeedView = ({ identity, posts, activeFilter, setActiveFilter, setComposerO
         </div>
         <div className="space-y-4">
             <SidebarCard title="Trending Topics" icon="🔥"><div className="space-y-3">{trendingTopics.map((item) => <div key={item.topic} className="flex items-center justify-between border-b border-[#eef4f0] pb-3 last:border-b-0 last:pb-0"><span className="font-semibold text-[#176b58]">{item.topic}</span><span className="text-sm text-slate-400">{item.count} posts</span></div>)}</div></SidebarCard>
-            <SidebarCard title="Active Challenge" icon="⚡" tone="warm"><div className="space-y-3"><p className="text-lg font-semibold text-slate-900">30-Day Savings Sprint</p><p className="text-sm leading-6 text-slate-600">Save KES 500 every day for 30 days = KES 15,000. 2,341 members are in.</p><div><div className="mb-2 flex items-center justify-between text-sm text-slate-500"><span>Day 14 of 30</span><span className="font-semibold text-[#1b6f5b]">47%</span></div><div className="h-2.5 rounded-full bg-[#e8f3ed]"><div className="h-full w-[47%] rounded-full bg-gradient-to-r from-[#3ca488] to-[#1d6a53]" /></div></div><button type="button" className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#1c6c5d] px-4 py-3 text-sm font-semibold text-white">View All Challenges<ArrowRight size={14} /></button></div></SidebarCard>
+            <SidebarCard title="Active Challenge" icon="⚡" tone="warm"><div className="space-y-3"><p className="text-lg font-semibold text-slate-900">30-Day Savings Sprint</p><p className="text-sm leading-6 text-slate-600">Save KES 500 every day for 30 days = KES 15,000. 2,341 members are in.</p><div><div className="mb-2 flex items-center justify-between text-sm text-slate-500"><span>Day 14 of 30</span><span className="font-semibold text-primary-700">47%</span></div><div className="h-2.5 rounded-full bg-[#e8f3ed]"><div className="h-full w-[47%] rounded-full bg-gradient-to-r from-primary-400 to-primary-700" /></div></div><button type="button" className="inline-flex w-full items-center justify-center gap-2 rounded-[0.8rem] bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white">View All Challenges<ArrowRight size={14} /></button></div></SidebarCard>
             <SidebarCard title="Top Contributors" icon="👑"><div className="space-y-4">{contributors.map((item) => <div key={item.name} className="flex items-center gap-3"><span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${item.tone} text-sm font-bold text-white`}>{item.initials}</span><div className="min-w-0 flex-1"><p className="font-semibold text-slate-900">{item.name}</p><p className="text-sm text-slate-400">{item.role} · {item.posts} posts</p></div><span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{item.rank}</span></div>)}<button type="button" className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-[#bfe3d3] px-4 py-3 text-sm font-semibold text-[#1c6c5d]">View Full Leaderboard<ArrowRight size={14} /></button></div></SidebarCard>
-            <SidebarCard title="Latest Episode" icon={<Mic size={16} />}><div className="rounded-[1.3rem] bg-[#104c3d] p-5 text-white"><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">New Episode</p><p className="mt-3 text-lg font-semibold">Ep. 42: How to Build KES 1M by 35</p><p className="mt-1 text-sm text-white/72">with Grace Nyambu · 38 min</p><button type="button" className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-3 text-sm font-semibold text-[#08372d]">▶ Listen Now</button></div></SidebarCard>
+            <SidebarCard title="Latest Episode" icon={<Mic size={16} />}><div className="rounded-[1rem] bg-primary-900 p-4 text-white"><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">New Episode</p><p className="mt-3 text-base font-semibold">Ep. 42: How to Build KES 1M by 35</p><p className="mt-1 text-sm text-white/72">with Grace Nyambu · 38 min</p><button type="button" className="mt-4 inline-flex items-center gap-2 rounded-[0.8rem] bg-amber-400 px-4 py-2.5 text-sm font-semibold text-[#08372d]">Listen Now</button></div></SidebarCard>
         </div>
     </div>
 );
@@ -814,13 +816,13 @@ const LeaderboardView = ({ identity, openActionModal, communityState }) => {
 };
 
 const SectionHeader = ({ title, description, actionLabel, onAction }) => (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="dashboard-display-title text-slate-900">{title}</h2><p className="mt-2 text-sm text-slate-500">{description}</p></div><button type="button" onClick={onAction} className="rounded-full bg-primary-700 px-5 py-3 text-sm font-semibold text-white">{actionLabel}{actionLabel.includes('Create') || actionLabel.includes('Ask') ? ' →' : ''}</button></div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="text-[1.15rem] font-bold text-slate-900">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-500">{description}</p></div><button type="button" onClick={onAction} className="rounded-[0.8rem] bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white">{actionLabel}{actionLabel.includes('Create') || actionLabel.includes('Ask') ? ' ->' : ''}</button></div>
 );
 
-const HeroMetric = ({ value, label, icon = null }) => (<div className="min-w-[110px] border-r border-white/18 pr-6 last:border-r-0 last:pr-0"><p className="flex items-center gap-2 text-[2rem] font-extrabold leading-none text-amber-300">{icon}{value}</p><p className="mt-1 text-sm text-white/65">{label}</p></div>);
-const HeroButton = ({ children, solid = false, ...props }) => (<button type="button" className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${solid ? 'bg-[#fff5e8] text-primary-700' : 'border border-white/25 bg-white/10 text-white hover:bg-white/16'}`} {...props}>{children}</button>);
+const HeroMetric = ({ value, label, icon = null }) => (<div className="min-w-[96px] border-r border-white/18 pr-4 last:border-r-0 last:pr-0"><p className="flex items-center gap-2 text-[1.45rem] font-bold leading-none text-amber-300">{icon}{value}</p><p className="mt-1 text-xs text-white/65">{label}</p></div>);
+const HeroButton = ({ children, solid = false, ...props }) => (<button type="button" className={`inline-flex items-center gap-2 rounded-[0.8rem] px-4 py-2.5 text-sm font-semibold transition ${solid ? 'bg-[#fff5e8] text-primary-700' : 'border border-white/25 bg-white/10 text-white hover:bg-white/16'}`} {...props}>{children}</button>);
 const ActionPill = ({ icon, label }) => (<button type="button" className="inline-flex items-center gap-2 rounded-full border border-[#dbeee5] bg-[#f8fcfa] px-4 py-2 text-sm font-semibold text-slate-700">{icon}{label}</button>);
-const SidebarCard = ({ title, icon, tone = 'default', children }) => (<section className={`rounded-[1.8rem] border p-5 shadow-[0_14px_30px_rgba(15,76,58,0.08)] ${tone === 'warm' ? 'border-amber-200 bg-[#fffaf0]' : 'border-[#dbeee5] bg-white'}`}><div className="mb-4 flex items-center gap-2 text-slate-900"><span className="text-lg">{icon}</span><h3 className="dashboard-display-title text-slate-900">{title}</h3></div>{children}</section>);
+const SidebarCard = ({ title, icon, tone = 'default', children }) => (<section className={`rounded-[1rem] border p-4 shadow-sm ${tone === 'warm' ? 'border-amber-200 bg-[#fffaf0]' : 'border-[#dbeee5] bg-white'}`}><div className="mb-4 flex items-center gap-2 text-slate-900"><span className="text-lg">{icon}</span><h3 className="text-[1.05rem] font-bold text-slate-900">{title}</h3></div>{children}</section>);
 const MiniStat = ({ label, value }) => (<div className="rounded-[0.9rem] bg-[#f8fcfa] px-3 py-2"><p className="text-xs text-slate-400">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div>);
 const MetricStrip = ({ label, value }) => (<div className="flex items-center justify-between rounded-[1rem] bg-[#f8fcfa] px-4 py-3"><span className="text-slate-700">{label}</span><span className="font-semibold text-[#145944]">{value}</span></div>);
 
