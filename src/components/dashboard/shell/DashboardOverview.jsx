@@ -11,7 +11,6 @@ import {
     Coins,
     Flame,
     Heart,
-    Instagram,
     Landmark,
     Lightbulb,
     Linkedin,
@@ -30,6 +29,8 @@ import { getAssets as getInvestmentAssets } from '../../../services/investmentTr
 import { getDebts } from '../../../services/debtApi';
 import { getNetWorthSummary } from '../../../services/networthApi';
 import { getHealthScore, getHealthScoreBreakdown } from '../../../services/financialHealthApi';
+import { compareModules } from '../explore/ComparisonHubPanel';
+import { COMMUNITY_POSTS_KEY, seedPosts } from '../explore/CommunityHubPanel';
 import { DASHBOARD_DATA_KEY } from '../../../utils/dashboardDataState';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
@@ -43,7 +44,7 @@ const previewBudget = [{ label: 'Housing & Rent', percent: 100, amount: 'KES 25,
 const previewTx = [{ name: 'Naivas Supermarket', category: 'Food', amount: '-KES 2,450', when: 'Today', tone: 'text-rose-600' }, { name: 'Salary - Safaricom PLC', category: 'Income', amount: '+KES 95,000', when: 'Yesterday', tone: 'text-emerald-700' }];
 const previewInv = [{ name: 'Safaricom PLC', type: 'NSE Equities', value: 'KES 82,400', change: '+3.2%', tone: 'text-emerald-700' }, { name: 'CIC Money Market', type: 'Unit Trust', value: 'KES 65,000', change: '+12.4% p.a.', tone: 'text-emerald-700' }];
 const previewGoals = [{ label: 'Emergency Fund', horizon: 'Short', progress: 74 }, { label: 'Zanzibar Holiday', horizon: 'Medium', progress: 42 }];
-const aiInsights = [
+const previewAiInsights = [
     {
         title: 'Entertainment overspend',
         description: "You're 20% over budget. Reducing by KES 1,000 this week puts you back on track.",
@@ -69,50 +70,39 @@ const aiInsights = [
         badgeShell: 'bg-[#fff0ba] text-[#9a6800]',
     },
 ];
-const calendarFilters = [
-    { label: 'All', shell: 'bg-[#0f3f39] text-white border-[#0f3f39]' },
-    { label: 'Dividends', shell: 'bg-white text-emerald-700 border-emerald-300' },
-    { label: 'Loan Payments', shell: 'bg-white text-rose-600 border-rose-300' },
-    { label: 'Tax', shell: 'bg-white text-amber-700 border-amber-300' },
-    { label: 'Savings', shell: 'bg-white text-blue-600 border-blue-300' },
-    { label: 'Insurance', shell: 'bg-white text-violet-600 border-violet-300' },
-    { label: 'Goals', shell: 'bg-white text-[#b56900] border-[#f4bd63]' },
-];
-const calendarDays = [
-    [{ day: 1, event: 'Auto-save', tone: 'bg-blue-100 text-blue-700' }, { day: 2 }, { day: 3 }, { day: 4 }, { day: 5, event: 'NCBA Loan', tone: 'bg-rose-100 text-rose-600' }, { day: 6 }, { day: 7 }],
-    [{ day: 8, event: 'Holiday Goal', tone: 'bg-amber-100 text-amber-700' }, { day: 9 }, { day: 10 }, { day: 11 }, { day: 12, event: 'Life Insurance', tone: 'bg-violet-100 text-violet-600' }, { day: 13 }, { day: 14 }],
-    [{ day: 15, event: 'PAYE Deadline', tone: 'bg-[#f9e3a9] text-[#8d5a00]' }, { day: 16 }, { day: 17 }, { day: 18 }, { day: 19 }, { day: 20, event: 'M-Shwari', tone: 'bg-rose-100 text-rose-600' }, { day: 21 }],
-    [{ day: 22, event: 'Health Premium', tone: 'bg-violet-100 text-violet-600' }, { day: 23 }, { day: 24 }, { day: 25, event: 'House Deposit', tone: 'bg-amber-100 text-amber-700' }, { day: 26 }, { day: 27 }, { day: 28 }],
-    [{ day: 29 }, { day: 30 }, { day: 31, event: 'Salary In', tone: 'bg-blue-100 text-blue-700' }, null, null, null, null],
-];
-const upcomingEvents = [
-    { date: 'Mar 1', name: 'Auto-save', tone: 'bg-blue-50 text-blue-700' },
-    { date: 'Mar 5', name: 'NCBA Loan', tone: 'bg-rose-50 text-rose-600' },
-    { date: 'Mar 8', name: 'Holiday Goal', tone: 'bg-amber-50 text-amber-700' },
-    { date: 'Mar 10', name: 'Dividend In', tone: 'bg-emerald-50 text-emerald-700' },
-];
-const cashflowForecast = [
-    { label: 'Dividends In', value: '+4,200', tone: 'text-emerald-300', dot: 'bg-[#51d1ba]' },
-    { label: 'Savings Goal', value: '+8,000', tone: 'text-blue-300', dot: 'bg-[#4b8fff]' },
-    { label: 'Loan Repayments', value: '-15,500', tone: 'text-rose-300', dot: 'bg-[#ff6d6d]' },
-    { label: 'Tax Obligation', value: '-6,200', tone: 'text-amber-300', dot: 'bg-[#f7bf4a]' },
-    { label: 'Insurance Premium', value: '-3,800', tone: 'text-violet-300', dot: 'bg-[#9d7cff]' },
-];
-const learningItems = [
-    { title: 'Unit 3: Investing in the NSE', subtitle: 'Continue learning', meta: '68% done - ~12 mins remaining' },
-    { title: 'T-Bills & Treasury Bonds', meta: '8 min', tag: 'Beginner', tagShell: 'bg-[#fff0ba] text-[#9a6800]' },
-    { title: 'Building a 6-Month Emergency Fund', meta: '10 min', tag: 'Intermediate', tagShell: 'bg-violet-100 text-violet-700' },
-];
-const learningStats = [
-    { value: '240', label: 'XP Earned', tone: 'text-amber-500' },
-    { value: '7', label: 'Lessons', tone: 'text-emerald-700' },
-    { value: '3', label: 'Badges', tone: 'text-blue-600' },
-];
-const bestRates = [
-    { value: '16.2%', label: 'Best T-Bill', shell: 'from-[#1d3f73] to-[#294c84] text-[#87f0d5]' },
-    { value: '14.8%', label: 'Best MMF', shell: 'from-[#294c84] to-[#315493] text-[#ffd975]' },
-    { value: '12.5%', label: 'Best SACCO', shell: 'from-[#355897] to-[#3d5ea0] text-[#cbb6ff]' },
-];
+const calendarTypeStyles = {
+    all: { shell: 'bg-[#0f3f39] text-white border-[#0f3f39]' },
+    income: {
+        filterShell: 'bg-white text-emerald-700 border-emerald-300',
+        cellTone: 'bg-emerald-100 text-emerald-700',
+        listTone: 'bg-emerald-50 text-emerald-700',
+        label: 'Income',
+    },
+    debt: {
+        filterShell: 'bg-white text-rose-600 border-rose-300',
+        cellTone: 'bg-rose-100 text-rose-600',
+        listTone: 'bg-rose-50 text-rose-600',
+        label: 'Loan Payments',
+    },
+    goal: {
+        filterShell: 'bg-white text-[#b56900] border-[#f4bd63]',
+        cellTone: 'bg-amber-100 text-amber-700',
+        listTone: 'bg-amber-50 text-amber-700',
+        label: 'Goals',
+    },
+    savings: {
+        filterShell: 'bg-white text-blue-600 border-blue-300',
+        cellTone: 'bg-blue-100 text-blue-700',
+        listTone: 'bg-blue-50 text-blue-700',
+        label: 'Savings',
+    },
+    investment: {
+        filterShell: 'bg-white text-violet-600 border-violet-300',
+        cellTone: 'bg-violet-100 text-violet-600',
+        listTone: 'bg-violet-50 text-violet-600',
+        label: 'Investments',
+    },
+};
 const toolTiles = [
     { label: 'Loan Calc', icon: Calculator },
     { label: 'Compound', icon: TrendingUp },
@@ -128,13 +118,48 @@ const communityPosts = [
 ];
 const communityTags = ['#emergencyfund', '#tbills2026', '#nseinvesting', '#savingsrate'];
 const dashboardFooterColumns = [
-    { title: 'Platform', items: ['Dashboard', 'Learning Hub', 'Compare Portal', 'Resources', 'Community', 'Financial Coach'] },
-    { title: 'Planning Tools', items: ['Budget Planner', 'Debt Manager', 'Investment Planner', 'Protection Planner', 'Retirement Planner', 'Net Worth Tracker'] },
-    { title: 'Company', items: ['About Us', 'Careers', 'Press & Media', 'Blog & Insights', 'Contact Us', 'Partner With Us'] },
-    { title: 'Support', items: ['Help Centre', 'FAQs', 'Privacy Policy', 'Terms of Use', 'Cookie Policy', 'Data Protection'] },
+    {
+        title: 'Platform',
+        items: [
+            { label: 'Dashboard', target: 'overview', type: 'section' },
+            { label: 'Learning Hub', target: 'learninghub', type: 'section' },
+            { label: 'Compare Portal', target: 'comparehub', type: 'section' },
+            { label: 'Resources', target: 'resourceshub', type: 'section' },
+            { label: 'Community', target: 'communityhub', type: 'section' },
+        ],
+    },
+    {
+        title: 'Planning Tools',
+        items: [
+            { label: 'Budget Planner', target: 'budget', type: 'section' },
+            { label: 'Debt Center', target: 'debts', type: 'section' },
+            { label: 'Investment Planner', target: 'investments', type: 'section' },
+            { label: 'Protection Planner', target: 'protection', type: 'section' },
+            { label: 'Retirement Planner', target: 'retirement', type: 'section' },
+            { label: 'Net Worth Tracker', target: 'networth', type: 'section' },
+        ],
+    },
+    {
+        title: 'Company',
+        items: [
+            { label: 'About Us', target: '/about', type: 'href' },
+            { label: 'Careers', target: '/about', type: 'href' },
+            { label: 'Contact Us', target: '/#site-footer', type: 'href' },
+            { label: 'Partner With Us', target: '/partnerships', type: 'href' },
+        ],
+    },
+    {
+        title: 'Support',
+        items: [
+            { label: 'Help Centre', target: '/faqs', type: 'href' },
+            { label: 'FAQs', target: '/faqs', type: 'href' },
+            { label: 'Privacy Policy', target: '/privacy', type: 'href' },
+            { label: 'Terms of Use', target: '/terms', type: 'href' },
+            { label: 'Cookie Policy', target: '/privacy', type: 'href' },
+            { label: 'Data Protection', target: '/privacy', type: 'href' },
+        ],
+    },
 ];
-const footerPolicies = ['Privacy Policy', 'Terms of Use', 'Cookie Policy', 'Data Protection Act 2019', 'Regulatory Disclosures'];
-
 const toNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const fmtKES = (v) => `KES ${Math.round(toNum(v)).toLocaleString('en-KE')}`;
 const fmtSigned = (v) => `${toNum(v) >= 0 ? '+' : '-'}KES ${Math.round(Math.abs(toNum(v))).toLocaleString('en-KE')}`;
@@ -149,6 +174,425 @@ const findHealthComponentScore = (components, keywords, fallback = 0) => {
     return Number.isFinite(score) ? score : fallback;
 };
 const getDate = (i) => i?.date || i?.created_at || i?.updated_at || '';
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const parseDateValue = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+const startOfDay = (value) => {
+    const date = parseDateValue(value);
+    if (!date) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+};
+const diffDaysFromToday = (value, reference = new Date()) => {
+    const date = startOfDay(value);
+    if (!date) return Number.POSITIVE_INFINITY;
+    const today = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate());
+    return Math.round((date.getTime() - today.getTime()) / 86400000);
+};
+const isSameMonth = (value, reference = new Date()) => {
+    const date = parseDateValue(value);
+    return Boolean(date) && date.getMonth() === reference.getMonth() && date.getFullYear() === reference.getFullYear();
+};
+const formatMonthLabel = (date) => date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+const formatShortMonthDay = (date) => date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+const getGoalProgress = (goal) => {
+    const targetAmount = toNum(goal?.target_amount || goal?.target || goal?.goal_amount);
+    const currentAmount = toNum(goal?.current_amount || goal?.saved_amount || goal?.total_saved || goal?.amount_saved);
+    if (targetAmount > 0) {
+        return clamp(Math.round((currentAmount / targetAmount) * 100), 0, 100);
+    }
+    return clamp(Math.round(toNum(goal?.progress_percentage || goal?.progress || goal?.completion)), 0, 100);
+};
+const buildInsightCard = ({ title, description, badge, icon, iconShell, badgeShell }) => ({
+    title,
+    description,
+    badge,
+    icon,
+    iconShell,
+    badgeShell,
+});
+const buildAiInsightCards = ({ budgets, goals, debts, investments, income, savings, score }) => {
+    const cards = [];
+    const overspentBudget = (budgets || [])
+        .map((budget) => {
+            const target = toNum(budget?.budgeted_amount || budget?.allocated_amount || budget?.amount || budget?.target_amount);
+            const spent = toNum(budget?.spent_amount || budget?.actual_spent || budget?.total_spent || budget?.spent);
+            return {
+                label: budget?.category_name || budget?.name || 'Budget',
+                target,
+                spent,
+                overspend: spent - target,
+                overspendPct: target > 0 ? Math.round((spent / target) * 100) : 0,
+            };
+        })
+        .filter((budget) => budget.target > 0 && budget.spent > budget.target)
+        .sort((a, b) => b.overspend - a.overspend)[0];
+
+    if (overspentBudget) {
+        cards.push(buildInsightCard({
+            title: `${overspentBudget.label} is over budget`,
+            description: `${fmtKES(overspentBudget.overspend)} above target this month. A small trim gets you back on track fast.`,
+            badge: 'Action Needed',
+            icon: AlertTriangle,
+            iconShell: 'bg-amber-100 text-amber-700',
+            badgeShell: 'bg-rose-100 text-rose-600',
+        }));
+    }
+
+    const dueDebt = (debts || [])
+        .map((debt) => ({ ...debt, daysAway: diffDaysFromToday(debt?.dueDate) }))
+        .filter((debt) => Number.isFinite(debt.daysAway) && debt.daysAway >= 0 && debt.daysAway <= 10 && toNum(debt.balance) > 0)
+        .sort((a, b) => a.daysAway - b.daysAway)[0];
+
+    if (dueDebt) {
+        cards.push(buildInsightCard({
+            title: `${dueDebt.name} payment is due soon`,
+            description: `Minimum payment of ${fmtKES(dueDebt.minimumPayment || dueDebt.balance)} is due in ${dueDebt.daysAway === 0 ? 'today' : `${dueDebt.daysAway} day${dueDebt.daysAway === 1 ? '' : 's'}`}.`,
+            badge: 'Due Soon',
+            icon: Flame,
+            iconShell: 'bg-rose-100 text-rose-600',
+            badgeShell: 'bg-rose-100 text-rose-600',
+        }));
+    }
+
+    const nearGoal = (goals || [])
+        .map((goal) => ({
+            ...goal,
+            progress: getGoalProgress(goal),
+            targetAmount: toNum(goal?.target_amount || goal?.target || goal?.goal_amount),
+            currentAmount: toNum(goal?.current_amount || goal?.saved_amount || goal?.total_saved || goal?.amount_saved),
+        }))
+        .filter((goal) => goal.progress >= 70 && goal.progress < 100)
+        .sort((a, b) => b.progress - a.progress)[0];
+
+    if (nearGoal) {
+        cards.push(buildInsightCard({
+            title: `${nearGoal.name || nearGoal.title || 'Your goal'} is nearly complete`,
+            description: `${nearGoal.progress}% funded. You are ${fmtKES(Math.max(nearGoal.targetAmount - nearGoal.currentAmount, 0))} away from the finish line.`,
+            badge: 'Milestone',
+            icon: Trophy,
+            iconShell: 'bg-[#f9e7b0] text-[#9a6800]',
+            badgeShell: 'bg-[#fff0ba] text-[#9a6800]',
+        }));
+    }
+
+    const positiveInvestment = (investments || [])
+        .filter((asset) => toNum(asset?.gainLossPercentage) > 0)
+        .sort((a, b) => toNum(b?.gainLossPercentage) - toNum(a?.gainLossPercentage))[0];
+
+    if (positiveInvestment) {
+        cards.push(buildInsightCard({
+            title: `${positiveInvestment.name} is performing well`,
+            description: `Up ${Math.round(toNum(positiveInvestment.gainLossPercentage) * 10) / 10}% so far. Review whether you want to keep adding consistently.`,
+            badge: 'Opportunity',
+            icon: Lightbulb,
+            iconShell: 'bg-[#fff1c2] text-[#946200]',
+            badgeShell: 'bg-emerald-100 text-emerald-700',
+        }));
+    }
+
+    if (cards.length < 3 && income > 0) {
+        const savingsRate = Math.round((toNum(savings) / Math.max(toNum(income), 1)) * 100);
+        cards.push(buildInsightCard({
+            title: savingsRate >= 20 ? 'Your savings rate is looking strong' : 'There is room to improve your savings rate',
+            description: `You are currently saving about ${clamp(savingsRate, 0, 999)}% of tracked income this cycle.`,
+            badge: savingsRate >= 20 ? 'Healthy' : 'Watchlist',
+            icon: savingsRate >= 20 ? Trophy : Heart,
+            iconShell: savingsRate >= 20 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700',
+            badgeShell: savingsRate >= 20 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700',
+        }));
+    }
+
+    if (cards.length < 3 && score > 0) {
+        cards.push(buildInsightCard({
+            title: `Your financial health score is ${score}/100`,
+            description: score >= 70 ? 'You are in a strong position. Keep your habits consistent to hold the momentum.' : 'Focus on budgets, debt, and savings this month to raise your score.',
+            badge: score >= 70 ? 'On Track' : 'Improve',
+            icon: score >= 70 ? Trophy : AlertTriangle,
+            iconShell: score >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+            badgeShell: score >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600',
+        }));
+    }
+
+    return cards.slice(0, 3);
+};
+const buildCalendarEvents = ({ referenceDate, incomes, debts, goals, investments }) => {
+    const events = [];
+    const pushEvent = (event) => {
+        const date = parseDateValue(event.date);
+        if (!date || !isSameMonth(date, referenceDate)) return;
+        const style = calendarTypeStyles[event.type] || calendarTypeStyles.goal;
+        events.push({
+            ...event,
+            date,
+            day: date.getDate(),
+            label: style.label,
+            cellTone: style.cellTone,
+            listTone: style.listTone,
+            filterShell: style.filterShell,
+        });
+    };
+
+    (debts || []).forEach((debt) => {
+        if (!debt?.dueDate) return;
+        pushEvent({
+            type: 'debt',
+            date: debt.dueDate,
+            name: `${debt.name || debt.creditor || 'Debt'} payment`,
+            priority: 1,
+        });
+    });
+
+    (goals || []).forEach((goal) => {
+        const targetDate = goal?.target_date || goal?.targetDate;
+        if (!targetDate) return;
+        pushEvent({
+            type: 'goal',
+            date: targetDate,
+            name: `${goal.name || goal.title || 'Goal'} target`,
+            priority: 2,
+        });
+    });
+
+    (incomes || []).forEach((income) => {
+        const incomeDate = income?.income_date || income?.date || income?.created_at;
+        const recurringDate = parseDateValue(incomeDate);
+        const isRecurring = Boolean(income?.is_recurring) || !['', 'ONE_TIME', undefined, null].includes(income?.frequency);
+        if (isRecurring && recurringDate) {
+            const projectedDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), Math.min(recurringDate.getDate(), 28));
+            pushEvent({
+                type: 'income',
+                date: projectedDate,
+                name: `${income?.description || income?.source || income?.name || 'Income'} expected`,
+                priority: 3,
+            });
+            return;
+        }
+        if (incomeDate) {
+            pushEvent({
+                type: 'income',
+                date: incomeDate,
+                name: `${income?.description || income?.source || income?.name || 'Income'} received`,
+                priority: 4,
+            });
+        }
+    });
+
+    (investments || []).forEach((asset) => {
+        const reviewDate = asset?.lastValuedDate || asset?.updated_at || asset?.purchaseDate;
+        if (!reviewDate) return;
+        pushEvent({
+            type: 'investment',
+            date: reviewDate,
+            name: `${asset.name || 'Investment'} review`,
+            priority: 5,
+        });
+    });
+
+    return events
+        .sort((a, b) => a.date.getTime() - b.date.getTime() || a.priority - b.priority)
+        .filter((event, index, list) => index === list.findIndex((item) => item.type === event.type && item.name === event.name && item.day === event.day));
+};
+const buildCalendarFilters = (events) => {
+    const uniqueTypes = Array.from(new Set((events || []).map((event) => event.type)));
+    return [{ key: 'all', label: 'All', shell: calendarTypeStyles.all.shell }, ...uniqueTypes.map((type) => ({
+        key: type,
+        label: calendarTypeStyles[type]?.label || type,
+        shell: calendarTypeStyles[type]?.filterShell || calendarTypeStyles.goal.filterShell,
+    }))];
+};
+const buildCalendarGrid = (referenceDate, events) => {
+    const year = referenceDate.getFullYear();
+    const month = referenceDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startingWeekday = firstDay.getDay();
+    const eventsByDay = (events || []).reduce((acc, event) => {
+        if (!acc[event.day]) acc[event.day] = [];
+        acc[event.day].push(event);
+        return acc;
+    }, {});
+
+    const cells = [];
+    for (let i = 0; i < startingWeekday; i += 1) cells.push(null);
+    for (let day = 1; day <= daysInMonth; day += 1) {
+        cells.push({ day, events: eventsByDay[day] || [] });
+    }
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const weeks = [];
+    for (let index = 0; index < cells.length; index += 7) {
+        weeks.push(cells.slice(index, index + 7));
+    }
+    return weeks;
+};
+const formatCompactSigned = (value) => `${toNum(value) >= 0 ? '+' : '-'}${Math.round(Math.abs(toNum(value))).toLocaleString('en-KE')}`;
+const buildCashflowForecast = ({ referenceDate, incomes, debts, goals, investments, expenses }) => {
+    const recurringIncome = (incomes || []).reduce((sum, income) => {
+        const amount = toNum(income?.amount || income?.monthly_amount || income?.net_amount);
+        const frequency = String(income?.frequency || '').toUpperCase();
+        const isRecurring = Boolean(income?.is_recurring) || (frequency && frequency !== 'ONE_TIME');
+        const incomeDate = income?.income_date || income?.date || income?.created_at;
+        if (!amount) return sum;
+        if (isRecurring) return sum + amount;
+        if (income?.status === 'EXPECTED' && isSameMonth(incomeDate, referenceDate)) return sum + amount;
+        return sum;
+    }, 0);
+
+    const debtPayments = (debts || []).reduce((sum, debt) => {
+        if (!isSameMonth(debt?.dueDate, referenceDate)) return sum;
+        return sum + toNum(debt?.minimumPayment || debt?.balance);
+    }, 0);
+
+    const goalContributions = (goals || []).reduce((sum, goal) => {
+        const contribution = toNum(goal?.monthly_contribution || goal?.monthlyContribution);
+        return sum + contribution;
+    }, 0);
+
+    const investmentIncome = (investments || []).reduce((sum, asset) => {
+        const gain = toNum(asset?.gainLoss);
+        const category = String(asset?.categoryName || asset?.name || '').toLowerCase();
+        if (gain <= 0) return sum;
+        if (category.includes('dividend') || category.includes('money market') || category.includes('mmf') || category.includes('treasury') || category.includes('bond') || category.includes('bill')) {
+            return sum + gain;
+        }
+        return sum;
+    }, 0);
+
+    const taxObligation = (expenses || []).reduce((sum, expense) => {
+        const label = `${expense?.category_name || ''} ${expense?.category || ''} ${expense?.description || ''}`.toLowerCase();
+        if (!isSameMonth(expense?.date || expense?.expense_date || expense?.created_at, referenceDate)) return sum;
+        if (!label.includes('tax') && !label.includes('paye') && !label.includes('kra') && !label.includes('nhif') && !label.includes('nssf')) return sum;
+        return sum + Math.abs(toNum(expense?.amount));
+    }, 0);
+
+    const insurancePremium = (expenses || []).reduce((sum, expense) => {
+        const label = `${expense?.category_name || ''} ${expense?.category || ''} ${expense?.description || ''}`.toLowerCase();
+        if (!isSameMonth(expense?.date || expense?.expense_date || expense?.created_at, referenceDate)) return sum;
+        if (!label.includes('insurance') && !label.includes('premium') && !label.includes('cover')) return sum;
+        return sum + Math.abs(toNum(expense?.amount));
+    }, 0);
+
+    const forecastItems = [
+        { label: 'Recurring Income', rawValue: recurringIncome, tone: 'text-emerald-300', dot: 'bg-[#51d1ba]' },
+        { label: 'Investment Income', rawValue: investmentIncome, tone: 'text-blue-300', dot: 'bg-[#4b8fff]' },
+        { label: 'Debt Payments', rawValue: -debtPayments, tone: 'text-rose-300', dot: 'bg-[#ff6d6d]' },
+        { label: 'Goal Contributions', rawValue: -goalContributions, tone: 'text-sky-300', dot: 'bg-[#5ab4ff]' },
+        { label: 'Tax Obligation', rawValue: -taxObligation, tone: 'text-amber-300', dot: 'bg-[#f7bf4a]' },
+        { label: 'Insurance Premium', rawValue: -insurancePremium, tone: 'text-violet-300', dot: 'bg-[#9d7cff]' },
+    ].filter((item) => Math.abs(item.rawValue) > 0);
+
+    return {
+        items: forecastItems.map((item) => ({ ...item, value: formatCompactSigned(item.rawValue) })),
+        net: forecastItems.reduce((sum, item) => sum + item.rawValue, 0),
+    };
+};
+const dashboardToolTiles = [
+    { label: 'Loan Calc', icon: Calculator, target: 'resourceshub' },
+    { label: 'Compound', icon: TrendingUp, target: 'resourceshub' },
+    { label: 'FX Rates', icon: Landmark, target: 'comparehub' },
+    { label: 'Tax Calc', icon: Briefcase, target: 'resourceshub' },
+    { label: 'FIRE Calc', icon: Target, target: 'resourceshub' },
+    { label: 'Debt Payoff', icon: Wallet, target: 'debts' },
+];
+const buildLearningSnapshot = ({ hasData, healthScore, budgetScore, savingsRateScore, debtRatioScore, investmentScore, live }) => {
+    if (!hasData) {
+        return {
+            hero: { subtitle: 'Start learning', title: 'Complete your first planner', progress: 12, meta: 'Add data to unlock tailored lessons' },
+            items: [
+                { title: 'Budgeting Basics', meta: '6 min', tag: 'Beginner', tagShell: 'bg-[#fff0ba] text-[#9a6800]' },
+                { title: 'How Goal Saving Works', meta: '8 min', tag: 'Beginner', tagShell: 'bg-[#fff0ba] text-[#9a6800]' },
+            ],
+            stats: [
+                { value: '0', label: 'XP Earned', tone: 'text-amber-500' },
+                { value: '0', label: 'Lessons', tone: 'text-emerald-700' },
+                { value: '0', label: 'Badges', tone: 'text-blue-600' },
+            ],
+        };
+    }
+
+    const tracks = [
+        { key: 'budget', score: budgetScore, title: 'Master Your Monthly Budget', meta: '8 min', tag: 'Beginner', tagShell: 'bg-[#fff0ba] text-[#9a6800]' },
+        { key: 'savings', score: savingsRateScore, title: 'Build a Stronger Savings Rate', meta: '10 min', tag: 'Intermediate', tagShell: 'bg-violet-100 text-violet-700' },
+        { key: 'debt', score: debtRatioScore, title: 'Reduce Debt the Smart Way', meta: '9 min', tag: 'Action', tagShell: 'bg-rose-100 text-rose-700' },
+        { key: 'invest', score: investmentScore, title: 'Grow Wealth with T-Bills & MMFs', meta: '8 min', tag: 'Intermediate', tagShell: 'bg-violet-100 text-violet-700' },
+    ].sort((a, b) => a.score - b.score);
+
+    const primaryTrack = tracks[0];
+    const lessonsCompleted = (live.tx?.length || 0) + (live.goals?.length || 0) + (live.inv?.length || 0);
+    const xpEarned = Math.round((Number(healthScore || 0) * 3) + (lessonsCompleted * 10));
+    const badges = [budgetScore >= 70, savingsRateScore >= 70, investmentScore >= 70].filter(Boolean).length;
+    const progress = clamp(Math.round(primaryTrack.score), 10, 95);
+
+    return {
+        hero: {
+            subtitle: 'Continue learning',
+            title: primaryTrack.title,
+            progress,
+            meta: `${progress}% ready - ~${Math.max(6, Math.round((100 - progress) / 6))} mins remaining`,
+        },
+        items: tracks.slice(1, 3).map((track) => ({
+            title: track.title,
+            meta: track.meta,
+            tag: track.tag,
+            tagShell: track.tagShell,
+        })),
+        stats: [
+            { value: String(xpEarned), label: 'XP Earned', tone: 'text-amber-500' },
+            { value: String(lessonsCompleted), label: 'Lessons', tone: 'text-emerald-700' },
+            { value: String(badges), label: 'Badges', tone: 'text-blue-600' },
+        ],
+    };
+};
+const buildBestRatesSnapshot = () => {
+    const savingsModule = compareModules.find((module) => module.id === 'savings');
+    const loanModule = compareModules.find((module) => module.id === 'loans');
+    const bankingModule = compareModules.find((module) => module.id === 'banking');
+
+    const mmfRows = savingsModule?.segments?.find((segment) => segment.id === 'mmf')?.rows || [];
+    const saccoRows = bankingModule?.segments?.find((segment) => segment.id === 'saccos')?.rows || [];
+    const loanRows = loanModule?.segments?.flatMap((segment) => segment.rows || []) || [];
+
+    const extractPercent = (text) => {
+        const matches = String(text || '').match(/(\d+(\.\d+)?)/g) || [];
+        return matches.length ? Number(matches[0]) : 0;
+    };
+
+    const bestMmf = mmfRows.reduce((best, row) => (extractPercent(row[1]) > extractPercent(best?.[1]) ? row : best), mmfRows[0]);
+    const bestSacco = saccoRows.reduce((best, row) => (extractPercent(row[3]) > extractPercent(best?.[3]) ? row : best), saccoRows[0]);
+    const bestLoan = loanRows.reduce((best, row) => (extractPercent(row[3]) < extractPercent(best?.[3]) ? row : best), loanRows[0]);
+
+    return {
+        comparedCount: compareModules.reduce((count, module) => count + (module.segments || []).reduce((segmentCount, segment) => segmentCount + (segment.rows?.length || 0), 0), 0),
+        rates: [
+            { value: bestLoan?.[3] || '--', label: 'Best Loan APR', shell: 'from-[#1d3f73] to-[#294c84] text-[#87f0d5]' },
+            { value: bestMmf?.[1] || '--', label: 'Best MMF', shell: 'from-[#294c84] to-[#315493] text-[#ffd975]' },
+            { value: bestSacco?.[3] || '--', label: 'Best SACCO', shell: 'from-[#355897] to-[#3d5ea0] text-[#cbb6ff]' },
+        ],
+    };
+};
+const buildCommunityPreview = () => {
+    const avatarShell = ['bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-blue-100 text-blue-700', 'bg-violet-100 text-violet-700'];
+    let posts = seedPosts;
+    try {
+        const raw = localStorage.getItem(COMMUNITY_POSTS_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(parsed) && parsed.length) posts = parsed;
+    } catch {
+        posts = seedPosts;
+    }
+    return posts.slice(0, 3).map((post, index) => ({
+        initials: post.initials || String(post.name || 'SM').split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
+        author: post.name || post.author || 'Community Member',
+        text: post.text,
+        meta: `${post.time || ''}${post.tags?.[0] ? ` · ${post.tags[0]}` : ''}`.trim(),
+        reactions: post.reactions || 0,
+        comments: post.replies || post.comments || 0,
+        shell: avatarShell[index % avatarShell.length],
+    }));
+};
 const relDate = (v) => {
     if (!v) return 'Recent';
     const d = new Date(v); if (Number.isNaN(d.getTime())) return 'Recent';
@@ -170,8 +614,24 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     const palette = toneMap[moment];
     const newUser = isNewUser(user);
     const dateLabel = useMemo(() => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), []);
-    const [live, setLive] = useState({ loading: true, hasAnyData: false, netWorth: 0, income: 0, spent: 0, savings: 0, completion: 0, budget: [], spending: [], tx: [], inv: [], goals: [], breakdown: { cash: 0, investments: 0, property: 0, liabilities: 0 } });
+    const [live, setLive] = useState({
+        loading: true,
+        hasAnyData: false,
+        netWorth: 0,
+        income: 0,
+        spent: 0,
+        savings: 0,
+        completion: 0,
+        budget: [],
+        spending: [],
+        tx: [],
+        inv: [],
+        goals: [],
+        breakdown: { cash: 0, investments: 0, property: 0, liabilities: 0 },
+        raw: { incomes: [], budgets: [], expenses: [], goals: [], investments: [], debts: [] },
+    });
     const [healthSnapshot, setHealthSnapshot] = useState({ score: 0, statusDisplay: 'Data pending', components: [] });
+    const [selectedCalendarFilter, setSelectedCalendarFilter] = useState('all');
 
     useEffect(() => {
         let mounted = true;
@@ -261,7 +721,29 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
             const stepFlags = [income > 0, budget.length > 0, spending.length > 0, tx.length > 0, invRows.length > 0, goalRows.length > 0, Math.abs(netWorth) > 0];
             const completion = Math.round((stepFlags.filter(Boolean).length / stepFlags.length) * 100);
             if (!mounted) return;
-            setLive({ loading: false, hasAnyData: stepFlags.some(Boolean), netWorth, income, spent, savings, completion, budget, spending, tx, inv: invRows, goals: goalRows, breakdown });
+            setLive({
+                loading: false,
+                hasAnyData: stepFlags.some(Boolean),
+                netWorth,
+                income,
+                spent,
+                savings,
+                completion,
+                budget,
+                spending,
+                tx,
+                inv: invRows,
+                goals: goalRows,
+                breakdown,
+                raw: {
+                    incomes,
+                    budgets,
+                    expenses: expensesPayload?.expenses || [],
+                    goals,
+                    investments: inv,
+                    debts,
+                },
+            });
             setHealthSnapshot({
                 score: Number(healthScore?.overall_score ?? 0),
                 statusDisplay: healthScore?.status_display || 'Data pending',
@@ -292,6 +774,69 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         { icon: TrendingUp, label: 'Total Savings', value: hasData ? fmtKES(live.savings) : 'KES 0', meta: hasData ? 'Goals progress' : 'No savings progress', tone: 'text-emerald-700' },
     ];
     const spendingRows = hasData ? (live.budget.length ? live.budget : live.spending) : previewBudget;
+    const currentMonth = useMemo(() => new Date(), []);
+    const aiInsights = useMemo(() => {
+        if (!hasData) return [];
+        return buildAiInsightCards({
+            budgets: live.raw.budgets,
+            goals: live.raw.goals,
+            debts: live.raw.debts,
+            investments: live.raw.investments,
+            income: live.income,
+            savings: live.savings,
+            score: currentScore,
+        });
+    }, [hasData, live.raw, live.income, live.savings, currentScore]);
+    const calendarEvents = useMemo(() => {
+        if (!hasData) return [];
+        return buildCalendarEvents({
+            referenceDate: currentMonth,
+            incomes: live.raw.incomes,
+            debts: live.raw.debts,
+            goals: live.raw.goals,
+            investments: live.raw.investments,
+        });
+    }, [hasData, currentMonth, live.raw]);
+    const calendarFilters = useMemo(() => buildCalendarFilters(calendarEvents), [calendarEvents]);
+    const filteredCalendarEvents = useMemo(() => {
+        if (selectedCalendarFilter === 'all') return calendarEvents;
+        return calendarEvents.filter((event) => event.type === selectedCalendarFilter);
+    }, [calendarEvents, selectedCalendarFilter]);
+    const calendarDays = useMemo(() => buildCalendarGrid(currentMonth, filteredCalendarEvents), [currentMonth, filteredCalendarEvents]);
+    const upcomingEvents = useMemo(() => filteredCalendarEvents.slice(0, 4).map((event) => ({
+        date: formatShortMonthDay(event.date),
+        name: event.name,
+        tone: event.listTone,
+    })), [filteredCalendarEvents]);
+    const calendarMonthLabel = useMemo(() => formatMonthLabel(currentMonth), [currentMonth]);
+    const cashflowForecast = useMemo(() => {
+        if (!hasData) return { items: [], net: 0 };
+        return buildCashflowForecast({
+            referenceDate: currentMonth,
+            incomes: live.raw.incomes,
+            debts: live.raw.debts,
+            goals: live.raw.goals,
+            investments: live.raw.investments,
+            expenses: live.raw.expenses,
+        });
+    }, [hasData, currentMonth, live.raw]);
+    const learningSnapshot = useMemo(() => buildLearningSnapshot({
+        hasData,
+        healthScore: currentScore,
+        budgetScore,
+        savingsRateScore,
+        debtRatioScore,
+        investmentScore,
+        live,
+    }), [hasData, currentScore, budgetScore, savingsRateScore, debtRatioScore, investmentScore, live]);
+    const bestRatesSnapshot = useMemo(() => buildBestRatesSnapshot(), []);
+    const communityPreview = useMemo(() => buildCommunityPreview(), []);
+
+    useEffect(() => {
+        if (!calendarFilters.some((filter) => filter.key === selectedCalendarFilter)) {
+            setSelectedCalendarFilter('all');
+        }
+    }, [calendarFilters, selectedCalendarFilter]);
 
     return (
         <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
@@ -416,7 +961,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         <button type="button" onClick={() => onSelectSection('health')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">All <ArrowRight size={14} /></button>
                     </div>
                     <div className="grid gap-3">
-                        {aiInsights.map(({ title, description, badge, icon: Icon, iconShell, badgeShell }) => (
+                        {(hasData ? aiInsights : []).length ? aiInsights.map(({ title, description, badge, icon: Icon, iconShell, badgeShell }) => (
                             <article key={title} className="rounded-[1.2rem] border border-emerald-100 bg-white px-4 py-4 shadow-[0_8px_24px_rgba(18,56,74,0.06)]">
                                 <div className="flex items-start gap-3">
                                     <span className={`mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconShell}`}>
@@ -429,7 +974,11 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                     </div>
                                 </div>
                             </article>
-                        ))}
+                        )) : (
+                            <article className="rounded-[1.2rem] border border-dashed border-emerald-200 bg-white px-4 py-5 text-sm text-slate-600">
+                                Add budgets, goals, debts, or investments to unlock personalized AI insights here.
+                            </article>
+                        )}
                     </div>
                 </section>
 
@@ -453,7 +1002,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                 <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-white text-slate-500">
                                     <ChevronLeft size={16} />
                                 </button>
-                                <p className="text-2xl font-extrabold text-[#21413c]">March 2026</p>
+                                <p className="text-2xl font-extrabold text-[#21413c]">{calendarMonthLabel}</p>
                                 <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-white text-slate-500">
                                     <ChevronRight size={16} />
                                 </button>
@@ -461,9 +1010,14 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
 
                             <div className="mt-4 flex flex-wrap gap-2">
                                 {calendarFilters.map((filter) => (
-                                    <span key={filter.label} className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-semibold ${filter.shell}`}>
+                                    <button
+                                        key={filter.key}
+                                        type="button"
+                                        onClick={() => setSelectedCalendarFilter(filter.key)}
+                                        className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selectedCalendarFilter === filter.key ? filter.shell : 'border-emerald-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-primary-700'}`}
+                                    >
                                         {filter.label}
-                                    </span>
+                                    </button>
                                 ))}
                             </div>
 
@@ -476,16 +1030,23 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                     <div key={weekIndex} className="grid grid-cols-7 gap-2">
                                         {week.map((entry, dayIndex) => (
                                             <div key={`${weekIndex}-${dayIndex}`} className="min-h-[88px] rounded-xl border border-emerald-100 bg-white p-2">
-                                                {entry ? (
-                                                    <>
-                                                        <p className="text-sm font-semibold text-slate-900">{entry.day}</p>
-                                                        {entry.event ? (
-                                                            <span className={`mt-2 inline-flex rounded-md px-2 py-1 text-xs font-medium ${entry.tone}`}>{entry.event}</span>
-                                                        ) : (
-                                                            <div className="mt-6 h-1 rounded-full bg-slate-100" />
-                                                        )}
-                                                    </>
-                                                ) : null}
+                                                 {entry ? (
+                                                     <>
+                                                         <p className="text-sm font-semibold text-slate-900">{entry.day}</p>
+                                                         {entry.events?.length ? (
+                                                             <div className="mt-2 space-y-1">
+                                                                 {entry.events.slice(0, 2).map((event) => (
+                                                                     <span key={`${event.type}-${event.name}`} className={`block rounded-md px-2 py-1 text-left text-[11px] font-medium ${event.cellTone}`}>
+                                                                         {event.name}
+                                                                     </span>
+                                                                 ))}
+                                                                 {entry.events.length > 2 ? <p className="text-[10px] font-semibold text-slate-400">+{entry.events.length - 2} more</p> : null}
+                                                             </div>
+                                                         ) : (
+                                                             <div className="mt-6 h-1 rounded-full bg-slate-100" />
+                                                         )}
+                                                     </>
+                                                 ) : null}
                                             </div>
                                         ))}
                                     </div>
@@ -498,22 +1059,26 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-slate-900">Upcoming This Month</h3>
-                                <span className="inline-flex rounded-full bg-[#0f3f39] px-3 py-1 text-xs font-semibold text-white">{upcomingEvents.length} events</span>
+                                <span className="inline-flex rounded-full bg-[#0f3f39] px-3 py-1 text-xs font-semibold text-white">{filteredCalendarEvents.length} events</span>
                             </div>
                             <div className="mt-4 space-y-2">
-                                {upcomingEvents.map((event) => (
+                                {upcomingEvents.length ? upcomingEvents.map((event) => (
                                     <div key={`${event.date}-${event.name}`} className={`grid grid-cols-[52px_1fr] items-center rounded-xl px-3 py-2 text-sm ${event.tone}`}>
                                         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{event.date}</span>
                                         <span className="font-medium">{event.name}</span>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-500">
+                                        No money events are scheduled for this month yet.
+                                    </div>
+                                )}
                             </div>
                         </article>
 
                         <article className="rounded-[1.65rem] bg-[#0d342f] p-5 text-white shadow-[0_18px_40px_rgba(9,31,28,0.18)]">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-100/75">March Cash Flow Forecast</p>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-100/75">{calendarMonthLabel} Cash Flow Forecast</p>
                             <div className="mt-4 space-y-3">
-                                {cashflowForecast.map((item) => (
+                                {cashflowForecast.items.length ? cashflowForecast.items.map((item) => (
                                     <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
                                         <div className="flex items-center gap-2">
                                             <span className={`h-2.5 w-2.5 rounded-full ${item.dot}`} />
@@ -521,14 +1086,18 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                         </div>
                                         <span className={`font-bold ${item.tone}`}>{item.value}</span>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-white/75">
+                                        Add recurring income, debt due dates, goal contributions, or tagged tax and insurance expenses to populate this forecast.
+                                    </div>
+                                )}
                             </div>
                             <div className="mt-6 flex items-end justify-between border-t border-white/10 pt-4">
                                 <div>
                                     <p className="text-sm text-white/70">Net this month</p>
                                     <p className="text-xs text-emerald-100/70">Expected outcome after planned moves</p>
                                 </div>
-                                <p className="text-3xl font-extrabold text-[#ffd975]">+13,300</p>
+                                <p className={`text-3xl font-extrabold ${cashflowForecast.net >= 0 ? 'text-[#ffd975]' : 'text-rose-300'}`}>{formatCompactSigned(cashflowForecast.net)}</p>
                             </div>
                         </article>
                     </div>
@@ -545,16 +1114,16 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         </div>
 
                         <div className="mt-4 rounded-[1.2rem] border border-emerald-200 bg-[linear-gradient(135deg,_#eefaf4_0%,_#e4f5f0_100%)] p-4">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">{learningItems[0].subtitle}</p>
-                            <p className="mt-2 text-xl font-bold text-slate-900">{learningItems[0].title}</p>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">{learningSnapshot.hero.subtitle}</p>
+                            <p className="mt-2 text-xl font-bold text-slate-900">{learningSnapshot.hero.title}</p>
                             <div className="mt-3 h-2 rounded-full bg-white/70">
-                                <div className="h-2 w-[68%] rounded-full bg-emerald-500" />
+                                <div className="h-2 rounded-full bg-emerald-500 transition-[width]" style={{ width: `${learningSnapshot.hero.progress}%` }} />
                             </div>
-                            <p className="mt-2 text-sm text-slate-500">{learningItems[0].meta}</p>
+                            <p className="mt-2 text-sm text-slate-500">{learningSnapshot.hero.meta}</p>
                         </div>
 
                         <div className="mt-4 space-y-3">
-                            {learningItems.slice(1).map((item) => (
+                            {learningSnapshot.items.map((item) => (
                                 <div key={item.title} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3">
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">{item.title}</p>
@@ -568,7 +1137,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         </div>
 
                         <div className="mt-4 grid grid-cols-3 gap-3">
-                            {learningStats.map((item) => (
+                            {learningSnapshot.stats.map((item) => (
                                 <div key={item.label} className="rounded-xl border border-emerald-100 bg-[#f8fbfa] px-3 py-4 text-center">
                                     <p className={`text-2xl font-extrabold ${item.tone}`}>{item.value}</p>
                                     <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{item.label}</p>
@@ -588,9 +1157,9 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
 
                         <div className="mt-4 rounded-[1.35rem] bg-[linear-gradient(135deg,_#1b2d68_0%,_#243b7b_100%)] p-4 text-white">
                             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-100/75">Comparison Hub</p>
-                            <p className="mt-2 text-2xl font-extrabold">40+ products compared</p>
+                            <p className="mt-2 text-2xl font-extrabold">{bestRatesSnapshot.comparedCount}+ products compared</p>
                             <div className="mt-4 grid grid-cols-3 gap-3">
-                                {bestRates.map((item) => (
+                                {bestRatesSnapshot.rates.map((item) => (
                                     <div key={item.label} className={`rounded-2xl bg-gradient-to-br p-3 ${item.shell}`}>
                                         <p className="text-2xl font-extrabold">{item.value}</p>
                                         <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/75">{item.label}</p>
@@ -600,8 +1169,8 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         </div>
 
                         <div className="mt-4 grid grid-cols-2 gap-3">
-                            {toolTiles.map(({ label, icon: Icon }) => (
-                                <button key={label} type="button" onClick={() => onSelectSection('resourceshub')} className="rounded-[1.1rem] border border-emerald-100 bg-[#f8fbfa] px-3 py-4 text-left transition-colors hover:bg-[#eff8f4]">
+                            {dashboardToolTiles.map(({ label, icon: Icon, target }) => (
+                                <button key={label} type="button" onClick={() => onSelectSection(target)} className="rounded-[1.1rem] border border-emerald-100 bg-[#f8fbfa] px-3 py-4 text-left transition-colors hover:bg-[#eff8f4]">
                                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary-700 shadow-sm">
                                         <Icon size={18} />
                                     </span>
@@ -621,7 +1190,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         </div>
 
                         <div className="mt-4 space-y-4">
-                            {communityPosts.map((post) => (
+                            {communityPreview.map((post) => (
                                 <article key={post.author} className="border-b border-emerald-100 pb-4 last:border-b-0 last:pb-0">
                                     <div className="flex items-start gap-3">
                                         <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${post.shell}`}>{post.initials}</span>
@@ -651,7 +1220,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                     </article>
                 </section>
 
-                <DashboardOverviewFooter />
+                <DashboardOverviewFooter onSelectSection={onSelectSection} />
             </div>
         </div>
     );
@@ -789,13 +1358,22 @@ const getBudgetTone = (percent) => {
     return 'text-emerald-600';
 };
 
-const DashboardOverviewFooter = () => (
-    <footer className="overflow-hidden rounded-[1.5rem] bg-[#179b6e] text-white shadow-[0_22px_48px_rgba(23,155,110,0.2)]">
-        <div className="border-b border-white/10 px-5 py-8 sm:px-6 lg:px-8">
+const DashboardOverviewFooter = ({ onSelectSection }) => {
+    const handleFooterItemClick = (item) => {
+        if (item.type === 'section') {
+            onSelectSection?.(item.target);
+            return;
+        }
+        window.location.assign(item.target);
+    };
+
+    return (
+        <footer className="overflow-hidden rounded-[1.5rem] bg-[#050807] text-white shadow-[0_22px_48px_rgba(5,8,7,0.36)]">
+        <div className="border-b border-white/8 px-5 py-8 sm:px-6 lg:px-8">
             <div className="grid gap-8 xl:grid-cols-[minmax(220px,1.1fr)_repeat(4,minmax(120px,1fr))]">
                 <div className="max-w-sm">
                     <img src={animatedLogo} alt="Shilingi Moves" className="h-14 w-auto object-contain" />
-                    <p className="mt-4 text-base leading-7 text-white/78">
+                    <p className="mt-4 text-base leading-7 text-white/72">
                         Powering every step of your financial journey.
                         <br />
                         One shillingi at a time.
@@ -805,11 +1383,10 @@ const DashboardOverviewFooter = () => (
                         {[
                             { label: 'X', content: <span className="text-sm font-bold">X</span> },
                             { label: 'LinkedIn', content: <Linkedin size={16} /> },
-                            { label: 'Instagram', content: <Instagram size={16} /> },
                             { label: 'YouTube', content: <Youtube size={16} /> },
                             { label: 'Community', content: <MessageCircle size={16} /> },
                         ].map((item) => (
-                            <a key={item.label} href="#" aria-label={item.label} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/85 transition-colors hover:bg-white/10">
+                            <a key={item.label} href="#" aria-label={item.label} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/80 transition-colors hover:bg-white/[0.1] hover:text-white">
                                 {item.content}
                             </a>
                         ))}
@@ -818,12 +1395,17 @@ const DashboardOverviewFooter = () => (
 
                 {dashboardFooterColumns.map((column) => (
                     <div key={column.title}>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-100/70">{column.title}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/55">{column.title}</p>
                         <div className="mt-4 space-y-2.5">
                             {column.items.map((item) => (
-                                <a key={item} href="#" className="block text-sm text-white/78 transition-colors hover:text-white">
-                                    {item}
-                                </a>
+                                <button
+                                    key={item.label}
+                                    type="button"
+                                    onClick={() => handleFooterItemClick(item)}
+                                    className="block text-left text-sm text-white/78 transition-colors hover:text-white"
+                                >
+                                    {item.label}
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -833,20 +1415,14 @@ const DashboardOverviewFooter = () => (
 
         <div className="px-5 py-5 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap gap-4 text-sm text-white/70">
-                    {footerPolicies.map((item) => (
-                        <a key={item} href="#" className="transition-colors hover:text-white">
-                            {item}
-                        </a>
-                    ))}
-                </div>
-                <p className="text-sm text-white/65">© 2026 Shilingi Moves. All rights reserved.</p>
+                <p className="text-sm text-white/65">©Kaizen Publishers Limited All rights reserved.</p>
             </div>
-            <p className="mt-4 max-w-4xl text-sm leading-6 text-white/55">
+            <p className="mt-4 max-w-4xl text-sm leading-6 text-white/50">
                 Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions. Regulated under the applicable laws of Kenya.
             </p>
         </div>
-    </footer>
-);
+        </footer>
+    );
+};
 
 export default DashboardOverview;

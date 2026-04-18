@@ -5,10 +5,13 @@ import {
     Globe,
     HeartHandshake,
     Landmark,
+    MessageCircle,
     PiggyBank,
     ShieldCheck,
     Sparkles,
+    Star,
     TrendingUp,
+    Zap,
     WalletCards,
     X,
 } from 'lucide-react';
@@ -22,14 +25,14 @@ const currencyFormatter = new Intl.NumberFormat('en-KE', {
 });
 
 const compareTabs = [
-    { id: 'loans', label: 'Loans', icon: WalletCards },
-    { id: 'savings', label: 'Savings & MMFs', icon: PiggyBank },
-    { id: 'investments', label: 'Investments', icon: TrendingUp },
-    { id: 'banking', label: 'Banking', icon: Building2 },
-    { id: 'transfers', label: 'Transfers', icon: Globe },
-    { id: 'retirement', label: 'Retirement', icon: ShieldCheck },
-    { id: 'mortgage', label: 'Mortgages', icon: Landmark },
-    { id: 'insurance', label: 'Insurance', icon: HeartHandshake },
+    { id: 'loans', label: 'Loans', icon: '🏦' },
+    { id: 'savings', label: 'MMFs', icon: '💰' },
+    { id: 'investments', label: 'Investments', icon: '📈' },
+    { id: 'banking', label: 'Banking', icon: '🧾' },
+    { id: 'transfers', label: 'Transfers', icon: '🌍' },
+    { id: 'retirement', label: 'Retirement', icon: '🛡️' },
+    { id: 'mortgage', label: 'Mortgages', icon: '🏠' },
+    { id: 'insurance', label: 'Insurance', icon: '✅' },
 ];
 
 const wizardQuestions = [
@@ -72,7 +75,7 @@ const wizardPicks = {
     ],
 };
 
-const compareModules = [
+export const compareModules = [
     {
         id: 'loans',
         order: 'Module 1 of 8',
@@ -86,6 +89,8 @@ const compareModules = [
                 label: 'Banks',
                 columns: ['Provider', 'Type', 'Limits', 'APR', 'Term', 'Speed', 'Action'],
                 rows: [
+                    ['Equity Bank', 'Salary Advance', 'Up to 3M', '14.0 - 16.0%', '12-60 mo', '48-72 hrs', 'Apply'],
+                    ['NCBA Bank', 'Loop Personal', 'Up to 4M', '14.5 - 16.5%', '12-60 mo', '24-48 hrs', 'Apply'],
                     ['Stanbic Bank', 'Commercial Bank', '100K - 7M', '11.8 - 13.5%', '12-96 mo', '24-48 hrs', 'Apply'],
                     ['Standard Chartered', 'Commercial Bank', '50K - 5M', '12.7 - 14.0%', '12-60 mo', '48 hrs', 'Apply'],
                     ['KCB Bank', 'Commercial Bank', 'Up to 5M', '13.8 - 15.5%', '12-72 mo', '24-72 hrs', 'Apply'],
@@ -137,7 +142,6 @@ const compareModules = [
                 columns: ['Provider', 'Net Yield', 'Min. Investment', 'Fee', 'Withdrawal', 'Risk', 'Action'],
                 rows: [
                     ['Nabo Africa MMF', '~12.9%', 'KES 1,000', '0.8-1.2%', 'Same-day / 24 hrs', 'Low Risk', 'Invest'],
-                    ['Cytonn MMF', '11.1 - 11.6%', 'KES 1,000', '0.75-1.0%', 'Same-day', 'Low Risk', 'Invest'],
                     ['Gulfcap MMF', '10.8 - 11.4%', 'KES 5,000', '0.9-1.3%', 'Same-day / 24 hrs', 'Low Risk', 'Invest'],
                     ['Etica MMF', '10.9 - 11.3%', 'KES 1,000', '1.0-1.4%', '24-48 hrs', 'Low Risk', 'Invest'],
                     ['Lofty-Corban MMF', '10.5 - 11.1%', 'KES 1,000', '0.8-1.2%', '24-72 hrs', 'Low Risk', 'Invest'],
@@ -170,6 +174,8 @@ const compareModules = [
                 label: 'Govt Bonds & T-Bills',
                 columns: ['Provider', 'Instruments', 'Minimum', 'Fees', 'Regulation', 'Best For', 'Action'],
                 rows: [
+                    ['Genghis Capital', 'Gov. Securities & Fixed Income', 'KES 50,000', '0.8-1.2%', 'CMA', 'Retail access to institutional bonds', 'Open Account'],
+                    ['KCB Investments', 'Treasury Bills & Bonds', 'KES 100,000', '0.5-1%', 'CBK', 'Salary-linked government securities', 'Open Account'],
                     ['Dyer & Blair', 'T-Bills, T-Bonds', 'KES 50,000', '0.5-1%', 'CBK + CMA', 'Conservative safety', 'Open Account'],
                     ['Standard Chartered', 'T-Bills, T-Bonds', 'KES 100,000', '0.5-1%', 'CBK + CMA', 'Balanced fixed income', 'Open Account'],
                 ],
@@ -200,6 +206,9 @@ const compareModules = [
                 rows: [
                     ['Equity Bank', 'Current Account', 'KES 0', '4-6%', 'Excellent app + USSD', 'Salary and transactions', 'Open'],
                     ['KCB Bank', 'Savings Account', 'KES 0', 'Up to 7%', 'Strong app + M-Pesa', 'Savings + everyday use', 'Open'],
+                    ['NCBA (Loop / Gold)', 'Current + Savings', 'KES 0-50', '4-7%', 'Embedded M-Pesa, virtual cards', 'Millennials, digital users', 'Open'],
+                    ['Stanbic Bank', 'Savings + Current', 'KES 0', 'Competitive (above 5K)', 'Good app + internet banking', 'Low-fee savings + transactions', 'Open'],
+                    ['Co-operative Bank', 'Current + Savings', 'KES 0-50', 'Up to 7-9% on savings', 'Solid app + wide branch network', 'Family & group savers', 'Open'],
                 ],
             },
             {
@@ -240,6 +249,9 @@ const compareModules = [
                 rows: [
                     ['M-Pesa', 'KES 0-55', 'Instant', 'Up to KES 500K', 'Wallet, Paybill, Bank', 'Daily local transfers', 'Add'],
                     ['Airtel Money', 'Free on-net / 0-50', 'Instant', 'Up to KES 500K', 'Wallet, bank', 'Low-cost on-network transfers', 'Add'],
+                    ['T-Kash (Telkom)', 'Competitive', 'Instant', 'Up to KES 500K', 'T-Kash wallet, interoperability', 'Budget-conscious users', 'Add'],
+                    ['Bank Apps (Equity/KCB/NCBA)', 'Free or very low', 'Instant - Minutes', 'High (account limits)', 'Bank-to-bank, M-Pesa', 'Salary & large local transfers', 'Add'],
+                    ['Chipper Cash', 'Low / free P2P', 'Instant', 'Varies', 'Mobile wallets, bank', 'Peer-to-peer with friends', 'Add'],
                 ],
             },
             {
@@ -266,8 +278,27 @@ const compareModules = [
                 label: 'Individual Pension Plans',
                 columns: ['Provider', 'Contributions', 'Returns', 'Fee', 'Withdrawal Rules', 'Best For', 'Action'],
                 rows: [
+                    ['Jubilee Personal Pension', 'Flexible + M-Pesa contributions', '8-11%', '1.3%', 'Standard RBA rules (age 55+)', 'Convenient mobile contributors', 'Enroll'],
+                    ['CIC Individual Pension', 'Flexible monthly/annual', '9-11%', '1.2-1.8%', 'Age 55+; partial withdrawals allowed', 'Family-focused long-term savers', 'Enroll'],
+                    ['Zamara IPP', 'Flexible contributions', '8.5-11%', '1.5%', 'RBA-regulated at retirement age', 'Custom investment choices', 'Enroll'],
                     ['Old Mutual IPP', 'Flexible from KES 1,000/mo', '9-12%', '1.0-1.5%', 'Age 55+; annuity or lump sum', 'Self-employed professionals', 'Enroll'],
                     ['Britam Individual Pension', 'Flexible monthly or annual', '9-11.5%', '1.2-1.8%', 'Age 55+; annuity or lump sum', 'Individuals wanting guarantees', 'Enroll'],
+                ],
+            },
+            {
+                id: 'annuity',
+                label: 'Annuity',
+                columns: ['Provider', 'Type', 'Payout', 'Fee', 'Rules', 'Best For', 'Action'],
+                rows: [
+                    ['Placeholder Provider', 'Life annuity', 'Monthly income', 'TBD', 'Placeholder terms', 'Retirees needing guaranteed income', 'Explore'],
+                ],
+            },
+            {
+                id: 'drawdown',
+                label: 'Income Drawdown',
+                columns: ['Provider', 'Type', 'Payout', 'Fee', 'Rules', 'Best For', 'Action'],
+                rows: [
+                    ['Placeholder Provider', 'Flexible drawdown', 'Variable income', 'TBD', 'Placeholder terms', 'Retirees wanting investment flexibility', 'Explore'],
                 ],
             },
             {
@@ -294,9 +325,27 @@ const compareModules = [
                 label: 'KMRC Affordable',
                 columns: ['Provider', 'Type', 'Rate', 'Deposit', 'Monthly Repayment', 'Term', 'Best For', 'Action'],
                 rows: [
+                    ['Co-operative Bank (KMRC)', 'Fixed KMRC', 0.095, '10-20%', 'computed', 'Up to 25 yrs', 'Group & family buyers', 'Compare'],
+                    ['NCBA (KMRC-linked)', 'Fixed KMRC', 0.095, '15-20%', 'computed', 'Up to 20 yrs', 'Digital-savvy buyers', 'Compare'],
                     ['Stanbic Bank (KMRC)', 'Fixed KMRC', 0.0899, '10-20%', 'computed', 'Up to 25 yrs', 'First-time buyers', 'Compare'],
                     ['KCB Bank (KMRC)', 'Fixed KMRC', 0.09, '10-20%', 'computed', 'Up to 25 yrs', 'Salary earners', 'Compare'],
                     ['Standard Chartered (KMRC)', 'Fixed KMRC', 0.095, '10-20%', 'computed', '20-25 yrs', 'Stable income buyers', 'Compare'],
+                ],
+            },
+            {
+                id: 'hfhousing',
+                label: 'HF Housing Finance',
+                columns: ['Provider', 'Type', 'Rate', 'Deposit', 'Monthly (est.)', 'Term', 'Best For', 'Action'],
+                rows: [
+                    ['Placeholder Provider', 'Housing finance', 'TBD', 'TBD', '~TBD', 'TBD', 'Placeholder buyers', 'Compare'],
+                ],
+            },
+            {
+                id: 'affordable',
+                label: 'Affordable Housing',
+                columns: ['Provider', 'Type', 'Rate', 'Deposit', 'Monthly (est.)', 'Term', 'Best For', 'Action'],
+                rows: [
+                    ['Placeholder Provider', 'Affordable housing', 'TBD', 'TBD', '~TBD', 'TBD', 'Placeholder first-time buyers', 'Compare'],
                 ],
             },
             {
@@ -319,21 +368,21 @@ const compareModules = [
         filters: ['Claims Rating', 'Premium Range', 'Coverage Scope'],
         segments: [
             {
-                id: 'medical',
-                label: 'Medical',
-                columns: ['Provider', 'Cover Type', 'Premium', 'Key Benefits', 'Claims Rating', 'Best For', 'Action'],
-                rows: [
-                    ['Jubilee Health', 'Comprehensive', 'KES 4,000-8,000/mo', 'Wide network, dental, optical', '?????', 'Families needing broad cover', 'Get Quote'],
-                    ['AAR Insurance', 'Bronze - Platinum', 'KES 3,500-7,500/mo', 'Fast digital claims, maternity', '?????', 'Digital users', 'Get Quote'],
-                ],
-            },
-            {
                 id: 'motor',
                 label: 'Motor',
                 columns: ['Provider', 'Cover Type', 'Premium', 'Key Benefits', 'Claims Rating', 'Best For', 'Action'],
                 rows: [
                     ['Jubilee', 'Comprehensive', 'KES 25,000-45,000/yr', 'Wide repair network, courtesy car', '?????', 'Full vehicle protection', 'Get Quote'],
                     ['Britam', 'Comprehensive', 'KES 22,000-40,000/yr', 'AI-assisted fast claims', '?????', 'Modern claims', 'Get Quote'],
+                ],
+            },
+            {
+                id: 'medical',
+                label: 'Medical',
+                columns: ['Provider', 'Cover Type', 'Premium', 'Key Benefits', 'Claims Rating', 'Best For', 'Action'],
+                rows: [
+                    ['Jubilee Health', 'Comprehensive', 'KES 4,000-8,000/mo', 'Wide network, dental, optical', '?????', 'Families needing broad cover', 'Get Quote'],
+                    ['AAR Insurance', 'Bronze - Platinum', 'KES 3,500-7,500/mo', 'Fast digital claims, maternity', '?????', 'Digital users', 'Get Quote'],
                 ],
             },
         ],
@@ -345,6 +394,64 @@ const getActionClasses = (action) => {
         return 'bg-[#1f9c72] text-white hover:bg-[#145f57]';
     }
     return 'border border-[#9bcfc9] bg-white text-[#145f57] hover:bg-[#e8f5f3]';
+};
+
+const compareActionContent = {
+    loans: { primary: 'Apply Now', secondary: 'Save to Dashboard', advisor: 'Talk to Loan Advisor' },
+    savings: { primary: 'Open MMF Account', secondary: 'Save to Dashboard', advisor: 'Talk to Savings Advisor' },
+    investments: { primary: 'Open Investment Account', secondary: 'Save to Dashboard', advisor: 'Talk to Investment Advisor' },
+    banking: { primary: 'Open Account', secondary: 'Save to Dashboard', advisor: 'Talk to Banking Advisor' },
+    transfers: { primary: 'Start Transfer', secondary: 'Save to Dashboard', advisor: 'Talk to Transfer Advisor' },
+    retirement: { primary: 'Enroll Now', secondary: 'Save to Dashboard', advisor: 'Talk to Retirement Advisor' },
+    mortgage: { primary: 'Compare Mortgage', secondary: 'Save to Dashboard', advisor: 'Talk to Mortgage Advisor' },
+    insurance: { primary: 'Get Custom Quote', secondary: 'Save to Dashboard', advisor: 'Talk to Insurance Advisor' },
+};
+
+const providerShells = ['bg-[#df6a3a]', 'bg-[#5c47c5]', 'bg-[#1967b3]', 'bg-[#4a7d15]', 'bg-[#177e72]', 'bg-[#9d5f10]', 'bg-[#8d3b4e]'];
+
+const getProviderInitials = (name) => String(name || 'SM')
+    .replace(/\(.*?\)/g, '')
+    .split(/[\s/&-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+
+const getProviderShell = (name) => {
+    const seed = String(name || '').split('').reduce((sum, character) => sum + character.charCodeAt(0), 0);
+    return providerShells[seed % providerShells.length];
+};
+
+const getProviderMeta = (moduleId, segmentId, provider, detail) => {
+    const detailText = String(detail || '');
+    if (moduleId === 'loans') return segmentId === 'microfinance' ? 'Microfinance' : 'Commercial Bank';
+    if (moduleId === 'savings') return segmentId === 'mmf' ? 'CMA-regulated' : 'CMA-regulated';
+    if (moduleId === 'investments') return detailText.includes('CBK') ? 'Bank-linked Broker' : 'Licensed Broker';
+    if (moduleId === 'banking') return detailText || 'Deposit account';
+    if (moduleId === 'transfers') return segmentId === 'global' ? 'Remittance platform' : 'Payments provider';
+    if (moduleId === 'retirement') return 'RBA-regulated';
+    if (moduleId === 'mortgage') return detailText;
+    if (moduleId === 'insurance') return 'Licensed insurer';
+    return detailText;
+};
+
+const getCellPillTone = (column, value) => {
+    const text = String(value || '').toLowerCase();
+    if (text.includes('instant')) return 'border-[#f3c47a] bg-[#fff5dc] text-[#a96b00]';
+    if (text.includes('low risk')) return 'border-[#cfe1ff] bg-[#eef5ff] text-[#2d67c8]';
+    if (text.includes('cma') || text.includes('cbk') || text.includes('rba')) return 'border-[#99d0cb] bg-[#edf9f6] text-[#145f57]';
+    if (text.includes('kes 0')) return 'border-[#99d0cb] bg-[#edf9f6] text-[#145f57]';
+    if (text.includes('fixed kmrc')) return 'border-[#99d0cb] bg-[#edf9f6] text-[#145f57]';
+    if (column === 'Speed' && text.includes('24-48')) return 'border-[#f3c47a] bg-[#fff5dc] text-[#a96b00]';
+    return null;
+};
+
+const shouldRenderPill = (column, value) => ['Speed', 'Regulation', 'Risk', 'Monthly Fee', 'Type'].includes(column) && Boolean(getCellPillTone(column, value));
+
+const getSecondaryActionLabel = (action) => {
+    if (action === 'Get Quote') return 'Save';
+    return 'Add';
 };
 
 const calculateMortgagePayment = (principal, annualRate, years) => {
@@ -368,6 +475,7 @@ const ComparisonHubPanel = () => {
     const activeModule = moduleMap[activeTab];
     const activeSegment = activeModule.segments.find((segment) => segment.id === activeSegments[activeTab]) || activeModule.segments[0];
     const currentQuestion = wizardQuestions[wizardStep];
+    const actionContent = compareActionContent[activeTab] || compareActionContent.loans;
 
     // The wizard mirrors the Claude flow but keeps every answer in React state,
     // which makes the Compare Hub easier to reason about and easier to test.
@@ -418,7 +526,6 @@ const ComparisonHubPanel = () => {
 
             <nav className="sticky top-[5.25rem] z-20 flex gap-2 overflow-x-auto rounded-[1rem] border border-[#d0ddd9] bg-white/95 p-2 shadow-sm backdrop-blur-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {compareTabs.map((tab) => {
-                    const Icon = tab.icon;
                     const active = activeTab === tab.id;
                     return (
                         <button
@@ -429,7 +536,7 @@ const ComparisonHubPanel = () => {
                                 active ? 'border-[#9bcfc9] bg-[#e8f5f3] text-[#145f57]' : 'border-transparent text-slate-500 hover:bg-[#f5f7f6]'
                             }`}
                         >
-                            <Icon size={14} />
+                            <span className="text-[13px] leading-none" aria-hidden="true">{tab.icon}</span>
                             {tab.label}
                         </button>
                     );
@@ -533,9 +640,30 @@ const ComparisonHubPanel = () => {
                                         return (
                                             <td key={`${row[0]}-${column}`} className="px-4 py-3 align-top">
                                                 {column === 'Action' ? (
-                                                    <button type="button" className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${getActionClasses(String(content))}`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <button type="button" className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${getActionClasses(String(content))}`}>
+                                                            {String(content)}
+                                                        </button>
+                                                        <button type="button" className="rounded-lg border border-[#1f9c72] bg-white px-3 py-2 text-xs font-semibold text-[#145f57] transition hover:bg-[#e8f5f3]">
+                                                            + {getSecondaryActionLabel(String(content))}
+                                                        </button>
+                                                    </div>
+                                                ) : column === 'Provider' ? (
+                                                    <div className="flex items-start gap-3">
+                                                        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.55rem] text-[11px] font-bold text-white ${getProviderShell(String(content))}`}>
+                                                            {getProviderInitials(String(content))}
+                                                        </span>
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-slate-900">{String(content)}</p>
+                                                            <p className="mt-0.5 text-[11px] text-slate-500">{getProviderMeta(activeTab, activeSegment.id, row[0], row[1])}</p>
+                                                        </div>
+                                                    </div>
+                                                ) : shouldRenderPill(column, content) ? (
+                                                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getCellPillTone(column, content)}`}>
+                                                        {String(content).toLowerCase().includes('instant') ? <Zap size={11} /> : null}
+                                                        {String(content).includes('CMA') || String(content).includes('CBK') || String(content).includes('RBA') ? '✓' : null}
                                                         {String(content)}
-                                                    </button>
+                                                    </span>
                                                 ) : column === 'APR' || column === 'Net Yield' || column === 'Rate' || column === 'Returns' || column === 'Claims Rating' ? (
                                                     <span className="text-sm font-bold text-[#145f57]">{String(content)}</span>
                                                 ) : (
@@ -550,13 +678,37 @@ const ComparisonHubPanel = () => {
                     </table>
                 </div>
 
-                <div className="mx-5 my-4 rounded-r-[0.6rem] border-l-[3px] border-[#185fa5] bg-[#e6f1fb] px-4 py-3 text-sm text-[#0c447c]">
-                    <strong>Shilingi Insight:</strong> {activeModule.insight}
-                </div>
+                <div className="border-t border-[#d0ddd9] bg-white">
+                    <div className="mx-5 mt-4 rounded-r-[0.7rem] border-l-[3px] border-[#185fa5] bg-[#e6f1fb] px-4 py-3 text-sm leading-6 text-[#0c447c]">
+                        <strong>Shilingi Insight:</strong> {activeModule.insight}
+                    </div>
+                    <div className="mx-5 mt-4 rounded-[0.9rem] border border-[#f0c477] bg-[#fff5e8] px-4 py-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm leading-6 text-[#a86a00]">
+                                Upgrade to unlock full lists, custom quote tools, rate trend views and personalized recommendations.
+                            </p>
+                            <button type="button" className="rounded-lg bg-[#e8a020] px-4 py-2 text-sm font-bold text-slate-950">
+                                Upgrade Now
+                            </button>
+                        </div>
+                    </div>
 
-                <div className="flex flex-wrap gap-2 border-t border-[#d0ddd9] bg-[#f5f7f6] px-5 py-4">
-                    <button type="button" className="rounded-lg bg-[#1f9c72] px-4 py-2 text-xs font-semibold text-white">+ Add to My Dashboard</button>
-                    <button type="button" className="rounded-lg border border-[#d0ddd9] bg-white px-4 py-2 text-xs font-semibold text-slate-500">Talk to an Advisor</button>
+                    <div className="flex flex-wrap gap-2 px-5 py-4">
+                        <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[#1f9c72] px-4 py-2 text-xs font-semibold text-white">
+                            <Sparkles size={13} />
+                            {actionContent.primary}
+                        </button>
+                        <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-[#d0ddd9] bg-white px-4 py-2 text-xs font-semibold text-slate-600">
+                            <Star size={13} />
+                            {actionContent.secondary}
+                        </button>
+                        {activeTab !== 'insurance' ? (
+                            <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-[#d0ddd9] bg-white px-4 py-2 text-xs font-semibold text-slate-600">
+                                <MessageCircle size={13} />
+                                {actionContent.advisor}
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
             </section>
 

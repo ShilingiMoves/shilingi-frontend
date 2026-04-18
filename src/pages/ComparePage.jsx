@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     ArrowRight, CheckCircle2, ChevronRight, Calculator,
     Landmark, Smartphone, TrendingUp, ShieldCheck, Home,
     PiggyBank, LineChart, Users, BarChart3, PieChart,
-    Search, DollarSign, Briefcase, RefreshCcw, PauseCircle, PlayCircle
+    Search, Briefcase, PauseCircle, PlayCircle
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import HeroVideo from '../video/AI_Video-compare.mp4';
@@ -18,27 +18,6 @@ const ComparePage = () => {
             meta.setAttribute('content', 'Make informed decisions with transparent, side-by-side comparisons of Kenya’s financial products. Compare banks, loans, insurance, and more.');
         }
     }, []);
-
-    // Interactive Widget State
-    const [step, setStep] = useState(1);
-    const [goal, setGoal] = useState('');
-    const [detail, setDetail] = useState('');
-
-    const handleGoalSelect = (selectedGoal) => {
-        setGoal(selectedGoal);
-        setStep(2);
-    };
-
-    const handleDetailSelect = (selectedDetail) => {
-        setDetail(selectedDetail);
-        setStep(3);
-    };
-
-    const resetWidget = () => {
-        setStep(1);
-        setGoal('');
-        setDetail('');
-    };
 
     const categories = [
         {
@@ -87,7 +66,7 @@ const ComparePage = () => {
 
     return (
         <div className="min-h-screen bg-white text-gray-900">
-            {/* HERO SECTION - VIDEO BACKGROUND + INTERACTIVE WIDGET */}
+            {/* HERO SECTION */}
             <section className="relative h-auto md:h-[80vh] min-h-[700px] flex items-center justify-center overflow-hidden py-24 md:py-0">
                 {/* Video Background */}
                 <div className="absolute inset-0 z-0">
@@ -106,128 +85,25 @@ const ComparePage = () => {
                 </div>
 
                 <div className="container-custom relative z-10">
-                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-                        {/* Text Content */}
-                        <div className="w-full lg:w-1/2 text-center lg:text-left">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-primary-300 text-sm font-medium mb-8 animate-fadeIn">
-                                <Search size={16} /> Smart Product Finder
-                            </div>
-
+                    <div className="flex items-center justify-center">
+                        <div className="w-full max-w-4xl text-center">
                             <h1
-                                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-8"
+                                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.08] tracking-tight"
                                 style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                             >
-                                Compare Financial Products,<br />
+                                Compare Financial Products,
+                                <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-green-400">Make Smarter Choices.</span>
                             </h1>
-
-                            <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed drop-shadow-md animate-slideUp delay-100">
-                                Answer 3 quick questions and let our AI match you with the best rates, loans, or insurance plans for your specific needs.
-                            </p>
-
-                            <div className="hidden lg:flex items-center gap-6 text-sm text-gray-300 animate-slideUp delay-200">
-                                <div className="flex items-center gap-2"><CheckCircle2 size={18} className="text-green-400" /> Free to use</div>
-                                <div className="flex items-center gap-2"><CheckCircle2 size={18} className="text-green-400" /> No signup required</div>
-                                <div className="flex items-center gap-2"><CheckCircle2 size={18} className="text-green-400" /> Unbiased Results</div>
-                            </div>
-                        </div>
-
-                        {/* Interactive Widget Overlay */}
-                        <div className="w-full lg:w-1/2 relative perspective-1000 animate-slideUp delay-300">
-                            <div className="relative bg-white/95 backdrop-blur-sm text-gray-900 rounded-2xl p-6 md:p-8 shadow-2xl transition-all duration-500 min-h-[420px] flex flex-col border border-white/20">
-
-                                {/* Header */}
-                                <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-                                    <div>
-                                        <h3 className="font-bold text-xl">Quick Match</h3>
-                                        <p className="text-sm text-gray-500">Step {step} of 3</p>
-                                    </div>
-                                    <button onClick={resetWidget} className="text-gray-400 hover:text-primary-600 transition-colors p-2 hover:bg-gray-100 rounded-full" title="Start Over">
-                                        <RefreshCcw size={18} />
-                                    </button>
-                                </div>
-
-                                {/* Step 1: Goal Select */}
-                                {step === 1 && (
-                                    <div className="flex-grow animate-fadeIn">
-                                        <h4 className="text-lg font-bold mb-6 text-center">What is your main financial goal right now?</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {[
-                                                { label: 'Grow Savings', icon: TrendingUp, id: 'savings' },
-                                                { label: 'Get a Loan', icon: DollarSign, id: 'loans' },
-                                                { label: 'Insure Myself', icon: ShieldCheck, id: 'insurance' },
-                                                { label: 'Plan Retirement', icon: PiggyBank, id: 'retirement' },
-                                            ].map((option) => (
-                                                <button
-                                                    key={option.id}
-                                                    onClick={() => handleGoalSelect(option.id)}
-                                                    className="flex flex-col items-center justify-center p-5 rounded-xl border-2 border-gray-100 hover:border-primary-500 hover:bg-primary-50 transition-all duration-300 group"
-                                                >
-                                                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-white group-hover:text-primary-600 transition-colors text-gray-600">
-                                                        <option.icon size={20} />
-                                                    </div>
-                                                    <span className="font-bold text-sm group-hover:text-primary-700 transition-colors">{option.label}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Step 2: Detail Select */}
-                                {step === 2 && (
-                                    <div className="flex-grow animate-fadeIn">
-                                        <h4 className="text-lg font-bold mb-6 text-center">
-                                            {goal === 'savings' ? 'How much can you save monthly?' :
-                                                goal === 'loans' ? 'What is the loan for?' :
-                                                    goal === 'insurance' ? 'What do you want to protect?' :
-                                                        'When do you plan to retire?'}
-                                        </h4>
-                                        <div className="space-y-3">
-                                            {/* Dynamic Options based on Goal */}
-                                            {(goal === 'savings' ? ['Less than KES 5,000', 'KES 5,000 - 20,000', 'Over KES 20,000'] :
-                                                goal === 'loans' ? ['Personal/Emergency', 'Business Growth', 'Home/Asset Purchase'] :
-                                                    goal === 'insurance' ? ['My Health', 'Car/Vehicle', 'Family/Life'] :
-                                                        ['In 1-5 years', 'In 10-20 years', 'Just started working']
-                                            ).map((opt, i) => (
-                                                <button
-                                                    key={i}
-                                                    onClick={() => handleDetailSelect(opt)}
-                                                    className="w-full text-left px-6 py-4 rounded-xl border border-gray-200 hover:border-primary-500 hover:bg-primary-50 font-medium transition-all flex items-center justify-between group"
-                                                >
-                                                    {opt}
-                                                    <ChevronRight size={18} className="text-gray-400 group-hover:text-primary-600" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <button onClick={() => setStep(1)} className="mt-6 text-sm text-gray-500 hover:text-gray-900 underline font-medium">Back</button>
-                                    </div>
-                                )}
-
-                                {/* Step 3: Results */}
-                                {step === 3 && (
-                                    <div className="flex-grow animate-fadeIn text-center flex flex-col justify-center">
-                                        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-short shadow-sm">
-                                            <CheckCircle2 size={40} />
-                                        </div>
-                                        <h4 className="text-2xl font-bold mb-3 text-gray-900">Great news!</h4>
-                                        <p className="text-gray-600 mb-8 max-w-xs mx-auto">We found <strong className="text-primary-600">3 perfect matches</strong> for {goal === 'loans' ? 'loans' : goal} based on your needs.</p>
-
-                                        <a href="#categories" className="block w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg hover:shadow-primary-600/30 transition-all mb-4 transform hover:-translate-y-1">
-                                            View Your Matches
-                                        </a>
-                                        <p className="text-xs text-gray-400 font-medium">Results are 100% unbiased & verified</p>
-                                    </div>
-                                )}
-
-                            </div>
+                            <a
+                                href="#categories"
+                                className="mt-8 inline-flex rounded-xl bg-primary-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary-700"
+                            >
+                                Explore
+                            </a>
                         </div>
                     </div>
                 </div>
-
-                {/* Scroll Indicator - Hidden on mobile if needed, but keeping for desktop */}
-                <a href="#categories" className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 hover:text-white transition-colors animate-bounce">
-                    <ChevronRight size={32} className="rotate-90" />
-                </a>
             </section>
 
             {/* CATEGORIES GRID */}
@@ -252,9 +128,9 @@ const ComparePage = () => {
                                         </li>
                                     ))}
                                 </ul>
-                                <button className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-primary-600 hover:text-white hover:border-transparent transition-all flex items-center justify-center gap-2 group/btn">
+                                <Link to="/signup" className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-primary-600 hover:text-white hover:border-transparent transition-all flex items-center justify-center gap-2 group/btn">
                                     Compare Now <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                                </button>
+                                </Link>
                             </div>
                         ))}
                     </div>

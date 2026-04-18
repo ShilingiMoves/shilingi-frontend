@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { getStoredUserProfile } from '../../../services/authApi';
 
-const COMMUNITY_POSTS_KEY = 'shilingi_dashboard_community_posts_v3';
+export const COMMUNITY_POSTS_KEY = 'shilingi_dashboard_community_posts_v3';
 const COMMUNITY_ACTIONS_KEY = 'shilingi_dashboard_community_actions_v1';
 
 const defaultCommunityState = {
@@ -34,7 +34,7 @@ const defaultCommunityState = {
     createdChallenges: [],
 };
 
-const seedPosts = [
+export const seedPosts = [
     {
         id: 'seed-1',
         initials: 'JM',
