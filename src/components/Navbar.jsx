@@ -15,14 +15,17 @@ const Navbar = () => {
         return () => { document.body.style.overflow = ''; };
     }, [mobileMenuOpen]);
 
-    const navLinks = [
+    const mobileNavLinks = [
         { name: 'Home', path: '/' },
         { name: 'Dashboard', path: dashboardPath },
-        { name: 'Learn', path: '/learn' },
         { name: 'Compare', path: '/compare' },
-        { name: 'Tools', path: '/tools' },
+        { name: 'Resources', path: '/tools' },
+        { name: 'Learning Hub', path: '/learn' },
+        { name: 'Community', path: '/community' },
         { name: 'Refer a Friend', path: '/refer', icon: Gift },
     ];
+
+    const desktopNavLinks = mobileNavLinks.filter((link) => link.name !== 'Home');
 
     const isActive = (path) => location.pathname === path;
 
@@ -39,7 +42,7 @@ const Navbar = () => {
                     </Link>
 
                     <div className="hidden md:flex items-center space-x-1">
-                        {navLinks.map((link) => (
+                        {desktopNavLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
@@ -100,7 +103,7 @@ const Navbar = () => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-                        {navLinks.map((link) => (
+                        {mobileNavLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}

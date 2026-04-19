@@ -117,6 +117,23 @@ const DashboardPage = () => {
         return () => mediaQuery.removeListener(syncSidebarState);
     }, []);
 
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return undefined;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        if (mobileSidebarOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = previousOverflow || '';
+        }
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [mobileSidebarOpen]);
+
     const handleSignOut = () => {
         logoutUser();
         navigate('/signin', { replace: true });
@@ -314,7 +331,7 @@ const DashboardPage = () => {
                     onCloseMobile={() => setMobileSidebarOpen(false)}
                 />
 
-                <main className="min-w-0 flex-1 lg:h-full lg:overflow-y-auto lg:[scrollbar-gutter:stable]">
+                <main className="min-w-0 flex-1 pb-6 lg:h-full lg:overflow-y-auto lg:pb-0 lg:[scrollbar-gutter:stable]">
                     {renderActiveSection()}
                 </main>
             </div>

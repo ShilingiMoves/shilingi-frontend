@@ -8,9 +8,11 @@ import {
 } from 'lucide-react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
 import contactHeroImg from '../assets/contact-form-hero.png';
+import { hasStoredAccessToken } from '../services/authApi';
 
 
 const Footer = () => {
+    const dashboardPath = hasStoredAccessToken() ? '/dashboard/app' : '/dashboard';
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -66,7 +68,7 @@ const Footer = () => {
     return (
         <footer id="site-footer" className="font-sans bg-gray-50 border-t border-gray-200">
 
-            {/* ── CONTACT FORM SECTION ────────────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬ CONTACT FORM SECTION Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="bg-gradient-to-br from-primary-800 to-primary-900 relative overflow-hidden">
                 {/* Subtle overlay pattern */}
                 <div
@@ -200,12 +202,12 @@ const Footer = () => {
                 </div>
             </div>
 
-            {/* ── MAIN FOOTER BODY ───────────────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬ MAIN FOOTER BODY Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="bg-[#050807]">
             <div className="container-custom pt-14 pb-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
 
-                    {/* Brand column — spans 2 on lg */}
+                    {/* Brand column Ã¢â‚¬â€ spans 2 on lg */}
                     <div className="lg:col-span-2 space-y-6">
                         <Link to="/" className="inline-block">
                             <img
@@ -268,11 +270,12 @@ const Footer = () => {
                         <h3 className="mb-5 text-sm font-bold uppercase tracking-[0.26em] text-white">Platform</h3>
                         <ul className="space-y-4">
                             {[
-                                { label: 'Dashboard', to: '/dashboard' },
-                                { label: 'Learning Hub', to: '/learn' },
-                                { label: 'Compare Portal', to: '/compare' },
+                                { label: 'Dashboard', to: dashboardPath },
+                                { label: 'Compare', to: '/compare' },
                                 { label: 'Resources', to: '/tools' },
+                                { label: 'Learning Hub', to: '/learn' },
                                 { label: 'Community', to: '/community' },
+                                { label: 'Refer a Friend', to: '/refer' },
                             ].map((item, i) => (
                                 <li key={i}>
                                     <Link
@@ -385,22 +388,26 @@ const Footer = () => {
             </div>
             </div>
 
-            {/* ── BOTTOM BAR ─────────────────────────────────────────────── */}
+            {/* Ã¢â€â‚¬Ã¢â€â‚¬ BOTTOM BAR Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="border-t border-white/8 bg-[#050807] py-5">
                 <div className="container-custom flex flex-col items-center justify-between gap-3 text-xs text-white/72 md:flex-row">
-                    <p className="font-medium !text-white">© {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.</p>
-                    <div className="flex items-center gap-5">
+                    <div className="flex flex-wrap items-center justify-center gap-5 md:order-1 md:justify-start">
                         <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Privacy Policy</Link>
                         <Link to="/terms" className="!text-white/80 transition-colors hover:!text-white">Terms of Service</Link>
+                        <Link to="/privacy#cookies" className="!text-white/80 transition-colors hover:!text-white">Cookie Policy</Link>
+                        <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Data Protection</Link>
                     </div>
-                    <p>
-                        Built with <span className="text-white">♥</span> for Kenya by{' '}
+                    <p className="!text-white md:order-2">
+                        Built with <span className="text-white">&hearts;</span> for Kenya by{' '}
                         <span className="text-white font-semibold">Prospect Pilot AI</span>
                     </p>
                 </div>
                 <div className="container-custom mt-4">
                     <p className="max-w-5xl text-xs leading-6 !text-white/70">
                         Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions. Regulated under the applicable laws of Kenya.
+                    </p>
+                    <p className="mt-3 text-xs font-medium !text-white">
+                        &copy; {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.
                     </p>
                 </div>
             </div>

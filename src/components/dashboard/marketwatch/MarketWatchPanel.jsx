@@ -249,7 +249,7 @@ const alertOptions = [
 ];
 
 const toneClasses = {
-    green: { shell: 'border-emerald-200 bg-emerald-50/70', value: 'text-emerald-700', cta: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-700 hover:text-white', stripe: 'bg-emerald-500' },
+    green: { shell: 'border-[#9ed8bf] bg-[#eef8f3]', value: 'text-[#239c69]', cta: 'bg-[#dcf2e8] text-[#239c69] hover:bg-[#239c69] hover:text-white', stripe: 'bg-[#2aa975]' },
     blue: { shell: 'border-sky-200 bg-sky-50/80', value: 'text-sky-700', cta: 'bg-sky-100 text-sky-800 hover:bg-sky-700 hover:text-white', stripe: 'bg-sky-500' },
     amber: { shell: 'border-amber-200 bg-amber-50/80', value: 'text-amber-800', cta: 'bg-amber-100 text-amber-800 hover:bg-amber-500 hover:text-white', stripe: 'bg-amber-500' },
     red: { shell: 'border-rose-200 bg-rose-50/80', value: 'text-rose-700', cta: 'bg-rose-100 text-rose-800 hover:bg-rose-600 hover:text-white', stripe: 'bg-rose-500' },
@@ -285,14 +285,14 @@ const MarketWatchPanel = ({ onSelectSection }) => {
     };
 
     const marketMood = timeFilter === 'today'
-        ? { label: 'Calm today', shell: 'bg-emerald-100/80 text-emerald-800 border border-emerald-200' }
+        ? { label: 'Calm today', shell: 'border border-[#9ed8bf] bg-[#e4f5ec] text-[#239c69]' }
         : timeFilter === 'month'
             ? { label: 'Opportunity-rich month', shell: 'bg-amber-100/80 text-amber-900 border border-amber-200' }
             : { label: 'Cautiously stable', shell: 'bg-white/10 text-white border border-white/20' };
 
     return (
         <div className="space-y-5">
-            <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,_#07271d_0%,_#114735_40%,_#1b8f67_78%,_#259a72_100%)] px-5 py-6 text-white shadow-[0_18px_48px_rgba(17,71,53,0.22)] sm:px-7">
+            <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,_#0f4d35_0%,_#197a53_40%,_#239c69_78%,_#2fb07b_100%)] px-5 py-6 text-white shadow-[0_18px_48px_rgba(25,122,83,0.22)] sm:px-7">
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="max-w-3xl">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/55">Insights - Market Watch</p>
@@ -330,7 +330,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                                     onClick={() => setTimeFilter(item.key)}
                                     className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                                         timeFilter === item.key
-                                            ? 'bg-white text-[#0d3d30]'
+                                            ? 'bg-white text-[#14553d]'
                                             : 'border border-white/20 bg-white/10 text-white/80 hover:bg-white/15'
                                     }`}
                                 >
@@ -353,7 +353,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                 <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                     {heroSignals.map((signal) => {
                         const changeTone = signal.direction === 'up'
-                            ? 'text-emerald-300'
+                            ? 'text-[#b8f1d1]'
                             : signal.direction === 'down'
                                 ? 'text-rose-200'
                                 : 'text-white/65';
@@ -363,7 +363,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                             <article key={signal.label} className="rounded-[1.1rem] border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">{signal.label}</p>
                                 <div className="mt-3 flex items-start justify-between gap-3">
-                                    <p className="dashboard-metric-value text-2xl font-extrabold text-white">{signal.value}</p>
+                                    <p className="dashboard-metric-value text-[1.6rem] font-extrabold text-white">{signal.value}</p>
                                     <ValueIcon size={17} className={changeTone} />
                                 </div>
                                 <p className={`mt-1 text-xs font-semibold ${changeTone}`}>{signal.change}</p>
@@ -406,20 +406,20 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                         const tone = toneClasses[signal.tone];
                         const isOpen = Boolean(openExplain[signal.id]);
                         return (
-                            <article key={signal.id} className={`relative overflow-hidden rounded-[1.4rem] border p-5 shadow-sm ${tone.shell}`}>
+                            <article key={signal.id} className={`relative overflow-hidden rounded-[1.4rem] border p-4 shadow-sm ${tone.shell}`}>
                                 <span className={`absolute inset-y-0 left-0 w-1.5 ${tone.stripe}`} />
                                 <div className="pl-3">
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
-                                            <p className={`dashboard-metric-value text-[2rem] font-extrabold ${tone.value}`}>{signal.value}</p>
-                                            <p className={`text-sm font-semibold ${tone.value}`}>{signal.valueChange}</p>
+                                            <p className={`dashboard-metric-value text-[1.55rem] font-extrabold ${tone.value}`}>{signal.value}</p>
+                                            <p className={`text-[13px] font-semibold ${tone.value}`}>{signal.valueChange}</p>
                                         </div>
                                         <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700">
                                             {signal.eyebrow}
                                         </span>
                                     </div>
 
-                                    <h3 className="mt-4 text-xl font-bold leading-8 text-slate-950">{signal.title}</h3>
+                                    <h3 className="mt-3 text-[1.05rem] font-bold leading-7 text-slate-950">{signal.title}</h3>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {signal.tags.map((tag) => (
                                             <span key={tag} className="rounded-full bg-white/75 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -467,7 +467,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
 
             <section className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
                 <div className="space-y-4">
-                    <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                    <article className="rounded-[1.5rem] border border-[#cfe9dd] bg-white p-5 shadow-sm">
                         <div className="flex items-center gap-3">
                             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-50 text-primary-700">
                                 <CircleDollarSign size={20} />
@@ -497,13 +497,13 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                                                 <p className="mt-1 text-xs text-slate-500">{row.helper}</p>
                                             </td>
                                             <td className={`px-2 py-4 align-top text-lg font-extrabold ${toneClasses[row.tone]?.value || 'text-slate-900'}`}>{row.value}</td>
-                                            <td className={`px-2 py-4 align-top text-sm font-semibold ${row.change.includes('+') ? 'text-emerald-700' : row.change === 'Stable' ? 'text-slate-500' : 'text-amber-700'}`}>{row.change}</td>
+                                            <td className={`px-2 py-4 align-top text-sm font-semibold ${row.change.includes('+') ? 'text-[#239c69]' : row.change === 'Stable' ? 'text-slate-500' : 'text-amber-700'}`}>{row.change}</td>
                                             <td className="px-2 py-4 align-top">
                                                 <div className="flex h-10 items-end gap-1">
                                                     {row.bars.map((bar) => (
                                                         <span
                                                             key={`${row.name}-${bar}`}
-                                                            className={`w-2 rounded-t-full ${row.tone === 'green' ? 'bg-emerald-500/85' : row.tone === 'amber' ? 'bg-amber-400/85' : 'bg-primary-600/85'}`}
+                                                            className={`w-2 rounded-t-full ${row.tone === 'green' ? 'bg-[#2aa975]/85' : row.tone === 'amber' ? 'bg-amber-400/85' : 'bg-primary-600/85'}`}
                                                             style={{ height: `${bar}%` }}
                                                         />
                                                     ))}
@@ -523,7 +523,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                         </div>
                     </article>
 
-                    <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                    <article className="rounded-[1.5rem] border border-[#cfe9dd] bg-white p-5 shadow-sm">
                         <div className="flex items-center gap-3">
                             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
                                 <Landmark size={20} />
@@ -548,7 +548,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                 </div>
 
                 <div className="space-y-4">
-                    <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                    <article className="rounded-[1.5rem] border border-[#cfe9dd] bg-white p-5 shadow-sm">
                         <div className="flex items-center gap-3">
                             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
                                 <Sparkles size={20} />
@@ -565,7 +565,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                                     key={nudge.title}
                                     className={`rounded-[1.2rem] border p-4 ${
                                         nudge.tone === 'positive'
-                                            ? 'border-emerald-200 bg-emerald-50/70'
+                                            ? 'border-[#9ed8bf] bg-[#eef8f3]'
                                             : nudge.tone === 'caution'
                                                 ? 'border-amber-200 bg-amber-50/70'
                                                 : 'border-sky-200 bg-sky-50/70'
@@ -596,7 +596,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                         </div>
                     </article>
 
-                    <article className="rounded-[1.5rem] bg-[linear-gradient(135deg,_#103e2f_0%,_#1b8f67_100%)] p-5 text-white shadow-sm">
+                    <article className="rounded-[1.5rem] bg-[linear-gradient(135deg,_#176246_0%,_#239c69_100%)] p-5 text-white shadow-sm">
                         <div className="flex items-center gap-3">
                             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
                                 <Bot size={20} />
@@ -611,9 +611,9 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                             This market setup still looks constructive for disciplined savers. Fixed income is strong, inflation is calmer, and equities look more interesting for long-term accumulation than they did a few weeks ago.
                         </p>
                         <div className="mt-5 space-y-2 text-sm text-white/80">
-                            <div className="flex items-start gap-2"><ShieldCheck size={16} className="mt-1 shrink-0 text-emerald-300" />Keep surplus cash working harder than a basic savings account.</div>
+                            <div className="flex items-start gap-2"><ShieldCheck size={16} className="mt-1 shrink-0 text-[#b8f1d1]" />Keep surplus cash working harder than a basic savings account.</div>
                             <div className="flex items-start gap-2"><Fuel size={16} className="mt-1 shrink-0 text-amber-200" />Watch fuel-linked spending before it leaks into the rest of the budget.</div>
-                            <div className="flex items-start gap-2"><LineChart size={16} className="mt-1 shrink-0 text-emerald-300" />Stay patient with equities and buy through a plan, not a mood swing.</div>
+                            <div className="flex items-start gap-2"><LineChart size={16} className="mt-1 shrink-0 text-[#b8f1d1]" />Stay patient with equities and buy through a plan, not a mood swing.</div>
                         </div>
                         <button
                             type="button"
@@ -627,10 +627,10 @@ const MarketWatchPanel = ({ onSelectSection }) => {
             </section>
 
             <section className="grid gap-4 xl:grid-cols-2">
-                <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                <article className="rounded-[1.5rem] border border-[#cfe9dd] bg-white p-5 shadow-sm">
                     <div className="mb-4 flex items-center gap-3">
-                        <span className="h-3 w-3 rounded-full bg-emerald-500" />
-                        <h2 className="text-xl font-bold text-emerald-800">Green Zone Opportunities</h2>
+                        <span className="h-3 w-3 rounded-full bg-[#2aa975]" />
+                        <h2 className="text-xl font-bold text-[#239c69]">Green Zone Opportunities</h2>
                     </div>
                     <div className="space-y-3">
                         {radarOpportunities.map((item) => (
@@ -638,7 +638,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                                 key={item.title}
                                 type="button"
                                 onClick={() => jumpTo(item.action)}
-                                className="w-full rounded-[1.1rem] border border-emerald-200 bg-emerald-50/70 p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
+                                className="w-full rounded-[1.1rem] border border-[#9ed8bf] bg-[#eef8f3] p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
                             >
                                 <p className="font-bold text-slate-950">{item.title}</p>
                                 <p className="mt-2 text-sm leading-7 text-slate-600">{item.body}</p>
@@ -676,7 +676,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                 </article>
             </section>
 
-            <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+            <section className="rounded-[1.5rem] border border-[#cfe9dd] bg-white p-5 shadow-sm">
                 <div className="mb-5">
                     <h2 className="dashboard-display-title text-[1.65rem] font-extrabold text-slate-950">Take Action</h2>
                     <p className="text-sm text-slate-500">Turn the market read into the next best move on the platform.</p>
@@ -703,7 +703,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                 </div>
             </section>
 
-            <section className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+            <section className="rounded-[1.5rem] border border-[#cfe9dd] bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3">
                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-50 text-primary-700">
                         <Globe size={20} />
@@ -727,7 +727,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                 </p>
             </section>
 
-            <section className="overflow-hidden rounded-[1.7rem] bg-[linear-gradient(135deg,_#103e2f_0%,_#1b8f67_100%)] px-5 py-6 text-white shadow-sm">
+            <section className="overflow-hidden rounded-[1.7rem] bg-[linear-gradient(135deg,_#176246_0%,_#239c69_100%)] px-5 py-6 text-white shadow-sm">
                 <div className="max-w-2xl">
                     <h2 className="dashboard-display-title text-[1.7rem] font-extrabold">Market Watch Connects the Dashboard</h2>
                     <p className="mt-2 text-sm leading-7 text-white/75">
@@ -755,7 +755,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
 
             {alertsOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" onClick={(event) => event.target === event.currentTarget && setAlertsOpen(false)}>
-                    <div className="w-full max-w-xl rounded-[1.6rem] border border-emerald-100 bg-white p-5 shadow-[0_28px_80px_rgba(15,23,42,0.16)]">
+                    <div className="w-full max-w-xl rounded-[1.6rem] border border-[#cfe9dd] bg-white p-5 shadow-[0_28px_80px_rgba(15,23,42,0.16)]">
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <p className="inline-flex items-center gap-2 text-[1.45rem] font-extrabold text-slate-950">

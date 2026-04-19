@@ -51,7 +51,21 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                 is_taxable: income.is_taxable || false,
                 notes: income.notes || ''
             });
+            return;
         }
+        setFormData({
+            category: '',
+            amount: '',
+            description: '',
+            source: '',
+            income_date: new Date().toISOString().split('T')[0],
+            frequency: 'ONE_TIME',
+            is_recurring: false,
+            recurring_end_date: '',
+            status: 'RECEIVED',
+            is_taxable: false,
+            notes: ''
+        });
     }, [income]);
 
     const handleChange = (field, value) => {

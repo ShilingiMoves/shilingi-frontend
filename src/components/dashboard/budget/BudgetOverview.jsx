@@ -43,7 +43,6 @@ const tabOptions = [
     { id: 'summary', label: 'Budget Summary', icon: BarChart3 },
     { id: 'compare', label: 'Compare Budget Types', icon: Sparkles },
     { id: 'expenses', label: 'Expense Tracker', icon: Receipt },
-    { id: 'goals', label: 'Savings Goals', icon: Target },
     { id: 'bills', label: 'Bills', icon: CalendarDays },
 ];
 
@@ -119,14 +118,14 @@ const getBillVisual = (title = '', index = 0) => {
 
 const normaliseLabel = (value = '') => String(value).trim().toLowerCase();
 
-const SplitChip = ({ label, shell }) => <span className={`rounded-full px-3 py-1 text-sm font-semibold ${shell}`}>{label}</span>;
+const SplitChip = ({ label, shell }) => <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${shell}`}>{label}</span>;
 
 const MetricCard = ({ title, value, helper, accent, line }) => (
-    <article className="flex h-full flex-col overflow-hidden rounded-[1.2rem] border border-[#bfe2d6] bg-white shadow-sm">
-        <div className="flex flex-1 flex-col justify-between px-5 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-400">{title}</p>
-            <p className={`mt-2 text-[2rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
-            <p className="mt-3 min-h-[3.25rem] text-sm leading-6 text-slate-600">{helper}</p>
+    <article className="flex h-full flex-col overflow-hidden rounded-[1rem] border border-[#bfe2d6] bg-white shadow-sm">
+        <div className="flex flex-1 flex-col justify-between px-4 py-3.5">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">{title}</p>
+            <p className={`mt-2 text-[1.55rem] sm:text-[1.7rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
+            <p className="mt-2.5 min-h-[2.7rem] text-[12px] leading-5 text-slate-600">{helper}</p>
         </div>
         <div className={`h-1 w-full ${line}`} />
     </article>
@@ -222,7 +221,19 @@ const BudgetCategoryCard = ({ item, currency, onNavigate }) => {
     );
 };
 
-const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expenseTotal, totalIncome, budgetHealth, onNavigate, onSelectSection, onQuickExpenseAdded }) => {
+const BudgetOverview = ({
+    summary,
+    budgets,
+    expenses,
+    goals,
+    goalSummary,
+    expenseTotal,
+    totalIncome,
+    budgetHealth,
+    onNavigate,
+    onSelectSection,
+    onQuickExpenseAdded,
+}) => {
     const [activeView, setActiveView] = useState('summary');
     const [selectedModelId, setSelectedModelId] = useState('classic');
     const [showModelModal, setShowModelModal] = useState(false);
@@ -317,8 +328,11 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
     };
 
     const applyBudgetModel = (model) => {
+        if (model.id === 'custom') {
+            openCustomSplitModal();
+            return;
+        }
         setSelectedModelId(model.id);
-        openModelModal(model);
     };
 
     const handleCustomSplitChange = (field, value) => {
@@ -346,16 +360,10 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
             return;
         }
 
-        const namedModel = {
-            ...customModel,
-            label: customBudgetName.trim() || 'Custom Budget Split',
-            description: 'Your custom needs, wants, and savings plan is now active.',
-        };
-
         setSelectedModelId('custom');
-        setPendingModel(namedModel);
         setShowCustomSplitModal(false);
-        setShowModelModal(true);
+        setPendingModel(null);
+        setShowModelModal(false);
     };
 
     const handleQuickExpenseChange = (event) => {
@@ -567,6 +575,8 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
         custom: { icon: Pencil, shell: 'border-[#d9d0f7] bg-[#fbf9ff]', accent: 'bg-[#7a57d1]', cta: 'bg-[#7a57d1] text-white', badge: 'bg-[#f2edff] text-[#7a57d1]', bestFor: 'Your own plan', note: 'Create your own percentages when the preset models do not fit.' },
     };
 
+    const customSplitIncome = trackedIncome;
+
     const ecosystemCards = [
         { title: 'Goals', helper: 'Track your targets', cta: 'Track', icon: Target, action: () => onSelectSection?.('user') },
         { title: 'Debt Manager', helper: 'Plan repayments', cta: 'Manage', icon: BadgeDollarSign, action: () => onSelectSection?.('debt') },
@@ -624,35 +634,46 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
                 </div>
             </section>
 
-            <section className="rounded-[1.55rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
+            <section className="rounded-[1.3rem] border border-[#bfe2d6] bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-start gap-4">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[linear-gradient(135deg,_#1f7f63_0%,_#f2b13c_100%)] text-white shadow-sm">
-                            <Sparkles size={18} />
+                    <div className="flex items-start gap-3.5">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,_#1f7f63_0%,_#f2b13c_100%)] text-white shadow-sm">
+                            <Sparkles size={16} />
                         </div>
                         <div>
-                            <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">{selectedModel.label}</p>
-                            <p className="mt-1 text-sm text-slate-500">{selectedModel.description}. Income: {formatCurrency(trackedIncome, currency)}/mo</p>
-                            <div className="mt-3 flex flex-wrap gap-2">
+                            <p className="text-[1.1rem] sm:text-[1.2rem] font-bold tracking-tight text-slate-950">{selectedModel.label}</p>
+                            <p className="mt-1 text-[13px] text-slate-500">{selectedModel.description}. Income: {formatCurrency(trackedIncome, currency)}/mo</p>
+                            <div className="mt-2.5 flex flex-wrap gap-2">
                                 <SplitChip label={`Needs: ${formatCurrency((trackedIncome * selectedModel.split.needs) / 100, currency)} (${selectedModel.split.needs}%)`} shell="bg-[#e7f6f1] text-[#166a55]" />
                                 <SplitChip label={`Wants: ${formatCurrency((trackedIncome * selectedModel.split.wants) / 100, currency)} (${selectedModel.split.wants}%)`} shell="bg-[#fff3d8] text-[#b56a00]" />
                                 <SplitChip label={`Savings: ${formatCurrency((trackedIncome * selectedModel.split.savings) / 100, currency)} (${selectedModel.split.savings}%)`} shell="bg-[#eef4ff] text-[#2f74db]" />
                             </div>
                         </div>
                     </div>
-                    <button type="button" onClick={openCompareView} className="inline-flex h-10 items-center gap-2 rounded-full border border-[#bfe2d6] px-4 text-sm font-semibold text-[#166a55] transition-colors hover:bg-[#f6fbf8]">
-                        <Sparkles size={15} />
-                        Change Type
-                    </button>
+                    <label className="relative inline-flex h-9 min-w-[13rem] items-center rounded-full border border-[#bfe2d6] bg-[#f8fcfa] px-3.5 pr-10 text-[13px] font-semibold text-[#166a55] transition-colors hover:bg-[#f6fbf8]">
+                        <span className="truncate">Change Type</span>
+                        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#166a55]" />
+                        <select
+                            value={selectedModelId}
+                            onChange={(event) => {
+                                const nextModel = allBudgetModels.find((model) => model.id === event.target.value);
+                                if (nextModel) applyBudgetModel(nextModel);
+                            }}
+                            aria-label="Change budget type"
+                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        >
+                            {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
+                            <option value="custom">Custom Split</option>
+                        </select>
+                    </label>
                 </div>
             </section>
 
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MetricCard title="Budget Allocated" value={formatCurrency(totalBudgeted, currency)} helper={`${summary?.active_budgets_count || activeBudgets.length} active categories`} accent="text-[#166a55]" line="bg-[#1f9c72]" />
                 <MetricCard title="Spent So Far" value={formatCurrency(totalSpent, currency)} helper={`${Math.round(spendingProgress)}% of budget used`} accent="text-[#d94d4d]" line="bg-[#e24a4a]" />
                 <MetricCard title={totalRemaining >= 0 ? 'Left In Budget' : 'Over Budget'} value={formatCurrency(Math.abs(totalRemaining), currency)} helper={totalRemaining >= 0 ? 'Available inside your budget' : 'Needs immediate attention'} accent={totalRemaining >= 0 ? 'text-[#b56a00]' : 'text-[#d94d4d]'} line={totalRemaining >= 0 ? 'bg-[#f0a62e]' : 'bg-[#e24a4a]'} />
                 <MetricCard title="Budget Savings" value={formatCurrency(savingsValue, currency)} helper={savingsValue > 0 ? 'Auto-saved this month' : 'No savings recorded yet'} accent="text-[#2f74db]" line="bg-[#2f74db]" />
-                <MetricCard title="Cash Left After Spend" value={formatCurrency(remainingCash, currency)} helper="Income minus recorded spend" accent="text-[#7a57d1]" line="bg-[#8b5fd3]" />
             </section>
 
             <section className="rounded-[1.2rem] border border-[#bfe2d6] bg-white p-2 shadow-sm">
@@ -671,6 +692,91 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
 
             {activeView === 'summary' && (
                 <div className="space-y-4">
+                    <section className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
+                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#2f74db]">
+                                        <BarChart3 size={18} />
+                                    </div>
+                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Budget Categories - Summary Table</p>
+                                </div>
+                                <button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-semibold text-[#166a55]">
+                                    Manage Categories
+                                </button>
+                            </div>
+
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-[#d8ece3] text-left text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                                            <th className="py-3 pr-3">Category</th>
+                                            <th className="py-3 pr-3">Type</th>
+                                            <th className="py-3 pr-3">Allocated</th>
+                                            <th className="py-3 pr-3">Spent</th>
+                                            <th className="py-3 pr-3">Left</th>
+                                            <th className="py-3">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {summaryRows.map((item) => (
+                                            <tr key={`${item.uuid}-summary`} className="border-b border-[#edf5f1] last:border-b-0">
+                                                <td className="py-3 pr-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${item.meta.tint}`}>
+                                                            <item.meta.icon size={16} />
+                                                        </span>
+                                                        <span className="font-semibold text-slate-900">{item.category_name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 pr-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.meta.chip}`}>{item.meta.type}</span></td>
+                                                <td className="py-3 pr-3 text-slate-700">{formatCurrency(item.allocated, item.currency || currency)}</td>
+                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-slate-900'}`}>{formatCurrency(item.spent, item.currency || currency)}</td>
+                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-[#166a55]'}`}>{item.left < 0 ? `-${formatCurrency(Math.abs(item.left), item.currency || currency)}` : formatCurrency(item.left, item.currency || currency)}</td>
+                                                <td className="py-3"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span></td>
+                                            </tr>
+                                        ))}
+                                        <tr className="bg-[#f8fcfa]">
+                                            <td className="py-4 pr-3 text-base font-bold text-slate-950">Total</td>
+                                            <td />
+                                            <td className="py-4 pr-3 text-base font-bold text-[#166a55]">{formatCurrency(totalBudgeted, currency)}</td>
+                                            <td className="py-4 pr-3 text-base font-bold text-[#d94d4d]">{formatCurrency(totalSpent, currency)}</td>
+                                            <td className="py-4 pr-3 text-base font-bold text-[#166a55]">{formatCurrency(totalRemaining, currency)}</td>
+                                            <td />
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </article>
+
+                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]">
+                                    <TrendingUp size={18} />
+                                </div>
+                                <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Spending Breakdown</p>
+                            </div>
+                            <p className="mt-2 text-sm text-slate-500">Where most of your budget is currently going.</p>
+
+                            <div className="mt-4 space-y-4">
+                                {topSpendingCategories.map((item) => (
+                                    <div key={`${item.uuid}-breakdown`} className="rounded-[1rem] border border-[#edf5f1] bg-[#fbfdfc] px-4 py-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="font-semibold text-slate-900">{item.category_name}</p>
+                                                <p className="mt-1 text-sm text-slate-500">{formatCurrency(item.spent, item.currency || currency)} of {formatCurrency(item.allocated, item.currency || currency)}</p>
+                                            </div>
+                                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span>
+                                        </div>
+                                        <div className="mt-3 h-2.5 rounded-full bg-[#edf5f1]">
+                                            <div className="h-2.5 rounded-full" style={{ width: `${Math.min(item.progress, 100)}%`, backgroundColor: item.meta.bar }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </article>
+                    </section>
+
                     <section className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div>
@@ -787,91 +893,6 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
                                 </div>
                             </article>
                         </div>
-                    </section>
-
-                    <section className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
-                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#2f74db]">
-                                        <BarChart3 size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Budget Categories - Summary Table</p>
-                                </div>
-                                <button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-semibold text-[#166a55]">
-                                    Manage Categories
-                                </button>
-                            </div>
-
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-[#d8ece3] text-left text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                                            <th className="py-3 pr-3">Category</th>
-                                            <th className="py-3 pr-3">Type</th>
-                                            <th className="py-3 pr-3">Allocated</th>
-                                            <th className="py-3 pr-3">Spent</th>
-                                            <th className="py-3 pr-3">Left</th>
-                                            <th className="py-3">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {summaryRows.map((item) => (
-                                            <tr key={`${item.uuid}-summary`} className="border-b border-[#edf5f1] last:border-b-0">
-                                                <td className="py-3 pr-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${item.meta.tint}`}>
-                                                            <item.meta.icon size={16} />
-                                                        </span>
-                                                        <span className="font-semibold text-slate-900">{item.category_name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 pr-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.meta.chip}`}>{item.meta.type}</span></td>
-                                                <td className="py-3 pr-3 text-slate-700">{formatCurrency(item.allocated, item.currency || currency)}</td>
-                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-slate-900'}`}>{formatCurrency(item.spent, item.currency || currency)}</td>
-                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-[#166a55]'}`}>{item.left < 0 ? `-${formatCurrency(Math.abs(item.left), item.currency || currency)}` : formatCurrency(item.left, item.currency || currency)}</td>
-                                                <td className="py-3"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span></td>
-                                            </tr>
-                                        ))}
-                                        <tr className="bg-[#f8fcfa]">
-                                            <td className="py-4 pr-3 text-base font-bold text-slate-950">Total</td>
-                                            <td />
-                                            <td className="py-4 pr-3 text-base font-bold text-[#166a55]">{formatCurrency(totalBudgeted, currency)}</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-[#d94d4d]">{formatCurrency(totalSpent, currency)}</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-[#166a55]">{formatCurrency(totalRemaining, currency)}</td>
-                                            <td />
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </article>
-
-                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]">
-                                    <TrendingUp size={18} />
-                                </div>
-                                <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Spending Breakdown</p>
-                            </div>
-                            <p className="mt-2 text-sm text-slate-500">Where most of your budget is currently going.</p>
-
-                            <div className="mt-4 space-y-4">
-                                {topSpendingCategories.map((item) => (
-                                    <div key={`${item.uuid}-breakdown`} className="rounded-[1rem] border border-[#edf5f1] bg-[#fbfdfc] px-4 py-4">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <p className="font-semibold text-slate-900">{item.category_name}</p>
-                                                <p className="mt-1 text-sm text-slate-500">{formatCurrency(item.spent, item.currency || currency)} of {formatCurrency(item.allocated, item.currency || currency)}</p>
-                                            </div>
-                                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span>
-                                        </div>
-                                        <div className="mt-3 h-2.5 rounded-full bg-[#edf5f1]">
-                                            <div className="h-2.5 rounded-full" style={{ width: `${Math.min(item.progress, 100)}%`, backgroundColor: item.meta.bar }} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </article>
                     </section>
                 </div>
             )}
@@ -1472,7 +1493,6 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
                     </section>
                 </div>
             )}
-
             <section className="overflow-hidden rounded-[1.55rem] bg-[linear-gradient(135deg,_#0d4d40_0%,_#1a6e5a_55%,_#2b7d68_100%)] px-5 py-5 text-white shadow-[0_18px_44px_rgba(15,77,64,0.18)]">
                 <div className="flex flex-col gap-4">
                     <div>
@@ -1504,7 +1524,7 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
                                 </div>
                                 <div>
                                     <p className="text-[1.28rem] font-bold tracking-tight text-slate-950">Custom Budget Split</p>
-                                    <p className="mt-1 text-sm leading-5 text-slate-600">Your three values must add up to exactly 100%. Income used: {formatCurrency(trackedIncome, currency)}/mo</p>
+                                    <p className="mt-1 text-sm leading-5 text-slate-600">Your three values must add up to exactly 100%. Income used: {formatCurrency(customSplitIncome, currency)}/mo</p>
                                 </div>
                             </div>
                             <button
@@ -1517,7 +1537,7 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
                         </div>
 
                         <div className="mt-4 rounded-[0.95rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm leading-5 text-slate-700">
-                            Your three values must add up to exactly 100%. Income used: <span className="font-semibold text-[#166a55]">{formatCurrency(trackedIncome, currency)}/mo</span>
+                            Your three values must add up to exactly 100%. Income used: <span className="font-semibold text-[#166a55]">{formatCurrency(customSplitIncome, currency)}/mo</span>
                         </div>
 
                         <div className="mt-4 space-y-3.5">
@@ -1573,9 +1593,9 @@ const BudgetOverview = ({ summary, budgets, expenses, goals, goalSummary, expens
 
                         <div className="mt-4 rounded-[0.95rem] bg-[#f8fcfa] px-4 py-3 text-sm leading-6 text-slate-700">
                             <div className="flex flex-wrap gap-3">
-                                <span>Needs: <span className="font-semibold text-[#166a55]">{formatCurrency((trackedIncome * customSplit.needs) / 100, currency)}</span></span>
-                                <span>Wants: <span className="font-semibold text-[#b56a00]">{formatCurrency((trackedIncome * customSplit.wants) / 100, currency)}</span></span>
-                                <span>Savings: <span className="font-semibold text-[#2f74db]">{formatCurrency((trackedIncome * customSplit.savings) / 100, currency)}</span></span>
+                                <span>Needs: <span className="font-semibold text-[#166a55]">{formatCurrency((customSplitIncome * customSplit.needs) / 100, currency)}</span></span>
+                                <span>Wants: <span className="font-semibold text-[#b56a00]">{formatCurrency((customSplitIncome * customSplit.wants) / 100, currency)}</span></span>
+                                <span>Savings: <span className="font-semibold text-[#2f74db]">{formatCurrency((customSplitIncome * customSplit.savings) / 100, currency)}</span></span>
                             </div>
                             <p className={`mt-2 font-semibold ${customSplitTotal === 100 ? 'text-[#166a55]' : 'text-[#d94d4d]'}`}>
                                 {customSplitTotal === 100 ? `Total: ${customSplitTotal}%` : `Total: ${customSplitTotal}% - adjust to 100%`}

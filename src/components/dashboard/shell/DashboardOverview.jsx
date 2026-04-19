@@ -844,17 +844,17 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 <section className={`relative overflow-hidden rounded-[1.6rem] bg-gradient-to-br ${palette.shell} p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] sm:p-5`}>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.14),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(240,201,77,0.10),_transparent_24%)]" />
                     <div className="relative">
-                        <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/90">{`${dateLabel} - ${palette.label}`}</div>
+                        <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-white/85">{`${dateLabel} - ${palette.label}`}</div>
                         <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                             <div>
                                 {shouldShowNewUserHero ? (
                                     <>
-                                        <h1 className="max-w-4xl text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-[2.5rem]">Welcome {firstName}, your financial health score is {currentScore}/100.</h1>
+                                        <h1 className="max-w-4xl text-[1.65rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[2.1rem]">Welcome {firstName}, your financial health score is {currentScore}/100.</h1>
                                         <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">Please complete your profile and planners to unlock personalized insights tailored to your life.</p>
                                     </>
                                 ) : (
                                     <>
-                                        <h1 className="max-w-4xl text-[1.85rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-[2.25rem]">{palette.label}, {firstName}!</h1>
+                                        <h1 className="max-w-4xl text-[1.55rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.9rem]">{palette.label}, {firstName}!</h1>
                                         <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">Great progress today. Your health score is {currentScore}/100{hasData ? ` and you have ${fmtKES(live.savings)} in tracked savings.` : '.'}</p>
                                     </>
                                 )}
@@ -872,16 +872,16 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
 
                 {!hasData && <section className="rounded-[1.25rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm"><p className="text-sm font-semibold text-primary-700">Preview mode</p><p className="mt-1 text-sm text-slate-600">This is how your dashboard will look once you add income, budgets, investments, and goals.</p></section>}
 
-                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map(({ icon: Icon, label, value, meta, tone }) => <article key={label} className="rounded-[1.25rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm"><span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-primary-700"><Icon size={15} /></span><p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p><p className={`mt-1 text-3xl font-extrabold ${tone}`}>{live.loading ? '...' : value}</p><p className="mt-1 text-xs text-slate-500">{meta}</p></article>)}</section>
+                <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{stats.map(({ icon: Icon, label, value, meta, tone }) => <article key={label} className="rounded-[0.9rem] border border-emerald-100 bg-white px-3.5 py-2.5 shadow-sm"><span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-primary-700"><Icon size={13} /></span><p className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p><p className={`mt-1 text-[1.45rem] leading-none font-extrabold sm:text-[1.55rem] ${tone}`}>{live.loading ? '...' : value}</p><p className="mt-1 text-[10px] text-slate-500">{meta}</p></article>)}</section>
 
                 <section className="grid gap-4 xl:grid-cols-[1.2fr_0.72fr]">
                     <div className="grid gap-4">
-                        <article className="relative overflow-hidden rounded-[1.3rem] border border-emerald-100 bg-gradient-to-br from-[#14986b] via-[#117f5a] to-[#0a4d37] p-3.5 text-white shadow-sm">
+                        <article className="relative overflow-hidden rounded-[1rem] border border-emerald-100 bg-gradient-to-br from-[#14986b] via-[#117f5a] to-[#0a4d37] p-2.5 text-white shadow-sm">
                         <div className="absolute inset-y-0 right-0 w-40 rounded-full bg-white/5 blur-0" />
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-100">Net Worth Overview</p>
-                        <p className="mt-1.5 text-[2.2rem] font-extrabold leading-none">{hasData ? fmtKES(live.netWorth) : 'KES 0'}</p>
-                        <p className="mt-1.5 text-xs text-emerald-100">{hasData ? 'Updated now - +12.3% YTD' : 'Updated from your connected planners'}</p>
-                        <div className="mt-3 h-[58px] rounded-[1rem] bg-white/5 p-2">
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-emerald-100">Net Worth Overview</p>
+                        <p className="mt-1 text-[1.55rem] font-extrabold leading-none">{hasData ? fmtKES(live.netWorth) : 'KES 0'}</p>
+                        <p className="mt-1 text-[10px] text-emerald-100">{hasData ? 'Updated now - +12.3% YTD' : 'Updated from your connected planners'}</p>
+                        <div className="mt-2 h-[46px] rounded-[0.8rem] bg-white/5 p-1.5">
                             <div className="relative h-full overflow-hidden rounded-[1rem] bg-[linear-gradient(180deg,rgba(98,255,215,0.16)_0%,rgba(98,255,215,0.04)_100%)]">
                                 <svg viewBox="0 0 100 36" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
                                     <defs>
