@@ -63,71 +63,71 @@
 @layer utilities {
   .dashboard-brand-theme .bg-emerald-50,
   .dashboard-brand-theme .bg-primary-50 {
-    background-color: #edf9f4 !important;
+    background-color: #edf8f3 !important;
   }
 
   .dashboard-brand-theme .bg-emerald-100,
   .dashboard-brand-theme .bg-primary-100 {
-    background-color: #d2f0e4 !important;
+    background-color: #cee9dc !important;
   }
 
   .dashboard-brand-theme .bg-emerald-300,
   .dashboard-brand-theme .bg-primary-300 {
-    background-color: #74cda9 !important;
+    background-color: #74c5a8 !important;
   }
 
   .dashboard-brand-theme .bg-emerald-500,
   .dashboard-brand-theme .bg-primary-500,
   .dashboard-brand-theme .bg-emerald-600,
   .dashboard-brand-theme .bg-primary-600 {
-    background-color: #179b6e !important;
+    background-color: #1b8f67 !important;
   }
 
   .dashboard-brand-theme .text-emerald-300 {
-    color: #8fe1c0 !important;
+    color: #92d4bd !important;
   }
 
   .dashboard-brand-theme .text-emerald-600,
   .dashboard-brand-theme .text-primary-600 {
-    color: #14875f !important;
+    color: #177759 !important;
   }
 
   .dashboard-brand-theme .text-emerald-700,
   .dashboard-brand-theme .text-primary-700 {
-    color: #116f4e !important;
+    color: #155e45 !important;
   }
 
   .dashboard-brand-theme .text-primary-800 {
-    color: #0c563c !important;
+    color: #114d38 !important;
   }
 
   .dashboard-brand-theme .border-emerald-100,
   .dashboard-brand-theme .border-primary-100 {
-    border-color: #d2f0e4 !important;
+    border-color: #cee9dc !important;
   }
 
   .dashboard-brand-theme .border-emerald-200,
   .dashboard-brand-theme .border-primary-200 {
-    border-color: #a5dfca !important;
+    border-color: #9fd4bf !important;
   }
 
   .dashboard-brand-theme .border-emerald-300,
   .dashboard-brand-theme .border-primary-300 {
-    border-color: #74cda9 !important;
+    border-color: #74c5a8 !important;
   }
 
   .dashboard-brand-theme .from-emerald-400,
   .dashboard-brand-theme .from-emerald-500,
   .dashboard-brand-theme .from-primary-500,
   .dashboard-brand-theme .from-primary-600 {
-    --tw-gradient-from: #179b6e var(--tw-gradient-from-position) !important;
-    --tw-gradient-to: rgb(23 155 110 / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-from: #1b8f67 var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(27 143 103 / 0) var(--tw-gradient-to-position) !important;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
   }
 
   .dashboard-brand-theme .via-emerald-600,
   .dashboard-brand-theme .via-primary-600 {
-    --tw-gradient-stops: var(--tw-gradient-from), #179b6e var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), #1b8f67 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
   }
 
   .dashboard-brand-theme .to-emerald-500,
@@ -136,7 +136,7 @@
   .dashboard-brand-theme .to-teal-600,
   .dashboard-brand-theme .to-primary-600,
   .dashboard-brand-theme .to-primary-700 {
-    --tw-gradient-to: #14875f var(--tw-gradient-to-position) !important;
+    --tw-gradient-to: #177759 var(--tw-gradient-to-position) !important;
   }
 
   .dashboard-brand-theme .hover\:bg-emerald-50:hover,
@@ -145,7 +145,103 @@
   }
 
   .dashboard-brand-theme .hover\:bg-primary-700:hover {
-    background-color: #116f4e !important;
+    background-color: #155e45 !important;
+  }
+
+  .dashboard-brand-theme .bg-green-50 {
+    background-color: #eefbf3 !important;
+  }
+
+  .dashboard-brand-theme .bg-green-100 {
+    background-color: #d7f5e3 !important;
+  }
+
+  .dashboard-brand-theme .bg-green-500,
+  .dashboard-brand-theme .bg-green-600 {
+    background-color: #22c55e !important;
+  }
+
+  .dashboard-brand-theme .text-green-500,
+  .dashboard-brand-theme .text-green-600 {
+    color: #16a34a !important;
+  }
+
+  .dashboard-brand-theme .text-green-700 {
+    color: #15803d !important;
+  }
+
+  .dashboard-brand-theme .border-green-100 {
+    border-color: #d7f5e3 !important;
+  }
+
+  .dashboard-brand-theme .border-green-200 {
+    border-color: #b8ebcb !important;
+  }
+
+  .dashboard-brand-theme .from-green-500,
+  .dashboard-brand-theme .from-green-600 {
+    --tw-gradient-from: #22c55e var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(34 197 94 / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+
+  .dashboard-brand-theme .to-green-500,
+  .dashboard-brand-theme .to-green-600 {
+    --tw-gradient-to: #16a34a var(--tw-gradient-to-position) !important;
+  }
+
+  .dashboard-brand-theme .bg-amber-50,
+  .dashboard-brand-theme .bg-yellow-50 {
+    background-color: #fff7e8 !important;
+  }
+
+  .dashboard-brand-theme .bg-amber-100,
+  .dashboard-brand-theme .bg-yellow-100 {
+    background-color: #fde9c3 !important;
+  }
+
+  .dashboard-brand-theme .bg-amber-300,
+  .dashboard-brand-theme .bg-yellow-300 {
+    background-color: #f7c766 !important;
+  }
+
+  .dashboard-brand-theme .bg-amber-500,
+  .dashboard-brand-theme .bg-yellow-500 {
+    background-color: #f5a623 !important;
+  }
+
+  .dashboard-brand-theme .text-amber-700,
+  .dashboard-brand-theme .text-yellow-700 {
+    color: #a76506 !important;
+  }
+
+  .dashboard-brand-theme .text-amber-800,
+  .dashboard-brand-theme .text-yellow-800 {
+    color: #8a5608 !important;
+  }
+
+  .dashboard-brand-theme .border-amber-100,
+  .dashboard-brand-theme .border-yellow-100 {
+    border-color: #fde9c3 !important;
+  }
+
+  .dashboard-brand-theme .border-amber-200,
+  .dashboard-brand-theme .border-yellow-200 {
+    border-color: #f7d38b !important;
+  }
+
+  .dashboard-brand-theme .from-amber-300,
+  .dashboard-brand-theme .from-amber-500,
+  .dashboard-brand-theme .from-yellow-300,
+  .dashboard-brand-theme .from-yellow-500 {
+    --tw-gradient-from: #f5a623 var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(245 166 35 / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+
+  .dashboard-brand-theme .to-amber-500,
+  .dashboard-brand-theme .to-yellow-500 {
+    --tw-gradient-to: #d98b12 var(--tw-gradient-to-position) !important;
   }
 
   /* Prevent text from being too small on mobile */
@@ -171,5 +267,19 @@
   @keyframes floatCard {
     0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-8px); }
+  }
+
+  @keyframes marketwatchTicker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .marketwatch-ticker {
+    animation: marketwatchTicker 32s linear infinite;
+    width: max-content;
+  }
+
+  .marketwatch-ticker:hover {
+    animation-play-state: paused;
   }
 }

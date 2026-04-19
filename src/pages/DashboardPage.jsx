@@ -2,14 +2,9 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
-    BarChart3,
-    BookMarked,
     Bot,
-    Calculator,
-    CheckCircle2,
     GraduationCap,
     HeartHandshake,
-    Shield,
     Users,
 } from 'lucide-react';
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
@@ -36,6 +31,7 @@ const ComparisonHubPanel = lazy(() => import('../components/dashboard/explore/Co
 const ResourcesToolsPanel = lazy(() => import('../components/dashboard/explore/ResourcesToolsPanel'));
 const LearningHubPanel = lazy(() => import('../components/dashboard/explore/LearningHubPanel'));
 const CommunityHubPanel = lazy(() => import('../components/dashboard/explore/CommunityHubPanel'));
+const MarketWatchPanel = lazy(() => import('../components/dashboard/marketwatch/MarketWatchPanel'));
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -287,29 +283,9 @@ const DashboardPage = () => {
 
             case 'marketwatch':
                 return standardShell(
-                    <InsightPanel
-                        eyebrow="Insights"
-                        title="Market Watch"
-                        description="Keep macro and product-level changes connected to the user's planning decisions so insights feel practical instead of abstract."
-                        sections={[
-                            {
-                                icon: BarChart3,
-                                title: 'Rates and product signals',
-                                text: 'Show movements in savings, MMFs, lending rates, and product trends that may affect choices.',
-                            },
-                            {
-                                icon: Users,
-                                title: 'What it means for members',
-                                text: 'Translate market shifts into plain next steps for savers, borrowers, investors, and households.',
-                            },
-                            {
-                                icon: ArrowRight,
-                                title: 'Connected actions',
-                                text: 'Link straight into Compare Hub, planners, and Learning Hub when action is needed.',
-                            },
-                        ]}
-                        primaryAction={{ label: 'Open Compare Hub', onClick: () => setActiveSection('comparehub') }}
-                    />
+                    <Suspense fallback={sectionLoader}>
+                        <MarketWatchPanel onSelectSection={setActiveSection} />
+                    </Suspense>
                 );
 
             default:
