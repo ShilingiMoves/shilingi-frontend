@@ -21,47 +21,53 @@ const ComparePage = () => {
 
     const categories = [
         {
-            title: 'Banking & Mobile Money',
-            icon: Smartphone,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50',
-            items: ['Savings Accounts', 'Current Accounts', 'M-Pesa Rates', 'Bank to M-Pesa Charges']
+            title: 'Loans',
+            icon: '🏦',
+            accent: 'from-emerald-500 to-primary-700',
+            helper: 'Compare banks, SACCOs, microfinance, and digital lenders.',
         },
         {
-            title: 'Loans & Digital Credit',
-            icon: Landmark,
-            color: 'text-green-600',
-            bg: 'bg-green-50',
-            items: ['Personal Loans', 'Mobile Loans', 'Business Loans', 'Sacco Loans']
+            title: 'MMFs',
+            icon: '💰',
+            accent: 'from-amber-400 to-orange-500',
+            helper: 'Review yields, fees, liquidity, and minimum investment.',
         },
         {
-            title: 'Investment Options',
-            icon: TrendingUp,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50',
-            items: ['Money Market Funds', 'Treasury Bonds', 'NSE Stocks', 'Unit Trusts']
+            title: 'Investments',
+            icon: '📈',
+            accent: 'from-sky-500 to-blue-700',
+            helper: 'Explore T-Bills, bonds, NSE shares, and managed products.',
         },
         {
-            title: 'Insurance Plans',
-            icon: ShieldCheck,
-            color: 'text-rose-600',
-            bg: 'bg-rose-50',
-            items: ['Health Insurance', 'Car Insurance', 'Life Insurance', 'Education Policies']
+            title: 'Banking',
+            icon: '🧾',
+            accent: 'from-slate-700 to-primary-900',
+            helper: 'Compare everyday accounts, fees, interest, and features.',
         },
         {
-            title: 'Retirement Solutions',
-            icon: PiggyBank,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50',
-            items: ['Pension Plans', 'NSSF Updates', 'Individual Retirement', 'Annuities']
+            title: 'Transfers',
+            icon: '🌍',
+            accent: 'from-cyan-500 to-primary-700',
+            helper: 'Check local and global transfer options side by side.',
         },
         {
-            title: 'Mortgages & Housing',
-            icon: Home,
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-50',
-            items: ['Mortgage Rates', 'Construction Loans', 'Plot Loans', 'Affordable Housing']
-        }
+            title: 'Retirement',
+            icon: '🛡️',
+            accent: 'from-violet-500 to-indigo-700',
+            helper: 'Compare pension plans and long-term retirement options.',
+        },
+        {
+            title: 'Mortgages',
+            icon: '🏠',
+            accent: 'from-rose-400 to-red-600',
+            helper: 'Review home loan rates, terms, and affordability signals.',
+        },
+        {
+            title: 'Insurance',
+            icon: '✅',
+            accent: 'from-primary-500 to-emerald-700',
+            helper: 'Compare health, motor, life, and protection products.',
+        },
     ];
 
     return (
@@ -111,27 +117,33 @@ const ComparePage = () => {
                 <div className="container-custom">
                     <div className="text-center max-w-3xl mx-auto mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">What would you like to compare?</h2>
-                        <p className="text-lg text-gray-600">Select a category to see top-rated products tailored to your needs.</p>
+                        <p className="text-lg text-gray-600">Select a category to open the Compare Hub experience inside your Shilingi dashboard.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                         {categories.map((cat, index) => (
-                            <div key={index} className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 hover:border-primary-100 relative overflow-hidden">
-                                <div className={`w-14 h-14 rounded-xl ${cat.bg} ${cat.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                                    <cat.icon size={28} />
+                            <article
+                                key={cat.title}
+                                className="group relative overflow-hidden rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary-200 hover:shadow-xl"
+                            >
+                                <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${cat.accent}`} />
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${cat.accent} text-2xl shadow-lg shadow-primary-900/10 transition-transform duration-300 group-hover:scale-110`}>
+                                        <span aria-hidden="true">{cat.icon}</span>
+                                    </div>
+                                    <span className="rounded-full bg-[#eef8f4] px-3 py-1 text-xs font-bold text-primary-700">
+                                        {String(index + 1).padStart(2, '0')}
+                                    </span>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-4">{cat.title}</h3>
-                                <ul className="space-y-3 mb-8">
-                                    {cat.items.map((item, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-gray-600 text-sm">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div> {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Link to="/signup" className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-bold hover:bg-primary-600 hover:text-white hover:border-transparent transition-all flex items-center justify-center gap-2 group/btn">
-                                    Compare Now <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                                <h3 className="mt-5 text-2xl font-extrabold text-gray-900">{cat.title}</h3>
+                                <p className="mt-2 min-h-[3.5rem] text-sm leading-6 text-gray-600">{cat.helper}</p>
+                                <Link
+                                    to="/signin"
+                                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-[#f6fbf8] px-4 py-3 text-sm font-bold text-primary-700 transition-all hover:border-transparent hover:bg-primary-600 hover:text-white group/btn"
+                                >
+                                    Compare Now <ChevronRight size={16} className="transition-transform group-hover/btn:translate-x-1" />
                                 </Link>
-                            </div>
+                            </article>
                         ))}
                     </div>
                 </div>

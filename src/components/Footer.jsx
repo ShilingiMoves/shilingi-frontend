@@ -390,25 +390,25 @@ const Footer = () => {
 
             {/* Ã¢â€â‚¬Ã¢â€â‚¬ BOTTOM BAR Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="border-t border-white/8 bg-[#050807] py-5">
-                <div className="container-custom flex flex-col items-center justify-between gap-3 text-xs text-white/72 md:flex-row">
-                    <div className="flex flex-wrap items-center justify-center gap-5 md:order-1 md:justify-start">
-                        <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Privacy Policy</Link>
-                        <Link to="/terms" className="!text-white/80 transition-colors hover:!text-white">Terms of Service</Link>
-                        <Link to="/privacy#cookies" className="!text-white/80 transition-colors hover:!text-white">Cookie Policy</Link>
-                        <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Data Protection</Link>
-                    </div>
-                    <p className="!text-white md:order-2">
-                        Built with <span className="text-white">&hearts;</span> for Kenya by{' '}
-                        <span className="text-white font-semibold">Prospect Pilot AI</span>
-                    </p>
-                </div>
-                <div className="container-custom mt-4">
+                <div className="container-custom">
                     <p className="max-w-5xl text-xs leading-6 !text-white/70">
                         Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions. Regulated under the applicable laws of Kenya.
                     </p>
-                    <p className="mt-3 text-xs font-medium !text-white">
-                        &copy; {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.
-                    </p>
+                    <div className="mt-4 flex flex-col items-center justify-between gap-3 text-xs text-white/72 md:flex-row">
+                        <div className="flex flex-wrap items-center justify-center gap-5 md:justify-start">
+                            <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Privacy Policy</Link>
+                            <Link to="/terms" className="!text-white/80 transition-colors hover:!text-white">Terms of Service</Link>
+                            <Link to="/privacy#cookies" className="!text-white/80 transition-colors hover:!text-white">Cookie Policy</Link>
+                            <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Data Protection</Link>
+                        </div>
+                        <p className="text-center text-xs font-medium !text-white">
+                            &copy; {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.
+                        </p>
+                        <p className="!text-white">
+                            Built with <span className="text-white">&hearts;</span> for Kenya by{' '}
+                            <span className="text-white font-semibold">Prospect Pilot AI</span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </footer>

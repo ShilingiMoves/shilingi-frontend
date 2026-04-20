@@ -4,7 +4,6 @@ import {
     ArrowRight,
     Bot,
     BookOpen,
-    Briefcase,
     Calculator,
     Check,
     ChevronDown,
@@ -27,7 +26,7 @@ const brandYellowHover = '#E3BC43';
 const stats = [
     { value: '4', label: 'Dashboard tiers' },
     { value: '50+', label: 'Financial tools and calculators' },
-    { value: '6', label: 'Ecosystem modules' },
+    { value: '5', label: 'Ecosystem modules' },
     { value: 'KES 0', label: 'To get started' },
 ];
 
@@ -189,13 +188,6 @@ const comparisonGroups = [
 
 const ecosystemCards = [
     {
-        icon: BookOpen,
-        title: 'Learning Hub',
-        text: 'Curated articles, podcasts and books matched to your financial stage.',
-        tier: 'All tiers',
-        bg: 'bg-emerald-500/15 text-emerald-300',
-    },
-    {
         icon: Compass,
         title: 'Comparison Portal',
         text: 'Side-by-side product comparisons linked to your cash flow and risk profile.',
@@ -204,17 +196,17 @@ const ecosystemCards = [
     },
     {
         icon: Calculator,
-        title: 'Tools Suite',
+        title: 'Resources',
         text: '50+ calculators covering tax, retirement, mortgage, emergency fund and more.',
         tier: 'Pro and above',
         bg: 'bg-amber-500/15 text-[#E8B84B]',
     },
     {
-        icon: Bot,
-        title: 'Shilingi Buddy AI',
-        text: 'Your always-on financial companion for context, nudges, and decision support.',
-        tier: 'Elite only',
-        bg: 'bg-[#C4973A]/15 text-[#E8B84B]',
+        icon: BookOpen,
+        title: 'Learning Hub',
+        text: 'Curated articles, podcasts and books matched to your financial stage.',
+        tier: 'All tiers',
+        bg: 'bg-emerald-500/15 text-emerald-300',
     },
     {
         icon: Users,
@@ -224,9 +216,9 @@ const ecosystemCards = [
         bg: 'bg-emerald-500/15 text-emerald-300',
     },
     {
-        icon: Briefcase,
-        title: 'Advisor Matching',
-        text: 'Vetted Kenyan financial advisors matched to your goals and life stage.',
+        icon: Bot,
+        title: 'Shilingi Buddy AI',
+        text: 'Your always-on financial companion for context, nudges, and decision support.',
         tier: 'Elite only',
         bg: 'bg-[#C4973A]/15 text-[#E8B84B]',
     },
