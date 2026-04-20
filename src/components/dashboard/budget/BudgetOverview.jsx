@@ -54,21 +54,21 @@ const isSavingsCategoryName = (name = '') => {
 
 const categoryMeta = (name = '') => {
     const normalized = String(name).toLowerCase();
-    if (normalized.includes('housing') || normalized.includes('rent') || normalized.includes('mortgage')) return { type: 'Needs', icon: Home, tint: 'bg-[#fff6e8] text-[#b56a00]', chip: 'bg-[#e7f6f1] text-[#166a55]', bar: '#d38a12' };
-    if (normalized.includes('food') || normalized.includes('grocery') || normalized.includes('dining')) return { type: 'Needs', icon: ShoppingBasket, tint: 'bg-[#eef8f4] text-[#166a55]', chip: 'bg-[#e7f6f1] text-[#166a55]', bar: '#1f7f63' };
-    if (normalized.includes('transport') || normalized.includes('travel') || normalized.includes('fuel')) return { type: 'Needs', icon: Landmark, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#166a55]', bar: '#3b82f6' };
-    if (normalized.includes('utilit') || normalized.includes('power') || normalized.includes('water') || normalized.includes('internet')) return { type: 'Needs', icon: Zap, tint: 'bg-[#f3ecff] text-[#7a57d1]', chip: 'bg-[#e7f6f1] text-[#166a55]', bar: '#8b5fd3' };
-    if (normalized.includes('school') || normalized.includes('fee') || normalized.includes('education')) return { type: 'Needs', icon: GraduationCap, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#166a55]', bar: '#4c8ee8' };
-    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal')) return { type: 'Savings', icon: PiggyBank, tint: 'bg-[#eef8f4] text-[#166a55]', chip: 'bg-[#eef4ff] text-[#2f74db]', bar: '#39a88c' };
+    if (normalized.includes('housing') || normalized.includes('rent') || normalized.includes('mortgage')) return { type: 'Needs', icon: Home, tint: 'bg-[#fff6e8] text-[#b56a00]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#d38a12' };
+    if (normalized.includes('food') || normalized.includes('grocery') || normalized.includes('dining')) return { type: 'Needs', icon: ShoppingBasket, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
+    if (normalized.includes('transport') || normalized.includes('travel') || normalized.includes('fuel')) return { type: 'Needs', icon: Landmark, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#3b82f6' };
+    if (normalized.includes('utilit') || normalized.includes('power') || normalized.includes('water') || normalized.includes('internet')) return { type: 'Needs', icon: Zap, tint: 'bg-[#f3ecff] text-[#7a57d1]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#8b5fd3' };
+    if (normalized.includes('school') || normalized.includes('fee') || normalized.includes('education')) return { type: 'Needs', icon: GraduationCap, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#4c8ee8' };
+    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal')) return { type: 'Savings', icon: PiggyBank, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#eef4ff] text-[#2f74db]', bar: '#11814f' };
     if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('game')) return { type: 'Wants', icon: Flame, tint: 'bg-[#fff1ef] text-[#d94d4d]', chip: 'bg-[#fff6e8] text-[#b56a00]', bar: '#e24a4a' };
-    return { type: 'Needs', icon: Wallet, tint: 'bg-[#f6fbf8] text-[#1f7f63]', chip: 'bg-[#e7f6f1] text-[#166a55]', bar: '#1f9c72' };
+    return { type: 'Needs', icon: Wallet, tint: 'bg-[#f6fbf8] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
 };
 
 const statusMeta = {
-    ON_TRACK: { label: 'On Track', card: 'border-[#bfe2d6] bg-white', badge: 'bg-[#e7f6f1] text-[#166a55]' },
+    ON_TRACK: { label: 'On Track', card: 'border-[#bfe2d6] bg-white', badge: 'bg-[#e7f6f1] text-[#11814f]' },
     WARNING: { label: 'Watch Spend', card: 'border-[#f0d39a] bg-[#fffaf0]', badge: 'bg-[#fff3d8] text-[#b56a00]' },
     OVER_BUDGET: { label: 'Over Budget', card: 'border-[#f2bcbc] bg-[#fff5f5]', badge: 'bg-[#ffe7e7] text-[#d94d4d]' },
-    default: { label: 'Active', card: 'border-[#bfe2d6] bg-white', badge: 'bg-[#eef8f4] text-[#166a55]' },
+    default: { label: 'Active', card: 'border-[#bfe2d6] bg-white', badge: 'bg-[#eef8f4] text-[#11814f]' },
 };
 
 const getMonthLabel = () => new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
@@ -102,57 +102,74 @@ const helperCopy = (categoryName = '') => {
 
 const getSavingsVisual = (title = '', index = 0) => {
     const normalized = String(title).toLowerCase();
-    if (normalized.includes('emergency')) return { icon: ShieldCheck, tone: 'border-[#bfe2d6] bg-[linear-gradient(180deg,_#f8fcfb_0%,_#eff8f4_100%)]', amount: 'text-[#166a55]', bar: '#52b89b', badge: 'bg-[#e7f6f1] text-[#166a55]', label: 'Short' };
+    if (normalized.includes('emergency')) return { icon: ShieldCheck, tone: 'border-[#bfe2d6] bg-[linear-gradient(180deg,_#f8fcfb_0%,_#eff8f4_100%)]', amount: 'text-[#11814f]', bar: '#11814f', badge: 'bg-[#e7f6f1] text-[#11814f]', label: 'Short' };
     if (normalized.includes('holiday') || normalized.includes('travel')) return { icon: Rocket, tone: 'border-[#f0d39a] bg-[linear-gradient(180deg,_#fffdf7_0%,_#fff7e8_100%)]', amount: 'text-[#c98512]', bar: '#f5a623', badge: 'bg-[#fff3d8] text-[#b56a00]', label: 'Medium' };
     if (normalized.includes('house') || normalized.includes('home')) return { icon: Home, tone: 'border-[#c9d7f4] bg-[linear-gradient(180deg,_#fbfdff_0%,_#f2f7ff_100%)]', amount: 'text-[#2f74db]', bar: '#4c8ee8', badge: 'bg-[#f2edff] text-[#7a57d1]', label: 'Long' };
     if (index % 3 === 1) return { icon: Rocket, tone: 'border-[#f0d39a] bg-[linear-gradient(180deg,_#fffdf7_0%,_#fff7e8_100%)]', amount: 'text-[#c98512]', bar: '#f5a623', badge: 'bg-[#fff3d8] text-[#b56a00]', label: 'Medium' };
     if (index % 3 === 2) return { icon: Home, tone: 'border-[#c9d7f4] bg-[linear-gradient(180deg,_#fbfdff_0%,_#f2f7ff_100%)]', amount: 'text-[#2f74db]', bar: '#4c8ee8', badge: 'bg-[#f2edff] text-[#7a57d1]', label: 'Long' };
-    return { icon: ShieldCheck, tone: 'border-[#bfe2d6] bg-[linear-gradient(180deg,_#f8fcfb_0%,_#eff8f4_100%)]', amount: 'text-[#166a55]', bar: '#52b89b', badge: 'bg-[#e7f6f1] text-[#166a55]', label: 'Short' };
+    return { icon: ShieldCheck, tone: 'border-[#bfe2d6] bg-[linear-gradient(180deg,_#f8fcfb_0%,_#eff8f4_100%)]', amount: 'text-[#11814f]', bar: '#11814f', badge: 'bg-[#e7f6f1] text-[#11814f]', label: 'Short' };
 };
 
 const getBillVisual = (title = '', index = 0) => {
     const normalized = String(title).toLowerCase();
     if (normalized.includes('kplc') || normalized.includes('electric')) return { icon: Zap, tone: 'border-[#f2c2c2] bg-[#fff5f5]', amount: 'text-[#d94d4d]', pill: 'bg-[#ef4444] text-white', status: 'Pay Now' };
     if (normalized.includes('fibre') || normalized.includes('internet') || normalized.includes('safaricom')) return { icon: Landmark, tone: 'border-[#f0d39a] bg-[#fffaf0]', amount: 'text-[#b56a00]', pill: 'bg-[#fff3d8] text-[#b56a00]', status: 'Auto' };
-    if (normalized.includes('loan') || normalized.includes('emi')) return { icon: BadgeDollarSign, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#166a55]', pill: 'bg-[#e7f6f1] text-[#166a55]', status: 'Scheduled' };
-    if (normalized.includes('insurance')) return { icon: HeartHandshake, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#166a55]', pill: 'bg-[#eef8f4] text-[#166a55]', status: 'Auto' };
-    if (normalized.includes('nhif') || normalized.includes('sha')) return { icon: CalendarDays, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#166a55]', pill: 'bg-[#eef8f4] text-[#166a55]', status: 'Auto' };
+    if (normalized.includes('loan') || normalized.includes('emi')) return { icon: BadgeDollarSign, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#11814f]', pill: 'bg-[#e7f6f1] text-[#11814f]', status: 'Scheduled' };
+    if (normalized.includes('insurance')) return { icon: HeartHandshake, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#11814f]', pill: 'bg-[#eef8f4] text-[#11814f]', status: 'Auto' };
+    if (normalized.includes('nhif') || normalized.includes('sha')) return { icon: CalendarDays, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#11814f]', pill: 'bg-[#eef8f4] text-[#11814f]', status: 'Auto' };
     return index === 0
         ? { icon: Zap, tone: 'border-[#f2c2c2] bg-[#fff5f5]', amount: 'text-[#d94d4d]', pill: 'bg-[#ef4444] text-white', status: 'Pay Now' }
-        : { icon: CalendarDays, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#166a55]', pill: 'bg-[#eef8f4] text-[#166a55]', status: 'Auto' };
+        : { icon: CalendarDays, tone: 'border-[#bfe2d6] bg-[#f8fcfa]', amount: 'text-[#11814f]', pill: 'bg-[#eef8f4] text-[#11814f]', status: 'Auto' };
 };
 
 const normaliseLabel = (value = '') => String(value).trim().toLowerCase();
 
 const SplitChip = ({ label, shell }) => <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${shell}`}>{label}</span>;
 
+const displayFont = { fontFamily: '"Fraunces", Georgia, serif' };
+
 const MetricCard = ({ title, value, helper, accent, line }) => (
-    <article className="flex h-full flex-col overflow-hidden rounded-[1rem] border border-[#bfe2d6] bg-white shadow-sm">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[1rem] border border-[#d0e8df] bg-white shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)]">
         <div className="flex flex-1 flex-col justify-between px-4 py-3.5">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">{title}</p>
-            <p className={`mt-2 text-[1.55rem] sm:text-[1.7rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
-            <p className="mt-2.5 min-h-[2.7rem] text-[12px] leading-5 text-slate-600">{helper}</p>
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-[#9ab8af]">{title}</p>
+            <p className={`mt-2 text-[1.35rem] font-extrabold leading-tight tracking-tight sm:text-[1.5rem] ${accent}`} style={displayFont}>{value}</p>
+            <p className="mt-2 min-h-[1.65rem] text-[11px] leading-4 text-[#3d6158]">{helper}</p>
         </div>
-        <div className={`h-1 w-full ${line}`} />
+        <div className={`h-0.5 w-full ${line}`} />
     </article>
+);
+
+const SectionTitle = ({ icon: Icon, title, subtitle, action }) => (
+    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.7rem] bg-[#e8f5f0] text-[#11814f]">
+                <Icon size={17} />
+            </span>
+            <div>
+                <p className="text-[1.25rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{title}</p>
+                {subtitle && <p className="mt-1 text-sm leading-5 text-[#7a9e94]">{subtitle}</p>}
+            </div>
+        </div>
+        {action}
+    </div>
 );
 
 const HealthMiniCard = ({ value, label, shell }) => (
     <div className={`rounded-[1rem] px-4 py-4 text-center ${shell}`}>
-        <p className="text-4xl font-extrabold">{value}</p>
+        <p className="text-4xl font-extrabold" style={displayFont}>{value}</p>
         <p className="mt-1 text-sm font-semibold uppercase tracking-[0.16em]">{label}</p>
     </div>
 );
 
 const ActionPill = ({ label, onClick, emphasis = false }) => (
-    <button type="button" onClick={onClick} className={`rounded-[0.85rem] border px-3 py-2 text-sm font-semibold transition-colors ${emphasis ? 'border-[#f0d39a] bg-[#fff6e8] text-[#9a6200]' : 'border-[#bfe2d6] bg-[#eef8f4] text-[#166a55] hover:bg-[#e5f4ee]'}`}>{label}</button>
+    <button type="button" onClick={onClick} className={`rounded-[0.85rem] border px-3 py-2 text-sm font-semibold transition-colors ${emphasis ? 'border-[#f0d39a] bg-[#fff6e8] text-[#9a6200]' : 'border-[#bfe2d6] bg-[#eef8f4] text-[#11814f] hover:bg-[#e5f4ee]'}`}>{label}</button>
 );
 
 const ActionCard = ({ title, body, cta, onClick }) => (
-    <div className="rounded-[1rem] border border-[#d8ece3] bg-[#f8fcfa] px-4 py-4">
-        <p className="text-base font-semibold text-slate-950">{title}</p>
-        <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
-        <button type="button" onClick={onClick} className="mt-3 rounded-[0.9rem] border border-[#bfe2d6] bg-white px-3.5 py-2 text-sm font-semibold text-[#166a55]">{cta}</button>
+    <div className="rounded-[1rem] border border-[#d8ece3] bg-[#f8fcfa] px-4 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#a8d4c4] hover:shadow-[0_8px_24px_rgba(27,107,90,0.10)]">
+        <p className="text-base font-bold text-[#0d2b22]">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-[#3d6158]">{body}</p>
+        <button type="button" onClick={onClick} className="mt-3 rounded-[0.65rem] border border-[#a8d4c4] bg-[#e8f5f0] px-3.5 py-2 text-sm font-bold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">{cta}</button>
     </div>
 );
 
@@ -160,7 +177,7 @@ const EmptyCard = ({ title, body, cta, onClick }) => (
     <div className="rounded-[1.2rem] border border-dashed border-[#bfe2d6] bg-white px-5 py-10 text-center">
         <p className="text-base font-bold text-slate-950">{title}</p>
         <p className="mt-2 text-sm leading-6 text-slate-500">{body}</p>
-        <button type="button" onClick={onClick} className="mt-4 rounded-[0.9rem] border border-[#bfe2d6] bg-[#eef8f4] px-4 py-2 text-sm font-semibold text-[#166a55]">{cta}</button>
+        <button type="button" onClick={onClick} className="mt-4 rounded-[0.9rem] border border-[#bfe2d6] bg-[#eef8f4] px-4 py-2 text-sm font-semibold text-[#11814f]">{cta}</button>
     </div>
 );
 
@@ -183,37 +200,47 @@ const BudgetCategoryCard = ({ item, currency, onNavigate }) => {
     const spent = toNumber(item.total_spent);
     const left = allocated - spent;
     const progress = allocated > 0 ? clamp((spent / allocated) * 100) : 0;
+    const statusShell =
+        item.status === 'OVER_BUDGET'
+            ? 'border-[#f2bcbc] bg-[#fff0f0]'
+            : item.status === 'WARNING'
+                ? 'border-[#f0d39a] bg-[#fffbeb]'
+                : meta.type === 'Savings'
+                    ? 'border-[#bfe2d6] bg-[#f2faf7]'
+                    : 'border-[#d0e8df] bg-white';
 
     return (
-        <article className={`rounded-[1.2rem] border p-4 shadow-sm ${status.card}`}>
+        <article className={`relative overflow-hidden rounded-[1rem] border p-4 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)] ${statusShell}`}>
+            <span className={`absolute right-0 top-0 rounded-bl-[0.7rem] px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.08em] ${status.badge}`}>
+                {status.label}
+            </span>
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                    <span className={`inline-flex h-12 w-12 items-center justify-center rounded-[1rem] ${meta.tint}`}>
+                    <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.75rem] ${meta.tint}`}>
                         <meta.icon size={18} />
                     </span>
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[1.1rem] font-bold text-slate-950">{item.category_name}</p>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${meta.chip}`}>{meta.type}</span>
+                            <p className="text-[1rem] font-extrabold text-[#0d2b22]">{item.category_name}</p>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${meta.chip}`}>{meta.type}</span>
                         </div>
-                        <p className="mt-1 text-sm text-slate-500">{helperCopy(item.category_name)}</p>
+                        <p className="mt-1 text-xs text-[#7a9e94]">{helperCopy(item.category_name)}</p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.badge}`}>{status.label.toUpperCase()}</span>
-                    <p className="mt-2 text-[1.7rem] font-extrabold tracking-tight text-slate-950">{formatCurrency(spent, item.currency || currency)}</p>
-                    <p className="text-sm text-slate-500">of {formatCurrency(allocated, item.currency || currency)} budget</p>
-                    <p className={`mt-1 text-sm font-semibold ${left < 0 ? 'text-[#d94d4d]' : 'text-[#166a55]'}`}>{left < 0 ? `-${formatCurrency(Math.abs(left), item.currency || currency)} over` : `${formatCurrency(left, item.currency || currency)} left`}</p>
+                <div className="mt-4 shrink-0 text-right sm:mt-2">
+                    <p className="text-[1.45rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{formatCurrency(spent, item.currency || currency)}</p>
+                    <p className="text-xs text-[#7a9e94]">of {formatCurrency(allocated, item.currency || currency)} budget</p>
+                    <p className={`mt-1 text-xs font-extrabold ${left < 0 ? 'text-[#d94d4d]' : 'text-[#11814f]'}`}>{left < 0 ? `-${formatCurrency(Math.abs(left), item.currency || currency)} over` : `${formatCurrency(left, item.currency || currency)} left`}</p>
                 </div>
             </div>
 
-            <div className="mt-4 h-2.5 rounded-full bg-[#edf5f1]">
-                <div className="h-2.5 rounded-full" style={{ width: `${Math.min(progress, 100)}%`, backgroundColor: meta.bar }} />
+            <div className="mt-4 h-2 rounded-full bg-[#edf5f1]">
+                <div className="h-2 rounded-full transition-[width] duration-700" style={{ width: `${Math.min(progress, 100)}%`, backgroundColor: meta.bar }} />
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-sm">
-                <p className={`${left < 0 ? 'text-[#d94d4d]' : 'text-slate-500'}`}>{left < 0 ? `${formatCurrency(Math.abs(left), item.currency || currency)} over budget this month` : `${Math.round(progress)}% used`}</p>
-                <p className="font-semibold text-slate-500">{Math.round(progress)}%</p>
+            <div className="mt-2.5 flex items-center justify-between text-xs">
+                <p className={`${left < 0 ? 'font-bold text-[#d94d4d]' : 'text-[#7a9e94]'}`}>{left < 0 ? `${formatCurrency(Math.abs(left), item.currency || currency)} over budget this month` : `${Math.round(progress)}% used`}</p>
+                <p className="font-extrabold text-[#3d6158]">{Math.round(progress)}%</p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -256,6 +283,7 @@ const BudgetOverview = ({
     const [billActionMessage, setBillActionMessage] = useState('');
     const [billActionError, setBillActionError] = useState('');
     const compareSectionRef = useRef(null);
+    const expensesSectionRef = useRef(null);
     const [quickExpenseForm, setQuickExpenseForm] = useState({
         amount: '',
         description: '',
@@ -287,6 +315,7 @@ const BudgetOverview = ({
     const spendingProgress = totalBudgeted > 0 ? clamp((totalSpent / totalBudgeted) * 100) : 0;
     const remainingCash = trackedIncome - totalSpent;
     const savingsRate = trackedIncome > 0 ? clamp((savingsValue / trackedIncome) * 100) : 0;
+    const hasBudgetPlan = activeBudgets.length > 0 && totalBudgeted > 0;
     const currentMonthLabel = getMonthLabel();
     const customSplitTotal = toNumber(customSplit.needs) + toNumber(customSplit.wants) + toNumber(customSplit.savings);
 
@@ -329,6 +358,15 @@ const BudgetOverview = ({
         if (typeof window !== 'undefined') {
             window.requestAnimationFrame(() => {
                 compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    };
+
+    const openExpensesView = () => {
+        setActiveView('expenses');
+        if (typeof window !== 'undefined') {
+            window.requestAnimationFrame(() => {
+                expensesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         }
     };
@@ -526,9 +564,9 @@ const BudgetOverview = ({
 
     const displayedExpenses = filteredExpenses.slice(0, 8);
     const monthlySummaryRows = [
-        { label: 'Total Income', value: formatCurrency(trackedIncome, currency), shell: 'bg-[#edf8f3] text-[#166a55]' },
+        { label: 'Total Income', value: formatCurrency(trackedIncome, currency), shell: 'bg-[#edf8f3] text-[#11814f]' },
         { label: 'Total Spent', value: formatCurrency(totalSpent, currency), shell: 'bg-[#fff3f3] text-[#d94d4d]' },
-        { label: 'Total Saved', value: formatCurrency(savingsValue, currency), shell: 'bg-[#edf8f3] text-[#166a55]' },
+        { label: 'Total Saved', value: formatCurrency(savingsValue, currency), shell: 'bg-[#edf8f3] text-[#11814f]' },
         { label: 'Net Surplus', value: formatCurrency(remainingCash, currency), shell: 'bg-[#f3f7ff] text-[#2f74db]' },
     ];
 
@@ -573,7 +611,7 @@ const BudgetOverview = ({
     }).sort((a, b) => a.score - b.score);
 
     const modelVisuals = {
-        classic: { icon: Sparkles, shell: 'border-[#bfe2d6] bg-[#f8fcfa]', accent: 'bg-[#1f7f63]', cta: 'bg-[#1f7f63] text-white', badge: 'bg-[#e7f6f1] text-[#166a55]', bestFor: 'Balanced lifestyle', note: 'Best for a balanced lifestyle with steady savings.' },
+        classic: { icon: Sparkles, shell: 'border-[#bfe2d6] bg-[#f8fcfa]', accent: 'bg-[#11814f]', cta: 'bg-[#11814f] text-white', badge: 'bg-[#e7f6f1] text-[#11814f]', bestFor: 'Balanced lifestyle', note: 'Best for a balanced lifestyle with steady savings.' },
         aggressive: { icon: Rocket, shell: 'border-[#b9d5f2] bg-[#f8fbff]', accent: 'bg-[#3a7fd1]', cta: 'bg-[#3a7fd1] text-white', badge: 'bg-[#eef4ff] text-[#2f74db]', bestFor: 'FIRE path', note: 'Best for early retirement and fast wealth building.' },
         city: { icon: BarChart3, shell: 'border-[#bfe2d6] bg-[#f8fcfa]', accent: 'bg-[#f5a623]', cta: 'bg-[#f5a623] text-slate-950', badge: 'bg-[#fff3d8] text-[#b56a00]', bestFor: 'High rent', note: 'Best for higher rent cities while still protecting savings.' },
         debt: { icon: Swords, shell: 'border-[#f2c2c2] bg-[#fff8f8]', accent: 'bg-[#ef4444]', cta: 'bg-[#ef4444] text-white', badge: 'bg-[#ffe7e7] text-[#d94d4d]', bestFor: 'Debt payoff', note: 'Best for a high debt load and aggressive repayment.' },
@@ -593,28 +631,44 @@ const BudgetOverview = ({
     ];
 
     const insightCards = [
-        { title: totalRemaining >= 0 ? 'Budget still has room' : 'Entertainment over budget', body: totalRemaining >= 0 ? `You still have ${formatCurrency(totalRemaining, currency)} available inside your planned budget.` : `You are ${formatCurrency(Math.abs(totalRemaining), currency)} over your planned budget and should rebalance quickly.`, tone: totalRemaining >= 0 ? 'border-[#bfe2d6] bg-[#edf8f3] text-[#166a55]' : 'border-[#f2bcbc] bg-[#fff5f5] text-[#d94d4d]' },
+        { title: totalRemaining >= 0 ? 'Budget still has room' : 'Entertainment over budget', body: totalRemaining >= 0 ? `You still have ${formatCurrency(totalRemaining, currency)} available inside your planned budget.` : `You are ${formatCurrency(Math.abs(totalRemaining), currency)} over your planned budget and should rebalance quickly.`, tone: totalRemaining >= 0 ? 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]' : 'border-[#f2bcbc] bg-[#fff5f5] text-[#d94d4d]' },
         { title: 'Housing at a healthy level', body: trackedIncome > 0 ? `Your current housing allocation is ${formatCurrency(summaryRows.find((item) => item.category_name?.toLowerCase().includes('housing'))?.allocated || 0, currency)} against income ${formatCurrency(trackedIncome, currency)}.` : 'Add income to compare housing against your monthly inflow.', tone: 'border-[#f0d39a] bg-[#fff9ec] text-[#9a6200]' },
-        { title: savingsValue > 0 ? 'Savings target is moving' : 'Savings target needs setup', body: savingsValue > 0 ? `You have ${formatCurrency(savingsValue, currency)} flowing into savings goals right now.` : 'Create a savings goal or savings category so auto-save can be tracked here.', tone: 'border-[#bfe2d6] bg-[#edf8f3] text-[#166a55]' },
+        { title: savingsValue > 0 ? 'Savings target is moving' : 'Savings target needs setup', body: savingsValue > 0 ? `You have ${formatCurrency(savingsValue, currency)} flowing into savings goals right now.` : 'Create a savings goal or savings category so auto-save can be tracked here.', tone: 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]' },
     ];
-
+    const healthScore = clamp(100 - (toNumber(budgetHealth?.over) * 14) - (toNumber(budgetHealth?.warning) * 7) - Math.max(0, spendingProgress - 90) * 0.5);
+    const healthTone = healthScore >= 78 ? 'green' : healthScore >= 58 ? 'amber' : 'red';
+    const healthCopy = healthTone === 'green'
+        ? { title: 'Budget health looks strong', body: 'Most categories are pacing well. Keep expenses updated for precise signals.', color: '#11814f', shell: 'from-[#e8f5f0] to-[#f2faf7] border-[#bfe2d6]' }
+        : healthTone === 'amber'
+            ? { title: 'Budget needs attention', body: 'A few categories need a check-in before month end. Review watch spend items first.', color: '#f59e0b', shell: 'from-[#fffbeb] to-[#fef6e4] border-[#f0d39a]' }
+            : { title: 'Budget needs action', body: 'Overspend is building up. Rebalance limits or trim variable spending today.', color: '#e84545', shell: 'from-[#fff5f5] to-[#fff0f0] border-[#f2bcbc]' };
     return (
-        <div className="space-y-5">
-            <section className="overflow-hidden rounded-[1.65rem] bg-[linear-gradient(135deg,_#0d3f36_0%,_#1a6e5a_55%,_#1f856b_100%)] px-5 py-5 text-white shadow-[0_20px_50px_rgba(17,73,58,0.18)]">
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="mx-auto max-w-[1180px] space-y-5 rounded-[1.5rem] bg-[#f0f7f4] p-3 text-[#0d2b22] sm:p-5">
+            <section className="relative overflow-hidden rounded-[1.4rem] bg-[linear-gradient(135deg,_#062216_0%,_#0a4f32_42%,_#11814f_78%,_#14784e_100%)] px-5 py-6 text-white shadow-[0_18px_48px_rgba(13,61,48,0.24)] sm:px-8">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(245,166,35,0.18)_0%,_transparent_70%)]" />
+                <div className="relative flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="max-w-2xl">
-                        <p className="inline-flex items-center gap-2 text-[1.8rem] font-extrabold tracking-tight">
+                        <p className="inline-flex items-center gap-2 text-[1.8rem] font-extrabold tracking-tight" style={displayFont}>
                             <BarChart3 size={22} />
                             Budget Planner
                         </p>
-                        <p className="mt-2 text-sm leading-7 text-white/82">
+                        <p className="mt-2 max-w-[34rem] text-sm leading-7 text-white/70">
                             Track what you allocated, what you have spent, and where to adjust before you go over. Every shilling planned is a step toward financial freedom.
                         </p>
+                        {hasBudgetPlan && (
+                            <div className="mt-4 flex items-center gap-3">
+                                <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: healthCopy.color }} />
+                                <div>
+                                    <p className="text-sm font-extrabold text-white/95">{healthCopy.title}</p>
+                                    <p className="text-xs text-white/55">{Math.round(spendingProgress)}% spending progress this month</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2.5 xl:justify-end">
-                        <label className="relative inline-flex h-10 items-center gap-3 rounded-full bg-white px-4 pr-10 text-sm font-semibold text-[#166a55] shadow-sm">
+                        <label className="relative inline-flex h-10 items-center gap-3 rounded-full bg-white px-4 pr-10 text-sm font-semibold text-[#11814f] shadow-sm">
                             <span>Select Budget Type</span>
-                            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#166a55]" />
+                            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#11814f]" />
                             <select
                                 value={selectedModelId}
                                 onChange={(event) => {
@@ -640,25 +694,49 @@ const BudgetOverview = ({
                 </div>
             </section>
 
-            <section className="rounded-[1.3rem] border border-[#bfe2d6] bg-white p-4 shadow-sm">
+            {hasBudgetPlan && (
+                <section className={`rounded-[1rem] border bg-gradient-to-br px-5 py-4 shadow-[0_1px_5px_rgba(27,107,90,0.07)] ${healthCopy.shell}`}>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                        <div className="relative h-[82px] w-[82px] shrink-0">
+                            <svg className="-rotate-90" width="82" height="82" viewBox="0 0 82 82" aria-hidden="true">
+                                <circle cx="41" cy="41" r="34" fill="none" stroke="#d0e8df" strokeWidth="8" />
+                                <circle cx="41" cy="41" r="34" fill="none" stroke={healthCopy.color} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${(healthScore / 100) * 213.6} 213.6`} />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-2xl font-extrabold text-[#0d2b22]" style={displayFont}>{Math.round(healthScore)}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7a9e94]">/100</span>
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-[1.2rem] font-extrabold text-[#0d2b22]" style={displayFont}>{healthCopy.title}</p>
+                            <p className="mt-1 text-sm leading-6 text-[#3d6158]">{healthCopy.body}</p>
+                        </div>
+                        <button type="button" onClick={openExpensesView} className="inline-flex cursor-pointer items-center justify-center rounded-[0.75rem] border border-[#a8d4c4] bg-white/80 px-4 py-2 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">
+                            Review Expenses
+                        </button>
+                    </div>
+                </section>
+            )}
+
+            <section className="rounded-[1rem] border-2 border-[#a8d4c4] bg-white p-4 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-start gap-3.5">
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,_#1f7f63_0%,_#f2b13c_100%)] text-white shadow-sm">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.8rem] bg-[linear-gradient(135deg,_#11814f_0%,_#f5a623_100%)] text-white shadow-sm">
                             <Sparkles size={16} />
                         </div>
                         <div>
-                            <p className="text-[1.1rem] sm:text-[1.2rem] font-bold tracking-tight text-slate-950">{selectedModel.label}</p>
-                            <p className="mt-1 text-[13px] text-slate-500">{selectedModel.description}. Income: {formatCurrency(trackedIncome, currency)}/mo</p>
+                            <p className="text-[1.1rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{selectedModel.label}</p>
+                            <p className="mt-1 text-[13px] text-[#3d6158]">{selectedModel.description}. Income: {formatCurrency(trackedIncome, currency)}/mo</p>
                             <div className="mt-2.5 flex flex-wrap gap-2">
-                                <SplitChip label={`Needs: ${formatCurrency((trackedIncome * selectedModel.split.needs) / 100, currency)} (${selectedModel.split.needs}%)`} shell="bg-[#e7f6f1] text-[#166a55]" />
+                                <SplitChip label={`Needs: ${formatCurrency((trackedIncome * selectedModel.split.needs) / 100, currency)} (${selectedModel.split.needs}%)`} shell="bg-[#e7f6f1] text-[#11814f]" />
                                 <SplitChip label={`Wants: ${formatCurrency((trackedIncome * selectedModel.split.wants) / 100, currency)} (${selectedModel.split.wants}%)`} shell="bg-[#fff3d8] text-[#b56a00]" />
                                 <SplitChip label={`Savings: ${formatCurrency((trackedIncome * selectedModel.split.savings) / 100, currency)} (${selectedModel.split.savings}%)`} shell="bg-[#eef4ff] text-[#2f74db]" />
                             </div>
                         </div>
                     </div>
-                    <label className="relative inline-flex h-9 min-w-[13rem] items-center rounded-full border border-[#bfe2d6] bg-[#f8fcfa] px-3.5 pr-10 text-[13px] font-semibold text-[#166a55] transition-colors hover:bg-[#f6fbf8]">
+                    <label className="relative inline-flex h-9 min-w-[13rem] items-center rounded-full border border-[#a8d4c4] bg-[#f8fcfa] px-3.5 pr-10 text-[13px] font-extrabold text-[#11814f] transition-colors hover:bg-[#e8f5f0]">
                         <span className="truncate">Change Type</span>
-                        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#166a55]" />
+                        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#11814f]" />
                         <select
                             value={selectedModelId}
                             onChange={(event) => {
@@ -676,18 +754,18 @@ const BudgetOverview = ({
             </section>
 
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <MetricCard title="Budget Allocated" value={formatCurrency(totalBudgeted, currency)} helper={`${summary?.active_budgets_count || activeBudgets.length} active categories`} accent="text-[#166a55]" line="bg-[#1f9c72]" />
+                <MetricCard title="Budget Allocated" value={formatCurrency(totalBudgeted, currency)} helper={`${summary?.active_budgets_count || activeBudgets.length} active categories`} accent="text-[#11814f]" line="bg-[#11814f]" />
                 <MetricCard title="Spent So Far" value={formatCurrency(totalSpent, currency)} helper={`${Math.round(spendingProgress)}% of budget used`} accent="text-[#d94d4d]" line="bg-[#e24a4a]" />
                 <MetricCard title={totalRemaining >= 0 ? 'Left In Budget' : 'Over Budget'} value={formatCurrency(Math.abs(totalRemaining), currency)} helper={totalRemaining >= 0 ? 'Available inside your budget' : 'Needs immediate attention'} accent={totalRemaining >= 0 ? 'text-[#b56a00]' : 'text-[#d94d4d]'} line={totalRemaining >= 0 ? 'bg-[#f0a62e]' : 'bg-[#e24a4a]'} />
                 <MetricCard title="Budget Savings" value={formatCurrency(savingsValue, currency)} helper={savingsValue > 0 ? 'Auto-saved this month' : 'No savings recorded yet'} accent="text-[#2f74db]" line="bg-[#2f74db]" />
             </section>
 
-            <section className="rounded-[1.2rem] border border-[#bfe2d6] bg-white p-2 shadow-sm">
-                <div className="flex flex-wrap gap-2">
+            <section className="w-fit max-w-full rounded-[0.9rem] border border-[#d0e8df] bg-white p-1.5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                <div className="flex max-w-full flex-nowrap gap-1 overflow-x-auto">
                     {tabOptions.map(({ id, label, icon: Icon }) => {
                         const isActive = activeView === id;
                         return (
-                            <button key={id} type="button" onClick={() => setActiveView(id)} className={`inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold transition-all ${isActive ? 'bg-[#0f4d40] text-white shadow-md shadow-[#0f4d40]/20' : 'text-slate-600 hover:bg-[#f4faf7] hover:text-slate-950'}`}>
+                            <button key={id} type="button" onClick={() => setActiveView(id)} className={`inline-flex shrink-0 items-center gap-2 rounded-[0.75rem] px-4 py-2.5 text-sm font-extrabold transition-all ${isActive ? 'bg-[#11814f] text-white shadow-[0_2px_10px_rgba(13,61,48,0.22)]' : 'text-[#7a9e94] hover:bg-[#f4faf7] hover:text-[#0d2b22]'}`}>
                                 <Icon size={15} />
                                 {label}
                             </button>
@@ -699,18 +777,14 @@ const BudgetOverview = ({
             {activeView === 'summary' && (
                 <div className="space-y-4">
                     <section className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
-                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#2f74db]">
-                                        <BarChart3 size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Budget Categories - Summary Table</p>
-                                </div>
-                                <button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-semibold text-[#166a55]">
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle
+                                icon={BarChart3}
+                                title="Budget Categories - Summary Table"
+                                action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">
                                     Manage Categories
-                                </button>
-                            </div>
+                                </button>}
+                            />
 
                             <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full text-sm">
@@ -738,16 +812,16 @@ const BudgetOverview = ({
                                                 <td className="py-3 pr-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.meta.chip}`}>{item.meta.type}</span></td>
                                                 <td className="py-3 pr-3 text-slate-700">{formatCurrency(item.allocated, item.currency || currency)}</td>
                                                 <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-slate-900'}`}>{formatCurrency(item.spent, item.currency || currency)}</td>
-                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-[#166a55]'}`}>{item.left < 0 ? `-${formatCurrency(Math.abs(item.left), item.currency || currency)}` : formatCurrency(item.left, item.currency || currency)}</td>
+                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-[#11814f]'}`}>{item.left < 0 ? `-${formatCurrency(Math.abs(item.left), item.currency || currency)}` : formatCurrency(item.left, item.currency || currency)}</td>
                                                 <td className="py-3"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span></td>
                                             </tr>
                                         ))}
                                         <tr className="bg-[#f8fcfa]">
                                             <td className="py-4 pr-3 text-base font-bold text-slate-950">Total</td>
                                             <td />
-                                            <td className="py-4 pr-3 text-base font-bold text-[#166a55]">{formatCurrency(totalBudgeted, currency)}</td>
+                                            <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(totalBudgeted, currency)}</td>
                                             <td className="py-4 pr-3 text-base font-bold text-[#d94d4d]">{formatCurrency(totalSpent, currency)}</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-[#166a55]">{formatCurrency(totalRemaining, currency)}</td>
+                                            <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(totalRemaining, currency)}</td>
                                             <td />
                                         </tr>
                                     </tbody>
@@ -755,14 +829,8 @@ const BudgetOverview = ({
                             </div>
                         </article>
 
-                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]">
-                                    <TrendingUp size={18} />
-                                </div>
-                                <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Spending Breakdown</p>
-                            </div>
-                            <p className="mt-2 text-sm text-slate-500">Where most of your budget is currently going.</p>
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle icon={TrendingUp} title="Spending Breakdown" subtitle="Where most of your budget is currently going." />
 
                             <div className="mt-4 space-y-4">
                                 {topSpendingCategories.map((item) => (
@@ -783,15 +851,15 @@ const BudgetOverview = ({
                         </article>
                     </section>
 
-                    <section className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
+                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div>
-                                <p className="text-[1.5rem] font-bold tracking-tight text-slate-950">Budget vs Spending</p>
-                                <p className="mt-1 text-sm text-slate-500">A quick read on whether your month is under control.</p>
+                                <p className="text-[1.45rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Budget vs Spending</p>
+                                <p className="mt-1 text-sm text-[#7a9e94]">A quick read on whether your month is under control.</p>
                             </div>
                             <div className="flex items-center gap-4">
-                                <p className="text-4xl font-extrabold text-[#166a55]">{Math.round(spendingProgress)}%</p>
-                                <button type="button" onClick={() => setActiveView('expenses')} className="inline-flex items-center gap-2 rounded-full border border-[#bfe2d6] bg-[#edf8f3] px-4 py-2 text-sm font-semibold text-[#166a55]">
+                                <p className="text-4xl font-extrabold text-[#11814f]" style={displayFont}>{Math.round(spendingProgress)}%</p>
+                                <button type="button" onClick={openExpensesView} className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#a8d4c4] bg-[#edf8f3] px-4 py-2 text-sm font-extrabold text-[#11814f] hover:bg-[#11814f] hover:text-white">
                                     Review Expenses
                                     <ArrowRight size={14} />
                                 </button>
@@ -803,18 +871,18 @@ const BudgetOverview = ({
                                 <span>Spending progress</span>
                                 <span className="font-semibold text-slate-700">{Math.round(spendingProgress)}%</span>
                             </div>
-                            <div className="h-3 overflow-hidden rounded-full bg-[#edf5f1]">
-                                <div className="h-full rounded-full bg-[linear-gradient(90deg,_#52c3ac_0%,_#1f9c72_100%)]" style={{ width: `${Math.min(spendingProgress, 100)}%` }} />
+                            <div className="h-3.5 overflow-hidden rounded-full bg-[#edf5f1]">
+                                <div className="h-full rounded-full bg-[linear-gradient(90deg,_#11814f_0%,_#35a86e_100%)] transition-[width] duration-1000" style={{ width: `${Math.min(spendingProgress, 100)}%` }} />
                             </div>
                         </div>
 
                         <div className="mt-5 grid gap-3 md:grid-cols-3">
-                            <HealthMiniCard value={budgetHealth?.healthy || 0} label="On Track" shell="bg-[#edf8f3] text-[#166a55]" />
+                            <HealthMiniCard value={budgetHealth?.healthy || 0} label="On Track" shell="bg-[#edf8f3] text-[#11814f]" />
                             <HealthMiniCard value={budgetHealth?.warning || 0} label="Watch" shell="bg-[#fff9ec] text-[#9a6200]" />
                             <HealthMiniCard value={budgetHealth?.over || 0} label="Over Budget" shell="bg-[#fff3f3] text-[#d94d4d]" />
                         </div>
 
-                        <div className={`mt-4 rounded-[1.05rem] border px-4 py-4 ${budgetHealth?.over > 0 ? 'border-[#f0d39a] bg-[#fff9ec] text-[#9a6200]' : 'border-[#bfe2d6] bg-[#edf8f3] text-[#166a55]'}`}>
+                        <div className={`mt-4 rounded-[1.05rem] border px-4 py-4 ${budgetHealth?.over > 0 ? 'border-[#f0d39a] bg-[#fff9ec] text-[#9a6200]' : 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]'}`}>
                             <div className="flex items-start gap-3">
                                 <AlertTriangle size={18} className="mt-0.5 shrink-0" />
                                 <div>
@@ -830,21 +898,13 @@ const BudgetOverview = ({
                     </section>
 
                     <section className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
-                        <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]">
-                                        <Receipt size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[1.45rem] font-bold tracking-tight text-slate-950">Budget Categories - {currentMonthLabel}</p>
-                                        <p className="mt-1 text-sm text-slate-500">See each category, the live spend, and what action to take next.</p>
-                                    </div>
-                                </div>
-                                <button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-semibold text-[#166a55]">
-                                    + Add Category
-                                </button>
-                            </div>
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle
+                                icon={Receipt}
+                                title={`Budget Categories - ${currentMonthLabel}`}
+                                subtitle="See each category, the live spend, and what action to take next."
+                                action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">+ Add Category</button>}
+                            />
 
                             <div className="mt-5 space-y-3">
                                 {categoryCards.length ? categoryCards.map((item) => (
@@ -856,16 +916,8 @@ const BudgetOverview = ({
                         </article>
 
                         <div className="space-y-4">
-                            <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e8] text-[#b56a00]">
-                                        <Lightbulb size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Budget Insight</p>
-                                        <p className="mt-1 text-sm text-slate-500">What this month is telling you.</p>
-                                    </div>
-                                </div>
+                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                                <SectionTitle icon={Lightbulb} title="Budget Insight" subtitle="What this month is telling you." />
 
                                 <div className="mt-4 space-y-3">
                                     {insightCards.map((item) => (
@@ -874,23 +926,15 @@ const BudgetOverview = ({
                                             <p className="mt-1">{item.body}</p>
                                         </div>
                                     ))}
-                                    <button type="button" onClick={() => onSelectSection?.('health')} className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm font-semibold text-[#166a55]">
+                                    <button type="button" onClick={() => onSelectSection?.('health')} className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm font-semibold text-[#11814f]">
                                         <Sparkles size={15} />
                                         Ask Shilingi Buddy AI for More Tips
                                     </button>
                                 </div>
                             </article>
 
-                            <article className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]">
-                                        <Zap size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Next Best Actions</p>
-                                        <p className="mt-1 text-sm text-slate-500">The most useful next steps from this budget.</p>
-                                    </div>
-                                </div>
+                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                                <SectionTitle icon={Zap} title="Next Best Actions" subtitle="The most useful next steps from this budget." />
                                 <div className="mt-4 space-y-3">
                                     <ActionCard title="Update categories" body="Adjust category limits if your real spending pattern has changed this month." cta="Manage Budgets" onClick={() => onNavigate('budgets')} />
                                     <ActionCard title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expense" onClick={() => onNavigate('expenses')} />
@@ -905,15 +949,17 @@ const BudgetOverview = ({
 
             {activeView === 'compare' && (
                 <div ref={compareSectionRef} className="space-y-4">
-                    <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <p className="text-[1.55rem] font-bold tracking-tight text-slate-950">Compare Budget Models</p>
-                            <p className="mt-1 text-sm text-slate-500">See how different needs, wants, and savings splits would look on your {formatCurrency(trackedIncome, currency)}/mo income.</p>
+                            <p className="text-[1.55rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Compare Budget Models</p>
+                            <p className="mt-1 text-sm leading-6 text-[#3d6158]">See how different needs, wants, and savings splits would look on your {formatCurrency(trackedIncome, currency)}/mo income.</p>
                         </div>
-                        <button type="button" onClick={openCustomSplitModal} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#0f6a57] px-4 text-sm font-semibold text-white">
+                        <button type="button" onClick={openCustomSplitModal} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#11814f] px-4 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-[#0f7044]">
                             <Pencil size={15} />
                             Custom Split
                         </button>
+                        </div>
                     </section>
 
                     <section className="grid gap-4 xl:grid-cols-3">
@@ -922,25 +968,26 @@ const BudgetOverview = ({
                             const Icon = visual.icon;
                             const isSelected = selectedModelId === item.id;
                             return (
-                                <article key={item.id} className={`rounded-[1.4rem] border p-5 shadow-sm ${visual.shell} ${isSelected ? 'ring-2 ring-[#1f9c72]/30' : ''}`}>
+                                <article key={item.id} className={`relative overflow-hidden rounded-[1rem] border-2 p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)] ${visual.shell} ${isSelected ? 'border-[#11814f] ring-4 ring-[#11814f]/10' : ''}`}>
+                                    {item.id === 'classic' && <span className="absolute right-0 top-0 rounded-bl-[0.75rem] bg-[#11814f] px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-white">Recommended</span>}
                                     <div className="flex items-start gap-3">
                                         <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-slate-900 shadow-sm">
                                             <Icon size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-[1.2rem] font-bold tracking-tight text-slate-950">{item.label}</p>
+                                            <p className="text-[1.2rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{item.label}</p>
                                             <p className="mt-1 text-sm text-slate-500">{item.description}</p>
                                         </div>
                                     </div>
 
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <SplitChip label={`Needs ${item.split.needs}%`} shell="bg-[#e7f6f1] text-[#166a55]" />
+                                        <SplitChip label={`Needs ${item.split.needs}%`} shell="bg-[#e7f6f1] text-[#11814f]" />
                                         <SplitChip label={`Wants ${item.split.wants}%`} shell="bg-[#fff3d8] text-[#b56a00]" />
                                         <SplitChip label={`Save ${item.split.savings}%`} shell="bg-[#eef4ff] text-[#2f74db]" />
                                     </div>
 
                                     <div className="mt-4 space-y-3">
-                                        <ComparisonBar label="Needs" percent={item.split.needs} value={formatCurrency(item.needs, currency)} color="#1f7f63" />
+                                        <ComparisonBar label="Needs" percent={item.split.needs} value={formatCurrency(item.needs, currency)} color="#11814f" />
                                         <ComparisonBar label="Wants" percent={item.split.wants} value={formatCurrency(item.wants, currency)} color="#f5a623" />
                                         <ComparisonBar label={item.id === 'debt' ? 'Debt' : 'Savings'} percent={item.split.savings} value={formatCurrency(item.savings, currency)} color={item.id === 'debt' ? '#ef4444' : '#2f74db'} />
                                     </div>
@@ -952,7 +999,7 @@ const BudgetOverview = ({
                                     <button
                                         type="button"
                                         onClick={() => applyBudgetModel(item)}
-                                        className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] px-4 py-3 text-sm font-semibold ${isSelected ? 'bg-[#1f7f63] text-white' : visual.cta}`}
+                                        className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] px-4 py-3 text-sm font-semibold ${isSelected ? 'bg-[#11814f] text-white' : visual.cta}`}
                                     >
                                         {isSelected ? <><Check size={15} /> Currently Active</> : 'Apply This Model'}
                                     </button>
@@ -967,23 +1014,23 @@ const BudgetOverview = ({
                             const Icon = visual.icon;
                             const isSelected = selectedModelId === item.id;
                             return (
-                                <article key={item.id} className={`rounded-[1.4rem] border p-5 shadow-sm ${visual.shell} ${isSelected ? 'ring-2 ring-[#1f9c72]/30' : ''}`}>
+                                <article key={item.id} className={`relative overflow-hidden rounded-[1rem] border-2 p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)] ${visual.shell} ${isSelected ? 'border-[#11814f] ring-4 ring-[#11814f]/10' : ''}`}>
                                     <div className="flex items-start gap-3">
                                         <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-slate-900 shadow-sm">
                                             <Icon size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-[1.2rem] font-bold tracking-tight text-slate-950">{item.label}</p>
+                                            <p className="text-[1.2rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{item.label}</p>
                                             <p className="mt-1 text-sm text-slate-500">{item.description}</p>
                                         </div>
                                     </div>
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <SplitChip label={`Needs ${item.split.needs}%`} shell="bg-[#e7f6f1] text-[#166a55]" />
+                                        <SplitChip label={`Needs ${item.split.needs}%`} shell="bg-[#e7f6f1] text-[#11814f]" />
                                         <SplitChip label={`Wants ${item.split.wants}%`} shell="bg-[#fff3d8] text-[#b56a00]" />
                                         <SplitChip label={`${item.id === 'debt' ? 'Debt' : 'Save'} ${item.split.savings}%`} shell={item.id === 'debt' ? 'bg-[#ffe7e7] text-[#d94d4d]' : 'bg-[#eef4ff] text-[#2f74db]'} />
                                     </div>
                                     <div className="mt-4 space-y-3">
-                                        <ComparisonBar label="Needs" percent={item.split.needs} value={formatCurrency(item.needs, currency)} color="#1f7f63" />
+                                        <ComparisonBar label="Needs" percent={item.split.needs} value={formatCurrency(item.needs, currency)} color="#11814f" />
                                         <ComparisonBar label="Wants" percent={item.split.wants} value={formatCurrency(item.wants, currency)} color="#f5a623" />
                                         <ComparisonBar label={item.id === 'debt' ? 'Debt' : 'Savings'} percent={item.split.savings} value={formatCurrency(item.savings, currency)} color={item.id === 'debt' ? '#ef4444' : '#2f74db'} />
                                     </div>
@@ -993,7 +1040,7 @@ const BudgetOverview = ({
                                     <button
                                         type="button"
                                         onClick={() => applyBudgetModel(item)}
-                                        className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] px-4 py-3 text-sm font-semibold ${isSelected ? 'bg-[#1f7f63] text-white' : visual.cta}`}
+                                        className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] px-4 py-3 text-sm font-semibold ${isSelected ? 'bg-[#11814f] text-white' : visual.cta}`}
                                     >
                                         {isSelected ? <><Check size={15} /> Currently Active</> : 'Apply This Model'}
                                     </button>
@@ -1001,13 +1048,13 @@ const BudgetOverview = ({
                             );
                         })}
 
-                        <article className="rounded-[1.4rem] border border-[#d9d0f7] bg-[#fbf9ff] p-5 shadow-sm">
+                        <article className="rounded-[1rem] border-2 border-[#d9d0f7] bg-[#fbf9ff] p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)]">
                             <div className="flex items-start gap-3">
                                 <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-[#7a57d1] shadow-sm">
                                     <Pencil size={18} />
                                 </div>
                                 <div>
-                                    <p className="text-[1.2rem] font-bold tracking-tight text-slate-950">Custom Split</p>
+                                    <p className="text-[1.2rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Custom Split</p>
                                     <p className="mt-1 text-sm text-slate-500">Set your own percentages and keep total at 100%.</p>
                                 </div>
                             </div>
@@ -1030,7 +1077,7 @@ const BudgetOverview = ({
                                         />
                                     </label>
                                 ))}
-                                <div className={`rounded-[0.8rem] px-3 py-2 text-sm font-semibold ${customSplitTotal === 100 ? 'bg-[#eef8f4] text-[#166a55]' : 'bg-[#fff3d8] text-[#b56a00]'}`}>
+                                <div className={`rounded-[0.8rem] px-3 py-2 text-sm font-semibold ${customSplitTotal === 100 ? 'bg-[#eef8f4] text-[#11814f]' : 'bg-[#fff3d8] text-[#b56a00]'}`}>
                                     Total: {customSplitTotal}% {customSplitTotal === 100 ? 'ready to apply' : 'must equal 100%'}
                                 </div>
                             </div>
@@ -1041,13 +1088,8 @@ const BudgetOverview = ({
                         </article>
                     </section>
 
-                    <section className="rounded-[1.45rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#1f7f63]">
-                                <BarChart3 size={18} />
-                            </div>
-                            <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Model Comparison - {formatCurrency(trackedIncome, currency)} Income</p>
-                        </div>
+                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                        <SectionTitle icon={BarChart3} title={`Model Comparison - ${formatCurrency(trackedIncome, currency)} Income`} />
 
                         <div className="mt-4 overflow-x-auto">
                             <table className="min-w-full text-sm">
@@ -1075,7 +1117,7 @@ const BudgetOverview = ({
                                                 </td>
                                                 <td className="py-3 pr-4">{formatCurrency(item.needs, currency)}</td>
                                                 <td className="py-3 pr-4">{formatCurrency(item.wants, currency)}</td>
-                                                <td className={`py-3 pr-4 font-semibold ${item.id === 'debt' ? 'text-[#d94d4d]' : 'text-[#166a55]'}`}>{formatCurrency(item.savings, currency)}</td>
+                                                <td className={`py-3 pr-4 font-semibold ${item.id === 'debt' ? 'text-[#d94d4d]' : 'text-[#11814f]'}`}>{formatCurrency(item.savings, currency)}</td>
                                                 <td className="py-3 pr-4 font-semibold text-[#2f74db]">{formatCurrency(item.annualSavings, currency)}</td>
                                                 <td className="py-3">
                                                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${visual.badge}`}>{visual.bestFor}</span>
@@ -1091,20 +1133,14 @@ const BudgetOverview = ({
             )}
 
             {activeView === 'expenses' && (
-                <div className="space-y-4">
+                <div ref={expensesSectionRef} className="space-y-4">
                     <section className="grid gap-4 xl:grid-cols-[1.3fr_0.85fr]">
-                        <article className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e8] text-[#b56a00]">
-                                        <Receipt size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">All Expenses - {currentMonthLabel}</p>
-                                </div>
-                                <button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-semibold text-[#166a55]">
-                                    + Add
-                                </button>
-                            </div>
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle
+                                icon={Receipt}
+                                title={`All Expenses - ${currentMonthLabel}`}
+                            action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">+ Add</button>}
+                            />
 
                             <div className="mt-4 flex flex-wrap gap-2">
                                 {[
@@ -1119,7 +1155,7 @@ const BudgetOverview = ({
                                             key={item.id}
                                             type="button"
                                             onClick={() => setExpenseFilter(item.id)}
-                                            className={`rounded-[0.85rem] border px-4 py-2 text-sm font-semibold ${isActive ? 'border-[#bfe2d6] bg-[#edf8f3] text-[#166a55]' : 'border-[#d8ece3] bg-white text-slate-600'}`}
+                                            className={`rounded-[0.85rem] border px-4 py-2 text-sm font-semibold ${isActive ? 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]' : 'border-[#d8ece3] bg-white text-slate-600'}`}
                                         >
                                             {item.label}
                                         </button>
@@ -1147,7 +1183,7 @@ const BudgetOverview = ({
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className={`text-[1.05rem] font-extrabold ${isPositive ? 'text-[#166a55]' : 'text-[#d94d4d]'}`}>
+                                                <p className={`text-[1.05rem] font-extrabold ${isPositive ? 'text-[#11814f]' : 'text-[#d94d4d]'}`}>
                                                     {isPositive ? '' : '-'}{formatCurrency(Math.abs(amount), expense.currency || currency)}
                                                 </p>
                                                 <p className="mt-1 text-sm text-slate-400">{expense.expense_date || 'This month'}</p>
@@ -1160,20 +1196,15 @@ const BudgetOverview = ({
                             </div>
 
                             {filteredExpenses.length > displayedExpenses.length && (
-                                <button type="button" onClick={() => onNavigate('expenses')} className="mt-4 inline-flex w-full items-center justify-center rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#166a55]">
+                                <button type="button" onClick={() => onNavigate('expenses')} className="mt-4 inline-flex w-full items-center justify-center rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
                                     Load More
                                 </button>
                             )}
                         </article>
 
                         <div className="space-y-4">
-                            <article className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e8] text-[#b56a00]">
-                                        <Zap size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Quick Add Expense</p>
-                                </div>
+                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                                <SectionTitle icon={Zap} title="Quick Add Expense" />
 
                                 <form onSubmit={handleQuickExpenseSubmit} className="mt-4 space-y-3">
                                     {quickExpenseError && (
@@ -1182,7 +1213,7 @@ const BudgetOverview = ({
                                         </div>
                                     )}
                                     {quickExpenseSuccess && (
-                                        <div className="rounded-[0.95rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm text-[#166a55]">
+                                        <div className="rounded-[0.95rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm text-[#11814f]">
                                             {quickExpenseSuccess}
                                         </div>
                                     )}
@@ -1197,7 +1228,7 @@ const BudgetOverview = ({
                                             value={quickExpenseForm.amount}
                                             onChange={handleQuickExpenseChange}
                                             placeholder="e.g. 1,500"
-                                            className="mt-2 w-full rounded-[1rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                                            className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                         />
                                     </div>
                                     <div>
@@ -1209,7 +1240,7 @@ const BudgetOverview = ({
                                             value={quickExpenseForm.description}
                                             onChange={handleQuickExpenseChange}
                                             placeholder="e.g. Lunch at Java House"
-                                            className="mt-2 w-full rounded-[1rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                                            className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                         />
                                     </div>
                                     <div>
@@ -1219,7 +1250,7 @@ const BudgetOverview = ({
                                             name="category"
                                             value={quickExpenseForm.category}
                                             onChange={handleQuickExpenseChange}
-                                            className="mt-2 w-full rounded-[1rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none"
+                                            className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                         >
                                             <option value="">Select category</option>
                                             {quickCategories.map((category) => (
@@ -1237,7 +1268,7 @@ const BudgetOverview = ({
                                                 name="type"
                                                 value={quickExpenseForm.type}
                                                 onChange={handleQuickExpenseChange}
-                                                className="mt-2 w-full rounded-[1rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none"
+                                                className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                             >
                                                 <option value="EXPENSE">Expense</option>
                                                 <option value="SAVING">Savings</option>
@@ -1250,7 +1281,7 @@ const BudgetOverview = ({
                                                 name="payment_method"
                                                 value={quickExpenseForm.payment_method}
                                                 onChange={handleQuickExpenseChange}
-                                                className="mt-2 w-full rounded-[1rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none"
+                                                className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                             >
                                                 <option value="MPESA">M-Pesa</option>
                                                 <option value="CASH">Cash</option>
@@ -1259,19 +1290,14 @@ const BudgetOverview = ({
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" disabled={quickExpenseSubmitting} className="mt-2 inline-flex w-full items-center justify-center rounded-[1rem] bg-[#0f6a57] px-4 py-3 text-sm font-semibold text-white disabled:opacity-70">
+                                    <button type="submit" disabled={quickExpenseSubmitting} className="mt-2 inline-flex w-full items-center justify-center rounded-[0.8rem] bg-[#11814f] px-4 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#0f7044] disabled:opacity-70">
                                         {quickExpenseSubmitting ? 'Adding Expense...' : '+ Add Expense'}
                                     </button>
                                 </form>
                             </article>
 
-                            <article className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#f8fcfa] text-slate-600">
-                                        <Receipt size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">{currentMonthLabel} Summary</p>
-                                </div>
+                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                                <SectionTitle icon={Receipt} title={`${currentMonthLabel} Summary`} />
                                 <div className="mt-4 space-y-3">
                                     {monthlySummaryRows.map((item) => (
                                         <div key={item.label} className={`flex items-center justify-between rounded-[0.95rem] px-4 py-3 ${item.shell}`}>
@@ -1279,7 +1305,7 @@ const BudgetOverview = ({
                                             <span className="text-[1.05rem] font-extrabold">{item.value}</span>
                                         </div>
                                     ))}
-                                    <button type="button" className="inline-flex w-full items-center justify-center rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#166a55]">
+                                    <button type="button" className="inline-flex w-full items-center justify-center rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
                                         Export Statement
                                     </button>
                                 </div>
@@ -1287,18 +1313,13 @@ const BudgetOverview = ({
                         </div>
                     </section>
 
-                    <section className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-[#166a55]">
-                                <Sparkles size={18} />
-                            </div>
-                            <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Expense Signals</p>
-                        </div>
+                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                        <SectionTitle icon={Sparkles} title="Expense Signals" />
                         <div className="mt-4 grid gap-3 md:grid-cols-3">
                             {Object.keys(expenseByMethod).length ? Object.entries(expenseByMethod).map(([label, value]) => (
                                 <div key={label} className="rounded-[1rem] border border-[#edf5f1] bg-[#f8fcfa] px-4 py-4">
                                     <p className="text-sm font-semibold text-slate-900">{label}</p>
-                                    <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{formatCurrency(value, currency)}</p>
+                                    <p className="mt-2 text-2xl font-extrabold text-[#11814f]">{formatCurrency(value, currency)}</p>
                                 </div>
                             )) : (
                                 <div className="rounded-[1rem] border border-[#edf5f1] bg-[#f8fcfa] px-4 py-4 text-sm text-slate-500 md:col-span-3">Add expenses to see how spending is split across cash, card, and mobile money.</div>
@@ -1310,16 +1331,13 @@ const BudgetOverview = ({
 
             {activeView === 'goals' && (
                 <div className="space-y-4">
-                    <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e8] text-[#d94d4d]">
-                                <Target size={18} />
-                            </div>
-                            <p className="text-[1.5rem] font-bold tracking-tight text-slate-950">Savings Goals</p>
-                        </div>
-                        <button type="button" onClick={() => onNavigate('goals')} className="inline-flex h-10 items-center rounded-full bg-[#0f6a57] px-5 text-sm font-semibold text-white">
-                            + New Goal
-                        </button>
+                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                        <SectionTitle
+                            icon={Target}
+                            title="Savings Goals"
+                            subtitle="Keep savings visible because the budget type needs a clear savings lane."
+                            action={<button type="button" onClick={() => onNavigate('goals')} className="inline-flex h-10 items-center rounded-full bg-[#11814f] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#0f7044]">+ New Goal</button>}
+                        />
                     </section>
 
                     <section className="grid gap-4 xl:grid-cols-3">
@@ -1327,14 +1345,14 @@ const BudgetOverview = ({
                             const visual = getSavingsVisual(item.title, index);
                             const Icon = visual.icon;
                             return (
-                                <article key={item.title} className={`rounded-[1.35rem] border px-4 py-4 shadow-sm ${visual.tone}`}>
+                                <article key={item.title} className={`rounded-[1rem] border px-4 py-4 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)] ${visual.tone}`}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-start gap-3">
                                             <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white shadow-sm">
                                                 <Icon size={18} className={visual.amount} />
                                             </div>
                                             <div>
-                                                <p className="text-[1.15rem] font-bold tracking-tight text-slate-950">{item.title}</p>
+                                                <p className="text-[1.15rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{item.title}</p>
                                                 <p className="mt-1 text-sm text-slate-400">
                                                     {item.helper}{item.due ? ` · ${item.due}` : ''}
                                                 </p>
@@ -1343,7 +1361,7 @@ const BudgetOverview = ({
                                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${visual.badge}`}>{visual.label}</span>
                                     </div>
 
-                                    <p className={`mt-5 text-[2rem] font-extrabold tracking-tight ${visual.amount}`}>{formatCurrency(item.current, currency)}</p>
+                                    <p className={`mt-5 text-[2rem] font-extrabold tracking-tight ${visual.amount}`} style={displayFont}>{formatCurrency(item.current, currency)}</p>
                                     <p className="mt-1 text-sm text-slate-400">of {formatCurrency(item.target, currency)} target</p>
 
                                     <div className="mt-4 flex items-center justify-between text-sm">
@@ -1380,18 +1398,12 @@ const BudgetOverview = ({
             {activeView === 'bills' && (
                 <div className="space-y-4">
                     <section className="grid gap-4 xl:grid-cols-[1.05fr_1fr]">
-                        <article className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e8] text-[#b56a00]">
-                                        <CalendarDays size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Bills tracked - {currentMonthLabel}</p>
-                                </div>
-                                <button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-semibold text-[#166a55]">
-                                    + Track Bill
-                                </button>
-                            </div>
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle
+                                icon={CalendarDays}
+                                title={`Bills tracked - ${currentMonthLabel}`}
+                                action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">+ Track Bill</button>}
+                            />
 
                             <div className="mt-5 space-y-3">
                                 {billActionError && (
@@ -1400,7 +1412,7 @@ const BudgetOverview = ({
                                     </div>
                                 )}
                                 {billActionMessage && (
-                                    <div className="rounded-[1rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm text-[#166a55]">
+                                    <div className="rounded-[1rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm text-[#11814f]">
                                         {billActionMessage}
                                     </div>
                                 )}
@@ -1446,13 +1458,8 @@ const BudgetOverview = ({
                         </article>
 
                         <div className="space-y-4">
-                            <article className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e8] text-[#b56a00]">
-                                        <Lightbulb size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Bills tracked optimisation tips</p>
-                                </div>
+                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                                <SectionTitle icon={Lightbulb} title="Bills tracked optimisation tips" />
 
                                 <div className="mt-4 space-y-3">
                                     <div className="rounded-[1rem] border border-[#f2c2c2] bg-[#fff5f5] px-4 py-4 text-sm leading-6 text-slate-700">
@@ -1464,26 +1471,21 @@ const BudgetOverview = ({
                                         <p className="mt-1">Switching to annual payment can reduce fees and keep monthly cash flow cleaner.</p>
                                     </div>
                                     <div className="rounded-[1rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-4 text-sm leading-6 text-slate-700">
-                                        <p className="font-semibold text-[#166a55]">Audit subscriptions</p>
+                                        <p className="font-semibold text-[#11814f]">Audit subscriptions</p>
                                         <p className="mt-1">Review recurring services so you only keep the subscriptions you actually use.</p>
-                                        <button type="button" onClick={() => setActiveView('expenses')} className="mt-3 inline-flex rounded-full bg-[#0f6a57] px-4 py-2 text-sm font-semibold text-white">
+                                        <button type="button" onClick={openExpensesView} className="mt-3 inline-flex cursor-pointer rounded-full bg-[#11814f] px-4 py-2 text-sm font-semibold text-white">
                                             Audit Now
                                         </button>
                                     </div>
                                 </div>
                             </article>
 
-                            <article className="rounded-[1.5rem] border border-[#bfe2d6] bg-white p-5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#f2edff] text-[#7a57d1]">
-                                        <BarChart3 size={18} />
-                                    </div>
-                                    <p className="text-[1.35rem] font-bold tracking-tight text-slate-950">Monthly bills tracked</p>
-                                </div>
+                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                                <SectionTitle icon={BarChart3} title="Monthly bills tracked" />
                                 <div className="mt-4 space-y-3">
                                     <div className="flex items-center justify-between rounded-[0.95rem] bg-[#edf8f3] px-4 py-3 text-sm font-semibold text-slate-800">
                                         <span>Essential bills tracked</span>
-                                        <span className="text-[#166a55]">{formatCurrency(essentialBills, currency)}</span>
+                                        <span className="text-[#11814f]">{formatCurrency(essentialBills, currency)}</span>
                                     </div>
                                     <div className="flex items-center justify-between rounded-[0.95rem] bg-[#fff3f3] px-4 py-3 text-sm font-semibold text-slate-800">
                                         <span>Subscriptions</span>
@@ -1491,7 +1493,7 @@ const BudgetOverview = ({
                                     </div>
                                     <div className="flex items-center justify-between rounded-[0.95rem] bg-[#edf8f3] px-4 py-3 text-sm font-semibold text-slate-800">
                                         <span>Total bills tracked</span>
-                                        <span className="text-[#166a55]">{formatCurrency(totalMonthlyBills, currency)}</span>
+                                        <span className="text-[#11814f]">{formatCurrency(totalMonthlyBills, currency)}</span>
                                     </div>
                                 </div>
                             </article>
@@ -1499,7 +1501,7 @@ const BudgetOverview = ({
                     </section>
                 </div>
             )}
-            <section className="overflow-hidden rounded-[1.55rem] bg-[linear-gradient(135deg,_#0d4d40_0%,_#1a6e5a_55%,_#2b7d68_100%)] px-5 py-5 text-white shadow-[0_18px_44px_rgba(15,77,64,0.18)]">
+            <section className="overflow-hidden rounded-[1.55rem] bg-[linear-gradient(135deg,_#0a4f32_0%,_#11814f_55%,_#14784e_100%)] px-5 py-5 text-white shadow-[0_18px_44px_rgba(15,77,64,0.18)]">
                 <div className="flex flex-col gap-4">
                     <div>
                         <p className="text-[1.45rem] font-extrabold tracking-tight">Your Budget Connects the Full Ecosystem</p>
@@ -1508,7 +1510,7 @@ const BudgetOverview = ({
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
                         {ecosystemCards.map(({ title, helper, cta, icon: Icon, action }) => (
                             <button key={title} type="button" onClick={action} className="rounded-[1.1rem] border border-white/15 bg-white/8 px-4 py-4 text-left transition-all hover:bg-white/12">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-[#166a55] shadow-sm">
+                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-[#11814f] shadow-sm">
                                     <Icon size={18} />
                                 </div>
                                 <p className="mt-4 text-sm font-bold text-white">{title}</p>
@@ -1543,7 +1545,7 @@ const BudgetOverview = ({
                         </div>
 
                         <div className="mt-4 rounded-[0.95rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm leading-5 text-slate-700">
-                            Your three values must add up to exactly 100%. Income used: <span className="font-semibold text-[#166a55]">{formatCurrency(customSplitIncome, currency)}/mo</span>
+                            Your three values must add up to exactly 100%. Income used: <span className="font-semibold text-[#11814f]">{formatCurrency(customSplitIncome, currency)}/mo</span>
                         </div>
 
                         <div className="mt-4 space-y-3.5">
@@ -1599,11 +1601,11 @@ const BudgetOverview = ({
 
                         <div className="mt-4 rounded-[0.95rem] bg-[#f8fcfa] px-4 py-3 text-sm leading-6 text-slate-700">
                             <div className="flex flex-wrap gap-3">
-                                <span>Needs: <span className="font-semibold text-[#166a55]">{formatCurrency((customSplitIncome * customSplit.needs) / 100, currency)}</span></span>
+                                <span>Needs: <span className="font-semibold text-[#11814f]">{formatCurrency((customSplitIncome * customSplit.needs) / 100, currency)}</span></span>
                                 <span>Wants: <span className="font-semibold text-[#b56a00]">{formatCurrency((customSplitIncome * customSplit.wants) / 100, currency)}</span></span>
                                 <span>Savings: <span className="font-semibold text-[#2f74db]">{formatCurrency((customSplitIncome * customSplit.savings) / 100, currency)}</span></span>
                             </div>
-                            <p className={`mt-2 font-semibold ${customSplitTotal === 100 ? 'text-[#166a55]' : 'text-[#d94d4d]'}`}>
+                            <p className={`mt-2 font-semibold ${customSplitTotal === 100 ? 'text-[#11814f]' : 'text-[#d94d4d]'}`}>
                                 {customSplitTotal === 100 ? `Total: ${customSplitTotal}%` : `Total: ${customSplitTotal}% - adjust to 100%`}
                             </p>
                         </div>
@@ -1619,7 +1621,7 @@ const BudgetOverview = ({
                             <button
                                 type="button"
                                 onClick={handleApplyCustomSplit}
-                                className="inline-flex items-center justify-center rounded-[0.95rem] bg-[#0f6a57] px-6 py-3 text-sm font-semibold text-white"
+                                className="inline-flex items-center justify-center rounded-[0.95rem] bg-[#11814f] px-6 py-3 text-sm font-semibold text-white"
                             >
                                 Apply Custom Split
                             </button>
@@ -1632,7 +1634,7 @@ const BudgetOverview = ({
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/35 px-4">
                     <div className="w-full max-w-md rounded-[1.5rem] bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
                         <div className="flex items-start gap-3">
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#edf8f3] text-[#166a55]">
+                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#edf8f3] text-[#11814f]">
                                 <Check size={18} />
                             </div>
                             <div>
@@ -1642,7 +1644,7 @@ const BudgetOverview = ({
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
-                            <SplitChip label={`Needs ${pendingModel.split.needs}%`} shell="bg-[#e7f6f1] text-[#166a55]" />
+                            <SplitChip label={`Needs ${pendingModel.split.needs}%`} shell="bg-[#e7f6f1] text-[#11814f]" />
                             <SplitChip label={`Wants ${pendingModel.split.wants}%`} shell="bg-[#fff3d8] text-[#b56a00]" />
                             <SplitChip label={`Savings ${pendingModel.split.savings}%`} shell="bg-[#eef4ff] text-[#2f74db]" />
                         </div>
@@ -1651,7 +1653,7 @@ const BudgetOverview = ({
                             <button
                                 type="button"
                                 onClick={() => setShowModelModal(false)}
-                                className="inline-flex rounded-[0.9rem] bg-[#0f4d40] px-4 py-2.5 text-sm font-semibold text-white"
+                                className="inline-flex rounded-[0.9rem] bg-[#11814f] px-4 py-2.5 text-sm font-semibold text-white"
                             >
                                 Continue
                             </button>
