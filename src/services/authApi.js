@@ -15,6 +15,8 @@ const API_URL = resolveApiBaseUrl({
 });
 const LOGIN_ENDPOINT = import.meta.env.VITE_LOGIN_ENDPOINT || `${API_URL}/api/v1/auth/login/`;
 const REGISTER_ENDPOINT = import.meta.env.VITE_REGISTER_ENDPOINT || `${API_URL}/api/v1/auth/register/`;
+const PASSWORD_RESET_REQUEST_ENDPOINT = import.meta.env.VITE_PASSWORD_RESET_REQUEST_ENDPOINT || `${API_URL}/api/v1/auth/password-reset/`;
+const PASSWORD_RESET_CONFIRM_ENDPOINT = import.meta.env.VITE_PASSWORD_RESET_CONFIRM_ENDPOINT || `${API_URL}/api/v1/auth/password-reset/confirm/`;
 const PROFILE_ENDPOINT = import.meta.env.VITE_PROFILE_ENDPOINT || `${API_URL}/api/v1/users/me/`;
 const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
 
@@ -159,6 +161,46 @@ export async function registerUser(payload) {
 
     const result = await parseResponse(response);
     storeUserProfile(extractUser(result));
+    return result?.data || result;
+}
+
+export async function requestPasswordReset(payload) {
+    const response = await authRequestWithRetry(
+        PASSWORD_RESET_REQUEST_ENDPOINT,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        },
+        {
+            timeoutMs: AUTH_TIMEOUT_MS,
+            retries: 1,
+        }
+    );
+
+    const result = await parseResponse(response);
+    return result?.data || result;
+}
+
+export async function confirmPasswordReset(payload) {
+    const response = await authRequestWithRetry(
+        PASSWORD_RESET_CONFIRM_ENDPOINT,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        },
+        {
+            timeoutMs: AUTH_TIMEOUT_MS,
+            retries: 1,
+        }
+    );
+
+    const result = await parseResponse(response);
     return result?.data || result;
 }
 

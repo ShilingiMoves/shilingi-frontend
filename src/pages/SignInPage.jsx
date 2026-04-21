@@ -81,7 +81,23 @@ const SignInPage = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
-                        <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Enter your password" required />
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm font-medium text-gray-700">Password</span>
+                                <Link to="/forgot-password" className="text-sm font-semibold text-primary-700 hover:text-primary-600">
+                                    Forgot password?
+                                </Link>
+                            </div>
+                            <input
+                                name="password"
+                                type="password"
+                                value={formValues.password}
+                                onChange={handleChange}
+                                placeholder="Enter your password"
+                                required
+                                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500"
+                            />
+                        </div>
 
                         <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
                             {isSubmitting ? 'Signing you in... please wait' : 'Sign in'}

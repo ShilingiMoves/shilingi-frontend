@@ -47,11 +47,6 @@ const tabOptions = [
     { id: 'bills', label: 'Bills tracked', icon: CalendarDays },
 ];
 
-const isSavingsCategoryName = (name = '') => {
-    const normalized = String(name).toLowerCase();
-    return normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal');
-};
-
 const categoryMeta = (name = '') => {
     const normalized = String(name).toLowerCase();
     if (normalized.includes('housing') || normalized.includes('rent') || normalized.includes('mortgage')) return { type: 'Needs', icon: Home, tint: 'bg-[#fff6e8] text-[#b56a00]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#d38a12' };

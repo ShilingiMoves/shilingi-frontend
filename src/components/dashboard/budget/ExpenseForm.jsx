@@ -21,6 +21,17 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
 
     const isEditing = !!initialValues;
 
+    async function loadCategories() {
+        try {
+            setLoadError('');
+            const data = await getCategories();
+            setCategories(data);
+        } catch (error) {
+            console.error('Failed to load categories:', error);
+            setLoadError('We could not load budget categories right now. Try again in a moment.');
+        }
+    }
+
     useEffect(() => {
         loadCategories();
     }, []);
@@ -39,17 +50,6 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
             });
         }
     }, [initialValues]);
-
-    const loadCategories = async () => {
-        try {
-            setLoadError('');
-            const data = await getCategories();
-            setCategories(data);
-        } catch (error) {
-            console.error('Failed to load categories:', error);
-            setLoadError('We could not load budget categories right now. Try again in a moment.');
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;

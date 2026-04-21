@@ -4,7 +4,6 @@ import FeatureGrid from '../components/FeatureGrid';
 import Steps from '../components/Steps';
 import TrustAndCTA from '../components/TrustAndCTA';
 import Footer from '../components/Footer';
-import WhatsAppButton from '../components/WhatsAppButton';
 
 const Home = () => {
     return (
@@ -23,9 +22,6 @@ const Home = () => {
 
             {/* Footer */}
             <Footer />
-
-            {/* WhatsApp Floating Button */}
-            <WhatsAppButton />
         </div>
     );
 };

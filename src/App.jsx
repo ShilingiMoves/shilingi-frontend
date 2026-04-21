@@ -24,6 +24,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLandingPage = lazy(() => import('./pages/DashboardLandingPage'));
 const SignInPage = lazy(() => import('./pages/SignInPage'));
 const SignUpPage = lazy(() => import('./pages/SignUpPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const TrustPage = lazy(() =>
     import('./pages/PlaceholderPages').then((module) => ({ default: module.TrustPage }))
 );
@@ -104,6 +105,7 @@ function AppLayout() {
                         <Route path="/trust" element={<TrustPage />} />
                         <Route path="/signin" element={<SignInPage />} />
                         <Route path="/signup" element={<SignUpPage />} />
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
                         <Route path="/data-protection" element={<DataProtectionPage />} />
                         <Route path="/terms" element={<TermsPage />} />

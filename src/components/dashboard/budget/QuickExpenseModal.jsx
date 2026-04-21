@@ -14,11 +14,7 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
         description: '',
     });
 
-    useEffect(() => {
-        loadCategories();
-    }, []);
-
-    const loadCategories = async () => {
+    async function loadCategories() {
         try {
             setLoadError('');
             const data = await getCategories();
@@ -27,7 +23,11 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
             console.error('Failed to load categories:', error);
             setLoadError('We could not load budget categories right now.');
         }
-    };
+    }
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

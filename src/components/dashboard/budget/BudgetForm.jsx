@@ -15,6 +15,15 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
         notes: '',
     });
 
+    async function loadCategories() {
+        try {
+            const data = await getCategories();
+            setCategories(data);
+        } catch (error) {
+            console.error('Failed to load categories:', error);
+        }
+    }
+
     useEffect(() => {
         loadCategories();
     }, []);
@@ -33,15 +42,6 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
             });
         }
     }, [initialValues]);
-
-    const loadCategories = async () => {
-        try {
-            const data = await getCategories();
-            setCategories(data);
-        } catch (error) {
-            console.error('Failed to load categories:', error);
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;

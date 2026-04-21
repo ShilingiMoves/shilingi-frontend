@@ -35,6 +35,18 @@ const baseProps = {
             expense_count: 0,
         },
         {
+            uuid: 'budget-utilities',
+            category_id: 4,
+            category_name: 'Utilities',
+            amount: 7000,
+            total_spent: 0,
+            remaining: 7000,
+            status: 'ON_TRACK',
+            spent_percentage: 0,
+            currency: 'KES',
+            expense_count: 0,
+        },
+        {
             uuid: 'budget-savings',
             category_id: 2,
             category_name: 'Savings',
@@ -100,20 +112,31 @@ describe('BudgetOverview', () => {
     beforeEach(() => {
         createExpenseMock.mockReset();
         getCategoriesMock.mockReset();
+        baseProps.onNavigate.mockReset();
+        baseProps.onSelectSection.mockReset();
+        baseProps.onQuickExpenseAdded.mockReset();
         getCategoriesMock.mockResolvedValue([
             { id: 1, uuid: 'cat-housing', value: '1', name: 'Housing' },
             { id: 2, uuid: 'cat-savings', value: '2', name: 'Savings' },
+            { id: 4, uuid: 'cat-utilities', value: '4', name: 'Utilities' },
         ]);
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
     });
 
-    it('opens the compare section when change type is clicked', async () => {
+    it('opens the compare section from the planner tab', async () => {
         const user = userEvent.setup();
         render(<BudgetOverview {...baseProps} />);
 
-        await user.click(screen.getByRole('button', { name: /change type/i }));
+        await user.click(screen.getByRole('button', { name: /compare budget types/i }));
 
         expect(screen.getByText(/compare budget models/i)).toBeInTheDocument();
+    });
+
+    it('hides budget health for users without a created budget', () => {
+        render(<BudgetOverview {...baseProps} budgets={[]} summary={{ ...baseProps.summary, total_budget: 0, active_budgets_count: 0 }} />);
+
+        expect(screen.queryByText(/budget health looks strong/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/most categories are pacing well/i)).not.toBeInTheDocument();
     });
 
     it('submits the quick add expense form and refreshes the budget view', async () => {
@@ -154,7 +177,7 @@ describe('BudgetOverview', () => {
 
         render(<BudgetOverview {...baseProps} />);
 
-        await user.click(screen.getByRole('button', { name: /^bills$/i }));
+        await user.click(screen.getAllByRole('button', { name: /^bills tracked$/i })[0]);
         await user.click(screen.getByRole('button', { name: /pay now/i }));
 
         await waitFor(() => {

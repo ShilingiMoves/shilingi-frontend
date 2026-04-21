@@ -603,7 +603,11 @@ const relDate = (v) => {
 const isNewUser = (user) => {
     const profile = user?.profile || {};
     let ws = {};
-    try { ws = JSON.parse(localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}'); } catch {}
+    try {
+        ws = JSON.parse(localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
+    } catch {
+        ws = {};
+    }
     const hasData = localStorage.getItem(DASHBOARD_DATA_KEY) === 'true';
     return !(profile.monthly_income || profile.primary_financial_goal || ws.shortTermGoal || ws.mediumTermGoal || ws.longTermGoal || hasData);
 };
@@ -1310,7 +1314,6 @@ const SpendingDonut = ({ rows }) => {
     const totalAmount = (rows || []).reduce((sum, row) => sum + toNum(row.rawAmount ?? String(row.amount || '').replace(/[^\d.-]/g, '')), 0);
     const radius = 34;
     const circumference = 2 * Math.PI * radius;
-    let offset = 0;
     const colors = {
         'bg-emerald-600': '#14986b',
         'bg-blue-600': '#2d73d5',
@@ -1323,10 +1326,11 @@ const SpendingDonut = ({ rows }) => {
         <div className="relative flex h-28 w-28 items-center justify-center">
             <svg className="h-28 w-28 -rotate-90 transform" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r={radius} stroke="#eef4f1" strokeWidth="14" fill="none" />
-                {normalizedRows.map((row) => {
+                {normalizedRows.map((row, index) => {
                     const segment = (row.percent / total) * circumference;
-                    const currentOffset = offset;
-                    offset += segment;
+                    const currentOffset = normalizedRows
+                        .slice(0, index)
+                        .reduce((sum, previousRow) => sum + ((previousRow.percent / total) * circumference), 0);
                     return (
                         <circle
                             key={row.key}

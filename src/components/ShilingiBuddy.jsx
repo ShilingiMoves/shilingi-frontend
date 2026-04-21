@@ -26,7 +26,7 @@ const initialMessages = [
     {
         id: 1,
         sender: 'buddy',
-        text: 'Hi, I am Shilingi Buddy. Tell me what you want to improve today: budgeting, debt, saving, investing, or choosing the right Shilingi Moves tool.',
+        text: 'Hi, I am Shilingi Buddy AI. Tell me what you want to improve today: budgeting, debt, saving, investing, or choosing the right Shilingi Moves tool.',
     },
 ];
 
@@ -111,7 +111,7 @@ function ShilingiBuddy() {
     useEffect(() => {
         const openTimer = window.setTimeout(() => {
             setIsOpen(true);
-        }, 3000);
+        }, 6000);
 
         return () => window.clearTimeout(openTimer);
     }, []);
@@ -172,7 +172,7 @@ function ShilingiBuddy() {
                 <section
                     id="shilingi-buddy-panel"
                     className="flex h-[min(470px,calc(100vh-2rem))] w-[calc(100vw-1.5rem)] max-w-[340px] flex-col overflow-hidden rounded-xl border border-primary-100 bg-white shadow-2xl shadow-slate-900/20"
-                    aria-label="Shilingi Buddy chat"
+                    aria-label="Shilingi Buddy AI chat"
                 >
                     <header className="flex items-center justify-between bg-primary-700 px-3.5 py-2.5 text-white">
                         <div className="flex min-w-0 items-center gap-2.5">
@@ -180,7 +180,7 @@ function ShilingiBuddy() {
                                 <Bot size={20} aria-hidden="true" />
                             </span>
                             <div className="min-w-0">
-                                <h2 className="truncate text-sm font-bold">Shilingi Buddy</h2>
+                                <h2 className="truncate text-sm font-bold">Shilingi Buddy AI</h2>
                                 <p className="truncate text-[11px] font-medium text-primary-50">Website guide and money helper</p>
                             </div>
                         </div>
@@ -188,7 +188,7 @@ function ShilingiBuddy() {
                             type="button"
                             onClick={() => setIsOpen(false)}
                             className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/80"
-                            aria-label="Close Shilingi Buddy"
+                            aria-label="Close Shilingi Buddy AI"
                         >
                             <X size={18} aria-hidden="true" />
                         </button>
@@ -231,7 +231,7 @@ function ShilingiBuddy() {
                         {isTyping && (
                             <div className="flex justify-start">
                                 <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-3 py-2.5 text-[13px] font-medium text-slate-500 shadow-sm">
-                                    Shilingi Buddy is typing...
+                                    Shilingi Buddy AI is typing...
                                 </div>
                             </div>
                         )}
@@ -256,7 +256,7 @@ function ShilingiBuddy() {
                     <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-2.5">
                         <div className="flex items-end gap-2">
                             <label htmlFor="shilingi-buddy-message" className="sr-only">
-                                Message Shilingi Buddy
+                                Message Shilingi Buddy AI
                             </label>
                             <textarea
                                 id="shilingi-buddy-message"
@@ -270,7 +270,7 @@ function ShilingiBuddy() {
                                     }
                                 }}
                                 rows={1}
-                                placeholder="Ask Shilingi Buddy..."
+                                placeholder="Ask Shilingi Buddy AI..."
                                 className="max-h-20 min-h-[40px] flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                             />
                             <button
@@ -301,7 +301,7 @@ function ShilingiBuddy() {
                         <MessageCircle size={18} aria-hidden="true" />
                     </span>
                     <span className="text-left">
-                        <span className="block text-xs font-bold leading-tight">Shilingi Buddy</span>
+                        <span className="block text-xs font-bold leading-tight">Shilingi Buddy AI</span>
                         <span className="block text-[11px] font-medium leading-tight text-primary-50">Need help?</span>
                     </span>
                 </button>

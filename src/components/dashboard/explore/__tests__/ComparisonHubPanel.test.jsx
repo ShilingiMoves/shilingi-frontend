@@ -10,7 +10,7 @@ describe('ComparisonHubPanel', () => {
 
         expect(screen.getByRole('heading', { name: /loans & credit/i })).toBeInTheDocument();
 
-        await user.click(screen.getByRole('button', { name: /savings & mmfs/i }));
+        await user.click(screen.getByRole('button', { name: /mmfs/i }));
         expect(screen.getByRole('heading', { name: /savings & money market funds/i })).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: /^insurance$/i }));
