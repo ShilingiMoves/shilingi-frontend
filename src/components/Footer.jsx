@@ -396,10 +396,10 @@ const Footer = () => {
                     </p>
                     <div className="mt-4 flex flex-col items-center justify-between gap-3 text-xs text-white/72 md:flex-row">
                         <div className="flex flex-wrap items-center justify-center gap-5 md:justify-start">
-                            <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Privacy Policy</Link>
+                            <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Data Privacy Policy</Link>
                             <Link to="/terms" className="!text-white/80 transition-colors hover:!text-white">Terms of Service</Link>
                             <Link to="/privacy#cookies" className="!text-white/80 transition-colors hover:!text-white">Cookie Policy</Link>
-                            <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Data Protection</Link>
+                            <Link to="/privacy#data-protection" className="!text-white/80 transition-colors hover:!text-white">Data Protection</Link>
                         </div>
                         <p className="text-center text-xs font-medium !text-white">
                             &copy; {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.
