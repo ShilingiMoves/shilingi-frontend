@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppErrorBoundary from './components/AppErrorBoundary';
+import ShilingiBuddy from './components/ShilingiBuddy';
+import CookieConsentBanner from './components/CookieConsentBanner';
 
 const Home = lazy(() => import('./pages/Home'));
 const LearnPage = lazy(() => import('./pages/LearnPage'));
@@ -15,6 +17,7 @@ const PartnershipsPage = lazy(() => import('./pages/PartnershipsPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const DataProtectionPage = lazy(() => import('./pages/DataProtectionPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const ReferPage = lazy(() => import('./pages/ReferPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -102,11 +105,14 @@ function AppLayout() {
                         <Route path="/signin" element={<SignInPage />} />
                         <Route path="/signup" element={<SignUpPage />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/data-protection" element={<DataProtectionPage />} />
                         <Route path="/terms" element={<TermsPage />} />
                         <Route path="/refer" element={<ReferPage />} />
                     </Routes>
                 </Suspense>
             </main>
+            <ShilingiBuddy />
+            <CookieConsentBanner />
         </div>
     );
 }

@@ -27,6 +27,10 @@ const ToolsPage = () => {
     const [selectedCalc, setSelectedCalc] = useState(null);
     const [activeFilter, setActiveFilter] = useState('All');
 
+    const openShilingiBuddy = (prompt = 'Help me choose the right Shilingi Moves tool') => {
+        window.dispatchEvent(new CustomEvent('shilingi-buddy-open', { detail: { prompt } }));
+    };
+
     // Loan Calculator State
     const [loanAmount, setLoanAmount] = useState(100000);
     const [loanRate, setLoanRate] = useState(14);
@@ -872,17 +876,29 @@ const ToolsPage = () => {
 
                             <div className="space-y-3 mb-8">
                                 <p className="text-xs text-gray-400 font-bold tracking-wider uppercase">Try clicking a prompt:</p>
-                                <button className="w-full text-left px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors text-sm font-medium flex items-center justify-between group">
+                                <button
+                                    type="button"
+                                    onClick={() => openShilingiBuddy('Is a Sacco better than a bank?')}
+                                    className="w-full text-left px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors text-sm font-medium flex items-center justify-between group"
+                                >
                                     "Is a Sacco better than a bank?" <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
-                                <button className="w-full text-left px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors text-sm font-medium flex items-center justify-between group">
+                                <button
+                                    type="button"
+                                    onClick={() => openShilingiBuddy('How much should I save monthly?')}
+                                    className="w-full text-left px-5 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors text-sm font-medium flex items-center justify-between group"
+                                >
                                     "How much should I save monthly?" <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
                             </div>
 
-                            <Link to="/signup" className="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full transition-colors shadow-lg shadow-primary-900/50">
-                                Unlock Shilingi Buddy <Lock size={16} />
-                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => openShilingiBuddy()}
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full transition-colors shadow-lg shadow-primary-900/50"
+                            >
+                                Unlock Shilingi Buddy <MessageCircle size={16} />
+                            </button>
                         </div>
 
                         <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
