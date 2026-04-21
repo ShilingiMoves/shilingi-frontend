@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
     ArrowRight,
     Bot,
@@ -16,7 +17,6 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { hasStoredAccessToken } from '../services/authApi';
-import HeroDashboardImage from '../assets/Dashboard hero 2 - Copy.png';
 
 const dashboardDestination = { pathname: '/dashboard/app' };
 const pageShell = 'min-h-screen bg-[linear-gradient(180deg,_#f7fdfb_0%,_#ffffff_24%,_#f0f7f9_100%)] text-slate-900';
@@ -254,9 +254,125 @@ const toneClasses = {
     amber: 'bg-primary-100 text-primary-700',
 };
 
+const cream = '#F5F0E4';
+const greenDark = '#1A6B3C';
+const greenMid = '#22A05A';
+const greenLight = '#D6EFE1';
+const navy = '#0D1B2A';
+
+const dashboardHeroCards = [
+    { label: 'Budget Planner', value: 'KSh 45K/mo', note: '73% of budget used', color: '#16A34A', bg: '#F0FDF4', letter: 'B', pct: 73 },
+    { label: 'Debt Manager', value: 'KSh 120,000', note: '3 active debts', color: '#EF4444', bg: '#FEF2F2', letter: 'D', pct: 45 },
+    { label: 'Investment Planner', value: '+12.4% YTD', note: 'Portfolio growing', color: '#3B82F6', bg: '#EFF6FF', letter: 'I', pct: 60 },
+    { label: 'Protection Planner', value: '2 Policies', note: 'Life + critical illness', color: '#D97706', bg: '#FFFBEB', letter: 'P', pct: 100 },
+    { label: 'Retirement Planner', value: '34% of goal', note: 'Target: Age 60', color: '#7C3AED', bg: '#F5F3FF', letter: 'R', pct: 34 },
+    { label: 'Net Worth Tracker', value: 'KSh 2.45M', note: 'Growing month on month', color: '#0F766E', bg: '#F0FDFA', letter: 'N', pct: 68 },
+];
+
+const heroStagger = { hidden: {}, show: { transition: { staggerChildren: 0.12 } } };
+const heroFadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+};
+const heroSlideIn = {
+    hidden: { opacity: 0, x: 55 },
+    show: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.3 } },
+};
+
+const DashboardHeroCard = ({ label, value, note, color, bg, letter, pct }) => (
+    <div className="mb-1.5 flex shrink-0 items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
+        <div
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] text-[13px] font-extrabold"
+            style={{ backgroundColor: bg, color }}
+        >
+            {letter}
+        </div>
+        <div className="min-w-0 flex-1">
+            <div className="truncate text-[10.5px] font-bold text-slate-900">{label}</div>
+            <div className="mt-0.5 text-[9px] text-slate-400">{note}</div>
+            <div className="mt-1.5 h-[3px] rounded-full bg-slate-100">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+            </div>
+        </div>
+        <div className="whitespace-nowrap text-right text-[9.5px] font-bold" style={{ color }}>
+            {value}
+        </div>
+    </div>
+);
+
+const DashboardPhoneMockup = () => (
+    <div className="relative drop-shadow-[0_30px_60px_rgba(0,0,0,0.16)]">
+        <div className="absolute -left-[5px] top-[110px] h-8 w-[3px] rounded-l-sm bg-[#c8d0dc]" />
+        <div className="absolute -left-[5px] top-[152px] h-8 w-[3px] rounded-l-sm bg-[#c8d0dc]" />
+        <div className="absolute -right-[5px] top-32 h-[50px] w-[3px] rounded-r-sm bg-[#c8d0dc]" />
+
+        <div className="h-[516px] w-[248px] rounded-[46px] border-[3px] border-black bg-[#0b0f17] p-[6px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+            <div className="flex h-full w-full flex-col overflow-hidden rounded-[39px] bg-slate-950">
+                <div className="flex h-[38px] shrink-0 items-end justify-center bg-slate-900 pb-1.5">
+                    <div className="h-[26px] w-[92px] rounded-full bg-black" />
+                </div>
+
+                <div className="m-1 flex flex-1 flex-col overflow-hidden rounded-[34px] border border-black/60 bg-slate-50">
+                    <div className="flex shrink-0 items-center gap-2 border-b border-slate-100 bg-white px-[13px] py-2.5">
+                        <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: greenMid }}>
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                <path d="M7 1.5L12 4V8C12 10.5 9.5 12.5 7 13C4.5 12.5 2 10.5 2 8V4L7 1.5Z" fill="white" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <div className="text-[11px] font-bold text-slate-900">Shilingi Moves</div>
+                            <div className="text-[9px] text-slate-400">Good morning, Myra</div>
+                        </div>
+                        <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full text-[10px] font-extrabold" style={{ backgroundColor: greenLight, color: greenDark }}>
+                            M
+                        </div>
+                    </div>
+
+                    <div className="shrink-0 px-[15px] py-[13px]" style={{ backgroundColor: greenDark }}>
+                        <div className="text-[9px] uppercase tracking-[0.1em] text-white/60">Total Net Worth</div>
+                        <div className="mt-1 text-[22px] font-extrabold leading-none text-white">KSh 2,450,000</div>
+                        <div className="mt-1.5 text-[9px] text-white/75">Up 8.3% this month · 6 tools active</div>
+                    </div>
+
+                    <div className="flex-1 overflow-hidden bg-[#eef2f7] px-2 pt-2">
+                        <div className="shilingi-scroll-track">
+                            {[...dashboardHeroCards, ...dashboardHeroCards].map((card, index) => (
+                                <DashboardHeroCard key={`${card.label}-${index}`} {...card} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
 const DashboardLandingPage = () => {
     const [billingMode, setBillingMode] = useState('monthly');
     const [openFaq, setOpenFaq] = useState(0);
+
+    useEffect(() => {
+        const id = 'shilingi-dashboard-hero-motion';
+        if (document.getElementById(id)) return undefined;
+
+        const style = document.createElement('style');
+        style.id = id;
+        style.textContent = `
+            @keyframes shilingiDashboardScroll {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(-50%); }
+            }
+            .shilingi-scroll-track {
+                animation: shilingiDashboardScroll 14s linear infinite;
+            }
+            .shilingi-scroll-track:hover {
+                animation-play-state: paused;
+            }
+        `;
+        document.head.appendChild(style);
+
+        return () => document.getElementById(id)?.remove();
+    }, []);
 
     if (hasStoredAccessToken()) {
         return <Navigate to="/dashboard/app" replace />;
@@ -264,61 +380,74 @@ const DashboardLandingPage = () => {
 
     return (
         <div className={pageShell}>
-            <section className="relative min-h-[650px] overflow-hidden border-b border-primary-100">
-                <div className="absolute inset-0">
-                    <img
-                        src={HeroDashboardImage}
-                        alt="Shilingi Moves dashboard background"
-                        className="h-full w-full object-cover object-center"
-                    />
-                    <div className="absolute inset-0 bg-[linear-gradient(90deg,_rgba(253,247,238,0.97)_0%,_rgba(252,243,227,0.9)_34%,_rgba(255,255,255,0.3)_62%,_rgba(255,255,255,0.1)_100%)]" />
-                </div>
-
-                <div className="container-custom relative z-10 flex min-h-[650px] items-center py-14 lg:py-20">
-                    <div className="flex w-full max-w-2xl flex-col justify-center">
-                        <div className="w-full">
-                            {/* Top Tag */}
-                            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-md px-4 py-2 text-sm font-medium text-emerald-800 border border-white/60 mb-6 shadow-sm">
-                                <ShieldCheck size={16} className="text-emerald-600" />
+            <section className="overflow-hidden border-b border-primary-100 px-4 py-20 sm:px-6 lg:px-8" style={{ backgroundColor: cream }}>
+                <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-6xl flex-col items-center justify-center gap-12 lg:flex-row lg:gap-24">
+                    <motion.div
+                        variants={heroStagger}
+                        initial="hidden"
+                        animate="show"
+                        className="w-full max-w-[500px] text-center lg:text-left"
+                    >
+                        <motion.div variants={heroFadeUp} className="mb-6 flex justify-center lg:justify-start">
+                            <span className="inline-flex items-center gap-2 rounded-full border bg-white px-4 py-2 text-[12.5px] font-medium" style={{ borderColor: greenDark, color: greenDark }}>
+                                <ShieldCheck size={14} />
                                 Your personal financial command centre is waiting
-                            </div>
+                            </span>
+                        </motion.div>
 
-                            <h1 className="mt-2 text-4xl sm:text-5xl lg:text-6xl font-[300] leading-[1.05] tracking-tight text-slate-900 drop-shadow-sm">
-                                One Dashboard.
-                                <br />
-                                Every <span className="font-[450] text-emerald-700">Financial Decision.</span>
-                            </h1>
+                        <motion.h1
+                            variants={heroFadeUp}
+                            className="m-0 text-[2.45rem] font-black leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]"
+                            style={{ color: navy }}
+                        >
+                            One Dashboard.
+                            <br />
+                            Every <span style={{ color: greenDark }}>Financial Decision.</span>
+                        </motion.h1>
 
-                            <p className="mt-5 text-lg font-medium text-slate-800 leading-relaxed max-w-md drop-shadow-sm">
-                                Experience the Shilingi flow. Your finances in action.
-                            </p>
+                        <motion.p variants={heroFadeUp} className="mt-5 text-base font-semibold sm:text-lg" style={{ color: navy }}>
+                            Experience the Shilingi flow. Your finances in action.
+                        </motion.p>
 
-                            <p className="mt-3 text-base text-slate-700 leading-relaxed max-w-md drop-shadow-sm">
-                                Track, plan and grow your finances with a dashboard built for Kenyan realities. Choose the tier that fits your journey and upgrade when you are ready.
-                            </p>
+                        <motion.p variants={heroFadeUp} className="mx-auto mt-3 max-w-[420px] text-[0.95rem] leading-7 opacity-70 lg:mx-0" style={{ color: navy }}>
+                            Track, plan and grow your finances with a dashboard built for Kenyan realities. Choose the tier that fits your journey and upgrade when you are ready.
+                        </motion.p>
 
-                            <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                                <Link
-                                    to="/signin"
-                                    state={{ from: dashboardDestination }}
-                                    className="inline-flex min-h-[52px] items-center justify-center gap-3 rounded-xl px-8 py-4 text-base font-bold text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg shadow-black/5"
-                                    style={{ backgroundColor: brandYellow }}
-                                >
-                                    Start for Free
-                                </Link>
-                                <Link
-                                    to="/signup"
-                                    className="inline-flex min-h-[52px] items-center justify-center rounded-xl border border-white/80 bg-white/70 backdrop-blur-md px-8 py-4 text-base font-bold text-slate-900 transition-all hover:bg-white hover:-translate-y-0.5 hover:shadow-md"
-                                >
-                                    View Demo
-                                </Link>
-                            </div>
+                        <motion.div variants={heroFadeUp} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+                            <Link
+                                to="/signin"
+                                state={{ from: dashboardDestination }}
+                                className="inline-flex min-h-[52px] items-center justify-center rounded-lg px-8 py-3.5 text-[15px] font-extrabold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                                style={{ backgroundColor: brandYellow }}
+                            >
+                                Start for Free
+                            </Link>
+                            <Link
+                                to="/signup"
+                                className="inline-flex min-h-[52px] items-center justify-center rounded-lg border px-8 py-3.5 text-[15px] font-bold text-[#0D1B2A] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white"
+                                style={{ borderColor: navy }}
+                            >
+                                View Demo
+                            </Link>
+                        </motion.div>
 
-                            <p className="mt-5 text-xs font-medium text-slate-700 mix-blend-multiply">
-                                Cancel anytime. KES pricing.
-                            </p>
-                        </div>
-                    </div>
+                        <motion.p variants={heroFadeUp} className="mt-5 text-xs opacity-50" style={{ color: navy }}>
+                            Cancel anytime. KES pricing.
+                        </motion.p>
+                    </motion.div>
+
+                    <motion.div
+                        variants={heroSlideIn}
+                        initial="hidden"
+                        animate="show"
+                        className="relative flex shrink-0 justify-center"
+                    >
+                        <div
+                            className="pointer-events-none absolute left-1/2 top-1/2 h-[440px] w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70"
+                            style={{ background: `radial-gradient(ellipse, ${greenLight} 0%, transparent 68%)` }}
+                        />
+                        <DashboardPhoneMockup />
+                    </motion.div>
                 </div>
             </section>
 

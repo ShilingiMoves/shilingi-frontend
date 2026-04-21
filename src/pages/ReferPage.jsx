@@ -136,7 +136,7 @@ const ReferPage = () => {
 
                 <div className="container-custom relative z-10 pt-20 pb-16 md:pt-28 md:pb-24 text-center">
                     {/* Overlapping avatars with Shilingi logo */}
-                    <div className="flex justify-center items-center mb-10 md:mb-12">
+                    <div className="hidden">
                         <div className="relative flex items-center">
                             {/* Left avatar */}
                             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-primary-900 bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-3xl md:text-4xl shadow-xl z-10 relative overflow-hidden">
