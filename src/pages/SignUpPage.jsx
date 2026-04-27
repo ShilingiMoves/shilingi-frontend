@@ -94,13 +94,13 @@ const SignUpPage = () => {
                     )}
 
                     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-                        <Field label="First name" name="first_name" value={formValues.first_name} onChange={handleChange} placeholder="Myra" required />
-                        <Field label="Last name" name="last_name" value={formValues.last_name} onChange={handleChange} placeholder="Jarenga" required />
+                        <Field label="First name" name="first_name" value={formValues.first_name} onChange={handleChange} placeholder="John" required />
+                        <Field label="Last name" name="last_name" value={formValues.last_name} onChange={handleChange} placeholder="Doe" required />
                         <div className="sm:col-span-2">
-                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
+                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                         </div>
                         <div className="sm:col-span-2">
-                            <Field label="Phone number (optional)" name="phone_number" value={formValues.phone_number} onChange={handleChange} placeholder="+254 700 000 000" />
+                            <Field label="Phone number (optional)" name="phone_number" value={formValues.phone_number} onChange={handleChange} placeholder="0700 000 000" />
                         </div>
                         <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a password" required />
                         <Field label="Confirm password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your password" required />

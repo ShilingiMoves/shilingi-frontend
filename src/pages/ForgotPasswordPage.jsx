@@ -120,7 +120,7 @@ const ForgotPasswordPage = () => {
 
                     {step === 'email' && (
                         <form onSubmit={handleRequestCode} className="space-y-4">
-                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
+                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                             <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
                                 {isSubmitting ? 'Sending code...' : 'Send verification code'}
                             </Button>
@@ -129,7 +129,7 @@ const ForgotPasswordPage = () => {
 
                     {step === 'reset' && (
                         <form onSubmit={handleConfirmReset} className="space-y-4">
-                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
+                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                             <Field label="Verification code" name="code" value={formValues.code} onChange={handleChange} placeholder="Enter the code from your email" required inputMode="numeric" />
                             <Field label="New password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a new password" required />
                             <Field label="Confirm new password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your new password" required />

@@ -112,7 +112,7 @@ const SignInPage = () => {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" required />
+                        <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                         <div className="space-y-2">
                             <div className="flex items-center justify-between gap-4">
                                 <span className="text-sm font-medium text-gray-700">Password</span>

@@ -394,8 +394,7 @@ const Footer = () => {
                             &copy; {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.
                         </p>
                         <p className="!text-white">
-                            Built with <span className="text-white">&hearts;</span> for Kenya by{' '}
-                            <span className="text-white font-semibold">Prospect Pilot AI</span>
+                            Developed by <span className="text-white font-semibold">CyberJali</span>
                         </p>
                     </div>
                 </div>
