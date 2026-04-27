@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, KeyRound, MailCheck, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { confirmPasswordReset, requestPasswordReset } from '../services/authApi';
 
 const ForgotPasswordPage = () => {
-    const [step, setStep] = useState('email');
+    const [searchParams] = useSearchParams();
+    const resetToken = searchParams.get('token') || searchParams.get('uid') || '';
+    const [step, setStep] = useState(resetToken ? 'reset' : 'email');
     const [formValues, setFormValues] = useState({
         email: '',
-        code: '',
+        token: resetToken,
         password: '',
         password_confirm: '',
     });
@@ -34,10 +36,9 @@ const ForgotPasswordPage = () => {
             await requestPasswordReset({
                 email: formValues.email.trim(),
             });
-            setStep('reset');
-            setSuccess('We sent a verification code to your email. Enter it below to set a new password.');
+            setSuccess('If that email is linked to an account, we sent password reset instructions. Open the secure link in your inbox to continue.');
         } catch (err) {
-            setError(err.message || 'We could not send a reset code right now.');
+            setError(err.message || 'We could not send reset instructions right now.');
         } finally {
             setIsSubmitting(false);
         }
@@ -56,10 +57,9 @@ const ForgotPasswordPage = () => {
         try {
             setIsSubmitting(true);
             await confirmPasswordReset({
-                email: formValues.email.trim(),
-                code: formValues.code.trim(),
-                password: formValues.password,
-                password_confirm: formValues.password_confirm,
+                token: formValues.token.trim(),
+                new_password: formValues.password,
+                new_password_confirm: formValues.password_confirm,
             });
             setStep('complete');
             setSuccess('Your password has been reset. You can now sign in with your new password.');
@@ -80,7 +80,7 @@ const ForgotPasswordPage = () => {
                     <p className="mt-6 text-sm font-semibold uppercase tracking-[0.35em] text-primary-700">Password help</p>
                     <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">Reset your password and get back to your money plan.</h1>
                     <p className="mt-4 text-base leading-7 text-gray-600 sm:text-lg">
-                        We will send a verification code to your email, then you can create a new password for your Shilingi Moves account.
+                        We will send a secure password reset link to your email, then you can create a new password for your Shilingi Moves account.
                     </p>
 
                     <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -122,15 +122,16 @@ const ForgotPasswordPage = () => {
                         <form onSubmit={handleRequestCode} className="space-y-4">
                             <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                             <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
-                                {isSubmitting ? 'Sending code...' : 'Send verification code'}
+                                {isSubmitting ? 'Sending instructions...' : 'Send reset instructions'}
                             </Button>
                         </form>
                     )}
 
                     {step === 'reset' && (
                         <form onSubmit={handleConfirmReset} className="space-y-4">
-                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
-                            <Field label="Verification code" name="code" value={formValues.code} onChange={handleChange} placeholder="Enter the code from your email" required inputMode="numeric" />
+                            {!resetToken && (
+                                <Field label="Reset token" name="token" value={formValues.token} onChange={handleChange} placeholder="Paste the token from your email link" required />
+                            )}
                             <Field label="New password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a new password" required />
                             <Field label="Confirm new password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your new password" required />
 
@@ -138,8 +139,8 @@ const ForgotPasswordPage = () => {
                                 <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
                                     {isSubmitting ? 'Resetting password...' : 'Reset password'}
                                 </Button>
-                                <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" disabled={isSubmitting} onClick={handleRequestCode}>
-                                    Resend code
+                                <Button type="button" variant="outline" className="w-full justify-center sm:w-auto" disabled={isSubmitting} onClick={() => setStep('email')}>
+                                    Request new link
                                 </Button>
                             </div>
                         </form>
@@ -170,12 +171,12 @@ const stepOrder = {
 
 const stepCopy = {
     email: {
-        title: 'Send your reset code',
-        description: 'Enter your account email and we will send a password reset verification code.',
+        title: 'Send your reset link',
+        description: 'Enter your account email and we will send secure password reset instructions.',
     },
     reset: {
         title: 'Create a new password',
-        description: 'Use the code from your email and choose a new password for your account.',
+        description: 'Use the secure link from your email and choose a new password for your account.',
     },
     complete: {
         title: 'Password reset complete',
