@@ -9,6 +9,8 @@ import {
     X,
 } from 'lucide-react';
 
+const AUTO_OPEN_STORAGE_KEY = 'shilingi_buddy_auto_opened';
+
 const starterPrompts = [
     'Help me understand my money',
     'I want to start budgeting',
@@ -109,9 +111,22 @@ function ShilingiBuddy() {
     const inputRef = useRef(null);
 
     useEffect(() => {
+        try {
+            if (sessionStorage.getItem(AUTO_OPEN_STORAGE_KEY) === '1') {
+                return undefined;
+            }
+        } catch {
+            // If storage is unavailable, still avoid blocking the page immediately.
+        }
+
         const openTimer = window.setTimeout(() => {
             setIsOpen(true);
-        }, 6000);
+            try {
+                sessionStorage.setItem(AUTO_OPEN_STORAGE_KEY, '1');
+            } catch {
+                // Ignore storage failures; the chat can still function normally.
+            }
+        }, 10000);
 
         return () => window.clearTimeout(openTimer);
     }, []);
