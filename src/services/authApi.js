@@ -14,19 +14,10 @@ const API_URL = resolveApiBaseUrl({
     isDev: import.meta.env.DEV,
 });
 
-function normalizeForgotPasswordEndpoint(candidate) {
-    const raw = String(candidate || '').trim();
-    if (!raw) return null;
-
-    return raw.replace('/api/v1/auth/password-reset/', '/api/v1/auth/forgot-password/');
-}
-
 const LOGIN_ENDPOINT = import.meta.env.VITE_LOGIN_ENDPOINT || `${API_URL}/api/v1/auth/login/`;
 const REGISTER_ENDPOINT = import.meta.env.VITE_REGISTER_ENDPOINT || `${API_URL}/api/v1/auth/register/`;
-const PASSWORD_RESET_REQUEST_ENDPOINT = normalizeForgotPasswordEndpoint(
-    import.meta.env.VITE_PASSWORD_RESET_REQUEST_ENDPOINT || `${API_URL}/api/v1/auth/forgot-password/`
-);
-const PASSWORD_RESET_CONFIRM_ENDPOINT = import.meta.env.VITE_PASSWORD_RESET_CONFIRM_ENDPOINT || `${API_URL}/api/v1/auth/password-reset/confirm/`;
+const PASSWORD_RESET_REQUEST_ENDPOINT = `${API_URL}/api/v1/auth/forgot-password/`;
+const PASSWORD_RESET_CONFIRM_ENDPOINT = `${API_URL}/api/v1/auth/reset-password/`;
 const PROFILE_ENDPOINT = import.meta.env.VITE_PROFILE_ENDPOINT || `${API_URL}/api/v1/users/me/`;
 const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
 
