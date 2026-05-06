@@ -4,6 +4,8 @@ import { AlertCircle, CheckCircle2, UserRoundPlus } from 'lucide-react';
 import Button from '../components/Button';
 import { registerUser } from '../services/authApi';
 
+export const PENDING_PROFILE_SIGNUP_EMAIL_KEY = 'shilingi_pending_profile_signup_email';
+
 const passwordRules = [
     { id: 'length', label: '8 to 12 characters', test: (value) => value.length >= 8 && value.length <= 12 },
     { id: 'letter', label: 'At least one letter', test: (value) => /[A-Za-z]/.test(value) },
@@ -71,6 +73,11 @@ const SignUpPage = () => {
                 ...formValues,
                 default_currency: 'KES',
             });
+            try {
+                sessionStorage.setItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY, formValues.email.trim().toLowerCase());
+            } catch {
+                // If storage is blocked, sign-in will still use profile completeness.
+            }
             setSuccess('Your account is ready. You can now sign in and start taking control of your money.');
             setTimeout(() => navigate('/signin'), 1200);
         } catch (err) {

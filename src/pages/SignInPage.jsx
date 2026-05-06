@@ -2,39 +2,35 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { getStoredUserProfile, hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
-import { DASHBOARD_DATA_KEY, persistDashboardSection } from '../utils/dashboardDataState';
-import { USER_PROFILE_WORKSPACE_KEY } from '../components/dashboard/user/UserGoalsFamilyForm';
+import { hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
+import { persistDashboardSection } from '../utils/dashboardDataState';
+import { PENDING_PROFILE_SIGNUP_EMAIL_KEY } from './SignUpPage';
 
-const readProfileWorkspace = () => {
-    if (typeof window === 'undefined') return {};
-    try {
-        return JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
-    } catch {
-        return {};
-    }
-};
-
-const hasDashboardData = () => {
+const isPendingProfileSignup = (email) => {
     if (typeof window === 'undefined') return false;
     try {
-        return window.localStorage.getItem(DASHBOARD_DATA_KEY) === 'true';
+        const pendingEmail = sessionStorage.getItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY);
+        return Boolean(pendingEmail && pendingEmail === email.trim().toLowerCase());
     } catch {
         return false;
     }
 };
 
-const hasCompletedProfileSetup = (user) => {
-    const profile = user?.profile || {};
-    const workspace = readProfileWorkspace();
-    return Boolean(
-        profile.monthly_income ||
-        profile.primary_financial_goal ||
-        workspace.shortTermGoal ||
-        workspace.mediumTermGoal ||
-        workspace.longTermGoal ||
-        hasDashboardData()
-    );
+const clearPendingProfileSignup = () => {
+    if (typeof window === 'undefined') return;
+    try {
+        sessionStorage.removeItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY);
+    } catch {
+        // Storage may be blocked; redirect logic has already completed.
+    }
+};
+
+const getPostLoginSection = (email) => {
+    if (isPendingProfileSignup(email)) {
+        return 'user';
+    }
+
+    return 'overview';
 };
 
 const SignInPage = () => {
@@ -71,8 +67,8 @@ const SignInPage = () => {
                 password: formValues.password,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
-            const user = getStoredUserProfile();
-            const nextSection = hasCompletedProfileSetup(user) ? 'overview' : 'user';
+            const nextSection = getPostLoginSection(formValues.email);
+            clearPendingProfileSignup();
             persistDashboardSection(nextSection);
             const redirectTo = location.state?.from?.pathname || '/dashboard/app';
             navigate(redirectTo, { replace: true, state: { section: nextSection } });

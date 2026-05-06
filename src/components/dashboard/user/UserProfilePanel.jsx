@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     AlertCircle,
     ArrowRight,
@@ -30,6 +30,7 @@ const GOAL_META = {
     short: {
         key: 'shortTermGoal',
         detailKey: 'shortTermGoalDetails',
+        slotsKey: 'shortTermGoals',
         label: 'Short-Term',
         helper: 'Under 12 months',
         color: 'bg-[#37c837]',
@@ -49,6 +50,7 @@ const GOAL_META = {
     medium: {
         key: 'mediumTermGoal',
         detailKey: 'mediumTermGoalDetails',
+        slotsKey: 'mediumTermGoals',
         label: 'Medium-Term',
         helper: '1 - 5 years',
         color: 'bg-[#f6da1a]',
@@ -68,6 +70,7 @@ const GOAL_META = {
     long: {
         key: 'longTermGoal',
         detailKey: 'longTermGoalDetails',
+        slotsKey: 'longTermGoals',
         label: 'Long-Term',
         helper: '5+ years',
         color: 'bg-[#8a63df]',
@@ -86,6 +89,9 @@ const GOAL_META = {
     },
 };
 
+const GOAL_SLOT_LABELS = ['Goal 1', 'Goal 2', 'Goal 3'];
+const EMPTY_GOAL_DETAILS = { name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' };
+
 const defaults = {
     shortTermGoal: '',
     mediumTermGoal: '',
@@ -95,6 +101,9 @@ const defaults = {
     shortTermGoalDetails: { name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' },
     mediumTermGoalDetails: { name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' },
     longTermGoalDetails: { name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' },
+    shortTermGoals: [],
+    mediumTermGoals: [],
+    longTermGoals: [],
     riskAppetite: 'Moderate',
     investmentHorizon: '5-10 Years',
     preferredProducts: 'T-Bills, MMFs, NSE Equities',
@@ -137,6 +146,17 @@ const goalProgress = (currentSavings, targetAmount) => {
     const target = Number(targetAmount || 0);
     if (target <= 0) return 0;
     return Math.max(0, Math.min((current / target) * 100, 100));
+};
+const normalizeGoalSlot = (goal = {}) => ({ ...EMPTY_GOAL_DETAILS, ...goal });
+const goalHasContent = (goal = {}) => Boolean(goal.name || goal.targetAmount || goal.currentSavings || goal.targetDate || goal.monthlyContribution || goal.linkedProduct);
+const getGoalSlots = (workspace = defaults, meta) => {
+    const savedSlots = Array.isArray(workspace?.[meta.slotsKey]) ? workspace[meta.slotsKey] : [];
+    const legacyDetail = workspace?.[meta.detailKey] || {};
+    const legacyGoal = goalHasContent(legacyDetail) || workspace?.[meta.key]
+        ? [{ ...legacyDetail, name: legacyDetail.name || workspace?.[meta.key] || '' }]
+        : [];
+    const source = savedSlots.length ? savedSlots : legacyGoal;
+    return GOAL_SLOT_LABELS.map((_, index) => normalizeGoalSlot(source[index]));
 };
 const incomeAmount = (income) => Number(income?.monthly_equivalent || income?.amount || 0);
 const incomeHint = (income) => `${String(income?.description || '')} ${String(income?.category_name || '')} ${String(income?.source || '')}`.toLowerCase();
@@ -231,10 +251,10 @@ const AddGoalCard = ({ label, meta, onClick }) => (
         onClick={onClick}
         className={`flex min-h-[206px] w-full items-center justify-center rounded-[1.2rem] border border-dashed text-center transition-all hover:shadow-sm ${meta.softBorder} ${meta.addCardBg} ${meta.softText}`}
     >
-        <span className="text-base font-semibold">+ Add {label} Goal</span>
+        <span className="text-base font-semibold">+ Add {label}</span>
     </button>
 );
-const GoalBucketSection = ({ title, helper, meta, goals, onAdd, onEdit }) => (
+const GoalBucketSection = ({ title, helper, meta, slots, onAdd, onEdit }) => (
     <article className="rounded-[1.5rem] border border-[#cfe8dc] bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -247,22 +267,25 @@ const GoalBucketSection = ({ title, helper, meta, goals, onAdd, onEdit }) => (
             </div>
             <button
                 type="button"
-                onClick={onAdd}
+                onClick={() => onAdd(slots.findIndex((goal) => !goalHasContent(goal)) === -1 ? 0 : slots.findIndex((goal) => !goalHasContent(goal)))}
                 className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${meta.addTone}`}
             >
                 + Add {title}
             </button>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {goals.map((goal, index) => (
-                <GoalProgressCard
-                    key={`${goal.name || title}-${index}`}
-                    goal={goal}
-                    meta={meta}
-                    onClick={() => onEdit()}
-                />
+            {slots.map((goal, index) => (
+                goalHasContent(goal) ? (
+                    <GoalProgressCard
+                        key={`${title}-${GOAL_SLOT_LABELS[index]}`}
+                        goal={{ ...goal, name: goal.name || GOAL_SLOT_LABELS[index] }}
+                        meta={meta}
+                        onClick={() => onEdit(index)}
+                    />
+                ) : (
+                    <AddGoalCard key={`${title}-${GOAL_SLOT_LABELS[index]}`} label={GOAL_SLOT_LABELS[index]} meta={meta} onClick={() => onAdd(index)} />
+                )
             ))}
-            {goals.length < 3 && <AddGoalCard label={title} meta={meta} onClick={onAdd} />}
         </div>
     </article>
 );
@@ -664,10 +687,9 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const [baselineForm, setBaselineForm] = useState({ monthly_income: '' });
     const [dependentsForm, setDependentsForm] = useState({ dependentsCount: '', familyNotes: '' });
     const [prefsForm, setPrefsForm] = useState({ receive_notifications: true, receive_weekly_summary: true });
-    const [goalForm, setGoalForm] = useState({ primary_financial_goal: '', selectedType: 'short', name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' });
+    const [goalForm, setGoalForm] = useState({ primary_financial_goal: '', selectedType: 'short', slotIndex: 0, name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' });
     const [preferencesForm, setPreferencesForm] = useState({ primary_financial_goal: '', riskAppetite: 'Moderate', investmentHorizon: '5-10 Years', preferredProducts: 'T-Bills, MMFs, NSE Equities', financialMotivation: '' });
     const [submitting, setSubmitting] = useState({ baseline: false, goal: false, dependents: false, prefs: false, preferencesModal: false });
-    const autoPickedRef = useRef(false);
 
     useEffect(() => {
         const load = async () => {
@@ -701,15 +723,28 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
     const incomeValue = useMemo(() => resolvedIncome(summary, user?.profile?.monthly_income), [summary, user?.profile?.monthly_income]);
     const currentMonth = summary?.current_month || {};
-    const goalCount = [workspace.shortTermGoal, workspace.mediumTermGoal, workspace.longTermGoal].filter(Boolean).length;
+    const goalBuckets = useMemo(() => (
+        Object.entries(GOAL_META).map(([type, meta]) => {
+            const slots = getGoalSlots(workspace, meta);
+            return {
+                type,
+                meta,
+                slots,
+                goals: slots
+                    .map((goal, index) => ({ ...goal, slotIndex: index, slotLabel: GOAL_SLOT_LABELS[index] }))
+                    .filter(goalHasContent),
+            };
+        })
+    ), [workspace]);
+    const goalBucketByType = useMemo(() => Object.fromEntries(goalBuckets.map((bucket) => [bucket.type, bucket])), [goalBuckets]);
+    const goalCount = goalBuckets.reduce((sum, bucket) => sum + bucket.goals.length, 0);
     const sections = useMemo(() => ([
         { id: 'income', label: 'Income', complete: Boolean(incomeValue) || incomes.length > 0 },
         { id: 'goals', label: 'Goals', complete: Boolean(user?.profile?.primary_financial_goal) && goalCount > 0 },
         { id: 'dependents', label: 'Dependants', complete: Boolean(workspace.dependentsCount || workspace.familyNotes) },
     ]), [goalCount, incomeValue, incomes.length, user, workspace.dependentsCount, workspace.familyNotes]);
-    const recommendedTab = sections.find((s) => !s.complete)?.id || 'goals';
     const validTabIds = tabs.map((tab) => tab.id);
-    const completionChecks = [user?.first_name, incomeValue, user?.profile?.primary_financial_goal, workspace.shortTermGoal, workspace.mediumTermGoal, workspace.longTermGoal, workspace.dependentsCount || workspace.familyNotes, ...sections.map((s) => s.complete)];
+    const completionChecks = [user?.first_name, incomeValue, user?.profile?.primary_financial_goal, goalCount > 0, workspace.dependentsCount || workspace.familyNotes, ...sections.map((s) => s.complete)];
     const completion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
     const remaining = sections.filter((s) => !s.complete).length;
     const fullName = `${user?.first_name || 'Member'} ${user?.last_name || ''}`.trim();
@@ -740,23 +775,6 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const otherDependantsCount = Math.max(dependantCount - spouseCount - childrenCount, 0);
     const estimatedProtectionCover = dependantCount > 0 ? dependantCount * 3800000 : 0;
     const estimatedEmergencyFund = dependantCount > 0 ? dependantCount * 190000 : 0;
-    const goalBuckets = useMemo(() => (
-        Object.entries(GOAL_META).map(([type, meta]) => {
-            const detail = workspace[meta.detailKey] || defaults[meta.detailKey];
-            const hasGoal = Boolean(detail?.name || workspace[meta.key]);
-            return {
-                type,
-                meta,
-                goals: hasGoal ? [{
-                    name: detail.name || workspace[meta.key],
-                    targetAmount: detail.targetAmount,
-                    currentSavings: detail.currentSavings,
-                    targetDate: detail.targetDate,
-                    linkedProduct: detail.linkedProduct,
-                }] : [],
-            };
-        })
-    ), [workspace]);
     const ecosystemCards = [
         {
             title: 'Budget Planner',
@@ -793,22 +811,25 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             setActiveTab(validTabIds.includes(initialTab) ? initialTab : 'goals');
             return;
         }
-        if (!loading && !autoPickedRef.current) {
-            setActiveTab(recommendedTab);
-            autoPickedRef.current = true;
-        }
-    }, [initialTab, loading, recommendedTab, validTabIds]);
+        setActiveTab('goals');
+    }, [initialTab]);
 
     const patchUserProfile = (updated) => setUser((current) => ({ ...current, profile: { ...current?.profile, ...updated } }));
     const syncIncome = async () => { await Promise.all([fetchSummary(), fetchIncomes({ current_month: 'true' })]); };
+    const getNextGoalSlotIndex = (type) => {
+        const slots = goalBucketByType[type]?.slots || [];
+        const emptyIndex = slots.findIndex((goal) => !goalHasContent(goal));
+        return emptyIndex === -1 ? 0 : emptyIndex;
+    };
 
-    const openGoalModal = (type = 'short') => {
+    const openGoalModal = (type = 'short', slotIndex = 0) => {
         const meta = GOAL_META[type];
-        const details = workspace[meta.detailKey] || defaults[meta.detailKey];
+        const details = getGoalSlots(workspace, meta)[slotIndex] || EMPTY_GOAL_DETAILS;
         setGoalForm({
             primary_financial_goal: user?.profile?.primary_financial_goal || preferencesForm.primary_financial_goal || '',
             selectedType: type,
-            name: details.name || workspace[meta.key] || '',
+            slotIndex,
+            name: details.name || '',
             targetAmount: details.targetAmount || '',
             currentSavings: details.currentSavings || '',
             targetDate: details.targetDate || '',
@@ -853,17 +874,23 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             setError('');
             setSuccess('');
             const meta = GOAL_META[goalForm.selectedType];
+            const currentGoal = {
+                name: goalForm.name,
+                targetAmount: goalForm.targetAmount,
+                currentSavings: goalForm.currentSavings,
+                targetDate: goalForm.targetDate,
+                monthlyContribution: goalForm.monthlyContribution,
+                linkedProduct: goalForm.linkedProduct,
+            };
+            const nextSlots = getGoalSlots(workspace, meta).map((goal, index) => (
+                index === goalForm.slotIndex ? currentGoal : goal
+            ));
+            const primaryGoal = nextSlots.find(goalHasContent) || EMPTY_GOAL_DETAILS;
             const next = {
                 ...workspace,
-                [meta.key]: goalForm.name,
-                [meta.detailKey]: {
-                    name: goalForm.name,
-                    targetAmount: goalForm.targetAmount,
-                    currentSavings: goalForm.currentSavings,
-                    targetDate: goalForm.targetDate,
-                    monthlyContribution: goalForm.monthlyContribution,
-                    linkedProduct: goalForm.linkedProduct,
-                },
+                [meta.slotsKey]: nextSlots,
+                [meta.key]: primaryGoal.name,
+                [meta.detailKey]: primaryGoal,
             };
             writeWorkspace(next);
             setWorkspace(next);
@@ -872,7 +899,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 patchUserProfile(updated);
             }
             setGoalModalOpen(false);
-            setSuccess(`${meta.label} goal saved.`);
+            setSuccess(`${meta.label} ${GOAL_SLOT_LABELS[goalForm.slotIndex]} saved.`);
         } catch (err) {
             setError(err.message || 'We could not save your goal right now.');
         } finally {
@@ -941,6 +968,9 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
         }
     };
 
+    const selectedGoalMeta = GOAL_META[goalForm.selectedType] || GOAL_META.short;
+    const selectedGoalSlots = getGoalSlots(workspace, selectedGoalMeta);
+
     if (loading) {
         return <div className="flex min-h-[260px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm"><div className="text-center"><Loader2 className="mx-auto h-12 w-12 animate-spin text-primary-600" /><p className="mt-4 text-sm font-medium text-slate-600">Loading your profile workspace...</p></div></div>;
     }
@@ -985,14 +1015,13 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
             <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-2 shadow-sm"><div className="flex flex-wrap gap-2">{tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActiveTab(id)} className={`inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold transition-all ${activeTab === id ? 'bg-primary-600 text-white shadow-md shadow-primary-900/20' : 'text-slate-600 hover:bg-[#f4faf7] hover:text-slate-950'}`}><Icon size={16} />{label}</button>)}</div></section>
 
-            {activeTab === 'goals' && <section className="space-y-5"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><SummaryCard label="Active Goals" value={String(goalCount)} subtitle="Across all horizons" accent="bg-primary-600" dark compact onClick={() => openGoalModal(goalForm.selectedType || 'short')} /><GoalActionCard label={workspace.shortTermGoal ? workspace.shortTermGoal : 'Add Short-Term Goal'} helper={workspace.shortTermGoalDetails?.name || 'Under 12 months'} color="bg-[#37c837]" active={Boolean(workspace.shortTermGoal)} onClick={() => openGoalModal('short')} /><GoalActionCard label={workspace.mediumTermGoal ? workspace.mediumTermGoal : 'Add Medium-Term Goal'} helper={workspace.mediumTermGoalDetails?.name || '1 - 5 years'} color="bg-[#f6da1a]" active={Boolean(workspace.mediumTermGoal)} onClick={() => openGoalModal('medium')} /><GoalActionCard label={workspace.longTermGoal ? workspace.longTermGoal : 'Add Long-Term Goal'} helper={workspace.longTermGoalDetails?.name || '5+ years'} color="bg-[#8a63df]" active={Boolean(workspace.longTermGoal)} onClick={() => openGoalModal('long')} /></div>{goalBuckets.map(({ type, meta, goals }) => <GoalBucketSection key={type} title={meta.label} helper={meta.helper} meta={meta} goals={goals} onAdd={() => openGoalModal(type)} onEdit={() => openGoalModal(type)} />)}<article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-slate-950"><Target size={16} className="text-primary-700" /><p className="text-lg font-bold">Primary Financial Goal & Preferences</p></div><div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4"><Datum label="Primary financial goal" value={goalLabel(user?.profile?.primary_financial_goal)} /><Datum label="Risk appetite" value={workspace.riskAppetite || defaults.riskAppetite} /><Datum label="Investment horizon" value={workspace.investmentHorizon || defaults.investmentHorizon} /><Datum label="Preferred products" value={workspace.preferredProducts || defaults.preferredProducts} /></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Datum label="Financial motivation" value={workspace.financialMotivation || 'Add your motivation to personalize guidance'} /><Datum label="Goal coverage" value={`${goalCount} horizons active`} /></div><button type="button" onClick={() => setPreferencesModalOpen(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-amber-200 bg-[#fff6e7] px-4 py-3 text-sm font-semibold text-[#9a6200] transition-colors hover:bg-[#fff0d8]"><Pencil size={15} />Edit Primary Goal & Preferences</button><div className="mt-5"><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></div></article></section>}
+            {activeTab === 'goals' && <section className="space-y-5"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><SummaryCard label="Active Goals" value={String(goalCount)} subtitle="Goal slots filled" accent="bg-primary-600" dark compact onClick={() => openGoalModal(goalForm.selectedType || 'short', getNextGoalSlotIndex(goalForm.selectedType || 'short'))} /><GoalActionCard label="Short-Term Goals" helper={`${goalBucketByType.short?.goals.length || 0}/3 goals filled`} color="bg-[#37c837]" active={(goalBucketByType.short?.goals.length || 0) > 0} onClick={() => openGoalModal('short', getNextGoalSlotIndex('short'))} /><GoalActionCard label="Medium-Term Goals" helper={`${goalBucketByType.medium?.goals.length || 0}/3 goals filled`} color="bg-[#f6da1a]" active={(goalBucketByType.medium?.goals.length || 0) > 0} onClick={() => openGoalModal('medium', getNextGoalSlotIndex('medium'))} /><GoalActionCard label="Long-Term Goals" helper={`${goalBucketByType.long?.goals.length || 0}/3 goals filled`} color="bg-[#8a63df]" active={(goalBucketByType.long?.goals.length || 0) > 0} onClick={() => openGoalModal('long', getNextGoalSlotIndex('long'))} /></div>{goalBuckets.map(({ type, meta, slots }) => <GoalBucketSection key={type} title={meta.label} helper={meta.helper} meta={meta} slots={slots} onAdd={(slotIndex) => openGoalModal(type, slotIndex)} onEdit={(slotIndex) => openGoalModal(type, slotIndex)} />)}</section>}
 
             {activeTab === 'income' && <section className="space-y-5"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-sm text-slate-600">Capture your income baseline, manage current sources, and keep your planning inputs fresh.</p></div><div className="flex flex-wrap gap-3"><SecondaryButton type="button" onClick={() => setShowQuickIncome(true)}>Quick Add</SecondaryButton><PrimaryButton type="button" onClick={() => { setSelectedIncome(null); setShowIncomeForm(true); }}>Add Income</PrimaryButton></div></div></article><ProfileIncomeOverview incomes={incomes} totalIncome={incomeValue} recurringIncome={summary?.monthly_recurring_income} currentMonth={currentMonth} summary={summary} user={user} prefsForm={prefsForm} onAddIncome={() => { setSelectedIncome(null); setShowIncomeForm(true); }} onEditBaseline={() => setEditingBaseline(true)} onOpenBudget={() => onSelectSection?.('budget')} onEditIncome={(income) => { setSelectedIncome(income || null); setShowIncomeForm(true); }} /><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div><p className="text-lg font-bold text-slate-950">Recent income activity</p><p className="mt-1 text-sm text-slate-600">Returning users can adjust, tidy, or add new income without leaving the profile workspace.</p></div><div className="mt-5"><IncomeList incomes={incomes.slice(0, 6)} loading={incomeLoading} onEdit={(income) => { setSelectedIncome(income); setShowIncomeForm(true); }} onDelete={deleteIncome} currency={summary?.currency || 'KES'} /></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
 
             {activeTab === 'dependents' && <section className="space-y-5"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5"><DependantsSummaryCard value={dependantCount} label="Total Dependants" /><DependantsSummaryCard value={spouseCount} label="Spouse / Partner" /><DependantsSummaryCard value={childrenCount} label="Children" /><DependantsSummaryCard value={otherDependantsCount} label="Other Dependants" /><DependantsSummaryCard value={dependantCount > 0 ? 'Ready' : 'Update'} label="Planning Status" accent={dependantCount > 0 ? 'text-[#166a55]' : 'text-[#df8a11]'} /></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><Users size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Family Members</p><span className="rounded-full bg-[#fff6e7] px-3 py-1 text-xs font-semibold text-[#9a6200]">Optional</span></div>{editingDependents ? <form onSubmit={saveDependents} className="mt-5 space-y-4"><Input label="Number of dependants" name="dependentsCount" type="number" value={dependentsForm.dependentsCount} onChange={(e) => setDependentsForm((c) => ({ ...c, dependentsCount: e.target.value }))} placeholder="0" /><TextArea label="Family notes" name="familyNotes" value={dependentsForm.familyNotes} onChange={(e) => setDependentsForm((c) => ({ ...c, familyNotes: e.target.value }))} rows={5} /><div className="flex flex-wrap gap-3"><PrimaryButton type="submit" disabled={submitting.dependents}>{submitting.dependents ? 'Saving...' : 'Save Dependants'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingDependents(false)}>Cancel</SecondaryButton></div></form> : <><div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{familyMembers.map((member) => <DependantMemberCard key={`${member.name}-${member.role}`} {...member} />)}<AddDependantCard onClick={() => setEditingDependents(true)} /></div><div className="mt-4 rounded-[1.1rem] border-l-4 border-[#1f9c72] bg-[#edf8f3] px-5 py-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">Why this matters:</span> {dependantCount > 0 ? `Your ${dependantCount} dependants shape your protection cover, emergency fund target, and long-term planning.` : 'Add your household details so we can personalise protection, savings, and retirement planning for you.'} <button type="button" onClick={() => onSelectSection?.('protection')} className="font-semibold text-[#166a55]">View Protection Planner</button></div><button type="button" onClick={() => setEditingDependents(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"><Pencil size={15} className="text-amber-600" />Edit Dependants & Notes</button></>}</article><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><LinkIcon size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">How Your Family Profile Shapes Your Planning</p></div><div className="mt-5 grid gap-4 xl:grid-cols-3"><PlanningImpactCard icon={ShieldCheck} title="Protection Planner" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended life cover starts around ${fmtKES(estimatedProtectionCover)}.` : 'Add dependants to estimate the right cover for your household.'} badge={dependantCount > 0 ? `Cover target: ${fmtKES(estimatedProtectionCover)}` : 'Awaiting dependant details'} badgeTone={dependantCount > 0 ? 'bg-[#ffe8e8] text-[#d94d4d]' : 'bg-[#eef8f4] text-[#166a55]'} cta="View Planner" onClick={() => onSelectSection?.('protection')} /><PlanningImpactCard icon={Wallet} title="Retirement Planner" body={dependantCount > 0 ? `Supporting ${dependantCount} people in retirement means your income plan needs a stronger buffer and clearer milestones.` : 'Household details help shape a more realistic retirement target.'} badge={dependantCount > 0 ? 'Family target in focus' : 'Add dependants first'} badgeTone="bg-[#fff6e7] text-[#9a6200]" cta="View Planner" onClick={() => onSelectSection?.('retirement')} /><PlanningImpactCard icon={BarChart3} title="Emergency Fund Target" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended emergency fund is about ${fmtKES(estimatedEmergencyFund)}.` : 'Your emergency fund target becomes clearer once household size is added.'} badge={goalCount > 0 ? 'Goal set in profile' : 'Update goal'} badgeTone="bg-[#e7f6f1] text-[#166a55]" cta="Update Goal" onClick={() => setActiveTab('goals')} /></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
 
-            {goalModalOpen && <ModalShell title="Add New Goal" icon={Target} onClose={() => setGoalModalOpen(false)}><form onSubmit={saveGoalModal} className="space-y-4 sm:space-y-5"><div><p className="text-sm font-medium text-slate-700">Goal Horizon</p><div className="mt-3 grid gap-2 sm:gap-3 md:grid-cols-3">{Object.entries(GOAL_META).map(([type, meta]) => <GoalTypeCard key={type} active={goalForm.selectedType === type} label={meta.label} helper={meta.helper} color={meta.color} onClick={() => setGoalForm((current) => ({ ...current, selectedType: type }))} />)}</div></div><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Primary Financial Goal" value={goalForm.primary_financial_goal} onChange={(e) => setGoalForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><Input label="Goal Name" value={goalForm.name} onChange={(e) => setGoalForm((current) => ({ ...current, name: e.target.value }))} placeholder="e.g. Emergency Fund, Holiday, Retirement..." /><Input label="Target Amount (KES)" value={goalForm.targetAmount} onChange={(e) => setGoalForm((current) => ({ ...current, targetAmount: e.target.value }))} placeholder="e.g. 100,000" /><Input label="Current Savings (KES)" value={goalForm.currentSavings} onChange={(e) => setGoalForm((current) => ({ ...current, currentSavings: e.target.value }))} placeholder="e.g. 25,000" /><Input label="Target Date" type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm((current) => ({ ...current, targetDate: e.target.value }))} /><Input label="Monthly Contribution (KES)" value={goalForm.monthlyContribution} onChange={(e) => setGoalForm((current) => ({ ...current, monthlyContribution: e.target.value }))} placeholder="e.g. 5,000" /></div><Select label="Link to Product (Optional)" value={goalForm.linkedProduct} onChange={(e) => setGoalForm((current) => ({ ...current, linkedProduct: e.target.value }))}><option value="">-- Select a savings vehicle --</option><option value="MMF">Money Market Fund</option><option value="SACCO">SACCO</option><option value="Savings Account">Savings Account</option><option value="Fixed Deposit">Fixed Deposit</option></Select><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setGoalModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.goal}>{submitting.goal ? 'Saving...' : 'Save Goal'}</PrimaryButton></div></form></ModalShell>}
-            {goalModalOpen && <ModalShell title="Add New Goal" icon={Target} onClose={() => setGoalModalOpen(false)}><form onSubmit={saveGoalModal} className="space-y-4 sm:space-y-5"><div><p className="text-sm font-medium text-slate-700">Goal Horizon</p><div className="mt-3 grid gap-2 sm:gap-3 md:grid-cols-3">{Object.entries(GOAL_META).map(([type, meta]) => <GoalTypeCard key={type} active={goalForm.selectedType === type} label={meta.label} helper={meta.helper} color={meta.color} onClick={() => setGoalForm((current) => ({ ...current, selectedType: type }))} />)}</div></div><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Primary Financial Goal" value={goalForm.primary_financial_goal} onChange={(e) => setGoalForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><Input label="Goal Name" value={goalForm.name} onChange={(e) => setGoalForm((current) => ({ ...current, name: e.target.value }))} placeholder="e.g. Emergency Fund, Holiday, Retirement..." /><Input label="Target Amount (KES)" value={goalForm.targetAmount} onChange={(e) => setGoalForm((current) => ({ ...current, targetAmount: e.target.value }))} placeholder="e.g. 100,000" /><Input label="Current Savings (KES)" value={goalForm.currentSavings} onChange={(e) => setGoalForm((current) => ({ ...current, currentSavings: e.target.value }))} placeholder="e.g. 25,000" /><Input label="Target Date" type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm((current) => ({ ...current, targetDate: e.target.value }))} /><Input label="Monthly Contribution (KES)" value={goalForm.monthlyContribution} onChange={(e) => setGoalForm((current) => ({ ...current, monthlyContribution: e.target.value }))} placeholder="e.g. 5,000" /></div><Select label="Link to Product (Optional)" value={goalForm.linkedProduct} onChange={(e) => setGoalForm((current) => ({ ...current, linkedProduct: e.target.value }))}><option value="">-- Select a savings vehicle --</option><option value="MMF">Money Market Fund</option><option value="SACCO">SACCO</option><option value="Savings Account">Savings Account</option><option value="Fixed Deposit">Fixed Deposit</option></Select><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setGoalModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.goal}>{submitting.goal ? 'Saving...' : 'Save Goal'}</PrimaryButton></div></form></ModalShell>}
+            {goalModalOpen && <ModalShell title={`${selectedGoalMeta.label} Goal`} icon={Target} onClose={() => setGoalModalOpen(false)}><form onSubmit={saveGoalModal} className="space-y-4 sm:space-y-5"><div><p className="text-sm font-medium text-slate-700">Choose goal slot</p><div className="mt-3 grid gap-2 sm:gap-3 md:grid-cols-3">{GOAL_SLOT_LABELS.map((label, index) => <GoalTypeCard key={label} active={goalForm.slotIndex === index} label={label} helper={selectedGoalMeta.helper} color={selectedGoalMeta.color} onClick={() => { const nextSlot = selectedGoalSlots[index] || EMPTY_GOAL_DETAILS; setGoalForm((current) => ({ ...current, slotIndex: index, name: nextSlot.name || '', targetAmount: nextSlot.targetAmount || '', currentSavings: nextSlot.currentSavings || '', targetDate: nextSlot.targetDate || '', monthlyContribution: nextSlot.monthlyContribution || '', linkedProduct: nextSlot.linkedProduct || '' })); }} />)}</div></div><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Primary Financial Goal" value={goalForm.primary_financial_goal} onChange={(e) => setGoalForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><Input label="Goal Name" value={goalForm.name} onChange={(e) => setGoalForm((current) => ({ ...current, name: e.target.value }))} placeholder="e.g. Emergency Fund, Holiday, Retirement..." /><Input label="Target Amount (KES)" value={goalForm.targetAmount} onChange={(e) => setGoalForm((current) => ({ ...current, targetAmount: e.target.value }))} placeholder="e.g. 100,000" /><Input label="Current Savings (KES)" value={goalForm.currentSavings} onChange={(e) => setGoalForm((current) => ({ ...current, currentSavings: e.target.value }))} placeholder="e.g. 25,000" /><Input label="Target Date" type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm((current) => ({ ...current, targetDate: e.target.value }))} /><Input label="Monthly Contribution (KES)" value={goalForm.monthlyContribution} onChange={(e) => setGoalForm((current) => ({ ...current, monthlyContribution: e.target.value }))} placeholder="e.g. 5,000" /></div><Select label="Link to Product (Optional)" value={goalForm.linkedProduct} onChange={(e) => setGoalForm((current) => ({ ...current, linkedProduct: e.target.value }))}><option value="">-- Select a savings vehicle --</option><option value="MMF">Money Market Fund</option><option value="SACCO">SACCO</option><option value="Savings Account">Savings Account</option><option value="Fixed Deposit">Fixed Deposit</option></Select><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setGoalModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.goal}>{submitting.goal ? 'Saving...' : `Save ${GOAL_SLOT_LABELS[goalForm.slotIndex]}`}</PrimaryButton></div></form></ModalShell>}
 
             {preferencesModalOpen && <ModalShell title="Primary Goal & Preferences" icon={Wallet} onClose={() => setPreferencesModalOpen(false)}><form onSubmit={savePreferencesModal} className="space-y-4 sm:space-y-5"><Select label="Primary Financial Goal" value={preferencesForm.primary_financial_goal} onChange={(e) => setPreferencesForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Risk Appetite" value={preferencesForm.riskAppetite} onChange={(e) => setPreferencesForm((current) => ({ ...current, riskAppetite: e.target.value }))}><option>Conservative</option><option>Moderate</option><option>Aggressive</option></Select><Select label="Investment Horizon" value={preferencesForm.investmentHorizon} onChange={(e) => setPreferencesForm((current) => ({ ...current, investmentHorizon: e.target.value }))}><option>Under 12 months</option><option>1-5 Years</option><option>5-10 Years</option><option>10+ Years</option></Select></div><Input label="Preferred Products" value={preferencesForm.preferredProducts} onChange={(e) => setPreferencesForm((current) => ({ ...current, preferredProducts: e.target.value }))} /><TextArea label="Financial Motivation (Optional)" rows={4} value={preferencesForm.financialMotivation} onChange={(e) => setPreferencesForm((current) => ({ ...current, financialMotivation: e.target.value }))} /><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setPreferencesModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.preferencesModal}>{submitting.preferencesModal ? 'Saving...' : 'Save Changes'}</PrimaryButton></div></form></ModalShell>}
 
