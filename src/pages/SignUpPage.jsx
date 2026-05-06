@@ -4,6 +4,27 @@ import { AlertCircle, CheckCircle2, UserRoundPlus } from 'lucide-react';
 import Button from '../components/Button';
 import { registerUser } from '../services/authApi';
 
+const passwordRules = [
+    { id: 'length', label: '8 to 12 characters', test: (value) => value.length >= 8 && value.length <= 12 },
+    { id: 'letter', label: 'At least one letter', test: (value) => /[A-Za-z]/.test(value) },
+    { id: 'number', label: 'At least one number', test: (value) => /\d/.test(value) },
+    { id: 'symbol', label: 'At least one symbol', test: (value) => /[^A-Za-z0-9]/.test(value) },
+];
+
+const getPasswordStrength = (password) => {
+    const passed = passwordRules.filter((rule) => rule.test(password));
+    if (!password) {
+        return { passed, label: 'Password strength', tone: 'bg-gray-200', textTone: 'text-gray-500', width: '0%' };
+    }
+    if (passed.length <= 2) {
+        return { passed, label: 'Weak', tone: 'bg-rose-500', textTone: 'text-rose-700', width: '35%' };
+    }
+    if (passed.length === 3) {
+        return { passed, label: 'Almost there', tone: 'bg-amber-500', textTone: 'text-amber-700', width: '70%' };
+    }
+    return { passed, label: 'Strong', tone: 'bg-emerald-600', textTone: 'text-emerald-700', width: '100%' };
+};
+
 const SignUpPage = () => {
     const navigate = useNavigate();
     const [formValues, setFormValues] = useState({
@@ -17,6 +38,8 @@ const SignUpPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const passwordStrength = getPasswordStrength(formValues.password);
+    const isPasswordStrong = passwordStrength.passed.length === passwordRules.length;
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -33,6 +56,11 @@ const SignUpPage = () => {
 
         if (formValues.password !== formValues.password_confirm) {
             setError('Your passwords do not match. Please try again.');
+            return;
+        }
+
+        if (!isPasswordStrong) {
+            setError('Please create a stronger password: 8 to 12 characters with letters, numbers, and symbols.');
             return;
         }
 
@@ -102,11 +130,33 @@ const SignUpPage = () => {
                         <div className="sm:col-span-2">
                             <Field label="Phone number (optional)" name="phone_number" value={formValues.phone_number} onChange={handleChange} placeholder="0700 000 000" />
                         </div>
-                        <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a password" required />
+                        <div className="space-y-3">
+                            <Field label="Password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a password" minLength={8} maxLength={12} required />
+                            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Password strength</span>
+                                    <span className={`text-sm font-bold ${passwordStrength.textTone}`}>{passwordStrength.label}</span>
+                                </div>
+                                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                                    <div className={`h-full rounded-full transition-all ${passwordStrength.tone}`} style={{ width: passwordStrength.width }} />
+                                </div>
+                                <div className="mt-3 grid gap-2">
+                                    {passwordRules.map((rule) => {
+                                        const passed = rule.test(formValues.password);
+                                        return (
+                                            <div key={rule.id} className={`flex items-center gap-2 text-xs font-medium ${passed ? 'text-emerald-700' : 'text-gray-500'}`}>
+                                                <CheckCircle2 size={14} className={passed ? 'text-emerald-600' : 'text-gray-300'} />
+                                                <span>{rule.label}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                         <Field label="Confirm password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your password" required />
 
                         <div className="sm:col-span-2">
-                            <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
+                            <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting || !isPasswordStrong}>
                                 {isSubmitting ? 'Creating your account...' : 'Create account'}
                             </Button>
                         </div>

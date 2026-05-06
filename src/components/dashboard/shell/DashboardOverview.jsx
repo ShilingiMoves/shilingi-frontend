@@ -19,7 +19,6 @@ import {
     Target,
     TrendingUp,
     Trophy,
-    Users,
     Wallet,
     Youtube,
 } from 'lucide-react';
@@ -30,7 +29,6 @@ import { getDebts } from '../../../services/debtApi';
 import { getNetWorthSummary } from '../../../services/networthApi';
 import { getHealthScore, getHealthScoreBreakdown } from '../../../services/financialHealthApi';
 import { compareModules } from '../explore/ComparisonHubPanel';
-import { COMMUNITY_POSTS_KEY, seedPosts } from '../explore/CommunityHubPanel';
 import { DASHBOARD_DATA_KEY } from '../../../utils/dashboardDataState';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
@@ -40,36 +38,6 @@ const toneMap = {
     afternoon: { label: 'Good afternoon', shell: 'from-[#14986b] via-[#118561] to-[#0d6648]' },
     evening: { label: 'Good evening', shell: 'from-[#0a4d37] via-[#117f5a] to-[#14986b]' },
 };
-const previewBudget = [{ label: 'Housing & Rent', percent: 100, amount: 'KES 25,000', color: 'bg-emerald-600' }, { label: 'Food & Groceries', percent: 83, amount: 'KES 8,300', color: 'bg-blue-600' }, { label: 'Transport', percent: 60, amount: 'KES 3,600', color: 'bg-amber-500' }];
-const previewTx = [{ name: 'Naivas Supermarket', category: 'Food', amount: '-KES 2,450', when: 'Today', tone: 'text-rose-600' }, { name: 'Salary - Safaricom PLC', category: 'Income', amount: '+KES 95,000', when: 'Yesterday', tone: 'text-emerald-700' }];
-const previewInv = [{ name: 'Safaricom PLC', type: 'NSE Equities', value: 'KES 82,400', change: '+3.2%', tone: 'text-emerald-700' }, { name: 'CIC Money Market', type: 'Unit Trust', value: 'KES 65,000', change: '+12.4% p.a.', tone: 'text-emerald-700' }];
-const previewGoals = [{ label: 'Emergency Fund', horizon: 'Short', progress: 74 }, { label: 'Zanzibar Holiday', horizon: 'Medium', progress: 42 }];
-const previewAiInsights = [
-    {
-        title: 'Entertainment overspend',
-        description: "You're 20% over budget. Reducing by KES 1,000 this week puts you back on track.",
-        badge: 'Action Needed',
-        icon: AlertTriangle,
-        iconShell: 'bg-amber-100 text-amber-700',
-        badgeShell: 'bg-rose-100 text-rose-600',
-    },
-    {
-        title: 'T-Bills beat your savings account',
-        description: 'Move KES 30K from bank (5%) to T-Bills (16.2%) and earn about KES 2,700 more.',
-        badge: 'Opportunity',
-        icon: Lightbulb,
-        iconShell: 'bg-[#fff1c2] text-[#946200]',
-        badgeShell: 'bg-emerald-100 text-emerald-700',
-    },
-    {
-        title: 'Emergency Fund almost done!',
-        description: 'Just KES 26,000 away. One more month at your current rate gets you there.',
-        badge: 'Milestone',
-        icon: Trophy,
-        iconShell: 'bg-[#f9e7b0] text-[#9a6800]',
-        badgeShell: 'bg-[#fff0ba] text-[#9a6800]',
-    },
-];
 const calendarTypeStyles = {
     all: { shell: 'bg-[#0f3f39] text-white border-[#0f3f39]' },
     income: {
@@ -103,20 +71,7 @@ const calendarTypeStyles = {
         label: 'Investments',
     },
 };
-const toolTiles = [
-    { label: 'Loan Calc', icon: Calculator },
-    { label: 'Compound', icon: TrendingUp },
-    { label: 'FX Rates', icon: Landmark },
-    { label: 'Tax Calc', icon: Briefcase },
-    { label: 'FIRE Calc', icon: Target },
-    { label: 'Debt Payoff', icon: Wallet },
-];
-const communityPosts = [
-    { initials: 'JM', author: 'James Mwangi', text: 'Just hit KES 100K savings! The goal tracker kept me accountable.', meta: '2h · #savingswins', reactions: 24, comments: 8, shell: 'bg-emerald-100 text-emerald-700' },
-    { initials: 'SW', author: 'Stella Wanjiru', text: 'SACCO vs MMF for a 1-year goal. Which is better?', meta: '4h · #investing101', reactions: 23, comments: 11, shell: 'bg-amber-100 text-amber-700' },
-    { initials: 'BO', author: 'Brian Ochieng', text: 'T-Bills at 16.2%! Rolled over for another term. Passive income wins.', meta: '6h · #tbills', reactions: 47, comments: 15, shell: 'bg-blue-100 text-blue-700' },
-];
-const communityTags = ['#emergencyfund', '#tbills2026', '#nseinvesting', '#savingsrate'];
+const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
 const dashboardFooterColumns = [
     {
         title: 'Platform',
@@ -132,7 +87,7 @@ const dashboardFooterColumns = [
         title: 'Planning Tools',
         items: [
             { label: 'Budget Planner', target: 'budget', type: 'section' },
-            { label: 'Debt Center', target: 'debts', type: 'section' },
+            { label: 'Debt Center', target: 'debt', type: 'section' },
             { label: 'Investment Planner', target: 'investments', type: 'section' },
             { label: 'Protection Planner', target: 'protection', type: 'section' },
             { label: 'Retirement Planner', target: 'retirement', type: 'section' },
@@ -495,7 +450,7 @@ const dashboardToolTiles = [
     { label: 'FX Rates', icon: Landmark, target: 'comparehub' },
     { label: 'Tax Calc', icon: Briefcase, target: 'resourceshub' },
     { label: 'FIRE Calc', icon: Target, target: 'resourceshub' },
-    { label: 'Debt Payoff', icon: Wallet, target: 'debts' },
+    { label: 'Debt Payoff', icon: Wallet, target: 'debt' },
 ];
 const buildLearningSnapshot = ({ hasData, healthScore, budgetScore, savingsRateScore, debtRatioScore, investmentScore, live }) => {
     if (!hasData) {
@@ -567,31 +522,11 @@ const buildBestRatesSnapshot = () => {
     return {
         comparedCount: compareModules.reduce((count, module) => count + (module.segments || []).reduce((segmentCount, segment) => segmentCount + (segment.rows?.length || 0), 0), 0),
         rates: [
-            { value: bestLoan?.[3] || '--', label: 'Best Loan APR', shell: 'from-[#1d3f73] to-[#294c84] text-[#87f0d5]' },
-            { value: bestMmf?.[1] || '--', label: 'Best MMF', shell: 'from-[#294c84] to-[#315493] text-[#ffd975]' },
-            { value: bestSacco?.[3] || '--', label: 'Best SACCO', shell: 'from-[#355897] to-[#3d5ea0] text-[#cbb6ff]' },
+            { value: bestLoan?.[3] || '--', label: 'Best Loan APR', helper: bestLoan?.[0] || 'Lowest tracked rate', shell: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+            { value: bestMmf?.[1] || '--', label: 'Best MMF Yield', helper: bestMmf?.[0] || 'Highest tracked yield', shell: 'bg-amber-50 text-[#9a6200] border-amber-100' },
+            { value: bestSacco?.[3] || '--', label: 'Best SACCO Dividend', helper: bestSacco?.[0] || 'Top dividend range', shell: 'bg-blue-50 text-blue-700 border-blue-100' },
         ],
     };
-};
-const buildCommunityPreview = () => {
-    const avatarShell = ['bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-blue-100 text-blue-700', 'bg-violet-100 text-violet-700'];
-    let posts = seedPosts;
-    try {
-        const raw = localStorage.getItem(COMMUNITY_POSTS_KEY);
-        const parsed = raw ? JSON.parse(raw) : null;
-        if (Array.isArray(parsed) && parsed.length) posts = parsed;
-    } catch {
-        posts = seedPosts;
-    }
-    return posts.slice(0, 3).map((post, index) => ({
-        initials: post.initials || String(post.name || 'SM').split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
-        author: post.name || post.author || 'Community Member',
-        text: post.text,
-        meta: `${post.time || ''}${post.tags?.[0] ? ` · ${post.tags[0]}` : ''}`.trim(),
-        reactions: post.reactions || 0,
-        comments: post.replies || post.comments || 0,
-        shell: avatarShell[index % avatarShell.length],
-    }));
 };
 const relDate = (v) => {
     if (!v) return 'Recent';
@@ -599,6 +534,15 @@ const relDate = (v) => {
     const diff = Math.round((Date.now() - d.getTime()) / 86400000);
     if (diff <= 0) return 'Today'; if (diff === 1) return 'Yesterday'; if (diff < 7) return `${diff}d ago`;
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+const readCustomCalendarEvents = () => {
+    if (typeof window === 'undefined') return [];
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(FINANCIAL_CALENDAR_EVENTS_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
 };
 const isNewUser = (user) => {
     const profile = user?.profile || {};
@@ -636,14 +580,21 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     });
     const [healthSnapshot, setHealthSnapshot] = useState({ score: 0, statusDisplay: 'Data pending', components: [] });
     const [selectedCalendarFilter, setSelectedCalendarFilter] = useState('all');
+    const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+    const [customCalendarEvents, setCustomCalendarEvents] = useState(readCustomCalendarEvents);
+    const [calendarForm, setCalendarForm] = useState({ name: '', date: '', type: 'goal' });
+    const currentMonth = useMemo(() => new Date(), []);
 
     useEffect(() => {
         let mounted = true;
         (async () => {
-            const settled = await Promise.allSettled([incomeService.getSummary(), incomeService.getIncomes({ limit: 100 }), getBudgetSummary(), getBudgets({ current: 'true' }), getExpenses({ limit: 100 }), getGoals({ status: 'ACTIVE' }), getInvestmentAssets(), getDebts(), getNetWorthSummary(), getHealthScore(), getHealthScoreBreakdown()]);
+            const monthParams = { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 };
+            const settled = await Promise.allSettled([incomeService.getSummary(), incomeService.getIncomes({ limit: 100 }), getBudgetSummary(), getBudgets({ current: 'true', ...monthParams }), getExpenses({ limit: 100, ...monthParams }), getGoals({ status: 'ACTIVE' }), getInvestmentAssets(), getDebts(), getNetWorthSummary(), getHealthScore(), getHealthScoreBreakdown()]);
             const pick = (i, f) => (settled[i]?.status === 'fulfilled' ? settled[i].value : f);
             const incomeSummary = pick(0, {}), incomesPayload = pick(1, {}), budgetSummary = pick(2, {}), budgets = pick(3, []), expensesPayload = pick(4, {}), goals = pick(5, []), inv = pick(6, []), debts = pick(7, []), nw = pick(8, {}), healthScore = pick(9, {}), healthBreakdown = pick(10, {});
             const incomes = incomesPayload?.incomes || incomesPayload?.results || incomesPayload?.data || [];
+            const expenses = expensesPayload?.expenses || expensesPayload?.results || expensesPayload?.data || [];
+            const currentMonthExpenses = expenses.filter((expense) => isSameMonth(expense?.date || expense?.expense_date || expense?.created_at, currentMonth));
             const derivedIncome = (incomes || []).reduce((sum, item) => sum + toNum(item.amount || item.monthly_amount || item.net_amount), 0);
             const income = toNum(
                 incomeSummary?.total_income ||
@@ -655,7 +606,13 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 derivedIncome ||
                 user?.profile?.monthly_income
             );
-            const spent = toNum(budgetSummary?.total_spent || expensesPayload?.total);
+            const currentMonthExpenseTotal = currentMonthExpenses.reduce((sum, expense) => sum + Math.abs(toNum(expense.amount)), 0);
+            const spent = toNum(
+                budgetSummary?.current_month?.total_spent ||
+                budgetSummary?.currentMonth?.total_spent ||
+                budgetSummary?.monthly_spent ||
+                currentMonthExpenseTotal
+            );
             const debtTotal = (debts || []).reduce((s, d) => s + toNum(d.balance), 0);
             const invTotal = (inv || []).reduce((s, a) => s + toNum(a.currentValue), 0);
             const netWorth = toNum(nw?.netWorth || invTotal - debtTotal);
@@ -687,7 +644,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                     color: colors[i % colors.length],
                 };
             });
-            const groupedSpending = Object.values((expensesPayload?.expenses || []).reduce((acc, expense) => {
+            const groupedSpending = Object.values(currentMonthExpenses.reduce((acc, expense) => {
                 const label = expense.category_name || expense.category || expense.description || 'Other';
                 const amount = Math.abs(toNum(expense.amount));
                 if (!acc[label]) acc[label] = { label, amount: 0 };
@@ -706,7 +663,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 };
             });
             const tx = [
-                ...(expensesPayload?.expenses || []).map((e) => ({ date: getDate(e), name: e.description || e.name || e.category_name || 'Expense', category: e.category_name || 'Expense', amount: -Math.abs(toNum(e.amount)) })),
+                ...currentMonthExpenses.map((e) => ({ date: getDate(e), name: e.description || e.name || e.category_name || 'Expense', category: e.category_name || 'Expense', amount: -Math.abs(toNum(e.amount)) })),
                 ...incomes.map((x) => ({ date: getDate(x), name: x.source_name || x.name || 'Income', category: x.category_name || 'Income', amount: Math.abs(toNum(x.amount || x.monthly_amount)) })),
             ].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 5).map((r) => ({ name: r.name, category: r.category, amount: fmtSigned(r.amount), when: relDate(r.date), tone: r.amount >= 0 ? 'text-emerald-700' : 'text-rose-600' }));
             const invRows = (inv || []).slice(0, 4).map((a) => ({ name: a.name || 'Investment', type: a.categoryName || 'Investment', value: fmtKES(a.currentValue), change: `${toNum(a.gainLossPercentage) >= 0 ? '+' : ''}${Math.round(toNum(a.gainLossPercentage) * 10) / 10}%`, tone: toNum(a.gainLossPercentage) >= 0 ? 'text-emerald-700' : 'text-rose-600' }));
@@ -742,7 +699,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 raw: {
                     incomes,
                     budgets,
-                    expenses: expensesPayload?.expenses || [],
+                    expenses: currentMonthExpenses,
                     goals,
                     investments: inv,
                     debts,
@@ -755,7 +712,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
             });
         })();
         return () => { mounted = false; };
-    }, [user]);
+    }, [currentMonth, user]);
 
     const hasData = live.hasAnyData;
     const shouldShowNewUserHero = newUser && !hasData && !hasIncomeData;
@@ -766,10 +723,9 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     const budgetScore = findHealthComponentScore(healthSnapshot.components, ['budget', 'spending'], Math.min(100, hasData ? live.completion : 0));
     const investmentScore = findHealthComponentScore(healthSnapshot.components, ['invest', 'net worth', 'wealth'], Math.min(100, Math.round((live.breakdown.investments / Math.max(live.netWorth || 1, 1)) * 100)));
     const ctaButtons = useMemo(() => {
-        if (shouldShowNewUserHero) return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'income', label: 'Add Income', target: 'user', primary: false }, { id: 'plan', label: 'Start planning', target: 'budget', primary: false }];
-        if (!hasIncomeData) return [{ id: 'income', label: 'Add Income', target: 'user', primary: true }, { id: 'plan', label: 'Continue Planning', target: 'budget', primary: false }];
-        return [{ id: 'plan', label: 'Continue Planning', target: 'budget', primary: true }];
-    }, [shouldShowNewUserHero, hasIncomeData]);
+        if (shouldShowNewUserHero) return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'plan', label: 'Continue planning', target: 'budget', primary: false }];
+        return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'plan', label: 'Continue planning', target: 'budget', primary: false }];
+    }, [shouldShowNewUserHero]);
 
     const stats = [
         { icon: Coins, label: 'Total Net Worth', value: hasData ? fmtKES(live.netWorth) : 'KES 0', meta: hasData ? 'From connected planners' : 'Add data to see this', tone: 'text-emerald-700' },
@@ -777,8 +733,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         { icon: Wallet, label: 'Spent - Current', value: hasData ? fmtKES(live.spent) : 'KES 0', meta: hasData ? 'Budget + expenses' : 'No spending data', tone: 'text-rose-600' },
         { icon: TrendingUp, label: 'Total Savings', value: hasData ? fmtKES(live.savings) : 'KES 0', meta: hasData ? 'Goals progress' : 'No savings progress', tone: 'text-emerald-700' },
     ];
-    const spendingRows = hasData ? (live.budget.length ? live.budget : live.spending) : previewBudget;
-    const currentMonth = useMemo(() => new Date(), []);
+    const spendingRows = live.budget.length ? live.budget : live.spending;
     const aiInsights = useMemo(() => {
         if (!hasData) return [];
         return buildAiInsightCards({
@@ -792,15 +747,32 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         });
     }, [hasData, live.raw, live.income, live.savings, currentScore]);
     const calendarEvents = useMemo(() => {
-        if (!hasData) return [];
-        return buildCalendarEvents({
+        const liveEvents = hasData ? buildCalendarEvents({
             referenceDate: currentMonth,
             incomes: live.raw.incomes,
             debts: live.raw.debts,
             goals: live.raw.goals,
             investments: live.raw.investments,
-        });
-    }, [hasData, currentMonth, live.raw]);
+        }) : [];
+        const manualEvents = customCalendarEvents
+            .filter((event) => isSameMonth(event.date, currentMonth))
+            .map((event) => {
+                const style = calendarTypeStyles[event.type] || calendarTypeStyles.goal;
+                const date = parseDateValue(event.date);
+                return {
+                    ...event,
+                    date,
+                    day: date?.getDate(),
+                    label: style.label,
+                    cellTone: style.cellTone,
+                    listTone: style.listTone,
+                    filterShell: style.filterShell,
+                    priority: 0,
+                };
+            })
+            .filter((event) => event.date);
+        return [...manualEvents, ...liveEvents].sort((a, b) => a.date.getTime() - b.date.getTime() || a.priority - b.priority);
+    }, [hasData, currentMonth, live.raw, customCalendarEvents]);
     const calendarFilters = useMemo(() => buildCalendarFilters(calendarEvents), [calendarEvents]);
     const filteredCalendarEvents = useMemo(() => {
         if (selectedCalendarFilter === 'all') return calendarEvents;
@@ -834,7 +806,6 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         live,
     }), [hasData, currentScore, budgetScore, savingsRateScore, debtRatioScore, investmentScore, live]);
     const bestRatesSnapshot = useMemo(() => buildBestRatesSnapshot(), []);
-    const communityPreview = useMemo(() => buildCommunityPreview(), []);
 
     useEffect(() => {
         if (!calendarFilters.some((filter) => filter.key === selectedCalendarFilter)) {
@@ -842,39 +813,66 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         }
     }, [calendarFilters, selectedCalendarFilter]);
 
+    useEffect(() => {
+        try {
+            localStorage.setItem(FINANCIAL_CALENDAR_EVENTS_KEY, JSON.stringify(customCalendarEvents));
+        } catch (error) {
+            console.warn('Could not persist financial calendar events:', error);
+        }
+    }, [customCalendarEvents]);
+
+    const handleCalendarSubmit = (event) => {
+        event.preventDefault();
+        if (!calendarForm.name.trim() || !calendarForm.date) return;
+        setCustomCalendarEvents((current) => [
+            ...current,
+            {
+                id: `${calendarForm.date}-${calendarForm.type}-${Date.now()}`,
+                name: calendarForm.name.trim(),
+                date: calendarForm.date,
+                type: calendarForm.type,
+            },
+        ]);
+        setCalendarForm({ name: '', date: '', type: 'goal' });
+        setSelectedCalendarFilter('all');
+        setCalendarModalOpen(false);
+    };
+
     return (
         <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
             <div className="mx-auto max-w-7xl space-y-5">
-                <section className={`relative overflow-hidden rounded-[1.6rem] bg-gradient-to-br ${palette.shell} p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] sm:p-5`}>
+                <section className={`relative overflow-hidden rounded-[1.35rem] bg-gradient-to-br ${palette.shell} p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] sm:p-5`}>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.14),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(240,201,77,0.10),_transparent_24%)]" />
                     <div className="relative">
-                        <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-white/85">{`${dateLabel} - ${palette.label}`}</div>
-                        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                            <div>
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0 flex-1">
                                 {shouldShowNewUserHero ? (
                                     <>
-                                        <h1 className="max-w-4xl text-[1.65rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[2.1rem]">Welcome {firstName}, your financial health score is {currentScore}/100.</h1>
+                                        <h1 className="max-w-4xl text-[1.55rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.95rem]">Welcome {firstName}, your financial health score is {currentScore}/100.</h1>
                                         <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">Please complete your profile and planners to unlock personalized insights tailored to your life.</p>
                                     </>
                                 ) : (
                                     <>
-                                        <h1 className="max-w-4xl text-[1.55rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.9rem]">{palette.label}, {firstName}!</h1>
+                                        <h1 className="max-w-4xl text-[1.5rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.8rem]">{palette.label}, {firstName}!</h1>
                                         <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">Great progress today. Your health score is {currentScore}/100{hasData ? ` and you have ${fmtKES(live.savings)} in tracked savings.` : '.'}</p>
                                     </>
                                 )}
-                                <div className="mt-4 flex flex-wrap gap-2.5">{ctaButtons.map((b) => <button key={b.id} type="button" onClick={() => onSelectSection(b.target)} className={b.primary ? 'inline-flex items-center gap-2 rounded-full bg-[#F0C94D] px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-amber-300/20' : 'inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15'}>{b.label}<ArrowRight size={14} /></button>)}</div>
+                                <div className="mt-3 flex flex-wrap gap-2.5">{ctaButtons.map((b) => <button key={b.id} type="button" onClick={() => onSelectSection(b.target)} className={b.primary ? 'inline-flex items-center gap-2 rounded-full bg-[#F0C94D] px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-amber-300/20' : 'inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15'}>{b.label}<ArrowRight size={14} /></button>)}</div>
                             </div>
-                            {!shouldShowNewUserHero && (
-                                <div className="grid w-full grid-cols-2 gap-2.5 sm:max-w-[250px]">
-                                    <HeroBadge label="Day Streak" value={String(streakDays)} />
-                                    <HeroBadge label="Health Score" value={String(currentScore)} suffix="/100" />
+                            <div className="flex shrink-0 flex-col gap-3 lg:items-end">
+                                <div className="inline-flex self-start rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/85 backdrop-blur-sm lg:self-end">
+                                    {dateLabel}
                                 </div>
-                            )}
+                                {!shouldShowNewUserHero && (
+                                    <div className="grid w-full grid-cols-2 gap-2.5 sm:max-w-[230px]">
+                                        <HeroBadge label="Day Streak" value={String(streakDays)} />
+                                        <HeroBadge label="Health Score" value={String(currentScore)} suffix="/100" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </section>
-
-                {!hasData && <section className="rounded-[1.25rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm"><p className="text-sm font-semibold text-primary-700">Preview mode</p><p className="mt-1 text-sm text-slate-600">This is how your dashboard will look once you add income, budgets, investments, and goals.</p></section>}
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{stats.map(({ icon: Icon, label, value, meta, tone }) => <article key={label} className="rounded-[0.9rem] border border-emerald-100 bg-white px-3.5 py-2.5 shadow-sm"><span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-primary-700"><Icon size={13} /></span><p className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p><p className={`mt-1 text-[1.45rem] leading-none font-extrabold sm:text-[1.55rem] ${tone}`}>{live.loading ? '...' : value}</p><p className="mt-1 text-[10px] text-slate-500">{meta}</p></article>)}</section>
 
@@ -909,7 +907,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
 
                         <article className="rounded-[1.25rem] border border-emerald-100 bg-white p-4 shadow-sm">
                             <div className="mb-3 flex items-center justify-between">
-                                <h3 className="text-base font-bold text-slate-900">Spending Breakdown - March</h3>
+                                <h3 className="text-base font-bold text-slate-900">Spending Breakdown - {currentMonth.toLocaleDateString('en-GB', { month: 'long' })}</h3>
                                 <button type="button" onClick={() => onSelectSection('budget')} className="text-xs font-semibold text-primary-700">Full Report -</button>
                             </div>
                             <div className="grid gap-4 sm:grid-cols-[140px_1fr] sm:items-center">
@@ -917,13 +915,20 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                     <SpendingDonut rows={spendingRows} />
                                 </div>
                                 <div className="space-y-2">
-                                    {spendingRows.slice(0, 5).map((row) => (
-                                        <div key={row.label} className="grid grid-cols-[12px_1fr_auto] items-center gap-3">
-                                            <span className={`h-3 w-3 rounded-full ${row.color}`} />
-                                            <p className="text-sm text-slate-700">{row.label}</p>
-                                            <p className={`text-sm font-semibold ${getBudgetTone(row.percent)}`}>{Math.min(row.percent, 999)}%</p>
+                                    {spendingRows.length ? (
+                                        spendingRows.slice(0, 5).map((row) => (
+                                            <div key={row.label} className="grid grid-cols-[12px_1fr_auto] items-center gap-3">
+                                                <span className={`h-3 w-3 rounded-full ${row.color}`} />
+                                                <p className="text-sm text-slate-700">{row.label}</p>
+                                                <p className={`text-sm font-semibold ${getBudgetTone(row.percent)}`}>{Math.min(row.percent, 999)}%</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-4 py-3">
+                                            <p className="text-sm font-semibold text-slate-900">No {currentMonth.toLocaleDateString('en-GB', { month: 'long' })} spending yet</p>
+                                            <p className="mt-1 text-xs leading-5 text-slate-500">Add a budget or expense in the Budget Planner to see this breakdown.</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
                         </article>
@@ -947,13 +952,64 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                 <HealthBar label="Investments" value={investmentScore} color="bg-violet-600" textColor="text-violet-600" />
                             </div>
                         </article>
-                        <Panel title="Financial Goals" action="+ New Goal" onAction={() => onSelectSection('user')}>{(hasData ? live.goals : previewGoals).map((g) => <div key={g.label}><div className="mb-1.5 flex items-center justify-between text-sm"><p className="font-semibold text-slate-800">{g.label}</p><span className="text-slate-500">{g.progress}%</span></div><div className="mb-1 h-2 rounded-full bg-slate-200"><div className="h-2 rounded-full bg-primary-600" style={{ width: `${g.progress}%` }} /></div><p className="text-xs uppercase tracking-[0.16em] text-slate-400">{g.horizon}</p></div>)}</Panel>
+                        <Panel title="Financial Goals" action="+ New Goal" onAction={() => onSelectSection('user')}>
+                            {live.goals.length ? (
+                                live.goals.map((g) => (
+                                    <div key={g.label}>
+                                        <div className="mb-1.5 flex items-center justify-between text-sm">
+                                            <p className="font-semibold text-slate-800">{g.label}</p>
+                                            <span className="text-slate-500">{g.progress}%</span>
+                                        </div>
+                                        <div className="mb-1 h-2 rounded-full bg-slate-200">
+                                            <div className="h-2 rounded-full bg-primary-600" style={{ width: `${g.progress}%` }} />
+                                        </div>
+                                        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{g.horizon}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <DashboardEmptyState title="No goals yet" description="Add goals from your profile to track progress here." />
+                            )}
+                        </Panel>
                     </div>
                 </section>
 
                 <section className="grid gap-4 xl:grid-cols-2">
-                    <Panel title="Recent Transactions" action="View In Profile -" onAction={() => onSelectSection('user')}>{(hasData ? live.tx : previewTx).map((r, i) => <div key={`${r.name}-${i}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2"><div><p className="text-sm font-semibold text-slate-900">{r.name}</p><p className="text-xs text-slate-500">{r.category}</p></div><div className="text-right"><p className={`text-sm font-bold ${r.tone}`}>{r.amount}</p><p className="text-xs text-slate-400">{r.when}</p></div></div>)}</Panel>
-                    <Panel title="Investment Portfolio" action="Full View -" onAction={() => onSelectSection('investments')}>{(hasData ? live.inv : previewInv).map((r) => <div key={r.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2"><div><p className="text-sm font-semibold text-slate-900">{r.name}</p><p className="text-xs text-slate-500">{r.type}</p></div><div className="text-right"><p className="text-sm font-bold text-slate-900">{r.value}</p><p className={`text-xs font-semibold ${r.tone}`}>{r.change}</p></div></div>)}</Panel>
+                    <Panel title="Recent Transactions" action="View In Profile -" onAction={() => onSelectSection('user')}>
+                        {live.tx.length ? (
+                            live.tx.map((r, i) => (
+                                <div key={`${r.name}-${i}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">{r.name}</p>
+                                        <p className="text-xs text-slate-500">{r.category}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-sm font-bold ${r.tone}`}>{r.amount}</p>
+                                        <p className="text-xs text-slate-400">{r.when}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <DashboardEmptyState title="No recent transactions" description="Add income or expenses to see recent movement here." />
+                        )}
+                    </Panel>
+                    <Panel title="Investment Portfolio" action="Full View -" onAction={() => onSelectSection('investments')}>
+                        {live.inv.length ? (
+                            live.inv.map((r) => (
+                                <div key={r.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[#f8fbfa] px-3 py-2">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">{r.name}</p>
+                                        <p className="text-xs text-slate-500">{r.type}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-slate-900">{r.value}</p>
+                                        <p className={`text-xs font-semibold ${r.tone}`}>{r.change}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <DashboardEmptyState title="No investments yet" description="Add investments to see your portfolio summary here." />
+                        )}
+                    </Panel>
                 </section>
 
                 <section className="rounded-[1.65rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fffc_0%,_#f3fbf8_100%)] p-4 shadow-sm sm:p-5">
@@ -998,7 +1054,6 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                                     <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Plan upcoming money moves</p>
                                 </div>
                             </div>
-                            <button type="button" onClick={() => onSelectSection('budget')} className="text-sm font-semibold text-primary-700">+ Add Event</button>
                         </div>
 
                         <div className="rounded-[1.4rem] border border-emerald-100 bg-[#fbfefd] p-4">
@@ -1063,7 +1118,13 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                         <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-slate-900">Upcoming This Month</h3>
-                                <span className="inline-flex rounded-full bg-[#0f3f39] px-3 py-1 text-xs font-semibold text-white">{filteredCalendarEvents.length} events</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setCalendarModalOpen(true)}
+                                    className="inline-flex rounded-full bg-[#0f3f39] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-700"
+                                >
+                                    Add event
+                                </button>
                             </div>
                             <div className="mt-4 space-y-2">
                                 {upcomingEvents.length ? upcomingEvents.map((event) => (
@@ -1111,6 +1172,64 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                     <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm sm:p-5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
+                                <TrendingUp size={17} className="text-primary-700" />
+                                <h3 className="text-xl font-bold text-slate-900">Compare Hub</h3>
+                            </div>
+                            <button type="button" onClick={() => onSelectSection('comparehub')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">Compare All <ArrowRight size={14} /></button>
+                        </div>
+
+                        <div className="mt-4 overflow-hidden rounded-[1.35rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fffc_0%,_#eff8f4_100%)]">
+                            <div className="border-b border-emerald-100 px-4 py-4">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Comparison Hub</p>
+                                <div className="mt-2 flex items-end justify-between gap-3">
+                                    <div>
+                                        <p className="text-3xl font-extrabold tracking-tight text-slate-950">{bestRatesSnapshot.comparedCount}+</p>
+                                        <p className="text-sm font-medium text-slate-500">products tracked</p>
+                                    </div>
+                                    <span className="rounded-full bg-[#0f3f39] px-3 py-1.5 text-xs font-semibold text-white">Live rates</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 px-3 py-3">
+                                {bestRatesSnapshot.rates.map((item) => (
+                                    <div key={item.label} className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1rem] border px-3 py-3 ${item.shell}`}>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-bold text-slate-900">{item.label}</p>
+                                            <p className="mt-0.5 truncate text-xs font-medium opacity-80">{item.helper}</p>
+                                        </div>
+                                        <p className="text-right text-xl font-extrabold tracking-tight">{item.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <p className="mt-4 text-sm leading-6 text-slate-600">Compare loans, savings, SACCOs, and investment products before choosing the next move.</p>
+                    </article>
+
+                    <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm sm:p-5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Calculator size={17} className="text-primary-700" />
+                                <h3 className="text-xl font-bold text-slate-900">Resources & Tools</h3>
+                            </div>
+                            <button type="button" onClick={() => onSelectSection('resourceshub')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">Open <ArrowRight size={14} /></button>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                            {dashboardToolTiles.map(({ label, icon: Icon, target }) => (
+                                <button key={label} type="button" onClick={() => onSelectSection(target)} className="rounded-[1.1rem] border border-emerald-100 bg-[#f8fbfa] px-3 py-4 text-left transition-colors hover:bg-[#eff8f4]">
+                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary-700 shadow-sm">
+                                        <Icon size={18} />
+                                    </span>
+                                    <p className="mt-3 text-sm font-semibold text-slate-900">{label}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </article>
+
+                    <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm sm:p-5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
                                 <BookOpen size={17} className="text-primary-700" />
                                 <h3 className="text-xl font-bold text-slate-900">Learning Hub</h3>
                             </div>
@@ -1149,82 +1268,65 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                             ))}
                         </div>
                     </article>
-
-                    <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm sm:p-5">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <TrendingUp size={17} className="text-primary-700" />
-                                <h3 className="text-xl font-bold text-slate-900">Best Rates Today</h3>
-                            </div>
-                            <button type="button" onClick={() => onSelectSection('comparehub')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">Compare All <ArrowRight size={14} /></button>
-                        </div>
-
-                        <div className="mt-4 rounded-[1.35rem] bg-[linear-gradient(135deg,_#1b2d68_0%,_#243b7b_100%)] p-4 text-white">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-100/75">Comparison Hub</p>
-                            <p className="mt-2 text-2xl font-extrabold">{bestRatesSnapshot.comparedCount}+ products compared</p>
-                            <div className="mt-4 grid grid-cols-3 gap-3">
-                                {bestRatesSnapshot.rates.map((item) => (
-                                    <div key={item.label} className={`rounded-2xl bg-gradient-to-br p-3 ${item.shell}`}>
-                                        <p className="text-2xl font-extrabold">{item.value}</p>
-                                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/75">{item.label}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                            {dashboardToolTiles.map(({ label, icon: Icon, target }) => (
-                                <button key={label} type="button" onClick={() => onSelectSection(target)} className="rounded-[1.1rem] border border-emerald-100 bg-[#f8fbfa] px-3 py-4 text-left transition-colors hover:bg-[#eff8f4]">
-                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary-700 shadow-sm">
-                                        <Icon size={18} />
-                                    </span>
-                                    <p className="mt-3 text-sm font-semibold text-slate-900">{label}</p>
-                                </button>
-                            ))}
-                        </div>
-                    </article>
-
-                    <article className="rounded-[1.65rem] border border-emerald-100 bg-white p-4 shadow-sm sm:p-5">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Users size={17} className="text-primary-700" />
-                                <h3 className="text-xl font-bold text-slate-900">Community</h3>
-                            </div>
-                            <button type="button" onClick={() => onSelectSection('communityhub')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">Join <ArrowRight size={14} /></button>
-                        </div>
-
-                        <div className="mt-4 space-y-4">
-                            {communityPreview.map((post) => (
-                                <article key={post.author} className="border-b border-emerald-100 pb-4 last:border-b-0 last:pb-0">
-                                    <div className="flex items-start gap-3">
-                                        <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${post.shell}`}>{post.initials}</span>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-bold text-slate-900">{post.author}</p>
-                                            <p className="mt-1 text-sm leading-6 text-slate-600">{post.text}</p>
-                                            <p className="mt-1 text-xs text-slate-400">{post.meta}</p>
-                                            <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-500">
-                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[#9a6800]">
-                                                    <Flame size={12} /> {post.reactions}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
-                                                    <MessageCircle size={12} /> {post.comments}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {communityTags.map((tag) => (
-                                <span key={tag} className="rounded-full bg-[#eef7f4] px-3 py-1 text-xs font-semibold text-primary-700">{tag}</span>
-                            ))}
-                        </div>
-                    </article>
                 </section>
 
                 <DashboardOverviewFooter onSelectSection={onSelectSection} />
+                {calendarModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
+                        <form onSubmit={handleCalendarSubmit} className="w-full max-w-md rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Financial calendar</p>
+                                    <h3 className="mt-1 text-2xl font-extrabold text-slate-950">Add money event</h3>
+                                </div>
+                                <button type="button" onClick={() => setCalendarModalOpen(false)} className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-500">
+                                    Close
+                                </button>
+                            </div>
+                            <div className="mt-5 space-y-4">
+                                <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                                    Event name
+                                    <input
+                                        value={calendarForm.name}
+                                        onChange={(event) => setCalendarForm((current) => ({ ...current, name: event.target.value }))}
+                                        placeholder="e.g. SACCO deposit, rent, insurance renewal"
+                                        required
+                                        className="rounded-2xl border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
+                                    />
+                                </label>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                                        Date
+                                        <input
+                                            type="date"
+                                            value={calendarForm.date}
+                                            onChange={(event) => setCalendarForm((current) => ({ ...current, date: event.target.value }))}
+                                            required
+                                            className="rounded-2xl border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
+                                        />
+                                    </label>
+                                    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                                        Type
+                                        <select
+                                            value={calendarForm.type}
+                                            onChange={(event) => setCalendarForm((current) => ({ ...current, type: event.target.value }))}
+                                            className="rounded-2xl border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
+                                        >
+                                            <option value="goal">Goal</option>
+                                            <option value="income">Income</option>
+                                            <option value="debt">Loan Payment</option>
+                                            <option value="savings">Savings</option>
+                                            <option value="investment">Investment</option>
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" className="mt-5 inline-flex w-full items-center justify-center rounded-[1rem] bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
+                                Add event
+                            </button>
+                        </form>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -1240,10 +1342,17 @@ const Panel = ({ title, action, onAction, children }) => (
     </article>
 );
 
+const DashboardEmptyState = ({ title, description }) => (
+    <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-4 py-3">
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+    </div>
+);
+
 const HeroBadge = ({ label, value, suffix = '' }) => (
-    <div className="rounded-2xl border border-white/20 bg-white/10 px-3 py-3 text-center backdrop-blur-sm">
-        <p className="text-2xl font-extrabold text-white">{value}{suffix}</p>
-        <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-white/80">{label}</p>
+    <div className="rounded-[1rem] border border-white/18 bg-white/10 px-3 py-2.5 text-center backdrop-blur-sm">
+        <p className="text-xl font-extrabold leading-none text-white">{value}{suffix}</p>
+        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/78">{label}</p>
     </div>
 );
 
@@ -1430,3 +1539,4 @@ const DashboardOverviewFooter = ({ onSelectSection }) => {
 };
 
 export default DashboardOverview;
+

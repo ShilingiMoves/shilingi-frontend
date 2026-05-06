@@ -2,7 +2,40 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
+import { getStoredUserProfile, hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
+import { DASHBOARD_DATA_KEY, persistDashboardSection } from '../utils/dashboardDataState';
+import { USER_PROFILE_WORKSPACE_KEY } from '../components/dashboard/user/UserGoalsFamilyForm';
+
+const readProfileWorkspace = () => {
+    if (typeof window === 'undefined') return {};
+    try {
+        return JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
+    } catch {
+        return {};
+    }
+};
+
+const hasDashboardData = () => {
+    if (typeof window === 'undefined') return false;
+    try {
+        return window.localStorage.getItem(DASHBOARD_DATA_KEY) === 'true';
+    } catch {
+        return false;
+    }
+};
+
+const hasCompletedProfileSetup = (user) => {
+    const profile = user?.profile || {};
+    const workspace = readProfileWorkspace();
+    return Boolean(
+        profile.monthly_income ||
+        profile.primary_financial_goal ||
+        workspace.shortTermGoal ||
+        workspace.mediumTermGoal ||
+        workspace.longTermGoal ||
+        hasDashboardData()
+    );
+};
 
 const SignInPage = () => {
     const navigate = useNavigate();
@@ -38,8 +71,11 @@ const SignInPage = () => {
                 password: formValues.password,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
+            const user = getStoredUserProfile();
+            const nextSection = hasCompletedProfileSetup(user) ? 'overview' : 'user';
+            persistDashboardSection(nextSection);
             const redirectTo = location.state?.from?.pathname || '/dashboard/app';
-            navigate(redirectTo, { replace: true });
+            navigate(redirectTo, { replace: true, state: { section: nextSection } });
         } catch (err) {
             setError(err.message || 'We could not sign you in right now.');
         } finally {

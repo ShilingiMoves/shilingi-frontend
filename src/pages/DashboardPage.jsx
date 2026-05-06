@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
     Bot,
@@ -35,11 +35,29 @@ const MarketWatchPanel = lazy(() => import('../components/dashboard/marketwatch/
 
 const DashboardPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const mainContentRef = useRef(null);
+    const lastAppliedLocationKeyRef = useRef(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
-    const [activeSection, setActiveSection] = useState(getInitialDashboardSection);
+    const [activeSection, setActiveSection] = useState(() => {
+        const requestedSection = location.state?.section;
+        return dashboardSectionMap[requestedSection] ? requestedSection : getInitialDashboardSection();
+    });
     const [hasIncomeData, setHasIncomeData] = useState(false);
+
+    useEffect(() => {
+        if (lastAppliedLocationKeyRef.current === location.key) {
+            return;
+        }
+
+        lastAppliedLocationKeyRef.current = location.key;
+        const requestedSection = location.state?.section;
+        if (dashboardSectionMap[requestedSection]) {
+            setActiveSection(requestedSection);
+        }
+    }, [location.key, location.state]);
 
     useEffect(() => {
         const shouldRefreshPrerequisites = ['overview', 'cashflow', 'user'].includes(activeSection);
@@ -144,6 +162,21 @@ const DashboardPage = () => {
         }
     };
 
+    const handleSelectSection = useCallback((sectionId) => {
+        if (!dashboardSectionMap[sectionId] || sectionId === 'buddy') {
+            setActiveSection(DEFAULT_DASHBOARD_SECTION);
+            return;
+        }
+
+        setActiveSection(sectionId);
+        persistDashboardSection(sectionId);
+        setMobileSidebarOpen(false);
+
+        window.requestAnimationFrame(() => {
+            mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }, []);
+
     const sectionLoader = (
         <div className="flex min-h-[260px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
             <p className="text-sm font-medium text-slate-600">Loading dashboard section...</p>
@@ -159,13 +192,13 @@ const DashboardPage = () => {
     const renderActiveSection = () => {
         switch (activeSection) {
             case 'overview':
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={setActiveSection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} />;
 
             case 'cashflow':
                 return standardShell(
                     <IncomeProvider>
                         <Suspense fallback={sectionLoader}>
-                            <UserProfilePanel initialTab="income" onSelectSection={setActiveSection} />
+                            <UserProfilePanel initialTab="income" onSelectSection={handleSelectSection} />
                         </Suspense>
                     </IncomeProvider>
                 );
@@ -173,14 +206,14 @@ const DashboardPage = () => {
             case 'debt':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <DebtManagerPanel onSelectSection={setActiveSection} />
+                        <DebtManagerPanel onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
             case 'budget':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <BudgetDashboard onSelectSection={setActiveSection} />
+                        <BudgetDashboard onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
@@ -198,7 +231,7 @@ const DashboardPage = () => {
             case 'investments':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <InvestmentTracker onSelectSection={setActiveSection} />
+                        <InvestmentTracker onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
@@ -217,7 +250,7 @@ const DashboardPage = () => {
                 return standardShell(
                     <IncomeProvider>
                         <Suspense fallback={sectionLoader}>
-                            <UserProfilePanel onSelectSection={setActiveSection} />
+                            <UserProfilePanel onSelectSection={handleSelectSection} />
                         </Suspense>
                     </IncomeProvider>
                 );
@@ -239,7 +272,7 @@ const DashboardPage = () => {
             case 'resourceshub':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ResourcesToolsPanel onSelectSection={setActiveSection} />
+                        <ResourcesToolsPanel onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
@@ -260,14 +293,14 @@ const DashboardPage = () => {
             case 'protection':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ProtectionPlanner onSelectSection={setActiveSection} />
+                        <ProtectionPlanner onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
             case 'retirement':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <RetirementPlanner onSelectSection={setActiveSection} />
+                        <RetirementPlanner onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
@@ -294,19 +327,19 @@ const DashboardPage = () => {
                                 text: 'Help members prepare for compare flows, planner updates, and advisor conversations with clearer context.',
                             },
                         ]}
-                        primaryAction={{ label: 'Open profile inputs', onClick: () => setActiveSection('user') }}
+                        primaryAction={{ label: 'Open profile inputs', onClick: () => handleSelectSection('user') }}
                     />
                 );
 
             case 'marketwatch':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <MarketWatchPanel onSelectSection={setActiveSection} />
+                        <MarketWatchPanel onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
             default:
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={setActiveSection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} />;
         }
     };
 
@@ -314,7 +347,7 @@ const DashboardPage = () => {
         <div className="dashboard-brand-theme min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)] lg:h-screen lg:overflow-hidden">
             <DashboardTopbar
                 activeSection={activeSection}
-                onSelectSection={setActiveSection}
+                onSelectSection={handleSelectSection}
                 onOpenMobileMenu={() => setMobileSidebarOpen(true)}
                 onSignOut={handleSignOut}
                 user={profile}
@@ -326,12 +359,12 @@ const DashboardPage = () => {
                     onToggle={() => setSidebarCollapsed((current) => !current)}
                     onOpenWebsite={handleOpenWebsite}
                     activeSection={activeSection}
-                    onSelectSection={setActiveSection}
+                    onSelectSection={handleSelectSection}
                     mobileOpen={mobileSidebarOpen}
                     onCloseMobile={() => setMobileSidebarOpen(false)}
                 />
 
-                <main className="min-w-0 flex-1 pb-6 lg:h-full lg:overflow-y-auto lg:pb-0 lg:[scrollbar-gutter:stable]">
+                <main ref={mainContentRef} className="min-w-0 flex-1 pb-6 lg:h-full lg:overflow-y-auto lg:pb-0 lg:[scrollbar-gutter:stable]">
                     {renderActiveSection()}
                 </main>
             </div>

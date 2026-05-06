@@ -124,7 +124,6 @@ const writeWorkspace = (next) => {
 
 const fmtKES = (v) => Number(v || 0) > 0 ? `KES ${Number(v).toLocaleString('en-KE')}` : 'Not added yet';
 const goalLabel = (v) => v ? String(v).replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) : 'Not added yet';
-const tierLabel = (u) => (u?.tier || u?.subscription_tier || 'Basic').toString().replace(/_/g, ' ');
 const resolvedIncome = (s, p) => Number(s?.total_income ?? s?.monthly_income ?? s?.current_month?.total_income ?? 0) || Number(p || 0);
 const formatGoalDate = (value) => {
     if (!value) return 'No target date';
@@ -714,6 +713,8 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const completion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
     const remaining = sections.filter((s) => !s.complete).length;
     const fullName = `${user?.first_name || 'Member'} ${user?.last_name || ''}`.trim();
+    const dateLabel = useMemo(() => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), []);
+    const profileIntro = 'Your money profile is the engine room. Finish the missing pieces so every planner can give you sharper guidance.';
     const dependantCount = Number(workspace.dependentsCount || 0);
     const primaryMemberName = user?.first_name ? `${user.first_name} Household` : 'Family Member';
     const familyMembers = useMemo(() => {
@@ -949,18 +950,36 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             {(error || incomeError) && <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm"><div className="flex items-start gap-3"><AlertCircle size={18} className="mt-0.5 shrink-0" /><div><p className="font-semibold">We could not finish that update.</p><p className="mt-1">{error || incomeError}</p></div></div></div>}
             {success && <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-sm text-primary-800 shadow-sm">{success}</div>}
 
-            <section className="relative overflow-hidden rounded-[1.65rem] bg-primary-600 p-5 text-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]">
+            <section className="relative overflow-hidden rounded-[1.35rem] bg-primary-600 p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.12)] sm:p-5">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(240,201,77,0.14),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.06),_transparent_30%)]" />
-                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#d89f2f_0%,_#f0c94d_100%)] text-3xl font-extrabold text-slate-950 ring-2 ring-white/20 shadow-lg shadow-slate-950/20">{(user?.first_name?.charAt(0) || 'M').toUpperCase()}{(user?.last_name?.charAt(0) || '').toUpperCase()}</div>
-                        <div>
-                            <h2 className="text-[2rem] font-extrabold tracking-tight text-white">{fullName}</h2>
-                            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200/45 bg-slate-950/20 px-4 py-1.5 text-sm font-semibold text-amber-100 backdrop-blur-sm"><ShieldCheck size={15} />{tierLabel(user)} Member</div>
+                <div className="relative">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+                        <div className="min-w-0">
+                            <div className="flex items-start gap-3 sm:gap-4">
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#d89f2f_0%,_#f0c94d_100%)] text-2xl font-extrabold text-slate-950 ring-2 ring-white/20 shadow-lg shadow-slate-950/20 sm:h-16 sm:w-16">
+                                    {(user?.first_name?.charAt(0) || 'M').toUpperCase()}{(user?.last_name?.charAt(0) || '').toUpperCase()}
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <h2 className="truncate text-[1.65rem] font-extrabold leading-tight tracking-tight text-white sm:text-[2rem]">{fullName}</h2>
+                                    <p className="mt-2 max-w-3xl text-sm leading-6 text-white/82 sm:text-[0.95rem]">{profileIntro}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-3 lg:items-end">
+                            <div className="inline-flex self-start rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85 backdrop-blur-sm lg:self-end">
+                                {dateLabel}
+                            </div>
+                            <div className="w-full rounded-[1rem] border border-white/15 bg-slate-950/20 px-4 py-3 backdrop-blur-sm lg:w-[210px]">
+                                <p className="text-right text-[1.8rem] font-extrabold leading-none text-[#F0C94D]">{completion}%</p>
+                                <p className="mt-1 text-right text-xs font-medium text-white/90">Profile Complete</p>
+                                <div className="mt-2 h-1.5 rounded-full bg-white/18">
+                                    <div className="h-1.5 rounded-full bg-[#F0C94D] transition-all" style={{ width: `${completion}%` }} />
+                                </div>
+                                <p className="mt-2 text-right text-[11px] text-white/75">{remaining > 0 ? `${remaining} sections remaining` : 'Profile setup looks strong'}</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="min-w-[220px] rounded-[1.2rem] border border-white/15 bg-slate-950/20 px-5 py-3.5 backdrop-blur-sm"><p className="text-right text-[2.25rem] font-extrabold text-[#F0C94D]">{completion}%</p><p className="text-right text-sm font-medium text-white/90">Profile Complete</p><div className="mt-2.5 h-2 rounded-full bg-white/18"><div className="h-2 rounded-full bg-[#F0C94D] transition-all" style={{ width: `${completion}%` }} /></div><p className="mt-2 text-right text-xs text-white/75">{remaining > 0 ? `${remaining} sections remaining` : 'Profile setup looks strong'}</p></div>
                 </div>
             </section>
 
