@@ -49,6 +49,10 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     const [debtPaymentsLog, setDebtPaymentsLog] = useState({});
     const [paymentInputs, setPaymentInputs] = useState({});
     const [simulatorExtraPayment, setSimulatorExtraPayment] = useState(5000);
+    const [showDebtAddedModal, setShowDebtAddedModal] = useState(false);
+    const [selectedCalculatorDebtId, setSelectedCalculatorDebtId] = useState('');
+    const [loanCalculator, setLoanCalculator] = useState({ type: 'PERSONAL_LOAN', amount: '', monthlyPayment: '', months: '' });
+    const [superCalculator, setSuperCalculator] = useState({ type: 'BANK_LOAN', amount: '', monthlyPayment: '', months: '' });
 
     const summary = useMemo(() => calculateDebtSummary(debts), [debts]);
     const monthKey = new Date().toISOString().slice(0, 7);
@@ -176,6 +180,29 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     const incomeAfterPaidThisMonth = Math.max(monthlyIncome - paidThisMonthTotal, 0);
     const monthlyPaymentRatio = monthlyIncome > 0 ? (Number(summary.totalMinimumPayment || 0) / monthlyIncome) * 100 : 0;
     const readinessAction = loanReadiness.level === 'Strong' ? 'Compare now' : 'Improve consistency';
+    const crbStatus = useMemo(() => {
+        const hasRiskStatus = debts.some((item) => ['DEFAULTED', 'OVERDUE'].includes(String(item.status || '').toUpperCase()));
+        if (hasRiskStatus) return { label: 'At Risk', helper: 'Review overdue or defaulted debt first.', tone: 'text-rose-500' };
+        if (debts.length === 0) return { label: 'Not Started', helper: 'Add debt to start CRB tracking.', tone: 'text-slate-500' };
+        if (performance.progressPercent >= 10 || paidThisMonthTotal > 0) return { label: 'Improving', helper: 'Recent payments support a stronger profile.', tone: 'text-[#11814f]' };
+        return { label: 'Clear', helper: 'No risky status recorded in your debts.', tone: 'text-[#2167d8]' };
+    }, [debts, paidThisMonthTotal, performance.progressPercent]);
+    const loanCalculatorRate = useMemo(() => {
+        const principal = Number(loanCalculator.amount || 0);
+        const payment = Number(loanCalculator.monthlyPayment || 0);
+        const months = Math.max(Number(loanCalculator.months || 0), 1);
+        if (!principal || !payment) return 0;
+        const totalInterest = Math.max(payment * months - principal, 0);
+        return principal ? (totalInterest / principal) * (12 / months) * 100 : 0;
+    }, [loanCalculator]);
+    const superCalculatorRate = useMemo(() => {
+        const principal = Number(superCalculator.amount || 0);
+        const payment = Number(superCalculator.monthlyPayment || 0);
+        const months = Math.max(Number(superCalculator.months || 0), 1);
+        if (!principal || !payment) return 0;
+        const totalInterest = Math.max(payment * months - principal, 0);
+        return principal ? (totalInterest / principal) * (12 / months) * 100 : 0;
+    }, [superCalculator]);
 
     const simulatorProjection = useMemo(() => {
         const baselinePayment = Number(summary.totalMinimumPayment || 0);
@@ -222,8 +249,39 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
         { title: 'Net Worth Tracker', subtitle: 'Debts are subtracted from your net worth automatically', action: 'View ->', icon: Coins, onClick: () => onSelectSection?.('networth') },
         { title: 'Market Watch', subtitle: 'Track rates that affect repayments', action: 'Open ->', icon: Target, onClick: () => onSelectSection?.('marketwatch') },
     ];
+    const crbReportProviders = [
+        { name: 'Metropol', helper: 'Request your credit report or clearance certificate through Metropol channels.', steps: ['Have your national ID ready', 'Request report or clearance certificate', 'Review loan accounts and repayment status'] },
+        { name: 'TransUnion', helper: 'Check your credit listing, payment history, and disputes through TransUnion.', steps: ['Confirm identity details', 'Download or request your report', 'Raise a dispute for incorrect listings'] },
+        { name: 'Creditinfo', helper: 'Use Creditinfo to review bureau records and follow up on lender-reported accounts.', steps: ['Verify your personal details', 'Request credit report access', 'Check closed, active, and disputed facilities'] },
+    ];
 
     const getDebtPaidThisMonth = (debtId) => monthPayments.filter((entry) => String(entry.debtId) === String(debtId)).reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+
+    const handleCalculatorDebtSelect = (debtId) => {
+        setSelectedCalculatorDebtId(debtId);
+        const selectedDebt = debts.find((debt) => String(debt.id) === String(debtId));
+        if (!selectedDebt) {
+            setLoanCalculator({ type: 'PERSONAL_LOAN', amount: '', monthlyPayment: '', months: '' });
+            setSuperCalculator({ type: 'BANK_LOAN', amount: '', monthlyPayment: '', months: '' });
+            return;
+        }
+
+        const estimatedMonths = selectedDebt.minimumPayment > 0
+            ? Math.max(Math.ceil(Number(selectedDebt.balance || 0) / Number(selectedDebt.minimumPayment || 1)), 1)
+            : '';
+        setLoanCalculator({
+            type: selectedDebt.debtType || 'PERSONAL_LOAN',
+            amount: selectedDebt.balance || '',
+            monthlyPayment: selectedDebt.minimumPayment || '',
+            months: estimatedMonths,
+        });
+        setSuperCalculator({
+            type: selectedDebt.debtType || 'BANK_LOAN',
+            amount: selectedDebt.balance || '',
+            monthlyPayment: selectedDebt.minimumPayment || '',
+            months: estimatedMonths,
+        });
+    };
 
     const persistPaymentLog = (nextLog) => {
         setDebtPaymentsLog(nextLog);
@@ -290,6 +348,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                 setDebts((current) => [created, ...current]);
                 markDashboardDataExists();
                 triggerHealthRefresh('debt:create');
+                setShowDebtAddedModal(true);
             }
             setEditingDebt(null);
             setIsModalOpen(false);
@@ -347,6 +406,25 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     return (
         <div className="space-y-4">
             <DebtEntryModal isOpen={isModalOpen} initialValues={editingDebt} onSubmit={handleSubmit} onClose={() => { if (isSubmitting) return; setEditingDebt(null); setIsModalOpen(false); }} isSubmitting={isSubmitting} />
+            {showDebtAddedModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]">
+                    <div className="w-full max-w-[27rem] rounded-[1.25rem] bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#e8f5f0] text-[#11814f]">
+                            <CircleDot size={22} />
+                        </div>
+                        <p className="mt-4 text-[1.35rem] font-extrabold text-slate-950">Debt added successfully</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">You can now record repayments, choose a payoff strategy, and check how this debt affects your CRB profile.</p>
+                        <div className="mt-5 grid gap-2">
+                            <button type="button" onClick={() => { setShowDebtAddedModal(false); setActiveView('portfolio'); }} className="inline-flex items-center justify-center rounded-[0.95rem] bg-[#11814f] px-4 py-3 text-sm font-semibold text-white">
+                                Review payoff strategy
+                            </button>
+                            <button type="button" onClick={() => { setShowDebtAddedModal(false); setActiveView('crb'); }} className="inline-flex items-center justify-center rounded-[0.95rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
+                                View CRB report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {showCompareRatesModal && (
                 <QuickRateComparisonModal
                     debt={recommendedDebt}
@@ -363,7 +441,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle size={15} className="mr-2 inline" />{error}</div>}
             {submitError && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{submitError}</div>}
 
-            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] px-4 py-4 text-white shadow-sm sm:px-5">
+            <section className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
                         <p className="inline-flex items-center gap-3 dashboard-display-title text-[1.38rem] font-extrabold leading-none sm:text-[1.55rem]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#f4c95d] text-slate-950"><WalletCards size={16} /></span>Debt Manager</p>
@@ -391,55 +469,15 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
 
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <StatCard title="Total Debt" value={currency(totalDebtWithLiabilities)} valueClass="text-rose-500" subtitle={paidThisMonthTotal > 0 ? `KES ${Math.round(paidThisMonthTotal).toLocaleString('en-KE')} repaid this month` : 'Add your first debt to start tracking'} />
-                <StatCard title="Monthly Payments" value={currency(summary.totalMinimumPayment)} valueClass="text-amber-700" subtitle={`${monthlyPaymentRatio.toFixed(1)}% of monthly income`} />
+                <StatCard title="Monthly Repayments" value={currency(summary.totalMinimumPayment)} valueClass="text-amber-700" subtitle={`${monthlyPaymentRatio.toFixed(1)}% of monthly income`} />
+                <StatCard title="CRB Status" value={crbStatus.label} valueClass={crbStatus.tone} subtitle={crbStatus.helper} />
                 <StatCard title="Debt-Free Date" value={debtFreeDate} valueClass="text-[#13584d]" subtitle="At current pace" />
-                <StatCard title="Loan Readiness" value={loanReadiness.level} valueClass="text-[#2167d8]" subtitle={readinessAction} />
             </section>
 
-            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeView === 'portfolio'} onClick={() => setActiveView('portfolio')}>My Debt Portfolio</TabButton><TabButton active={activeView === 'solutions'} onClick={() => setActiveView('solutions')}>Explore Loan Solutions</TabButton><TabButton active={activeView === 'simulator'} onClick={() => setActiveView('simulator')}>Simulator</TabButton></div></section>
+            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeView === 'portfolio'} onClick={() => setActiveView('portfolio')}>My Portfolio</TabButton><TabButton active={activeView === 'crb'} onClick={() => setActiveView('crb')}>CRB Reports</TabButton><TabButton active={activeView === 'solutions'} onClick={() => setActiveView('solutions')}>Explore Loan Solutions</TabButton><TabButton active={activeView === 'simulator'} onClick={() => setActiveView('simulator')}>Simulator</TabButton></div></section>
 
             {activeView === 'portfolio' && (
                 <div className="space-y-4">
-                    <section className="grid gap-4 xl:grid-cols-[1.2fr_0.88fr]">
-                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                            <PanelHeading icon={Target} title="Debt Performance" />
-                            <p className="mt-5 text-xs uppercase tracking-[0.22em] text-[#9bb8af]">Amount Repaid Since Tracking Started</p>
-                            <p className="mt-1 text-[2.3rem] font-extrabold leading-none text-[#175f54]">{currency(performance.repaidAmount)}</p>
-                            <div className="mt-4 h-2 rounded-full bg-[#e6f2ee]"><div className="h-2 rounded-full bg-[#19725f]" style={{ width: `${Math.min(Math.max(performance.progressPercent, 0), 100)}%` }} /></div>
-                            <p className="mt-2 text-sm text-[#9bb8af]">{performance.progressPercent.toFixed(1)}% payoff progress overall</p>
-                            <div className="mt-5 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] p-4">
-                                <p className="text-base font-semibold text-slate-900">Monthly Installment Tracker</p>
-                                <p className="mt-1 text-sm text-[#175f54]">{installmentDueThisMonth > 0 ? `You still need to cover ${currency(installmentDueThisMonth)} this month.` : "This month's installments are covered."}</p>
-                                <p className="mt-2 text-sm text-slate-700">Paid this month: <span className="font-semibold">{currency(paidThisMonthTotal)}</span> | Scheduled: <span className="font-semibold">{currency(activeDebtInstallmentsTotal)}</span></p>
-                            </div>
-                            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                                <InfoMiniCard label="Monthly Paydown Pace" value={currency(performance.monthlyPaydown)} helper="Projected pace (annualised)" valueClass="text-rose-500" />
-                                <InfoMiniCard label="Projected Debt-Free" value={performance.projectedDebtFreeByPace || 'Keep paying'} helper="At current extra payments" valueClass="text-[#175f54]" />
-                            </div>
-                            <div className="mt-5 border-t border-slate-200 pt-4 text-sm text-slate-700">
-                                <p>Income after scheduled installments: <span className="font-semibold text-slate-900">{currency(incomeAfterInstallments)}</span></p>
-                                <p>Income after payments made this month: <span className="font-semibold text-slate-900">{currency(incomeAfterPaidThisMonth)}</span></p>
-                            </div>
-                        </article>
-
-                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                            <PanelHeading icon={Sparkles} title="Loan Readiness" />
-                            <div className={`mt-4 rounded-[1rem] border p-4 ${loanReadiness.tone}`}>
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em]">Readiness Status</p>
-                                <p className="mt-2 text-2xl font-extrabold">{loanReadiness.level}</p>
-                                <p className="mt-1 text-sm">{loanReadiness.recommendation}</p>
-                            </div>
-                            <div className="mt-5 space-y-3 text-sm text-slate-700">
-                                <MetricRow label="Payment-to-income ratio" value={`${(loanReadiness.paymentToIncomeRatio * 100).toFixed(1)}%`} valueClass="text-[#175f54]" />
-                                <MetricRow label="Total Debt-to-Income" value={`${(loanReadiness.totalDebtToIncome * 100).toFixed(0)}%`} valueClass="text-amber-600" />
-                                <MetricRow label="Ideal DTI threshold" value="Below 35%" valueClass="text-[#9bb8af]" />
-                                <MetricRow label="Credit score estimate" value={loanReadiness.level === 'Strong' ? 'Good (680)' : loanReadiness.level === 'Fair' ? 'Good (620)' : 'Improving'} valueClass="text-[#2167d8]" />
-                            </div>
-                            <div className="mt-4 rounded-[1rem] border border-[#b8d0ff] bg-[#eef4ff] p-4 text-sm text-[#1f55c7]">Income used for debt should stay below 35% for stronger loan eligibility. Use Debt type = Other to add non-loan liabilities.</div>
-                            <button type="button" onClick={() => setActiveView('solutions')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Explore Refinancing Options<ArrowRight size={14} /></button>
-                        </article>
-                    </section>
-
                     <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
                         <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                             <div className="mb-4 flex items-center justify-between"><PanelHeading icon={WalletCards} title="Active Debts" noMargin /><button type="button" onClick={() => { setEditingDebt(null); setIsModalOpen(true); }} className="text-sm font-semibold text-[#175f54]">+ Add Debt</button></div>
@@ -505,6 +543,29 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                     </section>
 
                     <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={Target} title="Loan Performance" />
+                        <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.22em] text-[#9bb8af]">Amount Repaid Since Tracking Started</p>
+                                <p className="mt-1 text-[2.3rem] font-extrabold leading-none text-[#175f54]">{currency(performance.repaidAmount)}</p>
+                                <div className="mt-4 h-2 rounded-full bg-[#e6f2ee]"><div className="h-2 rounded-full bg-[#19725f]" style={{ width: `${Math.min(Math.max(performance.progressPercent, 0), 100)}%` }} /></div>
+                                <p className="mt-2 text-sm text-[#9bb8af]">{performance.progressPercent.toFixed(1)}% payoff progress overall</p>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <InfoMiniCard label="Monthly Paydown Pace" value={currency(performance.monthlyPaydown)} helper="Projected pace (annualised)" valueClass="text-rose-500" />
+                                <InfoMiniCard label="Projected Debt-Free" value={performance.projectedDebtFreeByPace || 'Keep paying'} helper="At current extra payments" valueClass="text-[#175f54]" />
+                                <InfoMiniCard label="Income After Installments" value={currency(incomeAfterInstallments)} helper="After scheduled monthly repayments" valueClass="text-[#2167d8]" />
+                                <InfoMiniCard label="Income After Paid This Month" value={currency(incomeAfterPaidThisMonth)} helper="After payments already logged" valueClass="text-amber-700" />
+                            </div>
+                        </div>
+                        <div className="mt-5 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] p-4">
+                            <p className="text-base font-semibold text-slate-900">Monthly Installment Tracker</p>
+                            <p className="mt-1 text-sm text-[#175f54]">{installmentDueThisMonth > 0 ? `You still need to cover ${currency(installmentDueThisMonth)} this month.` : "This month's installments are covered."}</p>
+                            <p className="mt-2 text-sm text-slate-700">Paid this month: <span className="font-semibold">{currency(paidThisMonthTotal)}</span> | Scheduled: <span className="font-semibold">{currency(activeDebtInstallmentsTotal)}</span></p>
+                        </div>
+                    </section>
+
+                    <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                         <div className="flex items-center justify-between gap-4"><PanelHeading icon={Target} title="Debt Breakdown by Category" noMargin /><button type="button" onClick={() => setActiveView('simulator')} className="inline-flex items-center gap-2 text-sm font-semibold text-[#175f54]">Run Simulator<ArrowRight size={14} /></button></div>
                         <div className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
                             <div className="space-y-3">
@@ -514,7 +575,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                         </div>
                     </section>
 
-                    <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-5 text-white shadow-sm">
+                    <section className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm">
                         <p className="text-[1.3rem] font-extrabold">Connected to Your Shilingi Moves Ecosystem</p>
                         <p className="mt-2 text-sm text-white/80">Your debt profile powers personalised recommendations across all planning tools.</p>
                         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -532,6 +593,56 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                         </div>
                     </section>
                 </div>
+            )}
+
+            {activeView === 'crb' && (
+                <section className="space-y-4">
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                                <PanelHeading icon={ShieldAlert} title="CRB Reports" />
+                                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Use this section to understand where to request your CRB report, what to check, and what to do after reviewing your listing.</p>
+                            </div>
+                            <div className={`rounded-[1rem] border px-4 py-3 ${crbStatus.label === 'At Risk' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]'}`}>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em]">Current CRB Status</p>
+                                <p className="mt-1 text-2xl font-extrabold">{crbStatus.label}</p>
+                                <p className="mt-1 text-sm">{crbStatus.helper}</p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <section className="grid gap-4 xl:grid-cols-3">
+                        {crbReportProviders.map((provider) => (
+                            <article key={provider.name} className="rounded-[1.2rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                                <p className="text-[1.2rem] font-extrabold text-slate-950">{provider.name}</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">{provider.helper}</p>
+                                <div className="mt-4 space-y-2">
+                                    {provider.steps.map((step) => (
+                                        <div key={step} className="flex items-start gap-2 rounded-[0.9rem] bg-[#f8fcfa] px-3 py-2 text-sm text-slate-700">
+                                            <CircleDot size={14} className="mt-0.5 shrink-0 text-[#11814f]" />
+                                            <span>{step}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button type="button" className="mt-4 inline-flex w-full items-center justify-center rounded-[0.9rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-2.5 text-sm font-semibold text-[#11814f]">
+                                    Prepare request
+                                </button>
+                            </article>
+                        ))}
+                    </section>
+
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={Target} title="What to Check in Your CRB Report" />
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            <ChecklistRow text="All active loans match debts you recognise" />
+                            <ChecklistRow text="Closed accounts are marked as closed or paid off" />
+                            <ChecklistRow text="There are no unknown lenders or duplicate facilities" />
+                            <ChecklistRow text="Repayment history reflects recent payments" />
+                            <ChecklistRow text="Default or overdue listings have a clear lender to follow up with" />
+                            <ChecklistRow text="Personal details match your ID and phone details" />
+                        </div>
+                    </article>
+                </section>
             )}
 
             {activeView === 'solutions' && (
@@ -552,19 +663,53 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             )}
 
             {activeView === 'simulator' && (
-                <section className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
-                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={Calculator} title="Debt Payoff Simulator" />
-                        <p className="mt-3 text-sm text-slate-600">Test how much faster you could become debt-free by adding a little more each month.</p>
-                        <div className="mt-5 rounded-[1rem] border border-emerald-100 bg-[#eef8f3] p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-[#9bb8af]">Extra Monthly Payment</p><p className="mt-1 text-[2rem] font-extrabold text-[#175f54]">{currency(simulatorExtraPayment)}</p></div><p className="text-sm text-slate-600">Added on top of scheduled debt payments</p></div><input type="range" min="0" max="50000" step="1000" value={simulatorExtraPayment} onChange={(event) => setSimulatorExtraPayment(Number(event.target.value))} className="mt-4 w-full accent-[#19725f]" /></div>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-3"><InfoMiniCard label="Projected Debt-Free" value={simulatorProjection.debtFreeDate} helper="With extra payment" valueClass="text-[#175f54]" /><InfoMiniCard label="Months Saved" value={`${simulatorProjection.freedMonths}`} helper="Compared to current pace" valueClass="text-[#2167d8]" /><InfoMiniCard label="Est. Interest Saved" value={currency(simulatorProjection.extraSavings)} helper="Approximate savings" valueClass="text-amber-700" /></div>
-                    </article>
+                <section className="space-y-4">
+                    <section className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
+                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                            <PanelHeading icon={Calculator} title="Debt Payoff Calculator" />
+                            <p className="mt-3 text-sm text-slate-600">Test how much faster you could become debt-free by adding a little more each month.</p>
+                            <div className="mt-5 rounded-[1rem] border border-emerald-100 bg-[#eef8f3] p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.2em] text-[#9bb8af]">Extra Monthly Payment</p><p className="mt-1 text-[2rem] font-extrabold text-[#175f54]">{currency(simulatorExtraPayment)}</p></div><p className="text-sm text-slate-600">Added on top of scheduled debt payments</p></div><input type="range" min="0" max="50000" step="1000" value={simulatorExtraPayment} onChange={(event) => setSimulatorExtraPayment(Number(event.target.value))} className="mt-4 w-full accent-[#19725f]" /></div>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-3"><InfoMiniCard label="Projected Debt-Free" value={simulatorProjection.debtFreeDate} helper="With extra payment" valueClass="text-[#175f54]" /><InfoMiniCard label="Months Saved" value={`${simulatorProjection.freedMonths}`} helper="Compared to current pace" valueClass="text-[#2167d8]" /><InfoMiniCard label="Est. Interest Saved" value={currency(simulatorProjection.extraSavings)} helper="Approximate savings" valueClass="text-amber-700" /></div>
+                        </article>
 
-                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={TrendingDown} title="Recommended Next Move" />
-                        <div className="mt-4 rounded-[1rem] border border-slate-200 bg-slate-50 p-4"><p className="text-sm font-semibold text-slate-900">{recommendedDebt ? `Direct the extra ${currency(simulatorExtraPayment)} to ${recommendedDebt.name}` : 'Add debts to get a recommendation'}</p><p className="mt-2 text-sm text-slate-600">{recommendedDebt ? `Because you are using the ${strategy} method, this debt gives the strongest payoff impact right now.` : 'Once debts are added, the simulator will tell you where extra payments work best.'}</p></div>
-                        <button type="button" onClick={() => setActiveView('portfolio')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#1c6c5d] px-4 py-3 text-sm font-semibold text-white">Back to My Debt Portfolio</button>
-                    </article>
+                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                            <PanelHeading icon={TrendingDown} title="Recommended Next Move" />
+                            <div className="mt-4 rounded-[1rem] border border-slate-200 bg-slate-50 p-4"><p className="text-sm font-semibold text-slate-900">{recommendedDebt ? `Direct the extra ${currency(simulatorExtraPayment)} to ${recommendedDebt.name}` : 'Add debts to get a recommendation'}</p><p className="mt-2 text-sm text-slate-600">{recommendedDebt ? `Because you are using the ${strategy} method, this debt gives the strongest payoff impact right now.` : 'Once debts are added, the simulator will tell you where extra payments work best.'}</p></div>
+                            <button type="button" onClick={() => setActiveView('portfolio')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#11814f] px-4 py-3 text-sm font-semibold text-white">Back to My Portfolio</button>
+                        </article>
+                    </section>
+
+                    <section className="grid gap-4 xl:grid-cols-2">
+                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                            <PanelHeading icon={Coins} title="Normal Loan Calculator" />
+                            <label className="mt-4 flex flex-col gap-2 text-sm font-semibold text-slate-700">Prefill from saved debt<select value={selectedCalculatorDebtId} onChange={(event) => handleCalculatorDebtSelect(event.target.value)} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]"><option value="">Choose saved debt</option>{debts.map((debt) => <option key={`loan-${debt.id}`} value={debt.id}>{debt.name}</option>)}</select></label>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Loan type<select value={loanCalculator.type} onChange={(event) => setLoanCalculator((current) => ({ ...current, type: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]"><option value="PERSONAL_LOAN">Personal Loan</option><option value="MOBILE_LOAN">Mobile Loan</option><option value="SACCO_LOAN">SACCO Loan</option><option value="BANK_LOAN">Bank Loan</option><option value="MORTGAGE">Mortgage</option><option value="CAR_LOAN">Car Loan</option><option value="BUSINESS_LOAN">Business Loan</option></select></label>
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Loan amount<input type="number" min="0" value={loanCalculator.amount} onChange={(event) => setLoanCalculator((current) => ({ ...current, amount: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]" /></label>
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Monthly repayment<input type="number" min="0" value={loanCalculator.monthlyPayment} onChange={(event) => setLoanCalculator((current) => ({ ...current, monthlyPayment: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]" /></label>
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Duration (months)<input type="number" min="1" value={loanCalculator.months} onChange={(event) => setLoanCalculator((current) => ({ ...current, months: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]" /></label>
+                            </div>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                <InfoMiniCard label="Estimated Interest Rate" value={`${loanCalculatorRate.toFixed(2)}%`} helper="Approximate annualized rate" valueClass="text-[#11814f]" />
+                                <InfoMiniCard label="Total Repayment" value={currency(Number(loanCalculator.monthlyPayment || 0) * Number(loanCalculator.months || 0))} helper="Based on monthly repayment" valueClass="text-amber-700" />
+                            </div>
+                        </article>
+
+                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                            <PanelHeading icon={Sparkles} title="Super Loan Calculator" />
+                            <label className="mt-4 flex flex-col gap-2 text-sm font-semibold text-slate-700">Prefill from saved debt<select value={selectedCalculatorDebtId} onChange={(event) => handleCalculatorDebtSelect(event.target.value)} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]"><option value="">Choose saved debt</option>{debts.map((debt) => <option key={`super-${debt.id}`} value={debt.id}>{debt.name}</option>)}</select></label>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Loan type<select value={superCalculator.type} onChange={(event) => setSuperCalculator((current) => ({ ...current, type: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]"><option value="PERSONAL_LOAN">Personal Loan</option><option value="MOBILE_LOAN">Mobile Loan</option><option value="SACCO_LOAN">SACCO Loan</option><option value="BANK_LOAN">Bank Loan</option><option value="MORTGAGE">Mortgage</option><option value="CAR_LOAN">Car Loan</option><option value="BUSINESS_LOAN">Business Loan</option></select></label>
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Loan amount<input type="number" min="0" value={superCalculator.amount} onChange={(event) => setSuperCalculator((current) => ({ ...current, amount: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]" /></label>
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Monthly repayment<input type="number" min="0" value={superCalculator.monthlyPayment} onChange={(event) => setSuperCalculator((current) => ({ ...current, monthlyPayment: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]" /></label>
+                                <label className="flex flex-col gap-2 text-sm font-semibold text-slate-700">Duration (months)<input type="number" min="1" value={superCalculator.months} onChange={(event) => setSuperCalculator((current) => ({ ...current, months: event.target.value }))} className="rounded-[0.9rem] border border-[#d8ece3] px-3 py-2.5 text-sm outline-none focus:border-[#11814f]" /></label>
+                            </div>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                <InfoMiniCard label="Estimated Interest Rate" value={`${superCalculatorRate.toFixed(2)}%`} helper="Approximate annualized rate" valueClass="text-[#11814f]" />
+                                <InfoMiniCard label="Total Repayment" value={currency(Number(superCalculator.monthlyPayment || 0) * Number(superCalculator.months || 0))} helper="Based on monthly repayment" valueClass="text-amber-700" />
+                            </div>
+                        </article>
+                    </section>
                 </section>
             )}
         </div>

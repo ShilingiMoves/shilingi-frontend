@@ -36,8 +36,8 @@ const DebtEntryModal = ({ isOpen, initialValues, onSubmit, onClose, isSubmitting
                 }
             }}
         >
-            <div className="w-full max-w-lg overflow-hidden rounded-[1.15rem] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                <div className="flex items-center justify-between bg-primary-700 px-4 py-3 text-white">
+            <div className="flex max-h-[90vh] w-full max-w-[30rem] flex-col overflow-hidden rounded-[1.15rem] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                <div className="flex shrink-0 items-center justify-between bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-3 text-white">
                     <div className="flex items-center gap-3">
                         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/12">
                             <Plus size={16} />
@@ -60,7 +60,7 @@ const DebtEntryModal = ({ isOpen, initialValues, onSubmit, onClose, isSubmitting
                     </button>
                 </div>
 
-                <div className="px-4 py-4">
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
                     <DebtForm
                         initialValues={initialValues}
                         onSubmit={onSubmit}

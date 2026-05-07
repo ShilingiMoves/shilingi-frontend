@@ -8,6 +8,7 @@ const emptyForm = {
     balance: '',
     interestRate: '',
     minimumPayment: '',
+    durationMonths: '',
     dueDate: '',
     status: 'ACTIVE',
     notes: '',
@@ -39,11 +40,21 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
     const [showAdvanced, setShowAdvanced] = useState(false);
     const isModal = variant === 'modal';
     const inputClasses = isModal
-        ? 'rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-primary-500'
+        ? 'rounded-xl border border-[#d8ece3] px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10'
         : 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500';
     const textareaClasses = isModal
-        ? 'rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-primary-500'
+        ? 'rounded-xl border border-[#d8ece3] px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10'
         : 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500';
+    const calculatedInterestRate = (() => {
+        const balance = Number(formValues.balance || 0);
+        const monthlyPayment = Number(formValues.minimumPayment || 0);
+        const duration = Number(formValues.durationMonths || 0);
+        if (balance <= 0 || monthlyPayment <= 0 || duration <= 0) return '';
+        const totalRepayment = monthlyPayment * duration;
+        const interestAmount = Math.max(totalRepayment - balance, 0);
+        if (interestAmount <= 0) return '0.00';
+        return ((interestAmount / balance) * (12 / duration) * 100).toFixed(2);
+    })();
 
     useEffect(() => {
         if (initialValues) {
@@ -53,6 +64,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                 balance: initialValues.balance ?? '',
                 interestRate: initialValues.interestRate ?? '',
                 minimumPayment: initialValues.minimumPayment ?? '',
+                durationMonths: initialValues.durationMonths ?? '',
                 dueDate: initialValues.dueDate ?? '',
                 status: initialValues.status ?? 'ACTIVE',
                 notes: initialValues.notes ?? '',
@@ -79,6 +91,15 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
         }));
     };
 
+    useEffect(() => {
+        if (!calculatedInterestRate) return;
+        setFormValues((current) => (
+            current.interestRate === calculatedInterestRate
+                ? current
+                : { ...current, interestRate: calculatedInterestRate }
+        ));
+    }, [calculatedInterestRate]);
+
     const handleSubmit = (event) => {
         event.preventDefault();
         const fallbackDebtName = debtTypeLabels[formValues.debtType] || 'Debt Account';
@@ -89,7 +110,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
     };
 
     return (
-        <form onSubmit={handleSubmit} className={isModal ? 'space-y-4' : 'rounded-3xl border border-gray-100 bg-white p-6 shadow-sm'}>
+        <form onSubmit={handleSubmit} className={isModal ? 'space-y-3' : 'rounded-3xl border border-gray-100 bg-white p-6 shadow-sm'}>
             {!isModal && (
                 <div className="mb-6 flex items-start justify-between gap-4">
                     <div>
@@ -115,7 +136,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
 
             {isModal && (
                 <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary-700">Debt details</p>
+                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#11814f]">Debt details</p>
                     <p className="mt-1 text-xs leading-5 text-gray-600">
                         Add the essentials first.
                     </p>
@@ -123,7 +144,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
             )}
 
             <div className={`grid ${isModal ? 'gap-2.5 md:grid-cols-2' : 'gap-4 md:grid-cols-2'}`}>
-                <label className="flex flex-col gap-2 text-sm font-medium text-gray-700 md:col-span-2">
+                <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
                     Debt type
                     <select
                         name="debtType"
@@ -146,12 +167,13 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                     </select>
                 </label>
 
-                <Field label="Current balance" name="balance" type="number" min="0" step="0.01" value={formValues.balance} onChange={handleChange} placeholder="35000" required className={inputClasses} />
-                <Field label="Interest rate (%)" name="interestRate" type="number" min="0" step="0.01" value={formValues.interestRate} onChange={handleChange} placeholder="13.5" className={inputClasses} />
                 <Field label="Monthly repayment" name="minimumPayment" type="number" min="0" step="0.01" value={formValues.minimumPayment} onChange={handleChange} placeholder="5000" className={inputClasses} />
-                <Field label="Monthly due date" name="dueDate" type="date" value={formValues.dueDate} onChange={handleChange} className={inputClasses} />
+                <Field label="Debt amount" name="balance" type="number" min="0" step="0.01" value={formValues.balance} onChange={handleChange} placeholder="35000" required className={inputClasses} />
+                <Field label="Duration (months)" name="durationMonths" type="number" min="1" step="1" value={formValues.durationMonths} onChange={handleChange} placeholder="12" className={inputClasses} />
+                <Field label="Monthly repayment date" name="dueDate" type="date" value={formValues.dueDate} onChange={handleChange} className={inputClasses} />
+                <Field label="Interest rate (%) - auto calculated" name="interestRate" type="number" min="0" step="0.01" value={formValues.interestRate} onChange={handleChange} placeholder="Auto" className={`${inputClasses} bg-[#f8fcfa] text-[#11814f]`} readOnly={Boolean(calculatedInterestRate)} />
 
-                <div className="flex items-center gap-3 py-2">
+                {!isModal && <div className="flex items-center gap-3 py-2">
                     <input
                         type="checkbox"
                         id="isPriority"
@@ -163,9 +185,9 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                     <label htmlFor="isPriority" className="text-sm font-medium text-gray-700">
                         Mark as priority debt
                     </label>
-                </div>
+                </div>}
 
-                <label className="flex flex-col gap-2 text-sm font-medium text-gray-700 md:col-span-2">
+                {!isModal && <label className="flex flex-col gap-2 text-sm font-medium text-gray-700 md:col-span-2">
                     Description
                     <textarea
                         name="notes"
@@ -175,15 +197,15 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                         placeholder="Anything helpful like account number or repayment notes."
                         className={textareaClasses}
                     />
-                </label>
+                </label>}
             </div>
 
             {isModal && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                <div className="rounded-2xl border border-[#d0e8df] bg-[#f8fcfa] px-4 py-3">
                     <button
                         type="button"
                         onClick={() => setShowAdvanced((current) => !current)}
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-[#11814f]"
                     >
                         {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         {showAdvanced ? 'Hide extra details' : 'Add more details'}
@@ -191,8 +213,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
 
                     {showAdvanced && (
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
-                            <Field label="Creditor" name="creditor" value={formValues.creditor} onChange={handleChange} placeholder="Bank or lender" className={inputClasses} />
-                            <Field label="Account number" name="accountNumber" value={formValues.accountNumber} onChange={handleChange} placeholder="Optional" className={inputClasses} />
+                            <Field label="Financial institution" name="creditor" value={formValues.creditor} onChange={handleChange} placeholder="Bank, SACCO, lender, or person" className={inputClasses} wrapperClassName="md:col-span-2" />
 
                             <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
                                 Payment frequency
@@ -236,9 +257,19 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                         Cancel
                     </Button>
                 )}
-                <Button type="submit" variant="primary" size="sm" className="justify-center" disabled={isSubmitting}>
-                    {isSubmitting ? 'Saving debt...' : initialValues ? 'Save changes' : 'Add debt'}
-                </Button>
+                {isModal ? (
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[#11814f] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0f7044] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        {isSubmitting ? 'Saving debt...' : initialValues ? 'Save changes' : 'Add debt'}
+                    </button>
+                ) : (
+                    <Button type="submit" variant="primary" size="sm" className="justify-center" disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving debt...' : initialValues ? 'Save changes' : 'Add debt'}
+                    </Button>
+                )}
                 {!isModal && initialValues && (
                     <Button type="button" variant="outline" className="justify-center" onClick={onCancel}>
                         Cancel
@@ -249,8 +280,8 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
     );
 };
 
-const Field = ({ label, className = '', ...props }) => (
-    <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
+const Field = ({ label, className = '', wrapperClassName = '', ...props }) => (
+    <label className={`flex flex-col gap-2 text-sm font-medium text-gray-700 ${wrapperClassName}`}>
         {label}
         <input
             {...props}
