@@ -55,6 +55,16 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
         if (interestAmount <= 0) return '0.00';
         return ((interestAmount / balance) * (12 / duration) * 100).toFixed(2);
     })();
+    const hasDebtCalculationInputs = Number(formValues.balance || 0) > 0
+        && Number(formValues.minimumPayment || 0) > 0
+        && Number(formValues.durationMonths || 0) > 0;
+    const repaymentTotal = Number(formValues.minimumPayment || 0) * Number(formValues.durationMonths || 0);
+    const repaymentBelowPrincipal = hasDebtCalculationInputs && repaymentTotal < Number(formValues.balance || 0);
+    const interestHelperText = !hasDebtCalculationInputs
+        ? 'Enter debt amount, monthly repayment, and duration to calculate.'
+        : repaymentBelowPrincipal
+            ? 'Repayment total is below the debt amount, so the estimated rate shows 0.00%. Check duration or repayment.'
+            : 'Estimated from debt amount, monthly repayment, and duration.';
 
     useEffect(() => {
         if (initialValues) {
@@ -105,6 +115,7 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
         const fallbackDebtName = debtTypeLabels[formValues.debtType] || 'Debt Account';
         onSubmit({
             ...formValues,
+            interestRate: calculatedInterestRate || formValues.interestRate,
             name: formValues.name?.trim() || fallbackDebtName,
         });
     };
@@ -171,7 +182,19 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
                 <Field label="Debt amount" name="balance" type="number" min="0" step="0.01" value={formValues.balance} onChange={handleChange} placeholder="35000" required className={inputClasses} />
                 <Field label="Duration (months)" name="durationMonths" type="number" min="1" step="1" value={formValues.durationMonths} onChange={handleChange} placeholder="12" className={inputClasses} />
                 <Field label="Monthly repayment date" name="dueDate" type="date" value={formValues.dueDate} onChange={handleChange} className={inputClasses} />
-                <Field label="Interest rate (%) - auto calculated" name="interestRate" type="number" min="0" step="0.01" value={formValues.interestRate} onChange={handleChange} placeholder="Auto" className={`${inputClasses} bg-[#f8fcfa] text-[#11814f]`} readOnly={Boolean(calculatedInterestRate)} />
+                <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
+                    Interest rate (%) - auto calculated
+                    <input
+                        type="text"
+                        value={calculatedInterestRate ? `${calculatedInterestRate}%` : ''}
+                        readOnly
+                        placeholder="Auto"
+                        className={`${inputClasses} bg-[#f8fcfa] font-semibold text-[#11814f]`}
+                    />
+                    <span className="text-xs leading-4 text-[#6f968a]">
+                        {interestHelperText}
+                    </span>
+                </label>
 
                 {!isModal && <div className="flex items-center gap-3 py-2">
                     <input
