@@ -22,8 +22,10 @@ import {
 import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { getDebts } from '../../../services/debtApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
+import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 
 const PROTECTION_CATEGORY_NAME = 'Protection Policy';
+const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
 
 const POLICY_LIBRARY = {
     'Life Insurance': { icon: Heart, color: '#ef4444', label: 'Life Insurance', subtitle: 'Whole life policy', matrixTitle: 'Death / Life', recommendedMultiplier: 4.2, urgency: 'healthy' },
@@ -61,6 +63,22 @@ const readAssetDetail = (asset, keys = []) => {
         }
     }
     return '';
+};
+
+const readProfileWorkspace = () => {
+    if (typeof window === 'undefined') return {};
+    try {
+        return JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
+    } catch {
+        return {};
+    }
+};
+
+const buildPremiumCalendarDate = (index = 0) => {
+    const date = new Date();
+    date.setDate(Math.min(28, 5 + index * 5));
+    if (date < new Date()) date.setMonth(date.getMonth() + 1);
+    return date.toISOString().split('T')[0];
 };
 
 const parsePolicyType = (asset) => {
@@ -105,6 +123,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     const [categories, setCategories] = useState([]);
     const [totalDebt, setTotalDebt] = useState(0);
     const [activeTab, setActiveTab] = useState('portfolio');
+    const [profileWorkspace, setProfileWorkspace] = useState(() => readProfileWorkspace());
 
     const loadData = async () => {
         setLoading(true);
@@ -124,6 +143,16 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     };
 
     useEffect(() => { loadData(); }, []);
+
+    useEffect(() => {
+        const syncProfile = () => setProfileWorkspace(readProfileWorkspace());
+        window.addEventListener('storage', syncProfile);
+        window.addEventListener('focus', syncProfile);
+        return () => {
+            window.removeEventListener('storage', syncProfile);
+            window.removeEventListener('focus', syncProfile);
+        };
+    }, []);
 
     const protectionAssets = useMemo(() => assets.filter((item) => {
         const categoryName = normalize(item.categoryName);
@@ -147,8 +176,9 @@ const ProtectionPlanner = ({ onSelectSection }) => {
         return Math.min(Math.round(ratio * 0.7 + breadthScore), 100);
     }, [coverageTotal, recommendedCover, protectionAssets.length]);
 
-    const activePolicies = protectionAssets.filter((item) => item.protectionMeta.status === 'ACTIVE');
-    const carPolicies = protectionAssets.filter((item) => item.protectionMeta.policyType === 'Car Insurance');
+    const activePolicies = useMemo(() => protectionAssets.filter((item) => item.protectionMeta.status === 'ACTIVE'), [protectionAssets]);
+    const carPolicies = useMemo(() => protectionAssets.filter((item) => item.protectionMeta.policyType === 'Car Insurance'), [protectionAssets]);
+    const dependantCount = Math.max(asNumber(profileWorkspace.dependentsCount), asNumber(calculator.dependents));
 
     const recommendedByType = useMemo(() => {
         const income = asNumber(calculator.annualIncome);
@@ -183,9 +213,29 @@ const ProtectionPlanner = ({ onSelectSection }) => {
         name: policy.protectionMeta.policyType,
         provider: policy.institution || 'Provider',
         amount: formatKES(policy.purchaseValue),
-        note: index === 2 ? 'Due Apr 15' : `Paid Apr ${index === 0 ? '1' : '5'}`,
-        tone: index === 2 ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-primary-200 bg-primary-50 text-primary-700',
+        note: `Due ${formatDate(buildPremiumCalendarDate(index))}`,
+        tone: 'border-primary-200 bg-primary-50 text-primary-700',
     })), [activePolicies]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const premiumEvents = activePolicies.map((policy, index) => ({
+            id: `premium-${policy.uuid || policy.name}-${index}`,
+            name: `${policy.protectionMeta.policyType} premium - ${policy.institution || 'Provider'}`,
+            date: buildPremiumCalendarDate(index),
+            type: 'protection',
+        }));
+        try {
+            const existing = JSON.parse(window.localStorage.getItem(FINANCIAL_CALENDAR_EVENTS_KEY) || '[]');
+            const withoutOldPremiums = Array.isArray(existing)
+                ? existing.filter((event) => !String(event.id || '').startsWith('premium-'))
+                : [];
+            window.localStorage.setItem(FINANCIAL_CALENDAR_EVENTS_KEY, JSON.stringify([...withoutOldPremiums, ...premiumEvents]));
+            window.dispatchEvent(new Event('shilingi:calendar-events-updated'));
+        } catch (err) {
+            console.warn('Could not sync protection premiums to dashboard calendar:', err);
+        }
+    }, [activePolicies]);
 
     const documents = useMemo(() => protectionAssets.slice(0, 6).map((policy, index) => ({
         id: policy.uuid || `${policy.name}-${index}`,
@@ -298,74 +348,65 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                 </div>
             </section>
 
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                <MetricCard title="Active Policies" value={String(activePolicies.length)} helper={activePolicies.map((item) => item.protectionMeta.label).slice(0, 2).join(' â€¢ ') || 'No active cover'} valueClass="text-[#175f54]" />
-                <MetricCard title="Monthly Premiums" value={formatKES(monthlyPremiums)} helper={`${calculator.annualIncome ? ((monthlyPremiums * 12 / Math.max(asNumber(calculator.annualIncome), 1)) * 100).toFixed(1) : '0.0'}% of yearly income`} valueClass="text-[#c37a00]" />
+            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <MetricCard title="My Active Policies" value={String(activePolicies.length)} helper={activePolicies.map((item) => item.protectionMeta.label).slice(0, 2).join(' + ') || 'No active cover'} valueClass="text-[#175f54]" />
+                <MetricCard title="Total Monthly Premiums" value={formatKES(monthlyPremiums)} helper={`${calculator.annualIncome ? ((monthlyPremiums * 12 / Math.max(asNumber(calculator.annualIncome), 1)) * 100).toFixed(1) : '0.0'}% of yearly income`} valueClass="text-[#c37a00]" />
                 <MetricCard title="Total Cover Value" value={formatKES(coverageTotal)} helper={activePolicies.map((item) => item.protectionMeta.label).slice(0, 3).join(' + ') || 'No active policies'} valueClass="text-[#175f54]" />
-                <MetricCard title="Recommended Cover" value={formatKES(recommendedCover)} helper={coverageGap > 0 ? `${formatKES(coverageGap)} gap` : 'Cover target met'} valueClass="text-[#2167d8]" cardTone="bg-[linear-gradient(180deg,_#fffef7_0%,_#fff5df_100%)]" />
-                <MetricCard title="Coverage Gaps" value={`${missingPolicies.length} Gaps`} helper={gapHeadline || 'Well covered'} valueClass={missingPolicies.length > 0 ? 'text-rose-500' : 'text-[#175f54]'} cardTone={missingPolicies.length > 0 ? 'bg-rose-50' : 'bg-white'} />
+                <MetricCard title="Recommended Value" value={formatKES(recommendedCover)} helper={coverageGap > 0 ? `${formatKES(coverageGap)} gap` : 'Cover target met'} valueClass="text-[#2167d8]" cardTone="bg-[linear-gradient(180deg,_#fffef7_0%,_#fff5df_100%)]" />
             </section>
 
-            <section className="rounded-[1.45rem] border border-primary-100 bg-white p-5 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-center gap-4">
-                        <ScoreRing value={scoredCoverage} />
-                        <div>
-                            <p className="text-[1.5rem] font-extrabold text-slate-950">Protection Score: <span className="text-[#d28a0b]">{scoredCoverage >= 80 ? 'Strong' : scoredCoverage >= 55 ? 'Moderate' : 'Needs Attention'} ?</span></p>
-                            <p className="mt-2 max-w-3xl text-sm text-slate-600">{coverageGap > 0 ? `You have good foundational cover but there are still visible gaps. Adding ${missingPolicies.slice(0, 2).join(' and ') || 'priority policies'} would lift your score faster.` : 'Your current mix is broadly healthy. Keep cover levels and premium timing reviewed as your family needs grow.'}</p>
-                            <div className="mt-3 flex flex-wrap gap-2">{coreCoverage.map((type) => {
-                                const covered = activePolicies.some((item) => item.protectionMeta.policyType === type);
-                                return <span key={type} className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${covered ? 'bg-[#eef8f3] text-[#175f54]' : 'bg-rose-50 text-rose-500'}`}>{covered ? 'Covered' : 'Missing'} {POLICY_LIBRARY[type]?.label || type}</span>;
-                            })}</div>
-                        </div>
-                    </div>
-                    <div className="flex flex-col items-start gap-3 lg:items-end">
-                        <div className="text-left lg:text-right"><p className="text-sm text-[#9bb8af]">Cover Adequacy</p><p className="text-[2rem] font-extrabold text-[#d28a0b]">{coverageAdequacy}%</p><p className="text-sm text-slate-500">of recommended level</p></div>
-                    </div>
-                </div>
-            </section>
-            {missingPolicies.length > 0 && (
-                <section className="rounded-[1.35rem] border border-[#86181d] bg-[#931b1f] px-5 py-4 text-white shadow-sm">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex items-start gap-4">
-                            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#facc15] text-[#6b070b]"><ShieldAlert size={22} /></span>
-                            <div>
-                                <p className="text-[1.15rem] font-bold">Coverage Gap Alert - {missingPolicies.slice(0, 2).join(' & ')} not covered</p>
-                                <p className="mt-1 max-w-4xl text-sm text-white/85">If income stopped due to illness or injury, your family would still need protection. With {calculator.dependents} dependants and {formatKES(totalDebt)} debt, this is one of the clearest financial risks in your dashboard.</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            <button type="button" onClick={() => setShowCompareModal(true)} className="inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[#c11f24]">Get Covered</button>
-                            <button type="button" onClick={() => setActiveTab('calculators')} className="inline-flex h-11 items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-white">Calculate Cover</button>
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Protection Portfolio</TabButton><TabButton active={activeTab === 'solutions'} onClick={() => setActiveTab('solutions')}>Explore Protection Solutions</TabButton><TabButton active={activeTab === 'calculators'} onClick={() => setActiveTab('calculators')}>Insurance Calculators</TabButton></div></section>
+            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Protection Plans</TabButton><TabButton active={activeTab === 'dependents'} onClick={() => setActiveTab('dependents')}>My Dependents</TabButton><TabButton active={activeTab === 'solutions'} onClick={() => setActiveTab('solutions')}>Explore Protection Solutions</TabButton><TabButton active={activeTab === 'calculators'} onClick={() => setActiveTab('calculators')}>Protection Calculators</TabButton></div></section>
 
             {activeTab === 'portfolio' && (
                 <div className="space-y-4">
                     <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
                         <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                            <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="Current Coverage" noMargin /><button type="button" onClick={() => setShowAddModal(true)} className="text-sm font-semibold text-[#175f54]">+ Add Policy</button></div>
+                            <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="My Current Policies" noMargin /><button type="button" onClick={() => setShowAddModal(true)} className="text-sm font-semibold text-[#175f54]">+ Add Policy</button></div>
                             {loading ? <div className="flex items-center gap-2 py-8 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading protection policies...</div> : protectionAssets.length === 0 ? <EmptyState text="No protection policies yet. Add your first policy to start tracking coverage." /> : <div className="space-y-4">{protectionAssets.map((asset) => <PolicyCard key={asset.uuid} asset={asset} deleting={deletingPolicyId === asset.uuid} recommended={recommendedByType[asset.protectionMeta.policyType]} onDelete={() => removePolicy(asset)} onCompare={() => setShowCompareModal(true)} />)}</div>}
                         </article>
 
                         <div className="space-y-4">
-                            <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Shilingi Buddy Protection Insights" /><div className="mt-4 space-y-3">{insightCards.map((item) => <InsightCard key={item.title} title={item.title} text={item.text} tone={item.tone} />)}<button type="button" onClick={() => onSelectSection?.('buddy')} className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Chat with Buddy AI<ArrowRight size={14} /></button></div></article>
-                            <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><PanelHeading icon={FolderOpen} title="Claims History" noMargin /><button type="button" className="text-sm font-semibold text-[#175f54]">+ File New Claim</button></div><div className="space-y-3">{claimsHistory.length > 0 ? claimsHistory.map((item) => <ClaimRow key={item.id} item={item} />) : <EmptyState text="Claims you submit will appear here." />}<div className="rounded-xl border border-emerald-100 bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#175f54]">Total claims this year <span className="float-right">{formatKES(claimsHistory.reduce((sum, item) => sum + asNumber(String(item.amount).replace(/[^\d.-]/g, '')), 0))}</span></div></div></article>
+                            <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Shilingi Buddy Protection Insights" /><div className="mt-4 space-y-3">{insightCards.map((item) => <InsightCard key={item.title} title={item.title} text={item.text} tone={item.tone} />)}</div></article>
                         </div>
                     </section>
 
-                    <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
-                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={ShieldPlus} title="Coverage Matrix - What You're Protected Against" /><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{['Life Insurance', 'Medical Cover', 'Car Insurance', 'Disability Cover', 'Critical Illness Cover', 'Income Protection', 'Home Insurance', 'Travel Insurance'].map((type) => <CoverageMatrixCard key={type} type={type} covered={activePolicies.some((item) => item.protectionMeta.policyType === type)} amount={recommendedByType[type]} />)}</div></article>
-                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={WalletCards} title="Premium Payment Calendar" /><div className="mt-4 space-y-3">{paymentCalendar.length > 0 ? paymentCalendar.map((item) => <PaymentRow key={item.id} item={item} />) : <EmptyState text="Upcoming premium reminders will appear here." />}<div className="rounded-xl border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Total Monthly Premiums <span className="float-right">{formatKES(monthlyPremiums)}</span></div></div></article>
-                    </section>
+                    <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={ShieldPlus} title="Coverage Matrix - What You're Protected Against" /><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{['Life Insurance', 'Medical Cover', 'Car Insurance', 'Disability Cover', 'Critical Illness Cover', 'Income Protection', 'Home Insurance', 'Travel Insurance'].map((type) => <CoverageMatrixCard key={type} type={type} covered={activePolicies.some((item) => item.protectionMeta.policyType === type)} amount={recommendedByType[type]} />)}</div></section>
 
                     <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                         <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="Policy Documents & Contacts" noMargin /></div>
                         <div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr className="border-b border-emerald-100 text-left text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]"><th className="py-3 pr-4 font-semibold">Policy</th><th className="py-3 pr-4 font-semibold">Insurer</th><th className="py-3 pr-4 font-semibold">Policy No.</th><th className="py-3 pr-4 font-semibold">Start Date</th><th className="py-3 pr-4 font-semibold">Renewal Date</th><th className="py-3 pr-4 font-semibold">Status</th><th className="py-3 font-semibold">Contact</th></tr></thead><tbody>{documents.length > 0 ? documents.map((item) => <tr key={item.id} className="border-b border-slate-100 last:border-b-0"><td className="py-3 pr-4 font-medium text-slate-900">{item.policy}</td><td className="py-3 pr-4 text-slate-700">{item.insurer}</td><td className="py-3 pr-4 text-slate-700">{item.number}</td><td className="py-3 pr-4 text-slate-500">{item.startDate}</td><td className="py-3 pr-4 text-slate-500">{item.renewal}</td><td className="py-3 pr-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.status === 'Inactive' ? 'bg-slate-100 text-slate-600' : 'bg-[#eef8f3] text-[#175f54]'}`}>{item.status}</span></td><td className="py-3 text-slate-700">{item.contact}</td></tr>) : <tr className="border-b border-slate-100 last:border-b-0"><td className="py-3 pr-4 font-medium text-slate-500">None</td><td className="py-3 pr-4 text-slate-500">None</td><td className="py-3 pr-4 text-slate-500">None</td><td className="py-3 pr-4 text-slate-500">None</td><td className="py-3 pr-4 text-slate-500">None</td><td className="py-3 pr-4"><span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">None</span></td><td className="py-3 text-slate-500">None</td></tr>}</tbody></table></div>
+                    </section>
+
+                    <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                            <PanelHeading icon={ShieldCheck} title="Analytics" />
+                            <div className="mt-4 flex items-center gap-4">
+                                <ScoreRing value={scoredCoverage} />
+                                <div>
+                                    <p className="text-[1.35rem] font-extrabold text-slate-950">{scoredCoverage >= 80 ? 'Strong' : scoredCoverage >= 55 ? 'Moderate' : 'Needs Attention'}</p>
+                                    <p className="mt-1 text-sm text-slate-600">Cover adequacy is {coverageAdequacy}% across your core protection needs.</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-2">{coreCoverage.map((type) => {
+                                const covered = activePolicies.some((item) => item.protectionMeta.policyType === type);
+                                return <span key={type} className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${covered ? 'bg-[#eef8f3] text-[#175f54]' : 'bg-rose-50 text-rose-500'}`}>{covered ? 'Covered' : 'Missing'} {POLICY_LIBRARY[type]?.label || type}</span>;
+                            })}</div>
+                        </article>
+                        {missingPolicies.length > 0 && (
+                            <article className="rounded-[1.35rem] border border-[#86181d] bg-[#931b1f] px-5 py-4 text-white shadow-sm">
+                                <div className="flex items-start gap-4">
+                                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#facc15] text-[#6b070b]"><ShieldAlert size={22} /></span>
+                                    <div>
+                                        <p className="text-[1.15rem] font-bold">Coverage Gap Alert - {missingPolicies.slice(0, 2).join(' & ')} not covered</p>
+                                        <p className="mt-1 text-sm text-white/85">With {dependantCount} dependants and {formatKES(totalDebt)} debt, prioritise medical, disability, and life protection before optional cover.</p>
+                                        <div className="mt-4 flex flex-wrap gap-3">
+                                            <button type="button" onClick={() => setShowCompareModal(true)} className="inline-flex h-10 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-[#c11f24]">Get Covered</button>
+                                            <button type="button" onClick={() => setActiveTab('calculators')} className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white">Calculate Cover</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        )}
                     </section>
 
                     <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-5 text-white shadow-sm">
@@ -388,7 +429,29 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                 </div>
             )}
 
-            {activeTab === 'solutions' && <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{POLICY_OPTIONS.slice(0, 6).map((type) => <SolutionCard key={type} type={type} recommended={recommendedByType[type]} onCompare={() => setShowCompareModal(true)} />)}</section>}
+            {activeTab === 'dependents' && (
+                <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={User} title="My Dependents" />
+                        <div className="mt-4 rounded-[1rem] bg-[#eef8f3] p-5">
+                            <p className="text-xs uppercase tracking-[0.18em] text-[#6f968a]">Dependants on profile</p>
+                            <p className="mt-2 text-[2.6rem] font-extrabold leading-none text-[#175f54]">{dependantCount}</p>
+                            <p className="mt-2 text-sm text-slate-600">Each dependant increases the need for income replacement, medical cover, and emergency support.</p>
+                        </div>
+                        <button type="button" onClick={() => onSelectSection?.('user')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Update Dependents in Profile<ArrowRight size={14} /></button>
+                    </article>
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={ShieldAlert} title="Advisor Guidance" />
+                        <div className="mt-4 space-y-3">
+                            <InsightCard title="Income replacement" text={`Aim for cover that can replace income for ${calculator.yearsToCover || 10} years, plus outstanding debt and education support.`} tone="border-primary-200 bg-primary-50 text-primary-700" />
+                            <InsightCard title="Medical first" text="Medical cover should come before optional policies because one hospital event can disrupt every other financial goal." tone="border-[#b8d0ff] bg-[#eef4ff] text-[#1f55c7]" />
+                            <InsightCard title="Beneficiaries and documents" text="Keep beneficiaries, policy numbers, and insurer contacts current so dependants can act quickly during a claim." tone="border-amber-200 bg-amber-50 text-amber-800" />
+                        </div>
+                    </article>
+                </section>
+            )}
+
+            {activeTab === 'solutions' && <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{POLICY_OPTIONS.slice(0, 6).map((type) => <SolutionCard key={type} type={type} recommended={recommendedByType[type]} covered={activePolicies.some((item) => item.protectionMeta.policyType === type)} onCompare={() => setShowCompareModal(true)} onCalculate={() => setActiveTab('calculators')} />)}</section>}
 
             {activeTab === 'calculators' && (
                 <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -444,10 +507,10 @@ const CoverageMatrixCard = ({ type, covered, amount }) => {
     return <article className={`rounded-[1.1rem] border p-4 text-center ${tone}`}><span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl" style={{ backgroundColor: `${meta.color}14`, color: meta.color }}><Icon size={20} /></span><p className="mt-3 font-semibold text-slate-900">{meta.matrixTitle}</p><p className={`mt-2 text-sm font-semibold ${covered ? 'text-[#175f54]' : meta.urgency === 'gap' ? 'text-rose-500' : 'text-amber-700'}`}>{covered ? '? Covered' : meta.urgency === 'optional' ? 'Optional' : meta.urgency === 'watch' ? '? Partial' : '? Not Covered'}</p><p className="mt-1 text-sm text-slate-500">{covered ? formatKES(amount) : meta.urgency === 'optional' ? 'Consider adding' : 'Get Covered'}</p></article>;
 };
 
-const SolutionCard = ({ type, recommended, onCompare }) => {
+const SolutionCard = ({ type, recommended, covered, onCompare, onCalculate }) => {
     const meta = POLICY_LIBRARY[type];
     const Icon = meta.icon;
-    return <article className="rounded-[1.2rem] border border-emerald-100 bg-white p-5 shadow-sm"><span className="inline-flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: `${meta.color}14`, color: meta.color }}><Icon size={20} /></span><p className="mt-4 text-lg font-bold text-slate-950">{meta.label}</p><p className="mt-1 text-sm text-slate-500">{meta.subtitle}</p><div className="mt-4 rounded-xl border border-slate-100 bg-[#f8fcfa] px-4 py-3"><p className="text-xs uppercase tracking-[0.16em] text-[#9bb8af]">Suggested cover</p><p className="mt-1 text-2xl font-extrabold text-[#175f54]">{formatKES(recommended)}</p></div><button type="button" onClick={onCompare} className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-[#eef8f3] px-4 py-2 text-sm font-semibold text-[#175f54]">Compare options<ArrowRight size={14} /></button></article>;
+    return <article className="rounded-[1.2rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><span className="inline-flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: `${meta.color}14`, color: meta.color }}><Icon size={20} /></span><span className={`rounded-full px-3 py-1 text-xs font-semibold ${covered ? 'bg-[#eef8f3] text-[#175f54]' : 'bg-amber-50 text-amber-700'}`}>{covered ? 'In portfolio' : 'Worth reviewing'}</span></div><p className="mt-4 text-lg font-bold text-slate-950">{meta.label}</p><p className="mt-1 text-sm text-slate-500">{meta.subtitle}</p><div className="mt-4 rounded-xl border border-slate-100 bg-[#f8fcfa] px-4 py-3"><p className="text-xs uppercase tracking-[0.16em] text-[#9bb8af]">Suggested cover</p><p className="mt-1 text-2xl font-extrabold text-[#175f54]">{formatKES(recommended)}</p></div><p className="mt-3 text-sm text-slate-600">{covered ? 'Review policy limits and renewal terms before increasing premiums.' : 'Compare providers, exclusions, waiting periods, claim speed, and total cover value.'}</p><div className="mt-5 flex flex-wrap gap-2"><button type="button" onClick={onCompare} className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-[#eef8f3] px-4 py-2 text-sm font-semibold text-[#175f54]">Compare options<ArrowRight size={14} /></button><button type="button" onClick={onCalculate} className="inline-flex items-center gap-2 rounded-full border border-[#b8d0ff] bg-[#eef4ff] px-4 py-2 text-sm font-semibold text-[#1f55c7]">Calculate need</button></div></article>;
 };
 
 const Modal = ({ title, children, onClose }) => <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"><div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl"><div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><h3 className="text-lg font-bold text-slate-900">{title}</h3><button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button></div><div className="px-5 py-5">{children}</div></div></div>;

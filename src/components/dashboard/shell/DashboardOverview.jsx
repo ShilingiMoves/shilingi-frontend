@@ -70,6 +70,12 @@ const calendarTypeStyles = {
         listTone: 'bg-violet-50 text-violet-600',
         label: 'Investments',
     },
+    protection: {
+        filterShell: 'bg-white text-[#175f54] border-emerald-300',
+        cellTone: 'bg-emerald-100 text-[#175f54]',
+        listTone: 'bg-emerald-50 text-[#175f54]',
+        label: 'Premiums',
+    },
 };
 const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
 const dashboardFooterColumns = [
@@ -820,6 +826,16 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
             console.warn('Could not persist financial calendar events:', error);
         }
     }, [customCalendarEvents]);
+
+    useEffect(() => {
+        const refreshCalendarEvents = () => setCustomCalendarEvents(readCustomCalendarEvents());
+        window.addEventListener('storage', refreshCalendarEvents);
+        window.addEventListener('shilingi:calendar-events-updated', refreshCalendarEvents);
+        return () => {
+            window.removeEventListener('storage', refreshCalendarEvents);
+            window.removeEventListener('shilingi:calendar-events-updated', refreshCalendarEvents);
+        };
+    }, []);
 
     const handleCalendarSubmit = (event) => {
         event.preventDefault();
