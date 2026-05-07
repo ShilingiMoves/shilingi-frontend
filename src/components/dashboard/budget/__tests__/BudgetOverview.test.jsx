@@ -145,7 +145,7 @@ describe('BudgetOverview', () => {
 
         render(<BudgetOverview {...baseProps} />);
 
-        await user.click(screen.getByRole('button', { name: /expense tracker/i }));
+        await user.click(screen.getByRole('button', { name: /quick add expense/i }));
 
         await waitFor(() => {
             expect(screen.getByLabelText(/amount \(kes\)/i)).toBeInTheDocument();
@@ -171,22 +171,33 @@ describe('BudgetOverview', () => {
         expect(baseProps.onQuickExpenseAdded).toHaveBeenCalled();
     });
 
-    it('records pay now bills as expenses using the matched backend category id', async () => {
+    it('logs shopping list items as expenses', async () => {
         const user = userEvent.setup();
         createExpenseMock.mockResolvedValue({ ok: true });
 
         render(<BudgetOverview {...baseProps} />);
 
-        await user.click(screen.getAllByRole('button', { name: /^bills tracked$/i })[0]);
-        await user.click(screen.getByRole('button', { name: /pay now/i }));
+        await user.click(screen.getByRole('button', { name: /expense tracker/i }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/shopping list/i)).toBeInTheDocument();
+        });
+
+        await user.type(screen.getByLabelText(/item/i), 'Tomatoes');
+        await user.type(screen.getByLabelText(/budget \(kes\)/i), '300');
+        await user.selectOptions(screen.getAllByLabelText(/^category$/i)[0], '1');
+        await user.click(screen.getByRole('button', { name: /add shopping item/i }));
+        await user.type(screen.getByLabelText(/actual spent for tomatoes/i), '280');
+        const logButtons = screen.getAllByRole('button', { name: /log spend/i });
+        await user.click(logButtons[logButtons.length - 1]);
 
         await waitFor(() => {
             expect(createExpenseMock).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    description: 'Housing bill payment',
+                    description: 'Tomatoes',
                     category: '1',
                     payment_method: 'MPESA',
-                    amount: 30000,
+                    amount: 280,
                 })
             );
         });

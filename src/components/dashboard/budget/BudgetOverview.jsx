@@ -7,6 +7,7 @@ import {
     CalendarDays,
     Check,
     ChevronDown,
+    Download,
     Flame,
     GraduationCap,
     HeartHandshake,
@@ -40,11 +41,10 @@ const budgetModels = [
 ];
 
 const tabOptions = [
-    { id: 'summary', label: 'Budget Summary', icon: BarChart3 },
     { id: 'compare', label: 'Compare Budget Types', icon: Sparkles },
+    { id: 'categories', label: 'Budget Categories', icon: Wallet },
     { id: 'expenses', label: 'Expense Tracker', icon: Receipt },
-    { id: 'goals', label: 'Savings Goals', icon: Target },
-    { id: 'bills', label: 'Bills tracked', icon: CalendarDays },
+    { id: 'summary', label: 'Budget Summary', icon: BarChart3 },
 ];
 
 const categoryMeta = (name = '') => {
@@ -262,11 +262,12 @@ const BudgetOverview = ({
     onSelectSection,
     onQuickExpenseAdded,
 }) => {
-    const [activeView, setActiveView] = useState('summary');
+    const [activeView, setActiveView] = useState('compare');
     const [selectedModelId, setSelectedModelId] = useState('classic');
     const [showModelModal, setShowModelModal] = useState(false);
     const [pendingModel, setPendingModel] = useState(null);
     const [showCustomSplitModal, setShowCustomSplitModal] = useState(false);
+    const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
     const [customBudgetName, setCustomBudgetName] = useState('');
     const [customSplit, setCustomSplit] = useState({ needs: 45, wants: 25, savings: 30 });
     const [expenseFilter, setExpenseFilter] = useState('all');
@@ -277,6 +278,11 @@ const BudgetOverview = ({
     const [payingBillId, setPayingBillId] = useState(null);
     const [billActionMessage, setBillActionMessage] = useState('');
     const [billActionError, setBillActionError] = useState('');
+    const [shoppingItemForm, setShoppingItemForm] = useState({ name: '', estimate: '', category: '' });
+    const [shoppingItems, setShoppingItems] = useState([]);
+    const [shoppingMessage, setShoppingMessage] = useState('');
+    const [shoppingError, setShoppingError] = useState('');
+    const [loggingShoppingId, setLoggingShoppingId] = useState(null);
     const compareSectionRef = useRef(null);
     const expensesSectionRef = useRef(null);
     const [quickExpenseForm, setQuickExpenseForm] = useState({
@@ -324,6 +330,10 @@ const BudgetOverview = ({
                 if (!mounted) return;
                 setQuickCategories(Array.isArray(data) ? data : []);
                 setQuickExpenseForm((current) => ({
+                    ...current,
+                    category: current.category || data?.[0]?.value || '',
+                }));
+                setShoppingItemForm((current) => ({
                     ...current,
                     category: current.category || data?.[0]?.value || '',
                 }));
@@ -446,6 +456,7 @@ const BudgetOverview = ({
             });
 
             setQuickExpenseSuccess('Expense added successfully.');
+            setShowQuickExpenseModal(false);
             setBillActionMessage('');
             setBillActionError('');
             setQuickExpenseForm((current) => ({
@@ -467,6 +478,97 @@ const BudgetOverview = ({
             setQuickExpenseError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
         } finally {
             setQuickExpenseSubmitting(false);
+        }
+    };
+
+    const handleShoppingItemChange = (event) => {
+        const { name, value } = event.target;
+        setShoppingError('');
+        setShoppingMessage('');
+        setShoppingItemForm((current) => ({ ...current, [name]: value }));
+    };
+
+    const handleAddShoppingItem = (event) => {
+        event.preventDefault();
+        setShoppingError('');
+        setShoppingMessage('');
+
+        if (!shoppingItemForm.name.trim()) {
+            setShoppingError('Add the item you plan to buy.');
+            return;
+        }
+
+        if (shoppingItemForm.estimate && Number(shoppingItemForm.estimate) < 0) {
+            setShoppingError('Budget estimate cannot be negative.');
+            return;
+        }
+
+        setShoppingItems((current) => [
+            ...current,
+            {
+                id: `shopping-${Date.now()}`,
+                name: shoppingItemForm.name.trim(),
+                estimate: toNumber(shoppingItemForm.estimate),
+                actual: '',
+                checked: false,
+                category: shoppingItemForm.category,
+            },
+        ]);
+        setShoppingItemForm((current) => ({ ...current, name: '', estimate: '' }));
+    };
+
+    const updateShoppingItem = (id, updates) => {
+        setShoppingError('');
+        setShoppingMessage('');
+        setShoppingItems((current) => current.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+    };
+
+    const removeShoppingItem = (id) => {
+        setShoppingItems((current) => current.filter((item) => item.id !== id));
+    };
+
+    const handleLogShoppingItem = async (item) => {
+        const amount = toNumber(item.actual || item.estimate);
+        const category = item.category || shoppingItemForm.category || quickExpenseForm.category;
+
+        setShoppingError('');
+        setShoppingMessage('');
+
+        if (amount <= 0) {
+            setShoppingError('Enter the actual amount spent before logging this item.');
+            return;
+        }
+
+        if (!category) {
+            setShoppingError('Choose a budget category before logging shopping spend.');
+            return;
+        }
+
+        setLoggingShoppingId(item.id);
+        try {
+            await createExpense({
+                amount,
+                description: item.name,
+                category,
+                payment_method: quickExpenseForm.payment_method,
+                expense_date: new Date().toISOString().split('T')[0],
+                currency,
+            });
+
+            updateShoppingItem(item.id, { checked: true, actual: amount });
+            setShoppingMessage(`${item.name} has been added to expenses.`);
+            onQuickExpenseAdded?.();
+        } catch (error) {
+            const errorMessage =
+                error?.response?.data?.errors ||
+                error?.response?.data?.detail ||
+                error?.response?.data?.message ||
+                error?.response?.data ||
+                error?.message ||
+                'We could not log this shopping item right now.';
+            setShoppingError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
+        } finally {
+            setLoggingShoppingId(null);
         }
     };
 
@@ -564,6 +666,39 @@ const BudgetOverview = ({
         { label: 'Total Saved', value: formatCurrency(savingsValue, currency), shell: 'bg-[#edf8f3] text-[#11814f]' },
         { label: 'Net Surplus', value: formatCurrency(remainingCash, currency), shell: 'bg-[#f3f7ff] text-[#2f74db]' },
     ];
+    const shoppingPlannedTotal = shoppingItems.reduce((sum, item) => sum + toNumber(item.estimate), 0);
+    const shoppingSpentTotal = shoppingItems.reduce((sum, item) => sum + toNumber(item.actual), 0);
+    const shoppingRemaining = Math.max(shoppingPlannedTotal - shoppingSpentTotal, 0);
+    const handleExportBudgetSummary = () => {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+        const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+        const rows = [
+            ['Budget Summary', currentMonthLabel],
+            [],
+            ['Metric', 'Value'],
+            ...monthlySummaryRows.map((item) => [item.label, item.value]),
+            [],
+            ['Category', 'Allocated', 'Spent', 'Remaining', 'Progress'],
+            ...summaryRows.map((item) => [
+                item.category_name,
+                formatCurrency(item.allocated, item.currency || currency),
+                formatCurrency(item.spent, item.currency || currency),
+                formatCurrency(item.left, item.currency || currency),
+                `${Math.round(item.progress)}%`,
+            ]),
+        ];
+        const csvContent = rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `budget-summary-${currentMonthLabel.toLowerCase().replace(/\s+/g, '-')}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
 
     const savingsItems = activeGoals.length
         ? activeGoals.slice(0, 4).map((goal) => {
@@ -639,8 +774,7 @@ const BudgetOverview = ({
             : { title: 'Budget needs action', body: 'Overspend is building up. Rebalance limits or trim variable spending today.', color: '#e84545', shell: 'from-[#fff5f5] to-[#fff0f0] border-[#f2bcbc]' };
     return (
         <div className="mx-auto max-w-[1180px] space-y-5 rounded-[1.5rem] bg-[#f0f7f4] p-3 text-[#0d2b22] sm:p-5">
-            <section className="relative overflow-hidden rounded-[1.4rem] bg-[linear-gradient(135deg,_#062216_0%,_#0a4f32_42%,_#11814f_78%,_#14784e_100%)] px-5 py-6 text-white shadow-[0_18px_48px_rgba(13,61,48,0.24)] sm:px-8">
-                <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(245,166,35,0.18)_0%,_transparent_70%)]" />
+            <section className="relative overflow-hidden rounded-[1.4rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-5 py-6 text-white shadow-[0_18px_48px_rgba(13,61,48,0.24)] sm:px-8">
                 <div className="relative flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="max-w-2xl">
                         <p className="inline-flex items-center gap-2 text-[1.8rem] font-extrabold tracking-tight" style={displayFont}>
@@ -681,9 +815,9 @@ const BudgetOverview = ({
                             <Plus size={15} />
                             Add Category
                         </button>
-                        <button type="button" onClick={() => onNavigate('expenses')} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f8b12d] px-4 text-sm font-semibold text-slate-950 shadow-sm">
+                        <button type="button" onClick={() => setShowQuickExpenseModal(true)} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f8b12d] px-4 text-sm font-semibold text-slate-950 shadow-sm">
                             <Plus size={15} />
-                            Add Expense
+                            Quick Add Expense
                         </button>
                     </div>
                 </div>
@@ -769,13 +903,13 @@ const BudgetOverview = ({
                 </div>
             </section>
 
-            {activeView === 'summary' && (
+            {activeView === 'categories' && (
                 <div className="space-y-4">
                     <section className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                             <SectionTitle
                                 icon={BarChart3}
-                                title="Budget Categories - Summary Table"
+                                title="Budget Categories"
                                 action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">
                                     Manage Categories
                                 </button>}
@@ -934,9 +1068,67 @@ const BudgetOverview = ({
                                     <ActionCard title="Update categories" body="Adjust category limits if your real spending pattern has changed this month." cta="Manage Budgets" onClick={() => onNavigate('budgets')} />
                                     <ActionCard title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expense" onClick={() => onNavigate('expenses')} />
                                     <ActionCard title="Compare budget models" body="See how switching to another split would change your monthly allocations." cta="Compare Types" onClick={openCompareView} />
-                                    <ActionCard title="Set up bills tracked" body="Track key bill-like categories such as rent, utilities, and school fees." cta="Manage Bills tracked" onClick={() => setActiveView('bills')} />
                                 </div>
                             </article>
+                        </div>
+                    </section>
+                </div>
+            )}
+
+            {activeView === 'summary' && (
+                <div className="space-y-4">
+                    <section className="grid gap-4 lg:grid-cols-2">
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle
+                                icon={BarChart3}
+                                title={`${currentMonthLabel} Budget Summary`}
+                                action={(
+                                    <button type="button" onClick={handleExportBudgetSummary} className="inline-flex items-center gap-2 rounded-full border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-2 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">
+                                        <Download size={14} />
+                                        Export Details
+                                    </button>
+                                )}
+                            />
+                            <div className="mt-4 space-y-3">
+                                {monthlySummaryRows.map((item) => (
+                                    <div key={item.label} className={`flex items-center justify-between rounded-[0.95rem] px-4 py-3 ${item.shell}`}>
+                                        <span className="text-sm font-semibold">{item.label}</span>
+                                        <span className="text-[1.05rem] font-extrabold">{item.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </article>
+
+                        <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                            <SectionTitle icon={Lightbulb} title="Budget Insight" subtitle="What this month is telling you." />
+                            <div className="mt-4 space-y-3">
+                                {insightCards.map((item) => (
+                                    <div key={item.title} className={`rounded-[1rem] border px-4 py-4 text-sm leading-6 ${item.tone}`}>
+                                        <p className="font-semibold">{item.title}</p>
+                                        <p className="mt-1">{item.body}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </article>
+                    </section>
+
+                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                        <SectionTitle icon={TrendingUp} title="Top Spending Categories" />
+                        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {topSpendingCategories.length ? topSpendingCategories.map((item) => (
+                                <div key={`${item.uuid}-summary`} className="rounded-[1rem] border border-[#edf5f1] bg-[#f8fcfa] px-4 py-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-sm font-semibold text-slate-900">{item.category_name}</span>
+                                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${item.left < 0 ? 'bg-[#ffe7e7] text-[#d94d4d]' : 'bg-[#e7f6f1] text-[#11814f]'}`}>
+                                            {Math.round(item.progress)}%
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 text-2xl font-extrabold text-[#0d2b22]" style={displayFont}>{formatCurrency(item.spent, item.currency || currency)}</p>
+                                    <p className="mt-1 text-xs text-[#7a9e94]">of {formatCurrency(item.allocated, item.currency || currency)} planned</p>
+                                </div>
+                            )) : (
+                                <div className="rounded-[1rem] border border-[#edf5f1] bg-[#f8fcfa] px-4 py-4 text-sm text-slate-500 md:col-span-2 xl:col-span-3">Add budget categories and expenses to see your month at a glance.</div>
+                            )}
                         </div>
                     </section>
                 </div>
@@ -1199,112 +1391,130 @@ const BudgetOverview = ({
 
                         <div className="space-y-4">
                             <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
-                                <SectionTitle icon={Zap} title="Quick Add Expense" />
+                                <SectionTitle icon={ShoppingBasket} title="Shopping List" subtitle="Plan before checkout and log what you actually spend." />
 
-                                <form onSubmit={handleQuickExpenseSubmit} className="mt-4 space-y-3">
-                                    {quickExpenseError && (
+                                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                                    <div className="rounded-[0.95rem] bg-[#edf8f3] px-3 py-3 text-[#11814f]">
+                                        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]">Planned</p>
+                                        <p className="mt-1 text-lg font-extrabold">{formatCurrency(shoppingPlannedTotal, currency)}</p>
+                                    </div>
+                                    <div className="rounded-[0.95rem] bg-[#fff3f3] px-3 py-3 text-[#d94d4d]">
+                                        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]">Spent</p>
+                                        <p className="mt-1 text-lg font-extrabold">{formatCurrency(shoppingSpentTotal, currency)}</p>
+                                    </div>
+                                    <div className="rounded-[0.95rem] bg-[#f3f7ff] px-3 py-3 text-[#2f74db]">
+                                        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]">Left</p>
+                                        <p className="mt-1 text-lg font-extrabold">{formatCurrency(shoppingRemaining, currency)}</p>
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleAddShoppingItem} className="mt-4 space-y-3">
+                                    {shoppingError && (
                                         <div className="rounded-[0.95rem] border border-[#f2c2c2] bg-[#fff5f5] px-4 py-3 text-sm text-[#d94d4d]">
-                                            {quickExpenseError}
+                                            {shoppingError}
                                         </div>
                                     )}
-                                    {quickExpenseSuccess && (
+                                    {shoppingMessage && (
                                         <div className="rounded-[0.95rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm text-[#11814f]">
-                                            {quickExpenseSuccess}
+                                            {shoppingMessage}
                                         </div>
                                     )}
                                     <div>
-                                        <label htmlFor="quick-expense-amount" className="text-sm font-semibold text-slate-700">Amount ({currency})</label>
+                                        <label htmlFor="shopping-item-name" className="text-sm font-semibold text-slate-700">Item</label>
                                         <input
-                                            id="quick-expense-amount"
-                                            type="number"
-                                            name="amount"
-                                            min="0"
-                                            step="0.01"
-                                            value={quickExpenseForm.amount}
-                                            onChange={handleQuickExpenseChange}
-                                            placeholder="e.g. 1,500"
-                                            className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="quick-expense-description" className="text-sm font-semibold text-slate-700">Description</label>
-                                        <input
-                                            id="quick-expense-description"
+                                            id="shopping-item-name"
                                             type="text"
-                                            name="description"
-                                            value={quickExpenseForm.description}
-                                            onChange={handleQuickExpenseChange}
-                                            placeholder="e.g. Lunch at Java House"
+                                            name="name"
+                                            value={shoppingItemForm.name}
+                                            onChange={handleShoppingItemChange}
+                                            placeholder="e.g. Milk, rice, tomatoes"
                                             className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                         />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="quick-expense-category" className="text-sm font-semibold text-slate-700">Category</label>
-                                        <select
-                                            id="quick-expense-category"
-                                            name="category"
-                                            value={quickExpenseForm.category}
-                                            onChange={handleQuickExpenseChange}
-                                            className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
-                                        >
-                                            <option value="">Select category</option>
-                                            {quickCategories.map((category) => (
-                                                <option key={category.uuid || category.id} value={category.value}>
-                                                    {category.name}
-                                                </option>
-                                            ))}
-                                        </select>
                                     </div>
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <div>
-                                            <label htmlFor="quick-expense-type" className="text-sm font-semibold text-slate-700">Type</label>
-                                            <select
-                                                id="quick-expense-type"
-                                                name="type"
-                                                value={quickExpenseForm.type}
-                                                onChange={handleQuickExpenseChange}
-                                                className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
-                                            >
-                                                <option value="EXPENSE">Expense</option>
-                                                <option value="SAVING">Savings</option>
-                                            </select>
+                                            <label htmlFor="shopping-item-estimate" className="text-sm font-semibold text-slate-700">Budget ({currency})</label>
+                                            <input
+                                                id="shopping-item-estimate"
+                                                type="number"
+                                                name="estimate"
+                                                min="0"
+                                                step="0.01"
+                                                value={shoppingItemForm.estimate}
+                                                onChange={handleShoppingItemChange}
+                                                placeholder="e.g. 500"
+                                                className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                            />
                                         </div>
                                         <div>
-                                            <label htmlFor="quick-expense-payment-method" className="text-sm font-semibold text-slate-700">Payment Method</label>
+                                            <label htmlFor="shopping-item-category" className="text-sm font-semibold text-slate-700">Category</label>
                                             <select
-                                                id="quick-expense-payment-method"
-                                                name="payment_method"
-                                                value={quickExpenseForm.payment_method}
-                                                onChange={handleQuickExpenseChange}
+                                                id="shopping-item-category"
+                                                name="category"
+                                                value={shoppingItemForm.category}
+                                                onChange={handleShoppingItemChange}
                                                 className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
                                             >
-                                                <option value="MPESA">M-Pesa</option>
-                                                <option value="CASH">Cash</option>
-                                                <option value="CARD">Card</option>
-                                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                                <option value="">Select category</option>
+                                                {quickCategories.map((category) => (
+                                                    <option key={`shopping-${category.uuid || category.id}`} value={category.value}>
+                                                        {category.name}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" disabled={quickExpenseSubmitting} className="mt-2 inline-flex w-full items-center justify-center rounded-[0.8rem] bg-[#11814f] px-4 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#0f7044] disabled:opacity-70">
-                                        {quickExpenseSubmitting ? 'Adding Expense...' : '+ Add Expense'}
+                                    <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-[0.8rem] bg-[#11814f] px-4 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#0f7044]">
+                                        <Plus size={15} />
+                                        Add Shopping Item
                                     </button>
                                 </form>
-                            </article>
 
-                            <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
-                                <SectionTitle icon={Receipt} title={`${currentMonthLabel} Summary`} />
-                                <div className="mt-4 space-y-3">
-                                    {monthlySummaryRows.map((item) => (
-                                        <div key={item.label} className={`flex items-center justify-between rounded-[0.95rem] px-4 py-3 ${item.shell}`}>
-                                            <span className="text-sm font-semibold">{item.label}</span>
-                                            <span className="text-[1.05rem] font-extrabold">{item.value}</span>
+                                <div className="mt-5 space-y-3">
+                                    {shoppingItems.map((item) => (
+                                        <div key={item.id} className={`rounded-[1rem] border px-3 py-3 ${item.checked ? 'border-[#bfe2d6] bg-[#edf8f3]' : 'border-[#edf5f1] bg-[#f8fcfa]'}`}>
+                                            <div className="flex items-start justify-between gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateShoppingItem(item.id, { checked: !item.checked })}
+                                                    className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${item.checked ? 'border-[#11814f] bg-[#11814f] text-white' : 'border-[#a8d4c4] bg-white text-[#11814f]'}`}
+                                                    aria-label={item.checked ? `Mark ${item.name} as not bought` : `Mark ${item.name} as bought`}
+                                                >
+                                                    <Check size={15} />
+                                                </button>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className={`font-semibold ${item.checked ? 'text-[#11814f]' : 'text-slate-900'}`}>{item.name}</p>
+                                                    <p className="mt-1 text-xs text-[#7a9e94]">Planned {formatCurrency(item.estimate, currency)}</p>
+                                                </div>
+                                                <button type="button" onClick={() => removeShoppingItem(item.id)} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-[#fff0f0] hover:text-[#d94d4d]" aria-label={`Remove ${item.name}`}>
+                                                    <X size={15} />
+                                                </button>
+                                            </div>
+                                            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={item.actual}
+                                                    onChange={(event) => updateShoppingItem(item.id, { actual: event.target.value })}
+                                                    placeholder="Actual spent"
+                                                    aria-label={`Actual spent for ${item.name}`}
+                                                    className="w-full rounded-[0.75rem] border border-[#d8ece3] bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleLogShoppingItem(item)}
+                                                    disabled={loggingShoppingId === item.id}
+                                                    className="inline-flex items-center justify-center rounded-[0.75rem] border border-[#bfe2d6] bg-white px-3 py-2 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white disabled:opacity-70"
+                                                >
+                                                    {loggingShoppingId === item.id ? 'Logging...' : 'Log Spend'}
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
-                                    <button type="button" className="inline-flex w-full items-center justify-center rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
-                                        Export Statement
-                                    </button>
                                 </div>
                             </article>
+
                         </div>
                     </section>
 
@@ -1516,6 +1726,118 @@ const BudgetOverview = ({
                     </div>
                 </div>
             </section>
+
+            {showQuickExpenseModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6">
+                    <div className="max-h-[92vh] w-full max-w-[27rem] overflow-y-auto rounded-[1.2rem] bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.24)] sm:p-5">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.8rem] bg-[#e8f5f0] text-[#11814f]">
+                                    <Zap size={17} />
+                                </span>
+                                <p className="text-[1.35rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Quick Add Expense</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowQuickExpenseModal(false)}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8ece3] text-slate-500 transition-colors hover:bg-[#f8fcfa]"
+                                aria-label="Close quick add expense"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleQuickExpenseSubmit} className="mt-5 space-y-3">
+                            {quickExpenseError && (
+                                <div className="rounded-[0.95rem] border border-[#f2c2c2] bg-[#fff5f5] px-4 py-3 text-sm text-[#d94d4d]">
+                                    {quickExpenseError}
+                                </div>
+                            )}
+                            {quickExpenseSuccess && (
+                                <div className="rounded-[0.95rem] border border-[#bfe2d6] bg-[#edf8f3] px-4 py-3 text-sm text-[#11814f]">
+                                    {quickExpenseSuccess}
+                                </div>
+                            )}
+                            <div>
+                                <label htmlFor="quick-expense-amount" className="text-sm font-semibold text-slate-700">Amount ({currency})</label>
+                                <input
+                                    id="quick-expense-amount"
+                                    type="number"
+                                    name="amount"
+                                    min="0"
+                                    step="0.01"
+                                    value={quickExpenseForm.amount}
+                                    onChange={handleQuickExpenseChange}
+                                    placeholder="e.g. 1,500"
+                                    className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="quick-expense-description" className="text-sm font-semibold text-slate-700">Description</label>
+                                <input
+                                    id="quick-expense-description"
+                                    type="text"
+                                    name="description"
+                                    value={quickExpenseForm.description}
+                                    onChange={handleQuickExpenseChange}
+                                    placeholder="e.g. Lunch at Java House"
+                                    className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="quick-expense-category" className="text-sm font-semibold text-slate-700">Category</label>
+                                <select
+                                    id="quick-expense-category"
+                                    name="category"
+                                    value={quickExpenseForm.category}
+                                    onChange={handleQuickExpenseChange}
+                                    className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                >
+                                    <option value="">Select category</option>
+                                    {quickCategories.map((category) => (
+                                        <option key={category.uuid || category.id} value={category.value}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label htmlFor="quick-expense-type" className="text-sm font-semibold text-slate-700">Type</label>
+                                    <select
+                                        id="quick-expense-type"
+                                        name="type"
+                                        value={quickExpenseForm.type}
+                                        onChange={handleQuickExpenseChange}
+                                        className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                    >
+                                        <option value="EXPENSE">Expense</option>
+                                        <option value="SAVING">Savings</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="quick-expense-payment-method" className="text-sm font-semibold text-slate-700">Payment Method</label>
+                                    <select
+                                        id="quick-expense-payment-method"
+                                        name="payment_method"
+                                        value={quickExpenseForm.payment_method}
+                                        onChange={handleQuickExpenseChange}
+                                        className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                    >
+                                        <option value="MPESA">M-Pesa</option>
+                                        <option value="CASH">Cash</option>
+                                        <option value="CARD">Card</option>
+                                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" disabled={quickExpenseSubmitting} className="mt-2 inline-flex w-full items-center justify-center rounded-[0.8rem] bg-[#11814f] px-4 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#0f7044] disabled:opacity-70">
+                                {quickExpenseSubmitting ? 'Adding Expense...' : '+ Add Expense'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {showCustomSplitModal && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/35 px-4">
