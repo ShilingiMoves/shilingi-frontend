@@ -303,9 +303,11 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                 <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm sm:px-5">
                     <div className="dashboard-toolbar-row flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
-                            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-2xl shadow-inner shadow-white/10">💎</div>
+                            <div className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#18765e] shadow-inner shadow-white/10">
+                                <Gem size={16} />
+                            </div>
                             <div className="space-y-2">
-                                <h1 className="dashboard-display-title text-white">Net Worth Tracker</h1>
+                                <h1 className="dashboard-display-title text-[1.38rem] font-extrabold leading-none text-white sm:text-[1.55rem]">Net Worth Tracker</h1>
                                 <p className="max-w-xl text-sm leading-6 text-white/78">
                                     Your complete financial picture. Every asset and liability in one clear view.
                                 </p>
@@ -457,7 +459,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                                 <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#18765e]">
                                     <Gem size={18} />
                                 </div>
-                                <h2 className="dashboard-display-title text-slate-900">Buddy AI Net Worth Insights</h2>
+                                <h2 className="dashboard-display-title text-slate-900">Shilingi Buddy AI Insights</h2>
                             </div>
                             <div className="space-y-3">
                                 {insights.map((item) => (
