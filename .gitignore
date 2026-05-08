@@ -6,3 +6,11 @@ dist-ssr
 .env.*
 !.env.example
 .DS_Store
+out/shilingi-intro-frame-045.png
+out/shilingi-intro-frame-150.png
+out/shilingi-intro-frame-330.png
+out/shilingi-intro.mp4
+.gitignore
+.gitignore
+src/remotion/ShilingiIntroVideo.jsx
+src/remotion/VIDEO_CONCEPT.md

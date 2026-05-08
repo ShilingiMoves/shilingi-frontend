@@ -2,14 +2,11 @@
 import {
     AlertCircle,
     ArrowRight,
-    Coins,
     Gem,
-    Landmark,
     Loader2,
     PiggyBank,
     RefreshCw,
     ShieldCheck,
-    Sparkles,
     TrendingUp,
     XCircle,
 } from 'lucide-react';
@@ -303,14 +300,14 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                 {error ? <Banner tone="danger" icon={<AlertCircle size={18} />} message={error} /> : null}
                 {submitError ? <Banner tone="warning" icon={<AlertCircle size={18} />} message={submitError} /> : null}
 
-                <div className="overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-6 text-white shadow-[0_18px_55px_rgba(8,51,39,0.18)] lg:p-8">
+                <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm sm:px-5">
                     <div className="dashboard-toolbar-row flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
                             <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-2xl shadow-inner shadow-white/10">💎</div>
                             <div className="space-y-2">
                                 <h1 className="dashboard-display-title text-white">Net Worth Tracker</h1>
-                                <p className="max-w-xl text-sm leading-6 text-white/78 lg:text-base">
-                                    Your complete financial picture. Every asset, every liability, your true wealth score.
+                                <p className="max-w-xl text-sm leading-6 text-white/78">
+                                    Your complete financial picture. Every asset and liability in one clear view.
                                 </p>
                             </div>
                         </div>
@@ -336,15 +333,14 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <StatCard label="Total Assets" value={formatKES(totalAssets)} accent="text-[#0f766e]" helper={`${formatSignedKES(yearlyGrowth / 12)} vs last month`} />
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <StatCard label="Total Assets" value={formatKES(totalAssets)} accent="text-[#18765e]" helper={`${formatSignedKES(yearlyGrowth / 12)} vs last month`} />
                     <StatCard label="Total Liabilities" value={formatKES(totalLiabilities)} accent="text-[#ef4444]" helper={`${formatSignedKES(72000)} repaid this month`} />
                     <StatCard label="Net Worth" value={formatKES(netWorth)} accent="text-[#14532d]" helper={`${summary.changePercentage30d || 9.3}% this month`} />
                     <StatCard label="Debt-to-Asset Ratio" value={`${debtToAssetRatio.toFixed(1)}%`} accent="text-[#d97706]" helper="High - reduce liabilities" />
-                    <StatCard label="Wealth Score" value={`${wealthScore} / 100`} accent="text-[#7c3aed]" helper={`${percentileLabel} of Shilingi users`} />
                 </div>
 
-                <div className="overflow-hidden rounded-[1.8rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-6 text-white shadow-[0_16px_42px_rgba(8,51,39,0.18)]">
+                <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm">
                     <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <h2 className="dashboard-display-title text-white">Assets vs Liabilities - Visual Breakdown</h2>
@@ -354,7 +350,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
 
                     <div className="space-y-4">
-                        <BreakdownBar label="Assets" value={totalAssets} tone="bg-gradient-to-r from-[#36c2a2] to-[#58d6b7]" textTone="text-[#8ef4dc]" max={Math.max(totalAssets, totalLiabilities, Math.abs(netWorth), 1)} />
+                        <BreakdownBar label="Assets" value={totalAssets} tone="bg-gradient-to-r from-[#18765e] to-[#38a96b]" textTone="text-[#bdf0d0]" max={Math.max(totalAssets, totalLiabilities, Math.abs(netWorth), 1)} />
                         <BreakdownBar label="Liabilities" value={totalLiabilities} tone="bg-gradient-to-r from-[#c62828] to-[#ef4444]" textTone="text-[#ff8e8e]" max={Math.max(totalAssets, totalLiabilities, Math.abs(netWorth), 1)} />
                         <BreakdownBar label="Net Worth" value={Math.max(netWorth, 0)} tone="bg-gradient-to-r from-[#d1a115] to-[#ffcd55]" textTone="text-[#ffcf63]" max={Math.max(totalAssets, totalLiabilities, Math.abs(netWorth), 1)} />
                     </div>
@@ -376,41 +372,6 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                                 </span>
                             ))}
                         </div>
-                    </div>
-                </div>
-
-                <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
-                    <div className="mb-5 flex items-center gap-3">
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                            <Sparkles size={18} />
-                        </div>
-                        <div>
-                            <h2 className="dashboard-display-title text-slate-900">Wealth Milestone Journey</h2>
-                            <p className="text-sm text-slate-500">A simple map showing how far along your wealth-building path you already are.</p>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-4 lg:grid-cols-7">
-                        {milestones.map((milestone, index) => (
-                            <div key={`${milestone.label}-${index}`} className="text-center">
-                                <div className={`mx-auto mb-3 h-6 w-6 rounded-full border-4 ${milestone.current ? 'border-amber-300 bg-amber-500' : milestone.reached ? 'border-teal-100 bg-teal-700' : 'border-slate-100 bg-slate-200'}`} />
-                                <p className="text-sm font-semibold text-slate-800">{milestone.label}</p>
-                                <p className={`mt-1 text-sm ${milestone.current ? 'text-amber-600' : 'text-slate-500'}`}>{formatKES(milestone.value)}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                        <InsightBand
-                            tone="success"
-                            title={`Next Milestone: ${formatKES(Math.max(1000000, netWorth))}`}
-                            copy={nextMillionGap > 0 ? `${formatKES(nextMillionGap)} away at current pace - approximately ${monthsToNext || 'a few'} months with ${formatKES(cashFlowGrowth)}/mo net growth.` : 'You are already beyond the first million mark. Keep pushing toward financial independence.'}
-                        />
-                        <InsightBand
-                            tone="warning"
-                            title="Debt-Free Impact"
-                            copy={totalLiabilities > 0 ? `Once debt-free, your net worth jumps by ${formatKES(totalLiabilities)} instantly and your compounding gets cleaner.` : 'You are already debt-free. That gives your assets more room to compound.'}
-                        />
                     </div>
                 </div>
 
@@ -481,20 +442,19 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="rounded-[1.8rem] bg-gradient-to-br from-[#0f4a3a] via-[#145944] to-[#1f6c56] p-6 text-white shadow-[0_16px_40px_rgba(8,51,39,0.2)]">
+                        <div className="rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm">
                             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60">Your Net Worth</p>
                             <p className="dashboard-metric-value mt-3 text-amber-300">{formatKES(netWorth)}</p>
                             <p className="mt-2 text-sm text-white/72">Assets - Liabilities. Updated just now.</p>
-                            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                            <div className="mt-5 grid gap-3 sm:grid-cols-2">
                                 <SimpleStat label="YTD Growth" value={formatSignedKES(yearlyGrowth)} tone="text-amber-300" />
                                 <SimpleStat label="Debt-to-Asset" value={`${debtToAssetRatio.toFixed(1)}%`} tone="text-rose-300" />
-                                <SimpleStat label="Wealth Score" value={`${wealthScore} / 100`} tone="text-emerald-200" />
                             </div>
                         </div>
 
                         <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
                             <div className="mb-5 flex items-center gap-3">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#0f766e]">
+                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#18765e]">
                                     <Gem size={18} />
                                 </div>
                                 <h2 className="dashboard-display-title text-slate-900">Buddy AI Net Worth Insights</h2>
@@ -506,54 +466,13 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                             </div>
                         </div>
 
-                        <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
-                            <div className="mb-5 flex items-center gap-3">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f1eefb] text-[#6d28d9]">
-                                    <Coins size={18} />
-                                </div>
-                                <h2 className="dashboard-display-title text-slate-900">Peer Wealth Comparison</h2>
-                            </div>
-                            <p className="text-sm text-slate-500">Compared to Shilingi Moves users aged 30-40 in Kenya:</p>
-                            <div className="mt-4 space-y-3">
-                                <p className="font-semibold text-slate-900">Your net worth: {formatKES(netWorth)}</p>
-                                <div className="h-4 overflow-hidden rounded-full bg-slate-100">
-                                    <div className="h-full rounded-full bg-gradient-to-r from-[#17705a] via-[#c89d20] to-[#f6aa1c]" style={{ width: `${Math.max(8, Math.min(92, (netWorth / (top25Threshold * 1.2)) * 100))}%` }} />
-                                </div>
-                                <div className="flex justify-between text-xs text-slate-400">
-                                    <span>Bottom 10%: KES 0</span>
-                                    <span>Median: {formatKES(peerMedian)}</span>
-                                    <span>Top 10%: KES 5M+</span>
-                                </div>
-                                <SimpleMetric label="Median peer net worth" value={formatKES(peerMedian)} />
-                                <SimpleMetric label="You vs median" value={`${Math.round(((netWorth - peerMedian) / Math.max(peerMedian, 1)) * 100)}% above`} />
-                                <SimpleMetric label="Top 25% threshold" value={formatKES(top25Threshold)} />
-                                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                                    💡 You need {formatKES(Math.max(top25Threshold - netWorth, 0))} more to join the top 25% of your peers.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
-                            <div className="mb-5 flex items-center gap-3">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#0f766e]">
-                                    <Landmark size={18} />
-                                </div>
-                                <h2 className="dashboard-display-title text-slate-900">Asset Quality Analysis</h2>
-                            </div>
-                            <div className="space-y-3">
-                                <QualityRow label="Liquid Assets" value={assets.filter((item) => item.isLiquid).reduce((sum, item) => sum + item.currentValue, 0)} total={totalAssets} color="bg-[#3b82f6]" />
-                                <QualityRow label="Growth Assets" value={assets.filter((item) => !item.isLiquid).reduce((sum, item) => sum + item.currentValue, 0)} total={totalAssets} color="bg-[#17705a]" />
-                                <QualityRow label="Protected Assets" value={assets.filter((item) => (item.categoryName || '').toLowerCase().includes('insurance')).reduce((sum, item) => sum + item.currentValue, 0)} total={totalAssets} color="bg-[#8b5cf6]" />
-                                <QualityRow label="Illiquid Assets" value={assets.filter((item) => !item.isLiquid && (item.categoryName || '').toLowerCase().includes('property')).reduce((sum, item) => sum + item.currentValue, 0)} total={totalAssets} color="bg-[#f59e0b]" />
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                     <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
                         <div className="mb-5 flex items-center gap-3">
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#0f766e]">
+                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#18765e]">
                                 <TrendingUp size={18} />
                             </div>
                             <h2 className="dashboard-display-title text-slate-900">Net Worth History (Last 12 Months)</h2>
@@ -566,7 +485,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                                     const height = `${Math.max(16, ((point.netWorth || 0) / maxValue) * 100)}%`;
                                     return (
                                         <div key={point.id || index} className="flex flex-1 flex-col items-center justify-end gap-2">
-                                            <div className="w-full rounded-t-2xl bg-gradient-to-t from-[#145944] to-[#67c7b0]" style={{ height }} />
+                                            <div className="w-full rounded-t-2xl bg-gradient-to-t from-[#18765e] to-[#38a96b]" style={{ height }} />
                                             <span className="text-xs text-slate-400">{point.month?.slice(0, 3) || `M${index + 1}`}</span>
                                         </div>
                                     );
@@ -601,9 +520,9 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                                 {projectionRows.map((row) => (
                                     <div key={row.year} className="grid grid-cols-[1.1fr_1fr_1fr_1fr_0.8fr] gap-3 px-4 py-3 text-sm">
                                         <span className="font-semibold text-slate-900">{row.year} (Age {row.age})</span>
-                                        <span className="font-semibold text-[#145944]">{formatKES(row.assets)}</span>
+                                        <span className="font-semibold text-[#18765e]">{formatKES(row.assets)}</span>
                                         <span className="font-semibold text-[#ef4444]">{row.liabilities > 0 ? formatKES(row.liabilities) : 'Debt-free!'}</span>
-                                        <span className="font-semibold text-[#0f5132]">{formatKES(row.netWorth)}</span>
+                                        <span className="font-semibold text-[#18765e]">{formatKES(row.netWorth)}</span>
                                         <span className="text-slate-500">{row.milestone}</span>
                                     </div>
                                 ))}
@@ -612,7 +531,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[1.8rem] bg-gradient-to-r from-[#0a4d37] via-[#117f5a] to-[#14986b] p-6 text-white shadow-[0_18px_40px_rgba(8,51,39,0.18)] lg:p-8">
+                <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm">
                     <div className="mb-5 max-w-3xl">
                         <h2 className="dashboard-display-title text-white">Net Worth Connects Everything in Your Financial Life</h2>
                         <p className="mt-2 text-sm text-white/72">
@@ -659,7 +578,7 @@ const Banner = ({ tone = 'danger', icon, message }) => {
 const HeroButton = ({ children, solid = false, className = '', ...props }) => (
     <button
         type="button"
-        className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition duration-200 ${solid ? 'bg-white text-[#0f5132] hover:bg-emerald-50' : 'border border-white/28 bg-white/8 text-white hover:bg-white/14'} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition duration-200 ${solid ? 'bg-white text-[#18765e] hover:bg-emerald-50' : 'border border-white/28 bg-white/8 text-white hover:bg-white/14'} ${className}`}
         {...props}
     >
         {children}
@@ -705,13 +624,13 @@ const DualListCard = ({ title, icon, count, items, actionLabel, onAction, totalL
     <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#0f766e]">{icon}</div>
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#18765e]">{icon}</div>
                 <div>
                     <h2 className="dashboard-display-title text-slate-900">{title}</h2>
                     <p className="text-sm text-slate-500">{count} items</p>
                 </div>
             </div>
-            <button type="button" onClick={onAction} className="text-sm font-semibold text-[#0f766e] hover:text-[#0a5d53]">
+            <button type="button" onClick={onAction} className="text-sm font-semibold text-[#18765e] hover:text-[#1b8a64]">
                 {actionLabel}
             </button>
         </div>
@@ -721,8 +640,8 @@ const DualListCard = ({ title, icon, count, items, actionLabel, onAction, totalL
                 items.map((item) => <div key={item.uuid || item.id}>{renderItem(item)}</div>)
             ) : (
                 <div className="rounded-[1.4rem] border border-dashed border-[#a8ddca] px-6 py-10 text-center">
-                    <p className="text-xl font-semibold text-[#145944]">+</p>
-                    <p className="mt-2 text-lg font-semibold text-[#145944]">{emptyLabel}</p>
+                    <p className="text-xl font-semibold text-[#18765e]">+</p>
+                    <p className="mt-2 text-lg font-semibold text-[#18765e]">{emptyLabel}</p>
                     <p className="mt-2 text-sm text-slate-500">{emptyHelp}</p>
                 </div>
             )}
@@ -731,7 +650,7 @@ const DualListCard = ({ title, icon, count, items, actionLabel, onAction, totalL
         <div className="mt-5 rounded-[1.2rem] bg-[#f5fbf8] px-5 py-4">
             <div className="flex items-center justify-between gap-3">
                 <span className="text-base font-semibold text-slate-900">{totalLabel}</span>
-                <span className="text-2xl font-bold text-[#145944]">{totalValue}</span>
+                <span className="text-2xl font-bold text-[#18765e]">{totalValue}</span>
             </div>
         </div>
     </div>
@@ -750,8 +669,8 @@ const EntityCard = ({ name, subtitle, value, helper, emoji, progress, share, onE
                 </div>
             </div>
             <div className="lg:text-right">
-                <p className={`text-3xl font-bold ${tone === 'liability' ? 'text-[#ef4444]' : 'text-[#145944]'}`}>{value}</p>
-                <p className={`mt-1 text-sm ${tone === 'liability' ? 'text-[#ef4444]' : 'text-[#0f766e]'}`}>{helper}</p>
+                <p className={`text-3xl font-bold ${tone === 'liability' ? 'text-[#ef4444]' : 'text-[#18765e]'}`}>{value}</p>
+                <p className={`mt-1 text-sm ${tone === 'liability' ? 'text-[#ef4444]' : 'text-[#1b8a64]'}`}>{helper}</p>
             </div>
         </div>
 
@@ -761,14 +680,14 @@ const EntityCard = ({ name, subtitle, value, helper, emoji, progress, share, onE
                 <span className="font-semibold text-slate-700">{share}</span>
             </div>
             <div className="h-2 rounded-full bg-slate-100">
-                <div className={`h-full rounded-full ${tone === 'liability' ? 'bg-gradient-to-r from-[#ef4444] to-[#fca5a5]' : 'bg-gradient-to-r from-[#17705a] to-[#68d3bb]'}`} style={{ width: `${Math.max(progress, 6)}%` }} />
+                <div className={`h-full rounded-full ${tone === 'liability' ? 'bg-gradient-to-r from-[#ef4444] to-[#fca5a5]' : 'bg-gradient-to-r from-[#18765e] to-[#38a96b]'}`} style={{ width: `${Math.max(progress, 6)}%` }} />
             </div>
         </div>
 
         {children}
 
         <div className="mt-4 flex flex-wrap gap-3">
-            <button type="button" onClick={onEdit} className="rounded-xl border border-[#9ed7c1] px-4 py-2 text-sm font-semibold text-[#145944] hover:bg-[#f0faf6]">
+            <button type="button" onClick={onEdit} className="rounded-xl border border-[#9ed7c1] px-4 py-2 text-sm font-semibold text-[#18765e] hover:bg-[#f0faf6]">
                 Edit
             </button>
             <button type="button" onClick={onDelete} className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-50">
