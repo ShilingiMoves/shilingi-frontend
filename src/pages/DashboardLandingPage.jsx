@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { hasStoredAccessToken } from '../services/authApi';
+import dashboardGuideVideo from '../video/shilingi-dashboard-guide.mp4';
 
 const dashboardDestination = { pathname: '/dashboard/app' };
 const pageShell = 'min-h-screen bg-[linear-gradient(180deg,_#f7fdfb_0%,_#ffffff_24%,_#f0f7f9_100%)] text-slate-900';
@@ -24,10 +25,10 @@ const brandYellow = '#F0C94D';
 const brandYellowHover = '#E3BC43';
 
 const stats = [
-    { value: '4', label: 'Dashboard tiers' },
-    { value: '50+', label: 'Financial tools and calculators' },
-    { value: '5', label: 'Ecosystem modules' },
-    { value: 'KES 0', label: 'To get started' },
+    { value: 4, label: 'Dashboard tiers' },
+    { value: 50, suffix: '+', label: 'Financial tools and calculators' },
+    { value: 5, label: 'Ecosystem modules' },
+    { value: 0, start: 999, prefix: 'KES ', label: 'To get started' },
 ];
 
 const plans = [
@@ -256,18 +257,8 @@ const toneClasses = {
 
 const cream = '#F5F0E4';
 const greenDark = '#1A6B3C';
-const greenMid = '#22A05A';
 const greenLight = '#D6EFE1';
 const navy = '#0D1B2A';
-
-const dashboardHeroCards = [
-    { label: 'Budget Planner', value: 'KSh 45K/mo', note: '73% of budget used', color: '#16A34A', bg: '#F0FDF4', letter: 'B', pct: 73 },
-    { label: 'Debt Manager', value: 'KSh 120,000', note: '3 active debts', color: '#EF4444', bg: '#FEF2F2', letter: 'D', pct: 45 },
-    { label: 'Investment Planner', value: '+12.4% YTD', note: 'Portfolio growing', color: '#3B82F6', bg: '#EFF6FF', letter: 'I', pct: 60 },
-    { label: 'Protection Planner', value: '2 Policies', note: 'Life + critical illness', color: '#D97706', bg: '#FFFBEB', letter: 'P', pct: 100 },
-    { label: 'Retirement Planner', value: '34% of goal', note: 'Target: Age 60', color: '#7C3AED', bg: '#F5F3FF', letter: 'R', pct: 34 },
-    { label: 'Net Worth Tracker', value: 'KSh 2.45M', note: 'Growing month on month', color: '#0F766E', bg: '#F0FDFA', letter: 'N', pct: 68 },
-];
 
 const heroStagger = { hidden: {}, show: { transition: { staggerChildren: 0.12 } } };
 const heroFadeUp = {
@@ -279,100 +270,85 @@ const heroSlideIn = {
     show: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.3 } },
 };
 
-const DashboardHeroCard = ({ label, value, note, color, bg, letter, pct }) => (
-    <div className="mb-1.5 flex shrink-0 items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
-        <div
-            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] text-[13px] font-extrabold"
-            style={{ backgroundColor: bg, color }}
-        >
-            {letter}
-        </div>
-        <div className="min-w-0 flex-1">
-            <div className="truncate text-[10.5px] font-bold text-slate-900">{label}</div>
-            <div className="mt-0.5 text-[9px] text-slate-400">{note}</div>
-            <div className="mt-1.5 h-[3px] rounded-full bg-slate-100">
-                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-            </div>
-        </div>
-        <div className="whitespace-nowrap text-right text-[9.5px] font-bold" style={{ color }}>
-            {value}
-        </div>
-    </div>
+const DashboardGuideVideo = () => (
+    <video
+        className="relative z-10 h-[560px] max-h-[68vh] w-[448px] max-w-[88vw] object-contain drop-shadow-[0_30px_70px_rgba(13,27,42,0.18)]"
+        src={dashboardGuideVideo}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label="Animated Shilingi Moves mobile dashboard walkthrough"
+    />
 );
 
-const DashboardPhoneMockup = () => (
-    <div className="relative drop-shadow-[0_30px_60px_rgba(0,0,0,0.16)]">
-        <div className="absolute -left-[5px] top-[110px] h-8 w-[3px] rounded-l-sm bg-[#c8d0dc]" />
-        <div className="absolute -left-[5px] top-[152px] h-8 w-[3px] rounded-l-sm bg-[#c8d0dc]" />
-        <div className="absolute -right-[5px] top-32 h-[50px] w-[3px] rounded-r-sm bg-[#c8d0dc]" />
+const AnimatedStatValue = ({ value, prefix = '', suffix = '', start = 0 }) => {
+    const ref = useRef(null);
+    const [displayValue, setDisplayValue] = useState(start);
 
-        <div className="h-[516px] w-[248px] rounded-[46px] border-[3px] border-black bg-[#0b0f17] p-[6px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-            <div className="flex h-full w-full flex-col overflow-hidden rounded-[39px] bg-slate-950">
-                <div className="flex h-[38px] shrink-0 items-end justify-center bg-slate-900 pb-1.5">
-                    <div className="h-[26px] w-[92px] rounded-full bg-black" />
-                </div>
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return undefined;
 
-                <div className="m-1 flex flex-1 flex-col overflow-hidden rounded-[34px] border border-black/60 bg-slate-50">
-                    <div className="flex shrink-0 items-center gap-2 border-b border-slate-100 bg-white px-[13px] py-2.5">
-                        <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: greenMid }}>
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                                <path d="M7 1.5L12 4V8C12 10.5 9.5 12.5 7 13C4.5 12.5 2 10.5 2 8V4L7 1.5Z" fill="white" />
-                            </svg>
-                        </div>
-                        <div className="flex-1">
-                            <div className="text-[11px] font-bold text-slate-900">Shilingi Moves</div>
-                            <div className="text-[9px] text-slate-400">Good morning, Myra</div>
-                        </div>
-                        <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full text-[10px] font-extrabold" style={{ backgroundColor: greenLight, color: greenDark }}>
-                            M
-                        </div>
-                    </div>
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
+            const frameId = requestAnimationFrame(() => setDisplayValue(value));
+            return () => cancelAnimationFrame(frameId);
+        }
 
-                    <div className="shrink-0 px-[15px] py-[13px]" style={{ backgroundColor: greenDark }}>
-                        <div className="text-[9px] uppercase tracking-[0.1em] text-white/60">Total Net Worth</div>
-                        <div className="mt-1 text-[22px] font-extrabold leading-none text-white">KSh 2,450,000</div>
-                        <div className="mt-1.5 text-[9px] text-white/75">Up 8.3% this month · 6 tools active</div>
-                    </div>
+        let animationFrame;
+        let hasAnimated = false;
 
-                    <div className="flex-1 overflow-hidden bg-[#eef2f7] px-2 pt-2">
-                        <div className="shilingi-scroll-track">
-                            {[...dashboardHeroCards, ...dashboardHeroCards].map((card, index) => (
-                                <DashboardHeroCard key={`${card.label}-${index}`} {...card} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-);
+        const animateValue = () => {
+            const duration = 1400;
+            const startedAt = performance.now();
+            const distance = value - start;
+
+            const tick = (now) => {
+                const progress = Math.min((now - startedAt) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                setDisplayValue(Math.round(start + distance * eased));
+
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(tick);
+                }
+            };
+
+            animationFrame = requestAnimationFrame(tick);
+        };
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !hasAnimated) {
+                    hasAnimated = true;
+                    animateValue();
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.45 }
+        );
+
+        observer.observe(node);
+
+        return () => {
+            observer.disconnect();
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+        };
+    }, [start, value]);
+
+    return (
+        <span ref={ref}>
+            {prefix}
+            {displayValue.toLocaleString('en-US')}
+            {suffix}
+        </span>
+    );
+};
 
 const DashboardLandingPage = () => {
     const [billingMode, setBillingMode] = useState('monthly');
     const [openFaq, setOpenFaq] = useState(0);
-
-    useEffect(() => {
-        const id = 'shilingi-dashboard-hero-motion';
-        if (document.getElementById(id)) return undefined;
-
-        const style = document.createElement('style');
-        style.id = id;
-        style.textContent = `
-            @keyframes shilingiDashboardScroll {
-                0% { transform: translateY(0); }
-                100% { transform: translateY(-50%); }
-            }
-            .shilingi-scroll-track {
-                animation: shilingiDashboardScroll 14s linear infinite;
-            }
-            .shilingi-scroll-track:hover {
-                animation-play-state: paused;
-            }
-        `;
-        document.head.appendChild(style);
-
-        return () => document.getElementById(id)?.remove();
-    }, []);
 
     if (hasStoredAccessToken()) {
         return <Navigate to="/dashboard/app" replace />;
@@ -446,7 +422,7 @@ const DashboardLandingPage = () => {
                             className="pointer-events-none absolute left-1/2 top-1/2 h-[440px] w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70"
                             style={{ background: `radial-gradient(ellipse, ${greenLight} 0%, transparent 68%)` }}
                         />
-                        <DashboardPhoneMockup />
+                        <DashboardGuideVideo />
                     </motion.div>
                 </div>
             </section>
@@ -455,7 +431,9 @@ const DashboardLandingPage = () => {
                 <div className="container-custom grid gap-6 py-7 text-center sm:grid-cols-2 lg:grid-cols-4">
                     {stats.map((stat) => (
                         <div key={stat.label}>
-                            <p className="text-3xl font-extrabold text-primary-500">{stat.value}</p>
+                            <p className="text-3xl font-extrabold text-primary-500">
+                                <AnimatedStatValue {...stat} />
+                            </p>
                             <p className="mt-2 text-sm text-slate-600">{stat.label}</p>
                         </div>
                     ))}

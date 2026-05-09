@@ -8,6 +8,7 @@
     "build": "vite build",
     "remotion:studio": "npx remotion studio src/remotion/index.jsx",
     "remotion:render:intro": "npx remotion render src/remotion/index.jsx ShilingiIntroVideo out/shilingi-intro.mp4",
+    "remotion:render:dashboard-guide": "npx remotion render src/remotion/index.jsx ShilingiDashboardGuideVideo src/video/shilingi-dashboard-guide.mp4",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
