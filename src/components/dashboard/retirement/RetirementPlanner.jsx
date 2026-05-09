@@ -21,6 +21,12 @@ import {
   getAssets,
 } from "../../../services/investmentTrackerApi";
 import { markDashboardDataExists } from "../../../utils/dashboardDataState";
+import { usePlannerFinancialContext } from "../../../hooks/usePlannerFinancialContext";
+import {
+  buildFinancialSnapshot,
+  buildRetirementInsights,
+} from "../../../utils/financialIntelligence";
+import { USER_PROFILE_WORKSPACE_KEY } from "../user/UserGoalsFamilyForm";
 
 const RETIREMENT_CATEGORY_NAME = "Retirement Account";
 const ACCOUNT_OPTIONS = [
@@ -56,6 +62,14 @@ const toNumber = (value) => {
 };
 const formatKES = (value) =>
   `KES ${Math.round(toNumber(value)).toLocaleString("en-KE")}`;
+const readProfileWorkspace = () => {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+};
 const getCategoryIdentifier = (category) => {
   if (!category) return null;
   const candidates = [
@@ -159,6 +173,10 @@ const RetirementPlanner = ({ onSelectSection }) => {
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("portfolio");
+  const [profileWorkspace, setProfileWorkspace] = useState(() =>
+    readProfileWorkspace(),
+  );
+  const plannerContext = usePlannerFinancialContext();
 
   const loadData = async () => {
     setLoading(true);
@@ -181,6 +199,16 @@ const RetirementPlanner = ({ onSelectSection }) => {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const syncProfile = () => setProfileWorkspace(readProfileWorkspace());
+    window.addEventListener("storage", syncProfile);
+    window.addEventListener("focus", syncProfile);
+    return () => {
+      window.removeEventListener("storage", syncProfile);
+      window.removeEventListener("focus", syncProfile);
+    };
   }, []);
 
   const retirementAssets = useMemo(
@@ -265,30 +293,51 @@ const RetirementPlanner = ({ onSelectSection }) => {
         .sort((a, b) => b.value - a.value),
     [retirementAssets],
   );
-  const insightCards = useMemo(
-    () => [
-      {
-        title: "FIRE Acceleration Opportunity",
-        text: `Adding ${formatKES(7000)}/mo moves you to financial independence by age ${earlyRetirementAge}.`,
-        tone: "border-amber-200 bg-amber-50 text-amber-800",
-      },
-      {
-        title: "Tax Relief You're Missing",
-        text: "Pension contributions up to KES 20,000/mo are fully tax-deductible.",
-        tone: "border-emerald-200 bg-[#eef8f3] text-[#0d6648]",
-      },
-      {
-        title: "Employer Match Fully Utilized",
-        text: "Your current contribution pattern is capturing available employer support.",
-        tone: "border-emerald-200 bg-[#eef8f3] text-[#0d6648]",
-      },
-      {
-        title: "Asset Allocation Review Due",
-        text: "Your retirement mix can likely carry more growth exposure today.",
-        tone: "border-amber-200 bg-[#fff8ea] text-amber-800",
-      },
+  const retirementSnapshot = useMemo(
+    () =>
+      buildFinancialSnapshot({
+        profile: profileWorkspace,
+        live: {
+          income:
+            profileWorkspace.monthly_income ||
+            profileWorkspace.monthlyIncome ||
+            profileWorkspace.netMonthlyIncome ||
+            profileWorkspace.income,
+          raw: {
+            budgets: plannerContext.budgets,
+            expenses: plannerContext.expenses,
+            goals: plannerContext.goals,
+            debts: plannerContext.debts,
+            investments: assets,
+          },
+        },
+      }),
+    [
+      assets,
+      plannerContext.budgets,
+      plannerContext.debts,
+      plannerContext.expenses,
+      plannerContext.goals,
+      profileWorkspace,
     ],
-    [earlyRetirementAge],
+  );
+  const insightCards = useMemo(
+    () =>
+      buildRetirementInsights(retirementSnapshot, {
+        projectedPot,
+        fireNumber,
+        targetYear,
+        monthlyContribution: effectiveMonthlyContribution,
+        earlyRetirementAge,
+      }),
+    [
+      earlyRetirementAge,
+      effectiveMonthlyContribution,
+      fireNumber,
+      projectedPot,
+      retirementSnapshot,
+      targetYear,
+    ],
   );
   const returnsByVehicle = useMemo(() => {
     const rows = retirementAssets.map((asset) => ({

@@ -18,6 +18,8 @@ import {
 import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
+import { usePlannerFinancialContext } from '../../../hooks/usePlannerFinancialContext';
+import { buildFinancialSnapshot, buildInvestmentInsights } from '../../../utils/financialIntelligence';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 
 const INVESTMENT_TYPES = [
@@ -173,6 +175,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
     const [formData, setFormData] = useState(defaultFormData);
     const [profileWorkspace, setProfileWorkspace] = useState(() => readProfileWorkspace());
     const [simulator, setSimulator] = useState({ monthlyContribution: '18000', durationYears: '5', expectedReturn: '12.4', targetAmount: '10000000' });
+    const plannerContext = usePlannerFinancialContext();
 
     const refreshData = async () => {
         setLoading(true);
@@ -270,14 +273,27 @@ const InvestmentTracker = ({ onSelectSection }) => {
         return end.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
     }, [simulator.durationYears]);
 
-    const portfolioInsights = useMemo(() => {
-        const dominant = allocation[0];
-        return [
-            dominant ? { title: 'Rebalancing Opportunity', text: `${dominant.label} is at ${dominant.percent.toFixed(0)}% of your portfolio. Consider diversifying toward underweight assets.`, tone: 'border-primary-200 bg-primary-50 text-primary-700' } : null,
-            { title: 'Goal Acceleration', text: `Adding ${formatKES(5000)}/mo extra gets you to ${formatKES(targetAmount || 10000000)} faster than your current target pace.`, tone: 'border-amber-200 bg-amber-50 text-amber-800' },
-            { title: 'T-Bill Opportunity', text: 'Current 91-day T-Bill rates remain attractive for short-term top-ups and low-risk parking.', tone: 'border-[#b8d0ff] bg-[#eef4ff] text-[#1f55c7]' },
-        ].filter(Boolean);
-    }, [allocation, targetAmount]);
+    const investmentSnapshot = useMemo(() => buildFinancialSnapshot({
+        profile: profileWorkspace,
+        live: {
+            income: profileWorkspace.monthly_income || profileWorkspace.monthlyIncome || profileWorkspace.netMonthlyIncome || profileWorkspace.income,
+            raw: {
+                budgets: plannerContext.budgets,
+                expenses: plannerContext.expenses,
+                goals: plannerContext.goals,
+                debts: plannerContext.debts,
+                investments: assets,
+            },
+        },
+    }), [assets, plannerContext.budgets, plannerContext.debts, plannerContext.expenses, plannerContext.goals, profileWorkspace]);
+
+    const portfolioInsights = useMemo(() => buildInvestmentInsights(investmentSnapshot, {
+        allocation,
+        targetAmount,
+        riskAppetite: investmentPlan.riskAppetite,
+        horizon: investmentPlan.horizon,
+        preferredProducts: investmentPlan.preferredProducts,
+    }), [allocation, investmentPlan.horizon, investmentPlan.preferredProducts, investmentPlan.riskAppetite, investmentSnapshot, targetAmount]);
 
     const activityRows = useMemo(
         () =>
@@ -464,7 +480,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
                             <div className="space-y-4">{investmentAssets.length === 0 ? <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">No investments yet. Add an investment to start building your portfolio.</p> : investmentAssets.map((asset) => <HoldingCard key={asset.uuid} asset={asset} deleting={deletingAssetId === asset.uuid} onDelete={() => handleDeleteInvestment(asset)} onTopUp={() => setShowTypeModal(true)} />)}</div>
                         </article>
 
-                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Buddy AI Portfolio Insights" /> <div className="mt-4 space-y-3">{portfolioInsights.map((item) => <InsightCard key={item.title} title={item.title} text={item.text} tone={item.tone} />)}<button type="button" onClick={() => onSelectSection && onSelectSection('buddy')} className="inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Chat with Buddy AI<ArrowRight size={14} /></button></div></article>
+                        <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Shilingi Buddy Investment Insights" /> <div className="mt-4 space-y-3">{portfolioInsights.map((item) => <InsightCard key={item.title} title={item.title} text={item.text} tone={item.tone} />)}</div></article>
                     </section>
 
                     <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><PanelHeading icon={WalletCards} title="Recent Investment Activity" noMargin /><button type="button" className="text-sm font-semibold text-[#175f54]">Export</button></div><div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr className="border-b border-emerald-100 text-left text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]"><th className="py-3 pr-4 font-semibold">Date</th><th className="py-3 pr-4 font-semibold">Asset</th><th className="py-3 pr-4 font-semibold">Type</th><th className="py-3 pr-4 font-semibold">Amount</th><th className="py-3 pr-4 font-semibold">Units / Details</th><th className="py-3 font-semibold">Status</th></tr></thead><tbody>{activityRows.length > 0 ? activityRows.map((row) => <tr key={row.id} className="border-b border-slate-100 last:border-b-0"><td className="py-3 pr-4 text-slate-500">{formatDate(row.date)}</td><td className="py-3 pr-4 font-medium text-slate-900">{row.asset}</td><td className="py-3 pr-4"><span className="inline-flex rounded-full bg-[#eef8f3] px-2.5 py-1 text-xs font-semibold text-[#175f54]">{row.type}</span></td><td className="py-3 pr-4 font-semibold text-[#175f54]">{row.amount}</td><td className="py-3 pr-4 text-slate-700">{row.details}</td><td className="py-3"><span className="inline-flex rounded-full bg-[#eef8f3] px-2.5 py-1 text-xs font-semibold text-[#175f54]">{row.status}</span></td></tr>) : <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-500">No activity yet. Add or update investments to populate this table.</td></tr>}</tbody></table></div></section>
@@ -532,7 +548,46 @@ const InvestmentTracker = ({ onSelectSection }) => {
                 </section>
             )}
 
-            {activeTab === 'explore' && (<section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{WATCHLIST_ITEMS.map((item) => <ExploreProductCard key={item.name} {...item} onCompare={() => onSelectSection && onSelectSection('comparehub')} />)}</section>)}
+            {activeTab === 'explore' && (
+                <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={Sparkles} title="Explore Investment Products" />
+                        <div className="mt-4 grid gap-3">
+                            {investmentAssets.length === 0 ? (
+                                <p className="rounded-[1rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">Add an investment first so Shilingi can suggest product reviews from your real portfolio and risk profile.</p>
+                            ) : (
+                                allocation.slice(0, 3).map((item) => (
+                                    <div key={`${item.label}-solution`} className="rounded-[1rem] border border-slate-200 bg-[#f7fbf9] p-4">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-base font-semibold text-slate-900">{item.label}</p>
+                                                <p className="mt-1 text-sm text-slate-500">{formatKES(item.value)} current value - {item.percent.toFixed(1)}% of portfolio</p>
+                                            </div>
+                                            <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">{item.percent > 45 ? 'Diversify this position' : 'Worth comparing'}</span>
+                                        </div>
+                                        <p className="mt-3 text-sm text-slate-700">{item.percent > 45 ? 'This product type carries a large share of your portfolio. Compare lower-risk or complementary options before adding more.' : `Compare options that match your ${investmentPlan.riskAppetite.toLowerCase()} risk profile and ${investmentPlan.horizon} horizon.`}</p>
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            <button type="button" onClick={() => setActiveTab('simulator')} className="rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-xs font-semibold text-primary-700">Simulate growth</button>
+                                            <button type="button" onClick={() => onSelectSection && onSelectSection('comparehub')} className="rounded-full border border-emerald-200 bg-[#eef8f3] px-4 py-2 text-xs font-semibold text-[#175f54]">Compare products</button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </article>
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={ShieldCheck} title="What to Compare" />
+                        <div className="mt-4 space-y-3">
+                            <ChecklistRow text="Net annual return after all fees, taxes, and charges" />
+                            <ChecklistRow text={`Fit with your ${investmentPlan.riskAppetite.toLowerCase()} risk profile`} />
+                            <ChecklistRow text={`Liquidity and lock-in period for your ${investmentPlan.horizon} horizon`} />
+                            <ChecklistRow text="Minimum top-up amount and contribution flexibility" />
+                            <ChecklistRow text="Whether the product improves your current allocation mix" />
+                        </div>
+                        <div className="mt-5 rounded-[1rem] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Your preferred products from profile: {investmentPlan.preferredProducts}. Use this as a starting point, then compare suitability against your current portfolio.</div>
+                    </article>
+                </section>
+            )}
 
             {activeTab === 'simulator' && (<section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]"><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Investment Simulator" /><p className="mt-3 text-sm text-slate-600">Test how faster top-ups and returns could get you to your target portfolio.</p><div className="mt-5 grid gap-4 md:grid-cols-2"><TextField type="number" label="Monthly Contribution" value={simulator.monthlyContribution} onChange={(value) => setSimulator((c) => ({ ...c, monthlyContribution: value }))} /><TextField type="number" label="Duration (Years)" value={simulator.durationYears} onChange={(value) => setSimulator((c) => ({ ...c, durationYears: value }))} /><TextField type="number" label="Expected Return (%)" value={simulator.expectedReturn} onChange={(value) => setSimulator((c) => ({ ...c, expectedReturn: value }))} /><TextField type="number" label="Target Amount (KES)" value={simulator.targetAmount} onChange={(value) => setSimulator((c) => ({ ...c, targetAmount: value }))} /></div><div className="mt-5 rounded-[1rem] border border-amber-200 bg-[linear-gradient(180deg,_#f7fbf8_0%,_#fff4df_100%)] p-5"><p className="text-xs uppercase tracking-[0.18em] text-[#9bb8af]">Projected Portfolio Value</p><p className="mt-2 text-[2.6rem] font-extrabold leading-none text-[#175f54]">{formatKES(projectedValue)}</p><p className="mt-2 text-sm text-slate-600">Target progress: {targetAmount > 0 ? ((projectedValue / targetAmount) * 100).toFixed(1) : '0.0'}%</p></div></article><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Trophy} title="Scenario Summary" /><div className="mt-4 space-y-3"><MetricPanel label="Current Portfolio" value={formatKES(totals.totalValue)} valueClass="text-[#175f54]" /><MetricPanel label="Projected Value" value={formatKES(projectedValue)} valueClass="text-[#2167d8]" /><MetricPanel label="Target Date" value={targetDate} valueClass="text-[#8b5cf6]" /><MetricPanel label="Gap To Target" value={formatKES(Math.max(targetAmount - projectedValue, 0))} valueClass="text-rose-500" /><button type="button" onClick={openRebalanceModal} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#1c6c5d] px-4 py-3 text-sm font-semibold text-white">Rebalance Portfolio<ArrowRight size={14} /></button></div></article></section>)}
 
@@ -586,6 +641,7 @@ const TabButton = ({ active, onClick, children }) => (<button type="button" onCl
 const PanelHeading = ({ icon: Icon, title, noMargin = false }) => (<div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700"><Icon size={18} /></span><h3 className="dashboard-display-title text-[1.05rem] font-bold text-slate-950">{title}</h3></div>);
 const InfoMiniCard = ({ label, value, helper, valueClass }) => (<div className="rounded-[1rem] border border-slate-200 bg-[#f8fcfa] p-4"><p className="text-[11px] uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className={`dashboard-metric-value mt-2 text-[1.38rem] font-extrabold leading-none sm:text-[1.5rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{helper}</p></div>);
 const MetricPanel = ({ label, value, valueClass }) => (<div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${valueClass}`}>{value}</span></div></div>);
+const ChecklistRow = ({ text }) => (<div className="flex items-start gap-3 rounded-[0.9rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3 text-sm text-slate-700"><span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff3ea] text-[10px] font-extrabold text-[#175f54]">OK</span><span>{text}</span></div>);
 const LegendRow = ({ color, label, value }) => (<div className="flex items-center justify-between text-sm"><div className="flex items-center gap-3"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} /><span className="text-slate-700">{label}</span></div><span className="font-semibold text-slate-900">{value}</span></div>);
 const AssetReturnRow = ({ label, color, value, width }) => (<div><div className="mb-1 flex items-center justify-between text-sm"><span className="text-slate-700">{label}</span><span style={{ color }} className="font-semibold">{value}</span></div><div className="h-2.5 rounded-full bg-[#eef5f2]"><div className="h-2.5 rounded-full" style={{ width: `${width}%`, backgroundColor: color }} /></div></div>);
 const InsightCard = ({ title, text, tone }) => (<div className={`rounded-[1rem] border p-4 text-sm ${tone}`}><p className="font-semibold">{title}</p><p className="mt-1">{text}</p></div>);

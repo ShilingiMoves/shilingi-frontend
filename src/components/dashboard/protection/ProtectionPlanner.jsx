@@ -22,6 +22,8 @@ import {
 import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
 import { getDebts } from '../../../services/debtApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
+import { usePlannerFinancialContext } from '../../../hooks/usePlannerFinancialContext';
+import { buildFinancialSnapshot, buildProtectionInsights } from '../../../utils/financialIntelligence';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 
 const PROTECTION_CATEGORY_NAME = 'Protection Policy';
@@ -124,6 +126,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     const [totalDebt, setTotalDebt] = useState(0);
     const [activeTab, setActiveTab] = useState('portfolio');
     const [profileWorkspace, setProfileWorkspace] = useState(() => readProfileWorkspace());
+    const plannerContext = usePlannerFinancialContext();
 
     const loadData = async () => {
         setLoading(true);
@@ -192,14 +195,28 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     const coreCoverage = ['Life Insurance', 'Medical Cover', 'Car Insurance', 'Disability Cover', 'Critical Illness Cover'];
     const coverageAdequacy = Math.min(Math.round((activePolicies.length / coreCoverage.length) * 100), 100);
 
-    const insightCards = useMemo(() => {
-        const cards = [];
-        if (missingPolicies.includes('Disability Cover')) cards.push({ title: 'Urgent: Disability Gap', text: `With ${calculator.dependents} dependants and no disability cover, income protection should be your next priority.`, tone: 'border-rose-200 bg-rose-50 text-rose-700' });
-        if (carPolicies.length > 0) cards.push({ title: 'Car Insurance Expiring', text: 'One vehicle policy looks close to renewal. Comparing rates now could reduce your next premium.', tone: 'border-amber-200 bg-amber-50 text-amber-800' });
-        if (activePolicies.some((asset) => asset.protectionMeta.policyType === 'Life Insurance')) cards.push({ title: 'Life Cover Upgrade', text: `Your life cover is ${recommendedCover > 0 ? Math.round((coverageTotal / recommendedCover) * 100) : 0}% of recommended family protection.`, tone: 'border-primary-200 bg-primary-50 text-primary-700' });
-        cards.push({ title: 'Premium Optimisation', text: 'Annual premium payment and bundled cover could improve value while keeping your protection broad.', tone: 'border-[#b8d0ff] bg-[#eef4ff] text-[#1f55c7]' });
-        return cards.slice(0, 4);
-    }, [activePolicies, calculator.dependents, carPolicies.length, coverageTotal, missingPolicies, recommendedCover]);
+    const protectionSnapshot = useMemo(() => buildFinancialSnapshot({
+        profile: profileWorkspace,
+        live: {
+            income: profileWorkspace.monthly_income || profileWorkspace.monthlyIncome || profileWorkspace.netMonthlyIncome || profileWorkspace.income || asNumber(calculator.annualIncome) / 12,
+            raw: {
+                budgets: plannerContext.budgets,
+                expenses: plannerContext.expenses,
+                goals: plannerContext.goals,
+                debts: plannerContext.debts,
+                investments: assets,
+            },
+        },
+    }), [assets, calculator.annualIncome, plannerContext.budgets, plannerContext.debts, plannerContext.expenses, plannerContext.goals, profileWorkspace]);
+
+    const insightCards = useMemo(() => buildProtectionInsights(protectionSnapshot, {
+        missingPolicies,
+        coverageTotal,
+        recommendedCover,
+        dependantCount,
+        totalDebt,
+        hasCarPolicy: carPolicies.length > 0,
+    }), [carPolicies.length, coverageTotal, dependantCount, missingPolicies, protectionSnapshot, recommendedCover, totalDebt]);
     const claimsHistory = useMemo(() => activePolicies.slice(0, 4).map((policy, index) => ({
         id: policy.uuid || `${policy.name}-${index}`,
         title: policy.protectionMeta.policyType === 'Medical Cover' ? 'Medical - Outpatient' : policy.protectionMeta.policyType,
@@ -451,7 +468,46 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                 </section>
             )}
 
-            {activeTab === 'solutions' && <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{POLICY_OPTIONS.slice(0, 6).map((type) => <SolutionCard key={type} type={type} recommended={recommendedByType[type]} covered={activePolicies.some((item) => item.protectionMeta.policyType === type)} onCompare={() => setShowCompareModal(true)} onCalculate={() => setActiveTab('calculators')} />)}</section>}
+            {activeTab === 'solutions' && (
+                <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={Sparkles} title="Explore Protection Solutions" />
+                        <div className="mt-4 grid gap-3">
+                            {(missingPolicies.length ? missingPolicies : POLICY_OPTIONS.slice(0, 3)).slice(0, 4).map((type) => {
+                                const meta = POLICY_LIBRARY[type];
+                                const covered = activePolicies.some((item) => item.protectionMeta.policyType === type);
+                                return (
+                                    <div key={`${type}-solution`} className="rounded-[1rem] border border-slate-200 bg-[#f7fbf9] p-4">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-base font-semibold text-slate-900">{meta?.label || type}</p>
+                                                <p className="mt-1 text-sm text-slate-500">{meta?.subtitle || 'Protection cover'} - Suggested cover {formatKES(recommendedByType[type])}</p>
+                                            </div>
+                                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${covered ? 'bg-[#eef8f3] text-[#175f54]' : 'bg-amber-50 text-amber-700'}`}>{covered ? 'In portfolio' : 'Coverage gap'}</span>
+                                        </div>
+                                        <p className="mt-3 text-sm text-slate-700">{covered ? 'Review cover limits, renewal dates, exclusions, and whether premiums still fit the household budget.' : `With ${dependantCount} dependants and ${formatKES(totalDebt)} debt, compare this cover before adding optional protection.`}</p>
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            <button type="button" onClick={() => setActiveTab('calculators')} className="rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-xs font-semibold text-primary-700">Calculate need</button>
+                                            <button type="button" onClick={() => setShowCompareModal(true)} className="rounded-full border border-emerald-200 bg-[#eef8f3] px-4 py-2 text-xs font-semibold text-[#175f54]">Compare options</button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </article>
+                    <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <PanelHeading icon={ShieldAlert} title="What to Compare" />
+                        <div className="mt-4 space-y-3">
+                            <ChecklistRow text="Waiting periods, exclusions, and claim approval speed" />
+                            <ChecklistRow text="Cover value compared with income, dependants, and outstanding debt" />
+                            <ChecklistRow text="Premium affordability without disrupting budget or savings" />
+                            <ChecklistRow text="Renewal terms, lapse rules, and portability between providers" />
+                            <ChecklistRow text="Beneficiary details, emergency contacts, and document readiness" />
+                        </div>
+                        <div className="mt-5 rounded-[1rem] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Prioritise medical, disability, and life protection first. Optional covers should come after the core family risks are handled.</div>
+                    </article>
+                </section>
+            )}
 
             {activeTab === 'calculators' && (
                 <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -486,6 +542,7 @@ const InsightCard = ({ title, text, tone }) => <div className={`rounded-[1rem] b
 const ClaimRow = ({ item }) => <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0"><div><p className="text-sm font-semibold text-slate-900">{item.title}</p><p className="text-xs text-slate-500">{item.month}</p></div><div className="text-right"><p className={`text-sm font-extrabold ${item.status === 'Processing' ? 'text-amber-700' : 'text-primary-700'}`}>{item.amount}</p><p className={`text-xs font-semibold ${item.status === 'Processing' ? 'text-amber-700' : 'text-primary-700'}`}>{item.status}</p></div></div>;
 const PaymentRow = ({ item }) => <div className={`rounded-xl border px-4 py-3 ${item.tone}`}><div className="flex items-center justify-between gap-3"><div><p className="font-semibold">{item.name} - {item.provider}</p><p className="text-sm opacity-80">{item.note}</p></div><p className="text-xl font-extrabold">{item.amount}</p></div></div>;
 const GuidanceRow = ({ label, value, tone }) => <div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${tone}`}>{value}</span></div></div>;
+const ChecklistRow = ({ text }) => <div className="flex items-start gap-3 rounded-[0.9rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3 text-sm text-slate-700"><span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff3ea] text-[10px] font-extrabold text-[#175f54]">OK</span><span>{text}</span></div>;
 const CalcInput = ({ label, value, onChange }) => <label className="block text-sm font-medium text-slate-700">{label}<input type="number" value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" /></label>;
 const Input = ({ label, value, onChange, ...props }) => <label className="block text-sm font-medium text-slate-700">{label}<input {...props} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" /></label>;
 const EmptyState = ({ text }) => <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-600">{text}</div>;

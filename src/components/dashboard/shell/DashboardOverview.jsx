@@ -1547,7 +1547,7 @@ const DashboardOverviewFooter = ({ onSelectSection }) => {
                 <p className="text-sm text-white/65">©Kaizen Publishers Limited All rights reserved.</p>
             </div>
             <p className="mt-4 max-w-4xl text-sm leading-6 text-white/50">
-                Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions. Regulated under the applicable laws of Kenya.
+                Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions.
             </p>
         </div>
         </footer>

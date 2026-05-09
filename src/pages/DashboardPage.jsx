@@ -33,6 +33,12 @@ const LearningHubPanel = lazy(() => import('../components/dashboard/explore/Lear
 const CommunityHubPanel = lazy(() => import('../components/dashboard/explore/CommunityHubPanel'));
 const MarketWatchPanel = lazy(() => import('../components/dashboard/marketwatch/MarketWatchPanel'));
 
+const getRequestedDashboardSection = (location) => {
+    const querySection = new URLSearchParams(location.search || '').get('section');
+    const requestedSection = querySection || location.state?.section;
+    return dashboardSectionMap[requestedSection] ? requestedSection : '';
+};
+
 const DashboardPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -42,8 +48,7 @@ const DashboardPage = () => {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [activeSection, setActiveSection] = useState(() => {
-        const requestedSection = location.state?.section;
-        return dashboardSectionMap[requestedSection] ? requestedSection : getInitialDashboardSection();
+        return getRequestedDashboardSection(location) || getInitialDashboardSection();
     });
     const [hasIncomeData, setHasIncomeData] = useState(false);
 
@@ -53,11 +58,11 @@ const DashboardPage = () => {
         }
 
         lastAppliedLocationKeyRef.current = location.key;
-        const requestedSection = location.state?.section;
-        if (dashboardSectionMap[requestedSection]) {
+        const requestedSection = getRequestedDashboardSection(location);
+        if (requestedSection) {
             setActiveSection(requestedSection);
         }
-    }, [location.key, location.state]);
+    }, [location]);
 
     useEffect(() => {
         const shouldRefreshPrerequisites = ['overview', 'cashflow', 'user'].includes(activeSection);
@@ -165,6 +170,7 @@ const DashboardPage = () => {
     const handleSelectSection = useCallback((sectionId) => {
         if (!dashboardSectionMap[sectionId] || sectionId === 'buddy') {
             setActiveSection(DEFAULT_DASHBOARD_SECTION);
+            navigate({ pathname: location.pathname, search: `?section=${DEFAULT_DASHBOARD_SECTION}` }, { state: { section: DEFAULT_DASHBOARD_SECTION } });
             return;
         }
 
@@ -172,10 +178,15 @@ const DashboardPage = () => {
         persistDashboardSection(sectionId);
         setMobileSidebarOpen(false);
 
+        const nextSearch = `?section=${encodeURIComponent(sectionId)}`;
+        if (location.search !== nextSearch) {
+            navigate({ pathname: location.pathname, search: nextSearch }, { state: { section: sectionId } });
+        }
+
         window.requestAnimationFrame(() => {
             mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
-    }, []);
+    }, [location.pathname, location.search, navigate]);
 
     const sectionLoader = (
         <div className="flex min-h-[260px] items-center justify-center rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">

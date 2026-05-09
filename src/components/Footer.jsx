@@ -381,7 +381,7 @@ const Footer = () => {
             <div className="border-t border-white/8 bg-[#050807] py-5">
                 <div className="container-custom">
                     <p className="max-w-5xl text-xs leading-6 !text-white/70">
-                        Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions. Regulated under the applicable laws of Kenya.
+                        Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions.
                     </p>
                     <div className="mt-4 flex flex-col items-center justify-between gap-3 text-xs text-white/72 md:flex-row">
                         <div className="flex flex-wrap items-center justify-center gap-5 md:justify-start">
