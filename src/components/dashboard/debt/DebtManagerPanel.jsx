@@ -45,7 +45,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showCompareRatesModal, setShowCompareRatesModal] = useState(false);
     const [strategy, setStrategy] = useState('avalanche');
-    const [activeView, setActiveView] = useState('portfolio');
+    const [activeView, setActiveView] = useState('crb');
     const [debtPaymentsLog, setDebtPaymentsLog] = useState({});
     const [paymentInputs, setPaymentInputs] = useState({});
     const [simulatorExtraPayment, setSimulatorExtraPayment] = useState(5000);
@@ -474,7 +474,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                 <StatCard title="Debt-Free Date" value={debtFreeDate} valueClass="text-[#13584d]" subtitle="At current pace" />
             </section>
 
-            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeView === 'portfolio'} onClick={() => setActiveView('portfolio')}>My Portfolio</TabButton><TabButton active={activeView === 'crb'} onClick={() => setActiveView('crb')}>CRB Reports</TabButton><TabButton active={activeView === 'solutions'} onClick={() => setActiveView('solutions')}>Explore Loan Solutions</TabButton><TabButton active={activeView === 'simulator'} onClick={() => setActiveView('simulator')}>Simulator</TabButton></div></section>
+            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeView === 'crb'} onClick={() => setActiveView('crb')}>My CRB Status</TabButton><TabButton active={activeView === 'portfolio'} onClick={() => setActiveView('portfolio')}>My Loans</TabButton><TabButton active={activeView === 'solutions'} onClick={() => setActiveView('solutions')}>Explore My Loan Solutions</TabButton><TabButton active={activeView === 'simulator'} onClick={() => setActiveView('simulator')}>Loan Calculators</TabButton></div></section>
 
             {activeView === 'portfolio' && (
                 <div className="space-y-4">
@@ -600,7 +600,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div>
-                                <PanelHeading icon={ShieldAlert} title="CRB Reports" />
+                                <PanelHeading icon={ShieldAlert} title="My CRB Status" />
                                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Use this section to understand where to request your CRB report, what to check, and what to do after reviewing your listing.</p>
                             </div>
                             <div className={`rounded-[1rem] border px-4 py-3 ${crbStatus.label === 'At Risk' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]'}`}>
@@ -648,7 +648,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             {activeView === 'solutions' && (
                 <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={Sparkles} title="Explore Loan Solutions" />
+                        <PanelHeading icon={Sparkles} title="Explore My Loan Solutions" />
                         <div className="mt-4 grid gap-3">
                             {orderedDebts.length === 0 ? <p className="rounded-[1rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">Add debts first so we can suggest refinancing and restructuring options.</p> : orderedDebts.slice(0, 3).map((debt) => (<div key={`${debt.id}-solution`} className="rounded-[1rem] border border-slate-200 bg-[#f7fbf9] p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-base font-semibold text-slate-900">{debt.name}</p><p className="mt-1 text-sm text-slate-500">{debt.interestRate ? `${debt.interestRate}% interest` : 'No interest rate set'} � Current balance {currency(debt.balance)}</p></div><span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">{Number(debt.interestRate || 0) >= 15 ? 'High refinance potential' : 'Worth comparing'}</span></div><p className="mt-3 text-sm text-slate-700">{Number(debt.interestRate || 0) >= 15 ? 'This debt has a relatively high cost. Compare lower-rate options and consolidation offers first.' : 'Review repayment flexibility, total cost, and whether combining this debt improves monthly cash flow.'}</p><div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => setActiveView('simulator')} className="rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-xs font-semibold text-primary-700">Simulate savings</button><button type="button" className="rounded-full border border-emerald-200 bg-[#eef8f3] px-4 py-2 text-xs font-semibold text-[#175f54]">Compare options</button></div></div>))}
                         </div>
@@ -675,7 +675,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                         <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                             <PanelHeading icon={TrendingDown} title="Recommended Next Move" />
                             <div className="mt-4 rounded-[1rem] border border-slate-200 bg-slate-50 p-4"><p className="text-sm font-semibold text-slate-900">{recommendedDebt ? `Direct the extra ${currency(simulatorExtraPayment)} to ${recommendedDebt.name}` : 'Add debts to get a recommendation'}</p><p className="mt-2 text-sm text-slate-600">{recommendedDebt ? `Because you are using the ${strategy} method, this debt gives the strongest payoff impact right now.` : 'Once debts are added, the simulator will tell you where extra payments work best.'}</p></div>
-                            <button type="button" onClick={() => setActiveView('portfolio')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#11814f] px-4 py-3 text-sm font-semibold text-white">Back to My Portfolio</button>
+                            <button type="button" onClick={() => setActiveView('portfolio')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#11814f] px-4 py-3 text-sm font-semibold text-white">Back to My Loans</button>
                         </article>
                     </section>
 

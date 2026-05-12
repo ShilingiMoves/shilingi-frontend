@@ -172,7 +172,7 @@ const RetirementPlanner = ({ onSelectSection }) => {
   const [calculator, setCalculator] = useState(defaultCalculator);
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [activeTab, setActiveTab] = useState("portfolio");
+  const [activeTab, setActiveTab] = useState("objectives");
   const [profileWorkspace, setProfileWorkspace] = useState(() =>
     readProfileWorkspace(),
   );
@@ -554,28 +554,28 @@ const RetirementPlanner = ({ onSelectSection }) => {
       <section className="rounded-[1.1rem] border border-primary-100 bg-white p-1 shadow-sm">
         <div className="flex flex-wrap gap-2">
           <TabButton
-            active={activeTab === "portfolio"}
-            onClick={() => setActiveTab("portfolio")}
-          >
-            My Current Retirement Fund
-          </TabButton>
-          <TabButton
             active={activeTab === "objectives"}
             onClick={() => setActiveTab("objectives")}
           >
             My Retirement Objectives
           </TabButton>
           <TabButton
+            active={activeTab === "portfolio"}
+            onClick={() => setActiveTab("portfolio")}
+          >
+            My Retirement Fund
+          </TabButton>
+          <TabButton
             active={activeTab === "solutions"}
             onClick={() => setActiveTab("solutions")}
           >
-            Explore Pensions
+            Explore Retirement Solutions
           </TabButton>
           <TabButton
             active={activeTab === "simulator"}
             onClick={() => setActiveTab("simulator")}
           >
-            Retirement Simulators
+            Retirement Calculators
           </TabButton>
         </div>
       </section>
@@ -1047,7 +1047,7 @@ const RetirementPlanner = ({ onSelectSection }) => {
       {activeTab === "solutions" && (
         <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-            <PanelHeading icon={Sparkles} title="Explore Pension Solutions" />
+            <PanelHeading icon={Sparkles} title="Explore Retirement Solutions" />
             <div className="mt-4 grid gap-3">
               {retirementAssets.length === 0 ? (
                 <p className="rounded-[1rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
@@ -1124,7 +1124,7 @@ const RetirementPlanner = ({ onSelectSection }) => {
       {activeTab === "simulator" && (
         <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-            <PanelHeading icon={Sparkles} title="Simulator & FIRE Calculator" />
+            <PanelHeading icon={Sparkles} title="Retirement Calculators" />
             <p className="mt-3 text-sm text-slate-600">
               Test how earlier contributions, stronger returns, and lower target
               expenses can shift your retirement timeline.

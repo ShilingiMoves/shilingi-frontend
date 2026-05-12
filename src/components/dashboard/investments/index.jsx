@@ -165,7 +165,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
     const [success, setSuccess] = useState('');
     const [assets, setAssets] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [activeTab, setActiveTab] = useState('portfolio');
+    const [activeTab, setActiveTab] = useState('risk');
     const [showTypeModal, setShowTypeModal] = useState(false);
     const [showFormModal, setShowFormModal] = useState(false);
     const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -463,7 +463,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
                 <StatCard title="Target Investment Date" value={investmentPlan.targetDateLabel} helper={`${investmentPlan.horizon} horizon`} valueClass="text-[#8b5cf6]" />
             </section>
 
-            <section className="rounded-[1.1rem] border border-primary-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Current Investments</TabButton><TabButton active={activeTab === 'risk'} onClick={() => setActiveTab('risk')}>My Risk Profile</TabButton><TabButton active={activeTab === 'explore'} onClick={() => setActiveTab('explore')}>Explore Products</TabButton><TabButton active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')}>Investment Simulator</TabButton></div></section>
+            <section className="rounded-[1.1rem] border border-primary-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'risk'} onClick={() => setActiveTab('risk')}>My Investment Objectives</TabButton><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Current Investments</TabButton><TabButton active={activeTab === 'explore'} onClick={() => setActiveTab('explore')}>Explore Investment Solutions</TabButton><TabButton active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')}>Investment Calculators</TabButton></div></section>
 
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MetricCard title="Total Current Investments" value={formatKES(totals.totalValue)} valueClass="text-primary-700" />
@@ -523,7 +523,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
             {activeTab === 'risk' && (
                 <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={ShieldCheck} title="My Risk Profile" />
+                        <PanelHeading icon={ShieldCheck} title="My Investment Objectives" />
                         <div className="mt-4 rounded-[1rem] bg-[#eef8f3] p-5">
                             <p className="text-xs uppercase tracking-[0.18em] text-[#6f968a]">Risk appetite</p>
                             <p className="mt-2 text-[2.3rem] font-extrabold leading-none text-[#175f54]">{investmentPlan.riskAppetite}</p>
@@ -543,7 +543,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
                             <MetricPanel label="Expected Amount" value={formatKES(investmentPlan.expectedAmount)} valueClass="text-[#175f54]" />
                             <MetricPanel label="Target Investment Date" value={investmentPlan.targetDateLabel} valueClass="text-[#8b5cf6]" />
                         </div>
-                        <button type="button" onClick={() => onSelectSection && onSelectSection('user')} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#18765e] px-4 py-3 text-sm font-semibold text-white">Update Risk Profile<ArrowRight size={14} /></button>
+                        <button type="button" onClick={() => onSelectSection && onSelectSection('user')} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#18765e] px-4 py-3 text-sm font-semibold text-white">Update Investment Objectives<ArrowRight size={14} /></button>
                     </article>
                 </section>
             )}
@@ -551,7 +551,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
             {activeTab === 'explore' && (
                 <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={Sparkles} title="Explore Investment Products" />
+                        <PanelHeading icon={Sparkles} title="Explore Investment Solutions" />
                         <div className="mt-4 grid gap-3">
                             {investmentAssets.length === 0 ? (
                                 <p className="rounded-[1rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">Add an investment first so Shilingi can suggest product reviews from your real portfolio and risk profile.</p>
@@ -589,7 +589,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
                 </section>
             )}
 
-            {activeTab === 'simulator' && (<section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]"><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Investment Simulator" /><p className="mt-3 text-sm text-slate-600">Test how faster top-ups and returns could get you to your target portfolio.</p><div className="mt-5 grid gap-4 md:grid-cols-2"><TextField type="number" label="Monthly Contribution" value={simulator.monthlyContribution} onChange={(value) => setSimulator((c) => ({ ...c, monthlyContribution: value }))} /><TextField type="number" label="Duration (Years)" value={simulator.durationYears} onChange={(value) => setSimulator((c) => ({ ...c, durationYears: value }))} /><TextField type="number" label="Expected Return (%)" value={simulator.expectedReturn} onChange={(value) => setSimulator((c) => ({ ...c, expectedReturn: value }))} /><TextField type="number" label="Target Amount (KES)" value={simulator.targetAmount} onChange={(value) => setSimulator((c) => ({ ...c, targetAmount: value }))} /></div><div className="mt-5 rounded-[1rem] border border-amber-200 bg-[linear-gradient(180deg,_#f7fbf8_0%,_#fff4df_100%)] p-5"><p className="text-xs uppercase tracking-[0.18em] text-[#9bb8af]">Projected Portfolio Value</p><p className="mt-2 text-[2.6rem] font-extrabold leading-none text-[#175f54]">{formatKES(projectedValue)}</p><p className="mt-2 text-sm text-slate-600">Target progress: {targetAmount > 0 ? ((projectedValue / targetAmount) * 100).toFixed(1) : '0.0'}%</p></div></article><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Trophy} title="Scenario Summary" /><div className="mt-4 space-y-3"><MetricPanel label="Current Portfolio" value={formatKES(totals.totalValue)} valueClass="text-[#175f54]" /><MetricPanel label="Projected Value" value={formatKES(projectedValue)} valueClass="text-[#2167d8]" /><MetricPanel label="Target Date" value={targetDate} valueClass="text-[#8b5cf6]" /><MetricPanel label="Gap To Target" value={formatKES(Math.max(targetAmount - projectedValue, 0))} valueClass="text-rose-500" /><button type="button" onClick={openRebalanceModal} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#1c6c5d] px-4 py-3 text-sm font-semibold text-white">Rebalance Portfolio<ArrowRight size={14} /></button></div></article></section>)}
+            {activeTab === 'simulator' && (<section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]"><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Sparkles} title="Investment Calculators" /><p className="mt-3 text-sm text-slate-600">Test how faster top-ups and returns could get you to your target portfolio.</p><div className="mt-5 grid gap-4 md:grid-cols-2"><TextField type="number" label="Monthly Contribution" value={simulator.monthlyContribution} onChange={(value) => setSimulator((c) => ({ ...c, monthlyContribution: value }))} /><TextField type="number" label="Duration (Years)" value={simulator.durationYears} onChange={(value) => setSimulator((c) => ({ ...c, durationYears: value }))} /><TextField type="number" label="Expected Return (%)" value={simulator.expectedReturn} onChange={(value) => setSimulator((c) => ({ ...c, expectedReturn: value }))} /><TextField type="number" label="Target Amount (KES)" value={simulator.targetAmount} onChange={(value) => setSimulator((c) => ({ ...c, targetAmount: value }))} /></div><div className="mt-5 rounded-[1rem] border border-amber-200 bg-[linear-gradient(180deg,_#f7fbf8_0%,_#fff4df_100%)] p-5"><p className="text-xs uppercase tracking-[0.18em] text-[#9bb8af]">Projected Portfolio Value</p><p className="mt-2 text-[2.6rem] font-extrabold leading-none text-[#175f54]">{formatKES(projectedValue)}</p><p className="mt-2 text-sm text-slate-600">Target progress: {targetAmount > 0 ? ((projectedValue / targetAmount) * 100).toFixed(1) : '0.0'}%</p></div></article><article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Trophy} title="Scenario Summary" /><div className="mt-4 space-y-3"><MetricPanel label="Current Portfolio" value={formatKES(totals.totalValue)} valueClass="text-[#175f54]" /><MetricPanel label="Projected Value" value={formatKES(projectedValue)} valueClass="text-[#2167d8]" /><MetricPanel label="Target Date" value={targetDate} valueClass="text-[#8b5cf6]" /><MetricPanel label="Gap To Target" value={formatKES(Math.max(targetAmount - projectedValue, 0))} valueClass="text-rose-500" /><button type="button" onClick={openRebalanceModal} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#1c6c5d] px-4 py-3 text-sm font-semibold text-white">Rebalance Portfolio<ArrowRight size={14} /></button></div></article></section>)}
 
             {showRebalanceModal && <RebalanceModal allocation={allocation} targetAllocation={targetAllocation} onChangeTarget={handleTargetAllocationChange} onClose={() => setShowRebalanceModal(false)} onSave={handleSaveTargetAllocation} />}
 

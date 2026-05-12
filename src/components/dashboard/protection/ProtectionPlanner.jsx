@@ -124,7 +124,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     const [assets, setAssets] = useState([]);
     const [categories, setCategories] = useState([]);
     const [totalDebt, setTotalDebt] = useState(0);
-    const [activeTab, setActiveTab] = useState('portfolio');
+    const [activeTab, setActiveTab] = useState('dependents');
     const [profileWorkspace, setProfileWorkspace] = useState(() => readProfileWorkspace());
     const plannerContext = usePlannerFinancialContext();
 
@@ -372,13 +372,13 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                 <MetricCard title="Recommended Value" value={formatKES(recommendedCover)} helper={coverageGap > 0 ? `${formatKES(coverageGap)} gap` : 'Cover target met'} valueClass="text-[#2167d8]" cardTone="bg-[linear-gradient(180deg,_#fffef7_0%,_#fff5df_100%)]" />
             </section>
 
-            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Protection Plans</TabButton><TabButton active={activeTab === 'dependents'} onClick={() => setActiveTab('dependents')}>My Dependents</TabButton><TabButton active={activeTab === 'solutions'} onClick={() => setActiveTab('solutions')}>Explore Protection Solutions</TabButton><TabButton active={activeTab === 'calculators'} onClick={() => setActiveTab('calculators')}>Protection Calculators</TabButton></div></section>
+            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'dependents'} onClick={() => setActiveTab('dependents')}>My Protection Objectives</TabButton><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Active Policies</TabButton><TabButton active={activeTab === 'solutions'} onClick={() => setActiveTab('solutions')}>Explore Protection Solutions</TabButton><TabButton active={activeTab === 'calculators'} onClick={() => setActiveTab('calculators')}>Protection Calculators</TabButton></div></section>
 
             {activeTab === 'portfolio' && (
                 <div className="space-y-4">
                     <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
                         <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                            <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="My Current Policies" noMargin /><button type="button" onClick={() => setShowAddModal(true)} className="text-sm font-semibold text-[#175f54]">+ Add Policy</button></div>
+                            <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="My Active Policies" noMargin /><button type="button" onClick={() => setShowAddModal(true)} className="text-sm font-semibold text-[#175f54]">+ Add Policy</button></div>
                             {loading ? <div className="flex items-center gap-2 py-8 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading protection policies...</div> : protectionAssets.length === 0 ? <EmptyState text="No protection policies yet. Add your first policy to start tracking coverage." /> : <div className="space-y-4">{protectionAssets.map((asset) => <PolicyCard key={asset.uuid} asset={asset} deleting={deletingPolicyId === asset.uuid} recommended={recommendedByType[asset.protectionMeta.policyType]} onDelete={() => removePolicy(asset)} onCompare={() => setShowCompareModal(true)} />)}</div>}
                         </article>
 
@@ -449,13 +449,13 @@ const ProtectionPlanner = ({ onSelectSection }) => {
             {activeTab === 'dependents' && (
                 <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={User} title="My Dependents" />
+                        <PanelHeading icon={User} title="My Protection Objectives" />
                         <div className="mt-4 rounded-[1rem] bg-[#eef8f3] p-5">
                             <p className="text-xs uppercase tracking-[0.18em] text-[#6f968a]">Dependants on profile</p>
                             <p className="mt-2 text-[2.6rem] font-extrabold leading-none text-[#175f54]">{dependantCount}</p>
                             <p className="mt-2 text-sm text-slate-600">Each dependant increases the need for income replacement, medical cover, and emergency support.</p>
                         </div>
-                        <button type="button" onClick={() => onSelectSection?.('user')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Update Dependents in Profile<ArrowRight size={14} /></button>
+                        <button type="button" onClick={() => onSelectSection?.('user')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Update Protection Objectives<ArrowRight size={14} /></button>
                     </article>
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                         <PanelHeading icon={ShieldAlert} title="Advisor Guidance" />
