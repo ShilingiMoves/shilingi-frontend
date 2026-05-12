@@ -376,17 +376,17 @@ const DashboardLandingPage = () => {
                             className="m-0 text-[2.45rem] font-black leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]"
                             style={{ color: navy }}
                         >
-                            One Dashboard.
+                            See where every shilingi goes,
                             <br />
-                            Every <span style={{ color: greenDark }}>Financial Decision.</span>
+                            in <span style={{ color: greenDark }}>one dashboard.</span>
                         </motion.h1>
 
                         <motion.p variants={heroFadeUp} className="mt-5 text-base font-semibold sm:text-lg" style={{ color: navy }}>
-                            Experience the Shilingi flow. Your finances in action.
+                            Built for Kenyan salaries, side hustles, chama, debt, and more.
                         </motion.p>
 
                         <motion.p variants={heroFadeUp} className="mx-auto mt-3 max-w-[420px] text-[0.95rem] leading-7 opacity-70 lg:mx-0" style={{ color: navy }}>
-                            Track, plan and grow your finances with a dashboard built for Kenyan realities. Choose the tier that fits your journey and upgrade when you are ready.
+                            In 5 minutes, you&apos;ll see your real money picture - no spreadsheets.
                         </motion.p>
 
                         <motion.div variants={heroFadeUp} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
@@ -396,19 +396,19 @@ const DashboardLandingPage = () => {
                                 className="inline-flex min-h-[52px] items-center justify-center rounded-lg px-8 py-3.5 text-[15px] font-extrabold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                                 style={{ backgroundColor: brandYellow }}
                             >
-                                Start for Free
+                                Start for free - see my dashboard
                             </Link>
                             <Link
                                 to="/signup"
                                 className="inline-flex min-h-[52px] items-center justify-center rounded-lg border px-8 py-3.5 text-[15px] font-bold text-[#0D1B2A] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white"
                                 style={{ borderColor: navy }}
                             >
-                                View Demo
+                                Watch 2-minute demo
                             </Link>
                         </motion.div>
 
                         <motion.p variants={heroFadeUp} className="mt-5 text-xs opacity-50" style={{ color: navy }}>
-                            Cancel anytime. KES pricing.
+                            No card needed. Cancel anytime. KES pricing.
                         </motion.p>
                     </motion.div>
 
@@ -457,8 +457,8 @@ const DashboardLandingPage = () => {
                         type="button"
                         onClick={() => setBillingMode('monthly')}
                         className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${billingMode === 'monthly'
-                                ? 'border-primary-600 bg-primary-50 text-primary-700'
-                                : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
+                            ? 'border-primary-600 bg-primary-50 text-primary-700'
+                            : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
                             }`}
                     >
                         Monthly
@@ -467,8 +467,8 @@ const DashboardLandingPage = () => {
                         type="button"
                         onClick={() => setBillingMode('annual')}
                         className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${billingMode === 'annual'
-                                ? 'border-primary-600 bg-primary-50 text-primary-700'
-                                : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
+                            ? 'border-primary-600 bg-primary-50 text-primary-700'
+                            : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
                             }`}
                     >
                         Annual
@@ -487,8 +487,8 @@ const DashboardLandingPage = () => {
                             <article
                                 key={plan.key}
                                 className={`relative flex flex-col rounded-[1.75rem] border p-6 shadow-sm ${plan.featured
-                                        ? 'border-primary-200 bg-primary-50/70'
-                                        : 'border-slate-200 bg-white'
+                                    ? 'border-primary-200 bg-primary-50/70'
+                                    : 'border-slate-200 bg-white'
                                     }`}
                             >
                                 {plan.badge && (
