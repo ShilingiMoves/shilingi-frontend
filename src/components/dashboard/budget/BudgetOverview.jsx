@@ -42,9 +42,9 @@ const budgetModels = [
 
 const tabOptions = [
     { id: 'compare', label: 'Compare Budget Types', icon: Sparkles },
-    { id: 'categories', label: 'Budget Categories', icon: Wallet },
-    { id: 'expenses', label: 'Expense Tracker', icon: Receipt },
-    { id: 'summary', label: 'Budget Summary', icon: BarChart3 },
+    { id: 'categories', label: 'My Budget Limits', icon: Wallet },
+    { id: 'expenses', label: 'My Expense Tracker', icon: Receipt },
+    { id: 'summary', label: 'My Expense Summary', icon: BarChart3 },
 ];
 
 const categoryMeta = (name = '') => {
@@ -263,7 +263,7 @@ const BudgetOverview = ({
     onQuickExpenseAdded,
 }) => {
     const [activeView, setActiveView] = useState('compare');
-    const [selectedModelId, setSelectedModelId] = useState('classic');
+    const [selectedModelId, setSelectedModelId] = useState('custom');
     const [showModelModal, setShowModelModal] = useState(false);
     const [pendingModel, setPendingModel] = useState(null);
     const [showCustomSplitModal, setShowCustomSplitModal] = useState(false);
@@ -304,7 +304,7 @@ const BudgetOverview = ({
         description: 'Set your own needs, wants, and savings percentages',
         split: customSplit,
     }), [customSplit]);
-    const allBudgetModels = useMemo(() => [...budgetModels, customModel], [customModel]);
+    const allBudgetModels = useMemo(() => [customModel, ...budgetModels], [customModel]);
     const selectedModel = allBudgetModels.find((item) => item.id === selectedModelId) || allBudgetModels[0];
     const totalBudgeted = toNumber(summary?.total_budget);
     const totalSpent = toNumber(summary?.total_spent || expenseTotal);
@@ -674,7 +674,7 @@ const BudgetOverview = ({
 
         const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
         const rows = [
-            ['Budget Summary', currentMonthLabel],
+            ['My Expense Summary', currentMonthLabel],
             [],
             ['Metric', 'Value'],
             ...monthlySummaryRows.map((item) => [item.label, item.value]),
@@ -746,7 +746,7 @@ const BudgetOverview = ({
         city: { icon: BarChart3, shell: 'border-[#bfe2d6] bg-[#f8fcfa]', accent: 'bg-[#f5a623]', cta: 'bg-[#f5a623] text-slate-950', badge: 'bg-[#fff3d8] text-[#b56a00]', bestFor: 'High rent', note: 'Best for higher rent cities while still protecting savings.' },
         debt: { icon: Swords, shell: 'border-[#f2c2c2] bg-[#fff8f8]', accent: 'bg-[#ef4444]', cta: 'bg-[#ef4444] text-white', badge: 'bg-[#ffe7e7] text-[#d94d4d]', bestFor: 'Debt payoff', note: 'Best for a high debt load and aggressive repayment.' },
         balanced: { icon: BadgeDollarSign, shell: 'border-[#bfe2d6] bg-[#f8fcfa]', accent: 'bg-[#f5a623]', cta: 'bg-[#f5a623] text-slate-950', badge: 'bg-[#f6f0db] text-[#9a6200]', bestFor: 'Equal split', note: 'Best for moderate lifestyle needs and wants.' },
-        custom: { icon: Pencil, shell: 'border-[#d9d0f7] bg-[#fbf9ff]', accent: 'bg-[#7a57d1]', cta: 'bg-[#7a57d1] text-white', badge: 'bg-[#f2edff] text-[#7a57d1]', bestFor: 'Your own plan', note: 'Create your own percentages when the preset models do not fit.' },
+        custom: { icon: Pencil, shell: 'border-[#d9d0f7] bg-[#fbf9ff]', accent: 'bg-[#7a57d1]', cta: 'bg-[#7a57d1] text-white', badge: 'bg-[#f2edff] text-[#7a57d1]', bestFor: 'Flexible limits', note: 'Best when you want the platform to calculate limits from your own split and monthly money picture.' },
     };
 
     const customSplitIncome = trackedIncome;
@@ -807,8 +807,8 @@ const BudgetOverview = ({
                                 aria-label="Select Budget Type"
                                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                             >
-                                {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
                                 <option value="custom">Custom Split</option>
+                                {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
                             </select>
                         </label>
                         <button type="button" onClick={() => onNavigate('budgets')} className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white">
@@ -875,8 +875,8 @@ const BudgetOverview = ({
                             aria-label="Change budget type"
                             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                         >
-                            {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
                             <option value="custom">Custom Split</option>
+                            {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
                         </select>
                     </label>
                 </div>
@@ -909,9 +909,9 @@ const BudgetOverview = ({
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                             <SectionTitle
                                 icon={BarChart3}
-                                title="Budget Categories"
+                                title="My Budget Limits"
                                 action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">
-                                    Manage Categories
+                                    Manage Limits
                                 </button>}
                             />
 
@@ -1030,7 +1030,7 @@ const BudgetOverview = ({
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                             <SectionTitle
                                 icon={Receipt}
-                                title={`Budget Categories - ${currentMonthLabel}`}
+                                title={`My Budget Limits - ${currentMonthLabel}`}
                                 subtitle="See each category, the live spend, and what action to take next."
                                 action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">+ Add Category</button>}
                             />
@@ -1081,7 +1081,7 @@ const BudgetOverview = ({
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                             <SectionTitle
                                 icon={BarChart3}
-                                title={`${currentMonthLabel} Budget Summary`}
+                                title={`${currentMonthLabel} My Expense Summary`}
                                 action={(
                                     <button type="button" onClick={handleExportBudgetSummary} className="inline-flex items-center gap-2 rounded-full border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-2 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">
                                         <Download size={14} />
@@ -1150,12 +1150,13 @@ const BudgetOverview = ({
                     </section>
 
                     <section className="grid gap-4 xl:grid-cols-3">
-                        {compareCards.filter((item) => ['classic', 'aggressive', 'city'].includes(item.id)).map((item) => {
+                        {compareCards.filter((item) => ['custom', 'classic', 'aggressive'].includes(item.id)).map((item) => {
                             const visual = modelVisuals[item.id];
                             const Icon = visual.icon;
                             const isSelected = selectedModelId === item.id;
                             return (
                                 <article key={item.id} className={`relative overflow-hidden rounded-[1rem] border-2 p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)] ${visual.shell} ${isSelected ? 'border-[#11814f] ring-4 ring-[#11814f]/10' : ''}`}>
+                                    {item.id === 'custom' && <span className="absolute right-0 top-0 rounded-bl-[0.75rem] bg-[#7a57d1] px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-white">Start here</span>}
                                     {item.id === 'classic' && <span className="absolute right-0 top-0 rounded-bl-[0.75rem] bg-[#11814f] px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-white">Recommended</span>}
                                     <div className="flex items-start gap-3">
                                         <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-slate-900 shadow-sm">
@@ -1188,7 +1189,7 @@ const BudgetOverview = ({
                                         onClick={() => applyBudgetModel(item)}
                                         className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] px-4 py-3 text-sm font-semibold ${isSelected ? 'bg-[#11814f] text-white' : visual.cta}`}
                                     >
-                                        {isSelected ? <><Check size={15} /> Currently Active</> : 'Apply This Model'}
+                                        {item.id === 'custom' ? (isSelected ? 'Edit Custom Split' : 'Create Custom Split') : (isSelected ? <><Check size={15} /> Currently Active</> : 'Apply This Model')}
                                     </button>
                                 </article>
                             );
@@ -1196,7 +1197,7 @@ const BudgetOverview = ({
                     </section>
 
                     <section className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr]">
-                        {compareCards.filter((item) => item.id === 'debt' || item.id === 'balanced').map((item) => {
+                        {compareCards.filter((item) => item.id === 'city' || item.id === 'debt' || item.id === 'balanced').map((item) => {
                             const visual = modelVisuals[item.id];
                             const Icon = visual.icon;
                             const isSelected = selectedModelId === item.id;
@@ -1235,44 +1236,6 @@ const BudgetOverview = ({
                             );
                         })}
 
-                        <article className="rounded-[1rem] border-2 border-[#d9d0f7] bg-[#fbf9ff] p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(27,107,90,0.13)]">
-                            <div className="flex items-start gap-3">
-                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-[#7a57d1] shadow-sm">
-                                    <Pencil size={18} />
-                                </div>
-                                <div>
-                                    <p className="text-[1.2rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Custom Split</p>
-                                    <p className="mt-1 text-sm text-slate-500">Set your own percentages and keep total at 100%.</p>
-                                </div>
-                            </div>
-
-                            <div className="mt-4 space-y-3 rounded-[1rem] border border-dashed border-[#d7cdf4] bg-white px-4 py-4">
-                                {[
-                                    ['needs', 'Needs'],
-                                    ['wants', 'Wants'],
-                                    ['savings', 'Savings'],
-                                ].map(([field, label]) => (
-                                    <label key={field} className="flex items-center justify-between gap-3">
-                                        <span className="text-sm font-semibold text-slate-700">{label}</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            value={customSplit[field]}
-                                            onChange={(event) => handleCustomSplitChange(field, event.target.value)}
-                                            className="w-24 rounded-[0.8rem] border border-[#d7cdf4] bg-[#fbf9ff] px-3 py-2 text-right text-sm font-semibold text-slate-900 outline-none"
-                                        />
-                                    </label>
-                                ))}
-                                <div className={`rounded-[0.8rem] px-3 py-2 text-sm font-semibold ${customSplitTotal === 100 ? 'bg-[#eef8f4] text-[#11814f]' : 'bg-[#fff3d8] text-[#b56a00]'}`}>
-                                    Total: {customSplitTotal}% {customSplitTotal === 100 ? 'ready to apply' : 'must equal 100%'}
-                                </div>
-                            </div>
-
-                            <button type="button" onClick={openCustomSplitModal} className="mt-5 inline-flex w-full items-center justify-center rounded-[0.95rem] bg-[#7a57d1] px-4 py-3 text-sm font-semibold text-white">
-                                Create Custom Split
-                            </button>
-                        </article>
                     </section>
 
                     <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
@@ -1325,7 +1288,7 @@ const BudgetOverview = ({
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                             <SectionTitle
                                 icon={Receipt}
-                                title={`All Expenses - ${currentMonthLabel}`}
+                                title={`My Expense Tracker - ${currentMonthLabel}`}
                             action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">+ Add</button>}
                             />
 
