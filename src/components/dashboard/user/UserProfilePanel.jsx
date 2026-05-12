@@ -21,9 +21,16 @@ import {
 } from 'lucide-react';
 import { getUserAccount, updateUserPreferences } from '../../../services/userApi';
 import { useIncome } from '../../../contexts/IncomeContext';
+import DashboardOverviewFooter from '../shell/DashboardOverviewFooter';
 import IncomeForm from '../income/IncomeForm';
 import IncomeList from '../income/IncomeList';
 import QuickIncomeModal from '../income/QuickIncomeModal';
+import {
+    getMemberInitials,
+    getMemberLabel,
+    getStoredPreferredName,
+    setStoredPreferredName,
+} from '../../../utils/memberIdentity';
 import { USER_PROFILE_WORKSPACE_KEY } from './UserGoalsFamilyForm';
 
 const GOAL_META = {
@@ -213,6 +220,33 @@ const SummaryCard = ({ label, value, subtitle, accent = '', dark = false, compac
 const GoalActionCard = ({ label, helper, color, active, onClick }) => <button type="button" onClick={onClick} className={`w-full rounded-[1rem] border px-4 py-4 text-left transition-all ${active ? 'border-primary-300 bg-[#eef8f4] shadow-sm' : 'border-emerald-200 border-dashed bg-[#f8fcfa] hover:border-primary-300 hover:bg-[#f1faf6] hover:shadow-sm'}`}><div className="flex items-start justify-between gap-3"><div className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${active ? 'bg-white shadow-sm ring-1 ring-emerald-100' : 'bg-white/95 ring-1 ring-emerald-100'}`}><span className={`inline-flex h-3.5 w-3.5 rounded-full ${color}`} /></div><span className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold ${active ? 'bg-primary-100 text-primary-700' : 'bg-white text-primary-700 ring-1 ring-emerald-100'}`}>+</span></div><p className="mt-4 text-sm font-semibold text-slate-900">{label}</p><p className="mt-1 text-xs text-slate-500">{helper}</p></button>;
 const SecurityCard = ({ icon: Icon, title, subtitle }) => <div className="rounded-[1.2rem] border border-slate-200 bg-[linear-gradient(180deg,_#fbfdfc_0%,_#f4f8f6_100%)] px-4 py-5 text-center shadow-sm"><div className="mx-auto inline-flex rounded-2xl bg-white p-3 text-primary-700 shadow-sm ring-1 ring-slate-200"><Icon size={20} /></div><p className="mt-4 text-base font-bold text-slate-950">{title}</p><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div>;
 const ModalShell = ({ title, icon: Icon, onClose, children }) => <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/38 p-3 backdrop-blur-[3px] sm:p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.35rem] border border-emerald-100 bg-white shadow-[0_22px_60px_rgba(15,23,42,0.14)] sm:rounded-[1.5rem]"><div className="sticky top-0 z-10 flex items-center justify-between border-b border-emerald-100 bg-white/96 px-4 py-3 backdrop-blur sm:px-5 sm:py-4"><div className="flex items-center gap-2.5 sm:gap-3"><div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eef8f4] text-primary-700 sm:h-10 sm:w-10"><Icon size={17} /></div><h3 className="text-[1.2rem] font-extrabold tracking-tight text-slate-950 sm:text-[1.45rem]">{title}</h3></div><button type="button" onClick={onClose} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-[#f6fbf8] text-slate-500 transition-colors hover:text-slate-900"><X size={17} /></button></div><div className="p-4 sm:p-5">{children}</div></div></div>;
+const PreferredNameCard = ({ memberLabel, preferredName, onChange, onSave }) => (
+    <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Privacy-first profile</p>
+                <h3 className="mt-2 text-[1.45rem] font-extrabold tracking-tight text-slate-950">Preferred name</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Your dashboard identifies you as {memberLabel}. Add the name you prefer to be addressed by here, without changing the public dashboard display.
+                </p>
+            </div>
+            <form onSubmit={onSave} className="w-full lg:max-w-md">
+                <label className="block text-sm font-medium text-slate-700">
+                    Name you prefer
+                    <input
+                        value={preferredName}
+                        onChange={(event) => onChange(event.target.value)}
+                        placeholder="e.g. Myra"
+                        className="mt-2 w-full rounded-[1rem] border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
+                    />
+                </label>
+                <button type="submit" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
+                    Save preferred name
+                </button>
+            </form>
+        </div>
+    </section>
+);
 const GoalTypeCard = ({ active, label, helper, color, onClick }) => <button type="button" onClick={onClick} className={`rounded-[1rem] border px-3 py-4 text-center transition-all sm:px-4 sm:py-4 ${active ? 'border-primary-500 bg-[#eef8f4] shadow-sm' : 'border-emerald-100 bg-white hover:border-primary-300 hover:bg-[#f9fcfa]'}`}><span className={`mx-auto inline-flex h-7 w-7 rounded-full border-2 border-slate-950/70 ${color}`} /><p className="mt-3 text-sm font-semibold text-slate-900 sm:text-base">{label}</p><p className="mt-1 text-xs text-slate-500 sm:text-sm">{helper}</p></button>;
 const GoalProgressCard = ({ goal, meta, onClick }) => {
     const progress = goalProgress(goal.currentSavings, goal.targetAmount);
@@ -689,6 +723,8 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const [prefsForm, setPrefsForm] = useState({ receive_notifications: true, receive_weekly_summary: true });
     const [goalForm, setGoalForm] = useState({ primary_financial_goal: '', selectedType: 'short', slotIndex: 0, name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' });
     const [preferencesForm, setPreferencesForm] = useState({ primary_financial_goal: '', riskAppetite: 'Moderate', investmentHorizon: '5-10 Years', preferredProducts: 'T-Bills, MMFs, NSE Equities', financialMotivation: '' });
+    const [preferredName, setPreferredName] = useState(getStoredPreferredName);
+    const [preferredNameSaved, setPreferredNameSaved] = useState(() => Boolean(getStoredPreferredName().trim()));
     const [submitting, setSubmitting] = useState({ baseline: false, goal: false, dependents: false, prefs: false, preferencesModal: false });
 
     useEffect(() => {
@@ -747,7 +783,8 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const completionChecks = [user?.first_name, incomeValue, user?.profile?.primary_financial_goal, goalCount > 0, workspace.dependentsCount || workspace.familyNotes, ...sections.map((s) => s.complete)];
     const completion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
     const remaining = sections.filter((s) => !s.complete).length;
-    const fullName = `${user?.first_name || 'Member'} ${user?.last_name || ''}`.trim();
+    const memberLabel = getMemberLabel(user);
+    const memberInitials = getMemberInitials(user);
     const dateLabel = useMemo(() => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), []);
     const profileIntro = 'Your money profile is the engine room. Finish the missing pieces so every planner can give you sharper guidance.';
     const dependantCount = Number(workspace.dependentsCount || 0);
@@ -816,6 +853,13 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
     const patchUserProfile = (updated) => setUser((current) => ({ ...current, profile: { ...current?.profile, ...updated } }));
     const syncIncome = async () => { await Promise.all([fetchSummary(), fetchIncomes({ current_month: 'true' })]); };
+    const savePreferredName = (event) => {
+        event.preventDefault();
+        const nextPreferredName = preferredName.trim();
+        setStoredPreferredName(nextPreferredName);
+        setPreferredNameSaved(Boolean(nextPreferredName));
+        setSuccess(nextPreferredName ? 'Preferred name saved. Your dashboard will now address you by that name.' : 'Preferred name cleared.');
+    };
     const getNextGoalSlotIndex = (type) => {
         const slots = goalBucketByType[type]?.slots || [];
         const emptyIndex = slots.findIndex((goal) => !goalHasContent(goal));
@@ -988,10 +1032,10 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                         <div className="min-w-0">
                             <div className="flex items-start gap-3 sm:gap-4">
                                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#d89f2f_0%,_#f0c94d_100%)] text-2xl font-extrabold text-slate-950 ring-2 ring-white/20 shadow-lg shadow-slate-950/20 sm:h-16 sm:w-16">
-                                    {(user?.first_name?.charAt(0) || 'M').toUpperCase()}{(user?.last_name?.charAt(0) || '').toUpperCase()}
+                                    {memberInitials}
                                 </div>
                                 <div className="min-w-0 pt-0.5">
-                                    <h2 className="truncate text-[1.65rem] font-extrabold leading-tight tracking-tight text-white sm:text-[2rem]">{fullName}</h2>
+                                    <h2 className="truncate text-[1.65rem] font-extrabold leading-tight tracking-tight text-white sm:text-[2rem]">{memberLabel}</h2>
                                     <p className="mt-2 max-w-3xl text-sm leading-6 text-white/82 sm:text-[0.95rem]">{profileIntro}</p>
                                 </div>
                             </div>
@@ -1013,6 +1057,15 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 </div>
             </section>
 
+            {!preferredNameSaved && (
+                <PreferredNameCard
+                    memberLabel={memberLabel}
+                    preferredName={preferredName}
+                    onChange={setPreferredName}
+                    onSave={savePreferredName}
+                />
+            )}
+
             <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-2 shadow-sm"><div className="flex flex-wrap gap-2">{tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActiveTab(id)} className={`inline-flex items-center gap-2 rounded-[1rem] px-4 py-3 text-sm font-semibold transition-all ${activeTab === id ? 'bg-primary-600 text-white shadow-md shadow-primary-900/20' : 'text-slate-600 hover:bg-[#f4faf7] hover:text-slate-950'}`}><Icon size={16} />{label}</button>)}</div></section>
 
             {activeTab === 'goals' && <section className="space-y-5"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><SummaryCard label="Active Goals" value={String(goalCount)} subtitle="Goal slots filled" accent="bg-primary-600" dark compact onClick={() => openGoalModal(goalForm.selectedType || 'short', getNextGoalSlotIndex(goalForm.selectedType || 'short'))} /><GoalActionCard label="Short-Term Goals" helper={`${goalBucketByType.short?.goals.length || 0}/3 goals filled`} color="bg-[#37c837]" active={(goalBucketByType.short?.goals.length || 0) > 0} onClick={() => openGoalModal('short', getNextGoalSlotIndex('short'))} /><GoalActionCard label="Medium-Term Goals" helper={`${goalBucketByType.medium?.goals.length || 0}/3 goals filled`} color="bg-[#f6da1a]" active={(goalBucketByType.medium?.goals.length || 0) > 0} onClick={() => openGoalModal('medium', getNextGoalSlotIndex('medium'))} /><GoalActionCard label="Long-Term Goals" helper={`${goalBucketByType.long?.goals.length || 0}/3 goals filled`} color="bg-[#8a63df]" active={(goalBucketByType.long?.goals.length || 0) > 0} onClick={() => openGoalModal('long', getNextGoalSlotIndex('long'))} /></div>{goalBuckets.map(({ type, meta, slots }) => <GoalBucketSection key={type} title={meta.label} helper={meta.helper} meta={meta} slots={slots} onAdd={(slotIndex) => openGoalModal(type, slotIndex)} onEdit={(slotIndex) => openGoalModal(type, slotIndex)} />)}</section>}
@@ -1027,6 +1080,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
             {showIncomeForm && <IncomeForm income={selectedIncome} onClose={() => { setSelectedIncome(null); setShowIncomeForm(false); }} onSuccess={async () => { await syncIncome(); setSuccess('Income manager updated.'); }} />}
             <QuickIncomeModal isOpen={showQuickIncome} onClose={() => setShowQuickIncome(false)} />
+            <DashboardOverviewFooter onSelectSection={onSelectSection} />
         </div>
     );
 };

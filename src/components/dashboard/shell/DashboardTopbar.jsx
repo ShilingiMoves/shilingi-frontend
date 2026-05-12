@@ -2,6 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronDown, LogOut, Menu, Search, Settings, Smartphone, UserCircle2, X } from 'lucide-react';
 import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 import { dashboardTopTabs } from './dashboardSections';
+import {
+    getDashboardDisplayName,
+    getMemberInitials,
+    PREFERRED_NAME_KEY,
+    PREFERRED_NAME_UPDATED_EVENT,
+} from '../../../utils/memberIdentity';
 
 const notifications = [
     {
@@ -39,15 +45,14 @@ const DashboardTopbar = ({
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [displayName, setDisplayName] = useState(() => getDashboardDisplayName(user));
     const searchInputRef = useRef(null);
     const popoverContainerRef = useRef(null);
-    const firstName = user?.first_name || 'Client';
-    const lastName = user?.last_name || '';
+    const memberInitials = getMemberInitials(user);
     const tierLabel = useMemo(
         () => normalizeTier(user?.tier || user?.subscription_tier || user?.plan || 'Basic'),
         [user]
     );
-    const fullName = `${firstName} ${lastName}`.trim();
     const anyPanelOpen = searchOpen || notificationsOpen || accountOpen;
 
     useEffect(() => {
@@ -55,6 +60,27 @@ const DashboardTopbar = ({
             searchInputRef.current?.focus();
         }
     }, [searchOpen]);
+
+    useEffect(() => {
+        const syncDisplayName = () => setDisplayName(getDashboardDisplayName(user));
+        syncDisplayName();
+
+        const handleStorage = (event) => {
+            if (event.key === PREFERRED_NAME_KEY) {
+                syncDisplayName();
+            }
+        };
+
+        window.addEventListener(PREFERRED_NAME_UPDATED_EVENT, syncDisplayName);
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener('focus', syncDisplayName);
+
+        return () => {
+            window.removeEventListener(PREFERRED_NAME_UPDATED_EVENT, syncDisplayName);
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('focus', syncDisplayName);
+        };
+    }, [user]);
 
     useEffect(() => {
         const handlePointerDown = (event) => {
@@ -234,10 +260,10 @@ const DashboardTopbar = ({
                                 className="inline-flex items-center gap-3 rounded-full border border-gray-200 bg-white py-1 pl-1 pr-3 shadow-sm transition-colors hover:border-primary-200 hover:bg-gray-50"
                             >
                                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#8c8f3f] text-xs font-bold text-white">
-                                    {firstName.charAt(0).toUpperCase()}
+                                    {memberInitials}
                                 </span>
                                 <span className="hidden min-w-0 text-left md:block">
-                                    <span className="block truncate text-sm font-semibold text-gray-900">{fullName}</span>
+                                    <span className="block truncate text-sm font-semibold text-gray-900">{displayName}</span>
                                     <span className="block truncate text-[11px] text-[#f4c95d]">{tierLabel}</span>
                                 </span>
                                 <ChevronDown size={16} className="hidden text-gray-500 sm:block" />

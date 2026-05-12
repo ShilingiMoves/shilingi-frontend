@@ -4,6 +4,7 @@ import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
+import { queuePreferredNamePrompt } from '../utils/memberIdentity';
 import { PENDING_PROFILE_SIGNUP_EMAIL_KEY } from './SignUpPage';
 
 const isPendingProfileSignup = (email) => {
@@ -68,6 +69,7 @@ const SignInPage = () => {
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
             const nextSection = getPostLoginSection(formValues.email);
+            queuePreferredNamePrompt(nextSection === 'user' ? 'signup' : 'returning');
             clearPendingProfileSignup();
             persistDashboardSection(nextSection);
             const redirectTo = location.state?.from?.pathname || '/dashboard/app';
