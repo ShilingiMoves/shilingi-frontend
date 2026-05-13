@@ -5,6 +5,7 @@ import { dashboardTopTabs } from './dashboardSections';
 import {
     getDashboardDisplayName,
     getMemberInitials,
+    getMemberNumber,
     PREFERRED_NAME_KEY,
     PREFERRED_NAME_UPDATED_EVENT,
 } from '../../../utils/memberIdentity';
@@ -49,6 +50,7 @@ const DashboardTopbar = ({
     const searchInputRef = useRef(null);
     const popoverContainerRef = useRef(null);
     const memberInitials = getMemberInitials(user);
+    const memberNumber = getMemberNumber(user);
     const tierLabel = useMemo(
         () => normalizeTier(user?.tier || user?.subscription_tier || user?.plan || 'Basic'),
         [user]
@@ -273,6 +275,10 @@ const DashboardTopbar = ({
                                 <div className="absolute right-0 top-[calc(100%+0.55rem)] z-50 w-[220px] overflow-hidden rounded-[1rem] border border-emerald-100 bg-white p-3 shadow-[0_20px_55px_rgba(15,23,42,0.12)] max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-[4.7rem] max-sm:w-auto">
                                     {mobilePanelHeader('Account')}
                                     <div>
+                                        <div className="mb-2 rounded-xl border border-emerald-100 bg-[#f6fbf8] px-3 py-2.5">
+                                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700">Member Number</p>
+                                            <p className="mt-1 text-sm font-bold text-slate-900">{memberNumber}</p>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => {

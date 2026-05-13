@@ -26,6 +26,7 @@ import IncomeForm from '../income/IncomeForm';
 import IncomeList from '../income/IncomeList';
 import QuickIncomeModal from '../income/QuickIncomeModal';
 import {
+    getDashboardDisplayName,
     getMemberInitials,
     getMemberLabel,
     getStoredPreferredName,
@@ -227,7 +228,7 @@ const PreferredNameCard = ({ memberLabel, preferredName, onChange, onSave }) => 
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Privacy-first profile</p>
                 <h3 className="mt-2 text-[1.45rem] font-extrabold tracking-tight text-slate-950">Preferred name</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Your dashboard identifies you as {memberLabel}. Add the name you prefer to be addressed by here, without changing the public dashboard display.
+                    Your member number is {memberLabel}. Add the name you prefer to be addressed by here so the dashboard can greet you naturally.
                 </p>
             </div>
             <form onSubmit={onSave} className="w-full lg:max-w-md">
@@ -785,6 +786,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const remaining = sections.filter((s) => !s.complete).length;
     const memberLabel = getMemberLabel(user);
     const memberInitials = getMemberInitials(user);
+    const profileDisplayName = preferredNameSaved ? preferredName.trim() : getDashboardDisplayName(user);
     const dateLabel = useMemo(() => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), []);
     const profileIntro = 'Your money profile is the engine room. Finish the missing pieces so every planner can give you sharper guidance.';
     const dependantCount = Number(workspace.dependentsCount || 0);
@@ -1035,7 +1037,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                                     {memberInitials}
                                 </div>
                                 <div className="min-w-0 pt-0.5">
-                                    <h2 className="truncate text-[1.65rem] font-extrabold leading-tight tracking-tight text-white sm:text-[2rem]">{memberLabel}</h2>
+                                    <h2 className="truncate text-[1.65rem] font-extrabold leading-tight tracking-tight text-white sm:text-[2rem]">{profileDisplayName}</h2>
                                     <p className="mt-2 max-w-3xl text-sm leading-6 text-white/82 sm:text-[0.95rem]">{profileIntro}</p>
                                 </div>
                             </div>

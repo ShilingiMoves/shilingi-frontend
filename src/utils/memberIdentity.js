@@ -3,7 +3,11 @@ export const PREFERRED_NAME_UPDATED_EVENT = 'shilingi-preferred-name-updated';
 export const PROFILE_NAME_PROMPT_KEY = 'shilingi_show_preferred_name_prompt';
 export const PROFILE_NAME_PROMPT_REASON_KEY = 'shilingi_preferred_name_prompt_reason';
 
-const toStableNumber = (value) => {
+const MEMBER_NUMBER_PREFIX = '154';
+const MEMBER_NUMBER_SUFFIX_LENGTH = 4;
+const DEFAULT_MEMBER_NUMBER_SUFFIX = '2217';
+
+const toStableOffset = (value) => {
     const source = String(value || 'shilingi-member').trim().toLowerCase();
     let hash = 0;
 
@@ -12,7 +16,24 @@ const toStableNumber = (value) => {
         hash |= 0;
     }
 
-    return String(Math.abs(hash) % 1000000).padStart(6, '0');
+    return Math.abs(hash) % (10 ** MEMBER_NUMBER_SUFFIX_LENGTH);
+};
+
+const getGeneratedMemberNumber = (user = {}) => {
+    const numericId = Number(user?.id || user?.profile?.user_id);
+
+    if (Number.isFinite(numericId) && numericId > 0) {
+        const suffix = String(Math.floor(numericId) % (10 ** MEMBER_NUMBER_SUFFIX_LENGTH)).padStart(MEMBER_NUMBER_SUFFIX_LENGTH, '0');
+        return `${MEMBER_NUMBER_PREFIX}${suffix}`;
+    }
+
+    const stableSeed = user?.uuid || user?.email;
+    if (!stableSeed) {
+        return `${MEMBER_NUMBER_PREFIX}${DEFAULT_MEMBER_NUMBER_SUFFIX}`;
+    }
+
+    const suffix = String(toStableOffset(stableSeed)).padStart(MEMBER_NUMBER_SUFFIX_LENGTH, '0');
+    return `${MEMBER_NUMBER_PREFIX}${suffix}`;
 };
 
 export const getMemberNumber = (user = {}) => {
@@ -24,13 +45,20 @@ export const getMemberNumber = (user = {}) => {
         || user?.profile?.memberNumber;
 
     if (explicitNumber) {
-        return String(explicitNumber).replace(/^member\s*(no\.?|number)?\s*/i, '').trim();
+        const digits = String(explicitNumber).replace(/^member\s*(no\.?|number)?\s*/i, '').replace(/\D/g, '');
+        if (digits) {
+            const suffix = digits.startsWith(MEMBER_NUMBER_PREFIX)
+                ? digits.slice(MEMBER_NUMBER_PREFIX.length).slice(-MEMBER_NUMBER_SUFFIX_LENGTH)
+                : digits.slice(-MEMBER_NUMBER_SUFFIX_LENGTH);
+
+            return `MN ${MEMBER_NUMBER_PREFIX}${suffix.padStart(MEMBER_NUMBER_SUFFIX_LENGTH, '0')}`;
+        }
     }
 
-    return `SM-${toStableNumber(user?.uuid || user?.id || user?.email)}`;
+    return `MN ${getGeneratedMemberNumber(user)}`;
 };
 
-export const getMemberLabel = (user = {}) => `Member No. ${getMemberNumber(user)}`;
+export const getMemberLabel = (user = {}) => `Member Number ${getMemberNumber(user)}`;
 
 export const getMemberInitials = (user = {}) => {
     const firstInitial = String(user?.first_name || '').trim().charAt(0);
@@ -55,7 +83,11 @@ export const getStoredPreferredName = () => {
 };
 
 export const getDashboardDisplayName = (user = {}) => {
-    return getStoredPreferredName().trim() || getMemberLabel(user);
+    const storedPreferredName = getStoredPreferredName().trim();
+    if (storedPreferredName) return storedPreferredName;
+
+    const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+    return fullName || user?.name || 'My Profile';
 };
 
 export const setStoredPreferredName = (name) => {
