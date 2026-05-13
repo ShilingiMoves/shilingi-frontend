@@ -99,6 +99,60 @@ const GOAL_META = {
 
 const GOAL_SLOT_LABELS = ['Goal 1', 'Goal 2', 'Goal 3'];
 const EMPTY_GOAL_DETAILS = { name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' };
+const DEPENDANT_RELATION_GROUPS = [
+    {
+        label: 'Immediate Family',
+        options: ['Spouse / Partner', 'Son', 'Daughter'],
+    },
+    {
+        label: 'Parents',
+        options: ['Father (Papa)', 'Mother (Mama)', 'Father-in-Law', 'Mother-in-Law'],
+    },
+    {
+        label: 'Siblings',
+        options: ['Brother', 'Sister'],
+    },
+    {
+        label: 'Grandparents',
+        options: ['Grandfather', 'Grandmother'],
+    },
+    {
+        label: 'Extended Family',
+        options: ['Uncle', 'Aunt', 'Cousin', 'Other'],
+    },
+];
+const DEPENDANT_DEFAULT_COUNT = {
+    'Father (Papa)': 1,
+    'Mother (Mama)': 1,
+    'Father-in-Law': 1,
+    'Mother-in-Law': 1,
+    'Grandfather': 1,
+    'Grandmother': 1,
+    'Spouse / Partner': 1,
+    Other: 1,
+    Son: 1,
+    Daughter: 1,
+    Brother: 2,
+    Sister: 2,
+    Uncle: 4,
+    Aunt: 4,
+    Cousin: 3,
+};
+const DEPENDANT_PERSON_OPTIONS = [
+    { value: '1', label: '1 person' },
+    { value: '2', label: '2 people' },
+    { value: '3', label: '3 people' },
+    { value: '4', label: '4 people' },
+    { value: '5', label: '5 people' },
+    { value: '6', label: '6 or more' },
+];
+const EMPTY_DEPENDANT_FORM = {
+    relation: '',
+    number: '1',
+    benType: '',
+    amount: '',
+    freq: 'Monthly',
+};
 
 const defaults = {
     shortTermGoal: '',
@@ -112,6 +166,7 @@ const defaults = {
     shortTermGoals: [],
     mediumTermGoals: [],
     longTermGoals: [],
+    dependants: [],
     riskAppetite: 'Moderate',
     investmentHorizon: '5-10 Years',
     preferredProducts: 'T-Bills, MMFs, NSE Equities',
@@ -173,6 +228,44 @@ const incomeNote = (income) => {
     if (income?.source) return income.source;
     if (income?.is_recurring && income?.frequency_display) return `${income.frequency_display} income`;
     return income?.category_name || 'Income source';
+};
+const dependantCategory = (relation) => {
+    if (['Spouse / Partner', 'Son', 'Daughter'].includes(relation)) return 'Immediate Family';
+    if (['Father (Papa)', 'Mother (Mama)', 'Father-in-Law', 'Mother-in-Law'].includes(relation)) return 'Parent';
+    if (['Brother', 'Sister'].includes(relation)) return 'Sibling';
+    if (['Grandfather', 'Grandmother'].includes(relation)) return 'Grandparent';
+    return 'Extended';
+};
+const dependantSuggestedBeneficiary = (relation) => {
+    if (['Spouse / Partner', 'Son', 'Daughter'].includes(relation)) return 'Direct';
+    if (relation) return 'Indirect';
+    return '';
+};
+const dependantMonthlySupport = (amount, frequency) => {
+    const numericAmount = Number(amount || 0);
+    if (frequency === 'Weekly') return numericAmount * 4.33;
+    if (frequency === 'Fortnightly') return numericAmount * 2.17;
+    if (frequency === 'Quarterly') return numericAmount / 3;
+    if (frequency === 'Annually') return numericAmount / 12;
+    if (frequency === 'As needed') return 0;
+    return numericAmount;
+};
+const formatKESValue = (value, fallback = 'KES 0') => {
+    const numericValue = Number(value || 0);
+    return numericValue > 0 ? `KES ${numericValue.toLocaleString('en-KE')}` : fallback;
+};
+const buildDependantsSummary = (dependants = []) => {
+    const totalPeople = dependants.reduce((sum, dependant) => sum + Number(dependant.number || 0), 0);
+    const spouseCount = dependants
+        .filter((dependant) => dependant.relation === 'Spouse / Partner')
+        .reduce((sum, dependant) => sum + Number(dependant.number || 0), 0);
+    const childrenCount = dependants
+        .filter((dependant) => ['Son', 'Daughter'].includes(dependant.relation))
+        .reduce((sum, dependant) => sum + Number(dependant.number || 0), 0);
+    const otherCount = Math.max(totalPeople - spouseCount - childrenCount, 0);
+    const totalMonthly = dependants.reduce((sum, dependant) => sum + dependantMonthlySupport(dependant.amount, dependant.freq), 0);
+
+    return { totalPeople, spouseCount, childrenCount, otherCount, totalMonthly };
 };
 const goalIconForName = (name, fallbackIcon) => {
     const value = String(name || '').toLowerCase();
@@ -397,31 +490,167 @@ const ProfileEcosystemSection = ({ ecosystemCards }) => (
     </div>
 );
 const DependantsSummaryCard = ({ value, label, accent = 'text-[#166a55]' }) => (
-    <div className="rounded-[1.2rem] border border-emerald-100 bg-white px-5 py-4 text-center shadow-sm">
+    <div className="rounded-[1.2rem] border border-emerald-100 bg-white px-5 py-5 text-center shadow-[0_8px_24px_rgba(23,43,31,0.08)]">
         <p className={`text-[2rem] font-extrabold tracking-tight ${accent}`}>{value}</p>
         <p className="mt-1 text-sm text-slate-500">{label}</p>
     </div>
 );
-const DependantMemberCard = ({ initials, name, role, age, tag, tagTone }) => (
-    <div className="rounded-[1.2rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fcfb_0%,_#f1f8f5_100%)] px-5 py-4 text-center shadow-sm">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#2e9275] text-xl font-extrabold text-white">
-            {initials}
+const DependantsSectionHeader = ({ summaryLabel, onAdd, showAddButton = true }) => (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[#eef8f4] text-[#166a55]">
+                <Users size={18} />
+            </div>
+            <div>
+                <p className="text-[1.2rem] font-bold text-slate-950">My Dependants</p>
+                <p className="mt-1 text-sm text-slate-500">{summaryLabel}</p>
+            </div>
         </div>
-        <p className="mt-4 text-lg font-bold text-slate-950">{name}</p>
-        <p className="mt-1 text-sm text-slate-500">{role}</p>
-        <p className="mt-3 text-sm font-medium text-[#166a55]">{age}</p>
-        <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tagTone}`}>{tag}</span>
+        {showAddButton ? (
+            <button type="button" onClick={onAdd} className="inline-flex items-center gap-2 self-start text-sm font-semibold text-[#166a55] transition-colors hover:text-[#1f7f63]">
+                <span className="text-lg leading-none">+</span>
+                Add Dependant
+            </button>
+        ) : null}
     </div>
 );
-const AddDependantCard = ({ onClick }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className="flex min-h-[220px] w-full flex-col items-center justify-center rounded-[1.2rem] border border-dashed border-[#b7ddd0] bg-white text-[#166a55] transition-colors hover:bg-[#f6fbf8]"
-    >
-        <Users size={26} />
-        <span className="mt-4 text-lg font-semibold">Add Dependant</span>
-    </button>
+const DependantsFormPanel = ({ form, onChange, onSave, onCancel, isSaving, isEditing }) => (
+    <form onSubmit={onSave} className="rounded-[1.3rem] border border-[#c5dfce] bg-white p-5 shadow-[0_12px_30px_rgba(27,107,74,0.08)] sm:p-6">
+        <div className="flex items-center gap-3 text-[#166a55]">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[#eef8f4]">
+                <Users size={18} />
+            </div>
+            <p className="text-[1.45rem] font-bold tracking-tight">{isEditing ? 'Edit Dependant' : 'Add a New Dependant'}</p>
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Relation
+                <select value={form.relation} onChange={(event) => onChange('relation', event.target.value)} className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500">
+                    <option value="">Select relation</option>
+                    {DEPENDANT_RELATION_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                            {group.options.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </optgroup>
+                    ))}
+                </select>
+            </label>
+            <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Number of People
+                <select value={form.number} onChange={(event) => onChange('number', event.target.value)} className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500">
+                    {DEPENDANT_PERSON_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+                <span className="text-[11px] font-normal normal-case tracking-normal text-slate-400">Auto-suggested based on relation - adjust if needed</span>
+            </label>
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Beneficiary Type
+                <select value={form.benType} onChange={(event) => onChange('benType', event.target.value)} className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500">
+                    <option value="">Select</option>
+                    <option value="Direct">Direct Beneficiary</option>
+                    <option value="Indirect">Indirect Beneficiary</option>
+                </select>
+                <span className="text-[11px] font-normal normal-case tracking-normal text-slate-400">Direct = primary support provider</span>
+            </label>
+            <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Support Amount (KES)
+                <input value={form.amount} onChange={(event) => onChange('amount', event.target.value)} type="number" min="0" placeholder="e.g. 5,000" className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500" />
+            </label>
+            <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Frequency
+                <select value={form.freq} onChange={(event) => onChange('freq', event.target.value)} className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500">
+                    <option value="Monthly">Monthly</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Fortnightly">Fortnightly</option>
+                    <option value="Quarterly">Quarterly</option>
+                    <option value="Annually">Annually</option>
+                    <option value="As needed">As needed</option>
+                </select>
+            </label>
+        </div>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button type="button" onClick={onCancel} className="inline-flex items-center justify-center rounded-[0.95rem] border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300">
+                Cancel
+            </button>
+            <button type="submit" disabled={isSaving} className="inline-flex items-center justify-center rounded-[0.95rem] bg-[#1f7f63] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#166a55] disabled:cursor-not-allowed disabled:opacity-60">
+                {isSaving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Save Dependant')}
+            </button>
+        </div>
+    </form>
+);
+const DependantsEmptyState = () => (
+    <div className="rounded-[1.2rem] border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#f2f7f4] text-[#166a55]">
+            <Users size={28} />
+        </div>
+        <p className="mt-5 text-base font-semibold text-slate-700">No dependants added yet</p>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            Tell us who you support financially. This shapes your budget, insurance, and retirement plan automatically.
+        </p>
+    </div>
+);
+const DependantsEntryCard = ({ dependant, totalMonthly, onEdit, onDelete }) => {
+    const monthlySupport = dependantMonthlySupport(dependant.amount, dependant.freq);
+    const annualSupport = Math.round(monthlySupport * 12);
+    const supportShare = totalMonthly > 0 ? Math.round((monthlySupport / totalMonthly) * 100) : 0;
+    const category = dependant.category || dependantCategory(dependant.relation);
+    const categoryTone = category === 'Immediate Family'
+        ? 'border-[#b9c9f7] bg-[#eef3fe] text-[#2b56d6]'
+        : 'border-slate-200 bg-[#f3f5f3] text-slate-600';
+    const beneficiaryTone = dependant.benType === 'Direct'
+        ? 'border-[#c5dfce] bg-[#ebf5ef] text-[#1b6b4a]'
+        : 'border-[#f0c84a] bg-[#fef6e0] text-[#a07010]';
+
+    return (
+        <article className="rounded-[1.2rem] border border-emerald-100 bg-white px-5 py-5 shadow-[0_8px_24px_rgba(23,43,31,0.08)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-[1.05rem] font-bold text-slate-950">{dependant.relation}</p>
+                </div>
+                <div className="text-left sm:text-right">
+                    <p className="text-[1.4rem] font-extrabold text-slate-950">{formatKESValue(dependant.amount, '-')}</p>
+                    {Number(dependant.amount || 0) > 0 ? <p className="mt-1 text-xs font-medium text-[#1f7f63]">+{formatKESValue(annualSupport, 'KES 0')} p.a.</p> : null}
+                </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+                <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${categoryTone}`}>{category}</span>
+                <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${beneficiaryTone}`}>{dependant.benType} Beneficiary</span>
+                <span className="rounded-full border border-slate-200 bg-[#f3f5f3] px-3 py-1 text-xs font-semibold text-slate-600">{dependant.number} {Number(dependant.number || 0) === 1 ? 'person' : 'people'}</span>
+                <span className="rounded-full border border-slate-200 bg-[#f3f5f3] px-3 py-1 text-xs font-semibold text-slate-600">{dependant.freq}</span>
+            </div>
+            <div className="mt-5 flex items-center justify-between gap-3">
+                <span className="text-sm text-slate-600">Share of total support</span>
+                <span className="text-sm font-semibold text-slate-900">{supportShare}%</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-[#ebf5ef]">
+                <div className="h-2 rounded-full bg-[#1b6b4a]" style={{ width: `${supportShare}%` }} />
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                <span>{dependant.benType === 'Direct' ? 'Primary support' : 'Contributing support'}</span>
+                <span className="h-1 w-1 rounded-full bg-slate-400" />
+                <span>{dependant.freq} support</span>
+                <span className="h-1 w-1 rounded-full bg-slate-400" />
+                <span>Updated {dependant.updatedAt}</span>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" onClick={onEdit} className="inline-flex items-center justify-center rounded-[0.85rem] border border-[#1b6b4a] px-4 py-2 text-sm font-semibold text-[#1b6b4a] transition-colors hover:bg-[#ebf5ef]">
+                    Edit
+                </button>
+                <button type="button" onClick={onDelete} className="inline-flex items-center justify-center rounded-[0.85rem] border border-[#c94040] px-4 py-2 text-sm font-semibold text-[#c94040] transition-colors hover:bg-[#fef0f0]">
+                    Remove
+                </button>
+            </div>
+        </article>
+    );
+};
+const DependantsImpactStrip = () => (
+    <div className="flex flex-wrap gap-3">
+        <div className="min-w-[150px] flex-1 rounded-[0.95rem] border border-[#c5dfcc] bg-[#e9f7ef] px-4 py-3 text-sm font-medium text-[#1b7a4b]">Updating your Budget Planner</div>
+        <div className="min-w-[150px] flex-1 rounded-[0.95rem] border border-[#f0d68a] bg-[#fef6e0] px-4 py-3 text-sm font-medium text-[#a07010]">Adjusting Debt capacity</div>
+        <div className="min-w-[150px] flex-1 rounded-[0.95rem] border border-[#bacaf7] bg-[#eef3fe] px-4 py-3 text-sm font-medium text-[#2b56d6]">Refining Investment plan</div>
+        <div className="min-w-[150px] flex-1 rounded-[0.95rem] border border-[#f5b9b4] bg-[#fef0f0] px-4 py-3 text-sm font-medium text-[#b53535]">Calculating cover needed</div>
+        <div className="min-w-[150px] flex-1 rounded-[0.95rem] border border-[#d2b6f5] bg-[#f3edfd] px-4 py-3 text-sm font-medium text-[#6b2fa0]">Extending Retirement view</div>
+    </div>
 );
 const PlanningImpactCard = ({ icon: Icon, title, body, badge, badgeTone, cta, onClick }) => (
     <div className="rounded-[1.2rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fcfb_0%,_#f1f8f5_100%)] px-5 py-5 shadow-sm">
@@ -716,11 +945,12 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const [showQuickIncome, setShowQuickIncome] = useState(false);
     const [editingBaseline, setEditingBaseline] = useState(false);
     const [editingDependents, setEditingDependents] = useState(false);
+    const [editingDependantIndex, setEditingDependantIndex] = useState(-1);
     const [editingPrefs, setEditingPrefs] = useState(false);
     const [goalModalOpen, setGoalModalOpen] = useState(false);
     const [preferencesModalOpen, setPreferencesModalOpen] = useState(false);
     const [baselineForm, setBaselineForm] = useState({ monthly_income: '' });
-    const [dependentsForm, setDependentsForm] = useState({ dependentsCount: '', familyNotes: '' });
+    const [dependantsForm, setDependantsForm] = useState(EMPTY_DEPENDANT_FORM);
     const [prefsForm, setPrefsForm] = useState({ receive_notifications: true, receive_weekly_summary: true });
     const [goalForm, setGoalForm] = useState({ primary_financial_goal: '', selectedType: 'short', slotIndex: 0, name: '', targetAmount: '', currentSavings: '', targetDate: '', monthlyContribution: '', linkedProduct: '' });
     const [preferencesForm, setPreferencesForm] = useState({ primary_financial_goal: '', riskAppetite: 'Moderate', investmentHorizon: '5-10 Years', preferredProducts: 'T-Bills, MMFs, NSE Equities', financialMotivation: '' });
@@ -738,7 +968,9 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 setUser(acct);
                 setWorkspace(ws);
                 setBaselineForm({ monthly_income: acct?.profile?.monthly_income || '' });
-                setDependentsForm({ dependentsCount: ws.dependentsCount || '', familyNotes: ws.familyNotes || '' });
+                setDependantsForm({ ...EMPTY_DEPENDANT_FORM });
+                setEditingDependents(!Array.isArray(ws.dependants) || ws.dependants.length === 0);
+                setEditingDependantIndex(-1);
                 setPrefsForm({ receive_notifications: acct?.profile?.receive_notifications ?? true, receive_weekly_summary: acct?.profile?.receive_weekly_summary ?? true });
                 setPreferencesForm({
                     primary_financial_goal: acct?.profile?.primary_financial_goal || '',
@@ -775,13 +1007,15 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     ), [workspace]);
     const goalBucketByType = useMemo(() => Object.fromEntries(goalBuckets.map((bucket) => [bucket.type, bucket])), [goalBuckets]);
     const goalCount = goalBuckets.reduce((sum, bucket) => sum + bucket.goals.length, 0);
+    const dependants = useMemo(() => Array.isArray(workspace.dependants) ? workspace.dependants : [], [workspace.dependants]);
+    const dependantsSummary = useMemo(() => buildDependantsSummary(dependants), [dependants]);
     const sections = useMemo(() => ([
         { id: 'income', label: 'Income', complete: Boolean(incomeValue) || incomes.length > 0 },
         { id: 'goals', label: 'Goals', complete: Boolean(user?.profile?.primary_financial_goal) && goalCount > 0 },
-        { id: 'dependents', label: 'Dependants', complete: Boolean(workspace.dependentsCount || workspace.familyNotes) },
-    ]), [goalCount, incomeValue, incomes.length, user, workspace.dependentsCount, workspace.familyNotes]);
+        { id: 'dependents', label: 'Dependants', complete: dependants.length > 0 },
+    ]), [dependants.length, goalCount, incomeValue, incomes.length, user]);
     const validTabIds = tabs.map((tab) => tab.id);
-    const completionChecks = [user?.first_name, incomeValue, user?.profile?.primary_financial_goal, goalCount > 0, workspace.dependentsCount || workspace.familyNotes, ...sections.map((s) => s.complete)];
+    const completionChecks = [user?.first_name, incomeValue, user?.profile?.primary_financial_goal, goalCount > 0, dependants.length > 0, ...sections.map((s) => s.complete)];
     const completion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
     const remaining = sections.filter((s) => !s.complete).length;
     const memberLabel = getMemberLabel(user);
@@ -789,29 +1023,11 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const profileDisplayName = preferredNameSaved ? preferredName.trim() : getDashboardDisplayName(user);
     const dateLabel = useMemo(() => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), []);
     const profileIntro = 'Your money profile is the engine room. Finish the missing pieces so every planner can give you sharper guidance.';
-    const dependantCount = Number(workspace.dependentsCount || 0);
-    const primaryMemberName = user?.first_name ? `${user.first_name} Household` : 'Family Member';
-    const familyMembers = useMemo(() => {
-        const notes = (workspace.familyNotes || '').trim();
-        if (dependantCount <= 0) return [];
-        return Array.from({ length: dependantCount }).map((_, index) => {
-            const relation = index === 0 ? 'Spouse / Partner' : index === 1 ? 'Child' : 'Other Dependant';
-            const name = index === 0 ? primaryMemberName : relation === 'Child' ? `Child ${index}` : `Dependant ${index + 1}`;
-            const badgeTone = index === 0 ? 'bg-[#e7f6f1] text-[#166a55]' : relation === 'Child' ? 'bg-[#eef4ff] text-[#2f74db]' : 'bg-[#f3ecff] text-[#7a57d1]';
-            const badge = index === 0 ? 'Household support' : relation === 'Child' ? 'Education needs' : 'Care planning';
-            return {
-                initials: name.split(' ').map((part) => part.charAt(0)).join('').slice(0, 2).toUpperCase(),
-                name,
-                role: relation,
-                age: notes ? 'Saved in household notes' : 'Add details in notes',
-                tag: badge,
-                tagTone: badgeTone,
-            };
-        });
-    }, [dependantCount, primaryMemberName, workspace.familyNotes]);
-    const spouseCount = dependantCount > 0 ? 1 : 0;
-    const childrenCount = dependantCount > 1 ? 1 : 0;
-    const otherDependantsCount = Math.max(dependantCount - spouseCount - childrenCount, 0);
+    const dependantCount = dependantsSummary.totalPeople;
+    const spouseCount = dependantsSummary.spouseCount;
+    const childrenCount = dependantsSummary.childrenCount;
+    const otherDependantsCount = dependantsSummary.otherCount;
+    const totalDependantsSupport = dependantsSummary.totalMonthly;
     const estimatedProtectionCover = dependantCount > 0 ? dependantCount * 3800000 : 0;
     const estimatedEmergencyFund = dependantCount > 0 ? dependantCount * 190000 : 0;
     const ecosystemCards = [
@@ -855,6 +1071,47 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
     const patchUserProfile = (updated) => setUser((current) => ({ ...current, profile: { ...current?.profile, ...updated } }));
     const syncIncome = async () => { await Promise.all([fetchSummary(), fetchIncomes({ current_month: 'true' })]); };
+    const resetDependantForm = () => {
+        setDependantsForm({ ...EMPTY_DEPENDANT_FORM });
+        setEditingDependantIndex(-1);
+    };
+    const openNewDependantForm = () => {
+        resetDependantForm();
+        setEditingDependents(true);
+    };
+    const openEditDependantForm = (index) => {
+        const dependant = dependants[index];
+        if (!dependant) return;
+
+        setDependantsForm({
+            relation: dependant.relation || '',
+            number: String(dependant.number || '1'),
+            benType: dependant.benType || '',
+            amount: dependant.amount ? String(dependant.amount) : '',
+            freq: dependant.freq || 'Monthly',
+        });
+        setEditingDependantIndex(index);
+        setEditingDependents(true);
+    };
+    const closeDependantForm = () => {
+        setEditingDependents(false);
+        resetDependantForm();
+    };
+    const handleDependantFieldChange = (field, value) => {
+        if (field === 'relation') {
+            const suggestedCount = String(DEPENDANT_DEFAULT_COUNT[value] || 1);
+            const suggestedBeneficiary = dependantSuggestedBeneficiary(value);
+            setDependantsForm((current) => ({
+                ...current,
+                relation: value,
+                number: suggestedCount,
+                benType: suggestedBeneficiary || current.benType,
+            }));
+            return;
+        }
+
+        setDependantsForm((current) => ({ ...current, [field]: value }));
+    };
     const savePreferredName = (event) => {
         event.preventDefault();
         const nextPreferredName = preferredName.trim();
@@ -959,16 +1216,56 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             setSubmitting((s) => ({ ...s, dependents: true }));
             setError('');
             setSuccess('');
-            const next = { ...workspace, dependentsCount: dependentsForm.dependentsCount, familyNotes: dependentsForm.familyNotes };
+            if (!dependantsForm.relation) {
+                throw new Error('Please select a relation first.');
+            }
+            if (!dependantsForm.benType) {
+                throw new Error('Please choose a beneficiary type.');
+            }
+
+            const nowLabel = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const nextEntry = {
+                relation: dependantsForm.relation,
+                number: Number(dependantsForm.number || 1),
+                benType: dependantsForm.benType,
+                amount: Number(dependantsForm.amount || 0),
+                freq: dependantsForm.freq || 'Monthly',
+                category: dependantCategory(dependantsForm.relation),
+                updatedAt: nowLabel,
+            };
+            const nextDependants = editingDependantIndex >= 0
+                ? dependants.map((dependant, index) => (index === editingDependantIndex ? nextEntry : dependant))
+                : [...dependants, nextEntry];
+            const nextSummary = buildDependantsSummary(nextDependants);
+            const next = {
+                ...workspace,
+                dependants: nextDependants,
+                dependentsCount: String(nextSummary.totalPeople),
+            };
             writeWorkspace(next);
             setWorkspace(next);
-            setEditingDependents(false);
-            setSuccess('Dependants and household notes updated.');
+            closeDependantForm();
+            setSuccess(editingDependantIndex >= 0 ? 'Dependant updated successfully.' : 'Dependant added successfully.');
         } catch (err) {
-            setError(err.message || 'We could not save your dependants details right now.');
+            setError(err.message || 'We could not save your dependant details right now.');
         } finally {
             setSubmitting((s) => ({ ...s, dependents: false }));
         }
+    };
+    const removeDependant = (index) => {
+        const nextDependants = dependants.filter((_, dependantIndex) => dependantIndex !== index);
+        const nextSummary = buildDependantsSummary(nextDependants);
+        const next = {
+            ...workspace,
+            dependants: nextDependants,
+            dependentsCount: String(nextSummary.totalPeople),
+        };
+        writeWorkspace(next);
+        setWorkspace(next);
+        if (editingDependantIndex === index) {
+            closeDependantForm();
+        }
+        setSuccess('Dependant removed.');
     };
 
     const savePrefs = async (e) => {
@@ -1074,7 +1371,69 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
             {activeTab === 'income' && <section className="space-y-5"><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-sm text-slate-600">Capture your income baseline, manage current sources, and keep your planning inputs fresh.</p></div><div className="flex flex-wrap gap-3"><SecondaryButton type="button" onClick={() => setShowQuickIncome(true)}>Quick Add</SecondaryButton><PrimaryButton type="button" onClick={() => { setSelectedIncome(null); setShowIncomeForm(true); }}>Add Income</PrimaryButton></div></div></article><ProfileIncomeOverview incomes={incomes} totalIncome={incomeValue} recurringIncome={summary?.monthly_recurring_income} currentMonth={currentMonth} summary={summary} user={user} prefsForm={prefsForm} onAddIncome={() => { setSelectedIncome(null); setShowIncomeForm(true); }} onEditBaseline={() => setEditingBaseline(true)} onOpenBudget={() => onSelectSection?.('budget')} onEditIncome={(income) => { setSelectedIncome(income || null); setShowIncomeForm(true); }} /><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div><p className="text-lg font-bold text-slate-950">Recent income activity</p><p className="mt-1 text-sm text-slate-600">Returning users can adjust, tidy, or add new income without leaving the profile workspace.</p></div><div className="mt-5"><IncomeList incomes={incomes.slice(0, 6)} loading={incomeLoading} onEdit={(income) => { setSelectedIncome(income); setShowIncomeForm(true); }} onDelete={deleteIncome} currency={summary?.currency || 'KES'} /></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
 
-            {activeTab === 'dependents' && <section className="space-y-5"><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5"><DependantsSummaryCard value={dependantCount} label="Total Dependants" /><DependantsSummaryCard value={spouseCount} label="Spouse / Partner" /><DependantsSummaryCard value={childrenCount} label="Children" /><DependantsSummaryCard value={otherDependantsCount} label="Other Dependants" /><DependantsSummaryCard value={dependantCount > 0 ? 'Ready' : 'Update'} label="Planning Status" accent={dependantCount > 0 ? 'text-[#166a55]' : 'text-[#df8a11]'} /></div><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><Users size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">Family Members</p><span className="rounded-full bg-[#fff6e7] px-3 py-1 text-xs font-semibold text-[#9a6200]">Optional</span></div>{editingDependents ? <form onSubmit={saveDependents} className="mt-5 space-y-4"><Input label="Number of dependants" name="dependentsCount" type="number" value={dependentsForm.dependentsCount} onChange={(e) => setDependentsForm((c) => ({ ...c, dependentsCount: e.target.value }))} placeholder="0" /><TextArea label="Family notes" name="familyNotes" value={dependentsForm.familyNotes} onChange={(e) => setDependentsForm((c) => ({ ...c, familyNotes: e.target.value }))} rows={5} /><div className="flex flex-wrap gap-3"><PrimaryButton type="submit" disabled={submitting.dependents}>{submitting.dependents ? 'Saving...' : 'Save Dependants'}</PrimaryButton><SecondaryButton type="button" onClick={() => setEditingDependents(false)}>Cancel</SecondaryButton></div></form> : <><div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{familyMembers.map((member) => <DependantMemberCard key={`${member.name}-${member.role}`} {...member} />)}<AddDependantCard onClick={() => setEditingDependents(true)} /></div><div className="mt-4 rounded-[1.1rem] border-l-4 border-[#1f9c72] bg-[#edf8f3] px-5 py-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">Why this matters:</span> {dependantCount > 0 ? `Your ${dependantCount} dependants shape your protection cover, emergency fund target, and long-term planning.` : 'Add your household details so we can personalise protection, savings, and retirement planning for you.'} <button type="button" onClick={() => onSelectSection?.('protection')} className="font-semibold text-[#166a55]">View Protection Planner</button></div><button type="button" onClick={() => setEditingDependents(true)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[0.95rem] border border-emerald-200 bg-[#eef8f4] px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#e6f4ee]"><Pencil size={15} className="text-amber-600" />Edit Dependants & Notes</button></>}</article><article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 text-slate-950"><div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]"><LinkIcon size={18} /></div><p className="text-[1.4rem] font-bold tracking-tight">How Your Family Profile Shapes Your Planning</p></div><div className="mt-5 grid gap-4 xl:grid-cols-3"><PlanningImpactCard icon={ShieldCheck} title="Protection Planner" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended life cover starts around ${fmtKES(estimatedProtectionCover)}.` : 'Add dependants to estimate the right cover for your household.'} badge={dependantCount > 0 ? `Cover target: ${fmtKES(estimatedProtectionCover)}` : 'Awaiting dependant details'} badgeTone={dependantCount > 0 ? 'bg-[#ffe8e8] text-[#d94d4d]' : 'bg-[#eef8f4] text-[#166a55]'} cta="View Planner" onClick={() => onSelectSection?.('protection')} /><PlanningImpactCard icon={Wallet} title="Retirement Planner" body={dependantCount > 0 ? `Supporting ${dependantCount} people in retirement means your income plan needs a stronger buffer and clearer milestones.` : 'Household details help shape a more realistic retirement target.'} badge={dependantCount > 0 ? 'Family target in focus' : 'Add dependants first'} badgeTone="bg-[#fff6e7] text-[#9a6200]" cta="View Planner" onClick={() => onSelectSection?.('retirement')} /><PlanningImpactCard icon={BarChart3} title="Emergency Fund Target" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended emergency fund is about ${fmtKES(estimatedEmergencyFund)}.` : 'Your emergency fund target becomes clearer once household size is added.'} badge={goalCount > 0 ? 'Goal set in profile' : 'Update goal'} badgeTone="bg-[#e7f6f1] text-[#166a55]" cta="Update Goal" onClick={() => setActiveTab('goals')} /></div></article><ProfileEcosystemSection ecosystemCards={ecosystemCards} /></section>}
+            {activeTab === 'dependents' && (
+                <section className="space-y-5">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <DependantsSummaryCard value={dependantCount} label="Total Dependants" />
+                        <DependantsSummaryCard value={spouseCount} label="Spouse / Partner" />
+                        <DependantsSummaryCard value={childrenCount} label="Children" />
+                        <DependantsSummaryCard value={otherDependantsCount} label="Other Dependants" />
+                    </div>
+
+                    <article className="space-y-5">
+                        <DependantsSectionHeader
+                            summaryLabel={dependants.length > 0 ? `Supporting ${dependantCount} ${dependantCount === 1 ? 'person' : 'people'} · ${formatKESValue(Math.round(totalDependantsSupport), 'KES 0')}/mo total` : 'No dependants added yet'}
+                            onAdd={openNewDependantForm}
+                            showAddButton={dependants.length > 0}
+                        />
+
+                        {editingDependents && (
+                            <DependantsFormPanel
+                                form={dependantsForm}
+                                onChange={handleDependantFieldChange}
+                                onSave={saveDependents}
+                                onCancel={closeDependantForm}
+                                isSaving={submitting.dependents}
+                                isEditing={editingDependantIndex >= 0}
+                            />
+                        )}
+
+                        {dependants.length > 0 ? (
+                            <div className="space-y-4">
+                                {dependants.map((dependant, index) => (
+                                    <DependantsEntryCard
+                                        key={`${dependant.relation}-${index}-${dependant.updatedAt || 'saved'}`}
+                                        dependant={dependant}
+                                        totalMonthly={totalDependantsSupport}
+                                        onEdit={() => openEditDependantForm(index)}
+                                        onDelete={() => removeDependant(index)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <DependantsEmptyState />
+                        )}
+
+                        {dependants.length > 0 && <DependantsImpactStrip />}
+                    </article>
+
+                    <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        <div className="flex items-center gap-3 text-slate-950">
+                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]">
+                                <LinkIcon size={18} />
+                            </div>
+                            <p className="text-[1.4rem] font-bold tracking-tight">How Your Family Profile Shapes Your Planning</p>
+                        </div>
+                        <div className="mt-5 grid gap-4 xl:grid-cols-3">
+                            <PlanningImpactCard icon={ShieldCheck} title="Protection Planner" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended life cover starts around ${fmtKES(estimatedProtectionCover)}.` : 'Add dependants to estimate the right cover for your household.'} badge={dependantCount > 0 ? `Cover target: ${fmtKES(estimatedProtectionCover)}` : 'Awaiting dependant details'} badgeTone={dependantCount > 0 ? 'bg-[#ffe8e8] text-[#d94d4d]' : 'bg-[#eef8f4] text-[#166a55]'} cta="View Planner" onClick={() => onSelectSection?.('protection')} />
+                            <PlanningImpactCard icon={Wallet} title="Retirement Planner" body={dependantCount > 0 ? `Supporting ${dependantCount} people in retirement means your income plan needs a stronger buffer and clearer milestones.` : 'Household details help shape a more realistic retirement target.'} badge={dependantCount > 0 ? 'Family target in focus' : 'Add dependants first'} badgeTone="bg-[#fff6e7] text-[#9a6200]" cta="View Planner" onClick={() => onSelectSection?.('retirement')} />
+                            <PlanningImpactCard icon={BarChart3} title="Emergency Fund Target" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended emergency fund is about ${fmtKES(estimatedEmergencyFund)}.` : 'Your emergency fund target becomes clearer once household size is added.'} badge={goalCount > 0 ? 'Goal set in profile' : 'Update goal'} badgeTone="bg-[#e7f6f1] text-[#166a55]" cta="Update Goal" onClick={() => setActiveTab('goals')} />
+                        </div>
+                    </article>
+
+                    <ProfileEcosystemSection ecosystemCards={ecosystemCards} />
+                </section>
+            )}
 
             {goalModalOpen && <ModalShell title={`${selectedGoalMeta.label} Goal`} icon={Target} onClose={() => setGoalModalOpen(false)}><form onSubmit={saveGoalModal} className="space-y-4 sm:space-y-5"><div><p className="text-sm font-medium text-slate-700">Choose goal slot</p><div className="mt-3 grid gap-2 sm:gap-3 md:grid-cols-3">{GOAL_SLOT_LABELS.map((label, index) => <GoalTypeCard key={label} active={goalForm.slotIndex === index} label={label} helper={selectedGoalMeta.helper} color={selectedGoalMeta.color} onClick={() => { const nextSlot = selectedGoalSlots[index] || EMPTY_GOAL_DETAILS; setGoalForm((current) => ({ ...current, slotIndex: index, name: nextSlot.name || '', targetAmount: nextSlot.targetAmount || '', currentSavings: nextSlot.currentSavings || '', targetDate: nextSlot.targetDate || '', monthlyContribution: nextSlot.monthlyContribution || '', linkedProduct: nextSlot.linkedProduct || '' })); }} />)}</div></div><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Primary Financial Goal" value={goalForm.primary_financial_goal} onChange={(e) => setGoalForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><Input label="Goal Name" value={goalForm.name} onChange={(e) => setGoalForm((current) => ({ ...current, name: e.target.value }))} placeholder="e.g. Emergency Fund, Holiday, Retirement..." /><Input label="Target Amount (KES)" value={goalForm.targetAmount} onChange={(e) => setGoalForm((current) => ({ ...current, targetAmount: e.target.value }))} placeholder="e.g. 100,000" /><Input label="Current Savings (KES)" value={goalForm.currentSavings} onChange={(e) => setGoalForm((current) => ({ ...current, currentSavings: e.target.value }))} placeholder="e.g. 25,000" /><Input label="Target Date" type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm((current) => ({ ...current, targetDate: e.target.value }))} /><Input label="Monthly Contribution (KES)" value={goalForm.monthlyContribution} onChange={(e) => setGoalForm((current) => ({ ...current, monthlyContribution: e.target.value }))} placeholder="e.g. 5,000" /></div><Select label="Link to Product (Optional)" value={goalForm.linkedProduct} onChange={(e) => setGoalForm((current) => ({ ...current, linkedProduct: e.target.value }))}><option value="">-- Select a savings vehicle --</option><option value="MMF">Money Market Fund</option><option value="SACCO">SACCO</option><option value="Savings Account">Savings Account</option><option value="Fixed Deposit">Fixed Deposit</option></Select><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setGoalModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.goal}>{submitting.goal ? 'Saving...' : `Save ${GOAL_SLOT_LABELS[goalForm.slotIndex]}`}</PrimaryButton></div></form></ModalShell>}
 
