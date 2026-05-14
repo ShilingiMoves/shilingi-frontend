@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Target } from 'lucide-react';
 import { createGoal } from '../../../services/budgetApi';
+import NumericInput from '../../common/NumericInput';
 
 const GoalForm = ({ onClose, onSuccess }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,14 +123,11 @@ const GoalForm = ({ onClose, onSuccess }) => {
                             <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Target Amount
                             </label>
-                            <input
-                                type="number"
+                            <NumericInput
                                 name="target_amount"
                                 value={formData.target_amount}
                                 onChange={handleChange}
                                 required
-                                min="0"
-                                step="0.01"
                                 placeholder="0.00"
                                 className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />
@@ -154,13 +152,10 @@ const GoalForm = ({ onClose, onSuccess }) => {
                             <label className="mb-2 block text-sm font-semibold text-[#0c4f43]">
                                 Monthly Contribution (Optional)
                             </label>
-                            <input
-                                type="number"
+                            <NumericInput
                                 name="monthly_contribution"
                                 value={formData.monthly_contribution}
                                 onChange={handleChange}
-                                min="0"
-                                step="0.01"
                                 placeholder="0.00"
                                 className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-[#1a8a72] focus:outline-none focus:ring-2 focus:ring-[#1a8a72]/20"
                             />

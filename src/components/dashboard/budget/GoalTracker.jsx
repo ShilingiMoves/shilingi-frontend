@@ -8,6 +8,7 @@ import { formatCurrency, formatDate, getGoalTypeDisplay } from '../../../utils/b
 import { addGoalContribution, updateGoal, deleteGoal } from '../../../services/budgetApi';
 import GoalForm from './GoalForm';
 import { toast } from 'react-hot-toast';
+import NumericInput from '../../common/NumericInput';
 
 const GoalTracker = ({ goals, goalSummary, onUpdate }) => {
     const [showGoalForm, setShowGoalForm] = useState(false);
@@ -427,13 +428,10 @@ const GoalTracker = ({ goals, goalSummary, onUpdate }) => {
                                             {contributingTo === goal.uuid ? (
                                                 <div className="space-y-3">
                                                     <div className="relative">
-                                                        <input
-                                                            type="number"
+                                                        <NumericInput
                                                             value={contributionAmount}
                                                             onChange={(e) => setContributionAmount(e.target.value)}
                                                             placeholder="0.00"
-                                                            min="0"
-                                                            step="0.01"
                                                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm font-medium text-slate-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                                                             autoFocus
                                                         />

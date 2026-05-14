@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import NumericInput from '../../common/NumericInput';
 import {
     AlertCircle,
     ArrowRight,
@@ -277,12 +278,20 @@ const goalIconForName = (name, fallbackIcon) => {
     return fallbackIcon || Target;
 };
 
-const Input = ({ label, ...props }) => (
-    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-        {label}
-        <input {...props} className="rounded-2xl border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500" />
-    </label>
-);
+const Input = ({ label, ...props }) => {
+    const isNumeric = label.toLowerCase().includes('amount') || label.toLowerCase().includes('savings') || label.toLowerCase().includes('contribution');
+    
+    return (
+        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            {label}
+            {isNumeric && !props.type ? (
+                <NumericInput {...props} className="rounded-2xl border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500" />
+            ) : (
+                <input {...props} className="rounded-2xl border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500" />
+            )}
+        </label>
+    );
+};
 
 const Select = ({ label, children, ...props }) => (
     <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -554,7 +563,7 @@ const DependantsFormPanel = ({ form, onChange, onSave, onCancel, isSaving, isEdi
             </label>
             <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Support Amount (KES)
-                <input value={form.amount} onChange={(event) => onChange('amount', event.target.value)} type="number" min="0" placeholder="e.g. 5,000" className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500" />
+                <NumericInput value={form.amount} onChange={(event) => onChange('amount', event.target.value)} placeholder="e.g. 5,000" className="h-11 rounded-[0.95rem] border border-emerald-100 px-4 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition-colors focus:border-primary-500" />
             </label>
             <label className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Frequency

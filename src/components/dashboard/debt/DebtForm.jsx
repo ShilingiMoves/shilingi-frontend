@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import Button from '../../Button';
+import NumericInput from '../../common/NumericInput';
 
 const emptyForm = {
     name: '',
@@ -306,10 +307,17 @@ const DebtForm = ({ initialValues, onSubmit, onCancel, isSubmitting, variant = '
 const Field = ({ label, className = '', wrapperClassName = '', ...props }) => (
     <label className={`flex flex-col gap-2 text-sm font-medium text-gray-700 ${wrapperClassName}`}>
         {label}
-        <input
-            {...props}
-            className={className || 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500'}
-        />
+        {props.type === 'number' ? (
+            <NumericInput
+                {...props}
+                className={className || 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500'}
+            />
+        ) : (
+            <input
+                {...props}
+                className={className || 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500'}
+            />
+        )}
     </label>
 );
 

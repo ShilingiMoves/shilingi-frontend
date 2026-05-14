@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import NumericInput from '../../common/NumericInput';
 import {
     Bot,
     BookOpen,
@@ -860,7 +861,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Monthly income (KES)">
-                            <input aria-label="Monthly income (KES)" className={inputClass} type="number" min={0} value={monthlyIncome} onChange={(event) => setMonthlyIncome(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="Monthly income (KES)" className={inputClass} value={monthlyIncome} onChange={(event) => setMonthlyIncome(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
                             <p className="text-sm font-semibold text-slate-900">50/30/20 split</p>
@@ -874,7 +875,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Loan amount (KES)">
-                            <input aria-label="Loan amount (KES)" className={inputClass} type="number" min={0} value={loanAmount} onChange={(event) => setLoanAmount(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="Loan amount (KES)" className={inputClass} value={loanAmount} onChange={(event) => setLoanAmount(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Annual interest (%)">
                             <input aria-label="Annual interest (%)" className={inputClass} type="number" min={0} step="0.1" value={loanRate} onChange={(event) => setLoanRate(Number(event.target.value || 0))} />
@@ -893,10 +894,10 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Current savings (KES)">
-                            <input className={inputClass} type="number" min={0} value={principal} onChange={(event) => setPrincipal(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={principal} onChange={(event) => setPrincipal(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Monthly contribution (KES)">
-                            <input className={inputClass} type="number" min={0} value={monthlyAdd} onChange={(event) => setMonthlyAdd(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={monthlyAdd} onChange={(event) => setMonthlyAdd(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Annual return (%)">
                             <input className={inputClass} type="number" min={0} step="0.1" value={annualReturn} onChange={(event) => setAnnualReturn(Number(event.target.value || 0))} />
@@ -914,7 +915,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Gross monthly pay (KES)">
-                            <input className={inputClass} type="number" min={0} value={grossMonthlyPay} onChange={(event) => setGrossMonthlyPay(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={grossMonthlyPay} onChange={(event) => setGrossMonthlyPay(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
                             <p className="text-sm font-semibold text-slate-900">Estimated PAYE (monthly)</p>
@@ -927,7 +928,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Amount">
-                            <input aria-label="FX amount" className={inputClass} type="number" min={0} value={fxAmount} onChange={(event) => setFxAmount(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="FX amount" className={inputClass} value={fxAmount} onChange={(event) => setFxAmount(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="From currency">
                             <select aria-label="From currency" className={inputClass} value={fxFrom} onChange={(event) => setFxFrom(event.target.value)}>
@@ -950,7 +951,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Annual expense (KES)">
-                            <input className={inputClass} type="number" min={0} value={yearlyExpense} onChange={(event) => setYearlyExpense(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={yearlyExpense} onChange={(event) => setYearlyExpense(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Safe withdrawal rate (%)">
                             <input className={inputClass} type="number" min={0.5} step="0.1" value={safeRate} onChange={(event) => setSafeRate(Number(event.target.value || 0))} />
@@ -965,13 +966,13 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Total debt balance (KES)">
-                            <input aria-label="Total debt balance (KES)" className={inputClass} type="number" min={0} value={payoffBalance} onChange={(event) => setPayoffBalance(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="Total debt balance (KES)" className={inputClass} value={payoffBalance} onChange={(event) => setPayoffBalance(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Average annual interest (%)">
                             <input aria-label="Average annual interest (%)" className={inputClass} type="number" min={0} step="0.1" value={payoffRate} onChange={(event) => setPayoffRate(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Monthly payment (KES)">
-                            <input aria-label="Monthly payment (KES)" className={inputClass} type="number" min={0} value={payoffMonthly} onChange={(event) => setPayoffMonthly(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="Monthly payment (KES)" className={inputClass} value={payoffMonthly} onChange={(event) => setPayoffMonthly(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
                             <p className="text-sm font-semibold text-slate-900">Debt-free timeline</p>
@@ -989,10 +990,10 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Total assets (KES)">
-                            <input aria-label="Total assets (KES)" className={inputClass} type="number" min={0} value={manualAssets} onChange={(event) => setManualAssets(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="Total assets (KES)" className={inputClass} value={manualAssets} onChange={(event) => setManualAssets(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Total liabilities (KES)">
-                            <input aria-label="Total liabilities (KES)" className={inputClass} type="number" min={0} value={manualLiabilities} onChange={(event) => setManualLiabilities(Number(event.target.value || 0))} />
+                            <NumericInput aria-label="Total liabilities (KES)" className={inputClass} value={manualLiabilities} onChange={(event) => setManualLiabilities(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
                             <p className="text-sm font-semibold text-slate-900">Estimated net worth</p>
@@ -1004,13 +1005,13 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Annual income (KES)">
-                            <input className={inputClass} type="number" min={0} value={annualIncome} onChange={(event) => setAnnualIncome(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={annualIncome} onChange={(event) => setAnnualIncome(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Dependants">
                             <input className={inputClass} type="number" min={0} value={dependants} onChange={(event) => setDependants(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Outstanding debt (KES)">
-                            <input className={inputClass} type="number" min={0} value={debtBalance} onChange={(event) => setDebtBalance(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={debtBalance} onChange={(event) => setDebtBalance(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
                             <p className="text-sm font-semibold text-slate-900">Suggested cover amount</p>
@@ -1022,7 +1023,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Monthly expenses (KES)">
-                            <input className={inputClass} type="number" min={0} value={monthlyExpenses} onChange={(event) => setMonthlyExpenses(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={monthlyExpenses} onChange={(event) => setMonthlyExpenses(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Months to cover">
                             <input className={inputClass} type="number" min={1} max={12} value={monthsCovered} onChange={(event) => setMonthsCovered(Number(event.target.value || 1))} />
@@ -1037,7 +1038,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Investment amount (KES)">
-                            <input className={inputClass} type="number" min={0} value={nseInvestment} onChange={(event) => setNseInvestment(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={nseInvestment} onChange={(event) => setNseInvestment(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Dividend yield (%)">
                             <input className={inputClass} type="number" min={0} step="0.1" value={dividendYield} onChange={(event) => setDividendYield(Number(event.target.value || 0))} />
@@ -1057,13 +1058,13 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
                         <ModalField label="Monthly income (KES)">
-                            <input className={inputClass} type="number" min={0} value={housingIncome} onChange={(event) => setHousingIncome(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={housingIncome} onChange={(event) => setHousingIncome(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Existing monthly debt (KES)">
-                            <input className={inputClass} type="number" min={0} value={housingDebt} onChange={(event) => setHousingDebt(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={housingDebt} onChange={(event) => setHousingDebt(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Available savings / deposit (KES)">
-                            <input className={inputClass} type="number" min={0} value={housingSavings} onChange={(event) => setHousingSavings(Number(event.target.value || 0))} />
+                            <NumericInput className={inputClass} value={housingSavings} onChange={(event) => setHousingSavings(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
                             <p className="text-sm font-semibold text-slate-900">Affordability estimate</p>

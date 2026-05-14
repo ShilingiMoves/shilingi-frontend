@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Zap } from 'lucide-react';
 import { getCategories, quickExpense } from '../../../services/budgetApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
+import NumericInput from '../../common/NumericInput';
 
 const QuickExpenseModal = ({ onClose, onSuccess }) => {
     const [categories, setCategories] = useState([]);
@@ -148,14 +149,11 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
                             Amount
                         </label>
                         <div className="relative">
-                            <input
-                                type="number"
+                            <NumericInput
                                 name="amount"
                                 value={formData.amount}
                                 onChange={handleChange}
                                 required
-                                min="0"
-                                step="0.01"
                                 placeholder="0.00"
                                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                             />

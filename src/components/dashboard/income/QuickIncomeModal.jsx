@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useIncome } from '../../../contexts/IncomeContext';
+import NumericInput from '../../common/NumericInput';
 
 const QuickIncomeModal = ({ isOpen, onClose }) => {
     const { addQuickIncome, categories, fetchIncomes, fetchSummary } = useIncome();
@@ -114,9 +115,7 @@ const QuickIncomeModal = ({ isOpen, onClose }) => {
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                                 KES
                             </span>
-                            <input
-                                type="number"
-                                step="0.01"
+                            <NumericInput
                                 required
                                 value={formData.amount}
                                 onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}

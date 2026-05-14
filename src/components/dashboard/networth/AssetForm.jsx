@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNetWorth } from '../../../contexts/NetWorthContext';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import NumericInput from '../../common/NumericInput';
 
 const AssetForm = ({ asset, onClose, onSuccess }) => {
     const { createAsset, updateAsset, assetCategories, fetchAssets, fetchSummary } = useNetWorth();
@@ -168,9 +169,7 @@ const AssetForm = ({ asset, onClose, onSuccess }) => {
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                                     KES
                                 </span>
-                                <input
-                                    type="number"
-                                    step="0.01"
+                                <NumericInput
                                     required
                                     value={formData.current_value}
                                     onChange={(e) => handleChange('current_value', e.target.value)}
@@ -218,9 +217,7 @@ const AssetForm = ({ asset, onClose, onSuccess }) => {
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                                             KES
                                         </span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
+                                        <NumericInput
                                             value={formData.purchase_value}
                                             onChange={(e) => handleChange('purchase_value', e.target.value)}
                                             className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"

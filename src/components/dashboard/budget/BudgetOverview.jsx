@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import NumericInput from '../../common/NumericInput';
 import {
     AlertTriangle,
     ArrowRight,
@@ -1554,12 +1555,9 @@ const BudgetOverview = ({
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <div>
                                             <label htmlFor="shopping-item-estimate" className="text-sm font-semibold text-slate-700">Budget ({currency})</label>
-                                            <input
+                                            <NumericInput
                                                 id="shopping-item-estimate"
-                                                type="number"
                                                 name="estimate"
-                                                min="0"
-                                                step="0.01"
                                                 value={shoppingItemForm.estimate}
                                                 onChange={handleShoppingItemChange}
                                                 placeholder="e.g. 500"
@@ -1611,10 +1609,7 @@ const BudgetOverview = ({
                                                 </button>
                                             </div>
                                             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
+                                                <NumericInput
                                                     value={item.actual}
                                                     onChange={(event) => updateShoppingItem(item.id, { actual: event.target.value })}
                                                     placeholder="Actual spent"
@@ -1879,20 +1874,16 @@ const BudgetOverview = ({
                                 </div>
                             )}
                             <div>
-                                <label htmlFor="quick-expense-amount" className="text-sm font-semibold text-slate-700">Amount ({currency})</label>
-                                <input
-                                    id="quick-expense-amount"
-                                    type="number"
-                                    name="amount"
-                                    min="0"
-                                    step="0.01"
-                                    value={quickExpenseForm.amount}
-                                    onChange={handleQuickExpenseChange}
-                                    placeholder="e.g. 1,500"
-                                    className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
-                                />
-                            </div>
-                            <div>
+                               <label htmlFor="quick-expense-amount" className="text-sm font-semibold text-slate-700">Amount ({currency})</label>
+                               <NumericInput
+                                   id="quick-expense-amount"
+                                   name="amount"
+                                   value={quickExpenseForm.amount}
+                                   onChange={handleQuickExpenseChange}
+                                   placeholder="e.g. 1,500"
+                                   className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                               />
+                            </div>                            <div>
                                 <label htmlFor="quick-expense-description" className="text-sm font-semibold text-slate-700">Description</label>
                                 <input
                                     id="quick-expense-description"

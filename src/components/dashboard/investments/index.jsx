@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import NumericInput from '../../common/NumericInput';
 import {
     ArrowDownRight,
     ArrowRight,
@@ -754,7 +755,27 @@ const RebalanceModal = ({ allocation, targetAllocation, onChangeTarget, onClose,
         </div>
     );
 };
-const TextField = ({ label, value, onChange, type = 'text', required = false }) => (<label className="block text-sm font-medium text-slate-700">{label}<input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></label>);
+const TextField = ({ label, value, onChange, type = 'text', required = false }) => (
+    <label className="block text-sm font-medium text-slate-700">
+        {label}
+        {type === 'number' ? (
+            <NumericInput
+                required={required}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+            />
+        ) : (
+            <input
+                type={type}
+                required={required}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+            />
+        )}
+    </label>
+);
 const formatDate = (value) => { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
 
 export default InvestmentTracker;

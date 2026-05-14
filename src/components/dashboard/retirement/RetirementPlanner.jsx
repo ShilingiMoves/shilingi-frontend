@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import NumericInput from "../../common/NumericInput";
 import {
   ArrowRight,
   CalendarDays,
@@ -1469,8 +1470,7 @@ const InfoCell = ({ label, value }) => (
 const TextField = ({ label, value, onChange }) => (
   <label className="block text-sm font-medium text-slate-700">
     {label}
-    <input
-      type="number"
+    <NumericInput
       value={value}
       onChange={(event) => onChange(event.target.value)}
       className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
@@ -1480,12 +1480,21 @@ const TextField = ({ label, value, onChange }) => (
 const Field = ({ label, value, onChange, ...props }) => (
   <label className="block text-sm font-medium text-slate-700">
     {label}
-    <input
-      {...props}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-    />
+    {props.type === 'number' ? (
+      <NumericInput
+        {...props}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+      />
+    ) : (
+      <input
+        {...props}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+      />
+    )}
   </label>
 );
 const RetirementAccountCard = ({ asset, deleting, onDelete, onTopUp }) => {

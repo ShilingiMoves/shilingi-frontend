@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Button from '../../Button';
+import NumericInput from '../../common/NumericInput';
 
 const assetEmptyForm = {
     name: '',
@@ -351,14 +352,25 @@ const NetWorthForm = ({
     );
 };
 
-const Field = ({ label, className = '', ...props }) => (
-    <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
-        {label}
-        <input
-            {...props}
-            className={className || 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500'}
-        />
-    </label>
-);
+const Field = ({ label, className = '', ...props }) => {
+    const isNumeric = props.name === 'currentValue' || props.name === 'purchaseValue' || props.name === 'amount';
+    
+    return (
+        <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
+            {label}
+            {isNumeric ? (
+                <NumericInput
+                    {...props}
+                    className={className || 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500'}
+                />
+            ) : (
+                <input
+                    {...props}
+                    className={className || 'rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500'}
+                />
+            )}
+        </label>
+    );
+};
 
 export default NetWorthForm;

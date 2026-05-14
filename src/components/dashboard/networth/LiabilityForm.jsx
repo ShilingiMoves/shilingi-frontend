@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNetWorth } from '../../../contexts/NetWorthContext';
 import { X } from 'lucide-react';
+import NumericInput from '../../common/NumericInput';
 
 const LiabilityForm = ({ liability, onClose, onSuccess }) => {
     const { createLiability, updateLiability, liabilityCategories, fetchLiabilities, fetchSummary } = useNetWorth();
@@ -157,9 +158,7 @@ const LiabilityForm = ({ liability, onClose, onSuccess }) => {
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                                     KES
                                 </span>
-                                <input
-                                    type="number"
-                                    step="0.01"
+                                <NumericInput
                                     required
                                     value={formData.amount}
                                     onChange={(e) => handleChange('amount', e.target.value)}

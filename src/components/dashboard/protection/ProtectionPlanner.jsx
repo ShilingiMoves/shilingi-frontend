@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import NumericInput from '../../common/NumericInput';
 import {
     Activity,
     ArrowRight,
@@ -543,8 +544,36 @@ const ClaimRow = ({ item }) => <div className="flex items-start justify-between 
 const PaymentRow = ({ item }) => <div className={`rounded-xl border px-4 py-3 ${item.tone}`}><div className="flex items-center justify-between gap-3"><div><p className="font-semibold">{item.name} - {item.provider}</p><p className="text-sm opacity-80">{item.note}</p></div><p className="text-xl font-extrabold">{item.amount}</p></div></div>;
 const GuidanceRow = ({ label, value, tone }) => <div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${tone}`}>{value}</span></div></div>;
 const ChecklistRow = ({ text }) => <div className="flex items-start gap-3 rounded-[0.9rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3 text-sm text-slate-700"><span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff3ea] text-[10px] font-extrabold text-[#175f54]">OK</span><span>{text}</span></div>;
-const CalcInput = ({ label, value, onChange }) => <label className="block text-sm font-medium text-slate-700">{label}<input type="number" value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" /></label>;
-const Input = ({ label, value, onChange, ...props }) => <label className="block text-sm font-medium text-slate-700">{label}<input {...props} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm" /></label>;
+const CalcInput = ({ label, value, onChange }) => (
+    <label className="block text-sm font-medium text-slate-700">
+        {label}
+        <NumericInput
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+        />
+    </label>
+);
+const Input = ({ label, value, onChange, ...props }) => (
+    <label className="block text-sm font-medium text-slate-700">
+        {label}
+        {props.type === 'number' ? (
+            <NumericInput
+                {...props}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+            />
+        ) : (
+            <input
+                {...props}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+            />
+        )}
+    </label>
+);
 const EmptyState = ({ text }) => <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-600">{text}</div>;
 
 const PolicyCard = ({ asset, deleting, onDelete, onCompare, recommended }) => {
