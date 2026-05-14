@@ -3,7 +3,7 @@ import { DollarSign, Tag, Calendar, FileText, CreditCard, Building2, X } from 'l
 import { getCategories, createExpense, updateExpense } from '../../../services/budgetApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 
-const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
+const ExpenseForm = ({ initialValues, onSuccess, onCancel, budgets = [] }) => {
     const [categories, setCategories] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loadError, setLoadError] = useState('');
@@ -69,6 +69,23 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel }) => {
         if (!formData.amount || Number(formData.amount) <= 0) {
             setSubmitError('Enter a valid expense amount greater than zero.');
             return;
+        }
+
+        const selectedCategoryName = isEditing
+            ? initialValues?.category_name
+            : categories.find((item) => String(item.value) === String(formData.category))?.name;
+        const matchingBudget = budgets.find((item) => String(item.category_name || '').toLowerCase() === String(selectedCategoryName || '').toLowerCase());
+        const expenseAmount = Number(formData.amount || 0);
+        if (matchingBudget) {
+            const currentSpent = Number(matchingBudget.total_spent || 0);
+            const currentLimit = Number(matchingBudget.amount || 0);
+            const editingCredit = isEditing ? Number(initialValues?.amount || 0) : 0;
+            const remainingAvailable = Math.max(currentLimit - currentSpent + editingCredit, 0);
+
+            if (expenseAmount > remainingAvailable) {
+                setSubmitError(`No. This expense goes over the remaining budget for ${selectedCategoryName}. Remaining available is KES ${remainingAvailable.toLocaleString('en-KE')}.`);
+                return;
+            }
         }
 
         setIsSubmitting(true);

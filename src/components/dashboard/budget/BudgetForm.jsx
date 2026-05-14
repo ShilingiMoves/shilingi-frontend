@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, DollarSign, Tag, TrendingUp, Bell } from 'lucide-react';
 import { getCategories } from '../../../services/budgetApi';
+import { deriveBudgetCategoryType, getBudgetTypeLimit, readBudgetSetup } from '../../../utils/budgetSetup';
 
-const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
+const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingBudgets = [], totalIncome = 0 }) => {
     const [categories, setCategories] = useState([]);
+    const [formError, setFormError] = useState('');
     const [formData, setFormData] = useState({
         category: '',
         amount: '',
@@ -45,6 +47,7 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        setFormError('');
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
@@ -54,9 +57,28 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        const selectedCategory = categories.find((item) => String(item.value) === String(formData.category));
+        const categoryName = selectedCategory?.name || initialValues?.category_name || '';
+        const categoryType = deriveBudgetCategoryType(categoryName);
+        const budgetSetup = readBudgetSetup();
+        const allowedLimit = getBudgetTypeLimit(budgetSetup, totalIncome, categoryType);
+        const currentlyAllocated = existingBudgets
+            .filter((item) => item.uuid !== initialValues?.uuid)
+            .filter((item) => deriveBudgetCategoryType(item.category_name) === categoryType)
+            .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const remainingLimit = Math.max(allowedLimit - currentlyAllocated, 0);
+        const requestedAmount = Number(formData.amount || 0);
+
+        if (budgetSetup?.split && allowedLimit > 0 && requestedAmount > remainingLimit) {
+            setFormError(`No. This ${categoryType.toLowerCase()} item goes over your selected budget type. Remaining available is KES ${remainingLimit.toLocaleString('en-KE')}.`);
+            return;
+        }
+
         onSubmit({
             ...formData,
             category: formData.category || '',
+            categoryName,
+            categoryType,
         });
     };
 
@@ -83,6 +105,12 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting }) => {
                     Set spending limits and track your expenses
                 </p>
             </div>
+
+            {formError && (
+                <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {formError}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Category */}

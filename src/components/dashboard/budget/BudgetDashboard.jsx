@@ -279,6 +279,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                                 setSubmitError('');
                             }}
                             isSubmitting={isSubmitting}
+                            existingBudgets={budgets}
+                            totalIncome={totalIncome}
                         />
 
                         {submitError && (
@@ -302,8 +304,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
 
             {activeTab === 'expenses' && (
                 <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
-                    <ExpenseForm onSuccess={refreshExpenses} />
-                    <ExpenseList expenses={expenses} onUpdate={refreshExpenses} />
+                    <ExpenseForm onSuccess={refreshExpenses} budgets={budgets} />
+                    <ExpenseList expenses={expenses} onUpdate={refreshExpenses} budgets={budgets} />
                 </div>
             )}
 

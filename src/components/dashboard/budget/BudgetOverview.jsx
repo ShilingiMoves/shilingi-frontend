@@ -30,6 +30,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/budgetHelpers';
+import { getBudgetTypeLimit, readBudgetSetup, saveBudgetSetup } from '../../../utils/budgetSetup';
 import { createExpense, getCategories } from '../../../services/budgetApi';
 
 const budgetModels = [
@@ -44,7 +45,7 @@ const tabOptions = [
     { id: 'compare', label: 'Compare Budget Types', icon: Sparkles },
     { id: 'categories', label: 'My Budget Limits', icon: Wallet },
     { id: 'expenses', label: 'My Expense Tracker', icon: Receipt },
-    { id: 'summary', label: 'My Expense Summary', icon: BarChart3 },
+    { id: 'summary', label: 'My Budget Summary', icon: BarChart3 },
 ];
 
 const categoryMeta = (name = '') => {
@@ -188,6 +189,54 @@ const ComparisonBar = ({ label, percent, value, color }) => (
     </div>
 );
 
+const BudgetLimitRowCard = ({ row, currency }) => (
+    <tr className="border-b border-[#edf5f1] last:border-b-0">
+        <td className="py-4 pr-3">
+            <div className="flex items-center gap-3">
+                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] ${row.tint}`}>
+                    <row.icon size={17} />
+                </span>
+                <div>
+                    <p className="font-semibold text-slate-900">{row.category}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{row.helper}</p>
+                </div>
+            </div>
+        </td>
+        <td className="py-4 pr-3">
+            <div>
+                <p className="font-semibold text-[#11814f]">{formatCurrency(row.setLimit, currency)}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{row.percent}% from selected budget type</p>
+            </div>
+        </td>
+        <td className="py-4 pr-3 text-sm text-slate-700">{row.itemLabel}</td>
+        <td className="py-4 font-semibold text-slate-900">{formatCurrency(row.currentAmount, currency)}</td>
+    </tr>
+);
+
+const ExpenseTrackerRowCard = ({ expense, summaryRows, currency }) => {
+    const budgetRow = summaryRows.find((item) => String(item.category_name || '').toLowerCase() === String(expense.category_name || '').toLowerCase());
+    const meta = categoryMeta(expense.category_name);
+
+    return (
+        <tr className="border-b border-[#edf5f1] last:border-b-0">
+            <td className="py-4 pr-3">
+                <div className="flex items-center gap-3">
+                    <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] ${meta.tint}`}>
+                        <meta.icon size={17} />
+                    </span>
+                    <div>
+                        <p className="font-semibold text-slate-900">{expense.category_name || 'Category'}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{meta.type} lane</p>
+                    </div>
+                </div>
+            </td>
+            <td className="py-4 pr-3 font-semibold text-[#11814f]">{formatCurrency(budgetRow?.allocated || 0, budgetRow?.currency || currency)}</td>
+            <td className="py-4 pr-3 text-sm text-slate-700">{expense.description} {expense.payment_method ? `· ${paymentMethodLabel(expense.payment_method)}` : ''}</td>
+            <td className="py-4 font-semibold text-slate-900">{formatCurrency(expense.amount, expense.currency || currency)}</td>
+        </tr>
+    );
+};
+
 const BudgetCategoryCard = ({ item, currency, onNavigate }) => {
     const meta = categoryMeta(item.category_name);
     const status = statusMeta[item.status] || statusMeta.default;
@@ -262,14 +311,18 @@ const BudgetOverview = ({
     onSelectSection,
     onQuickExpenseAdded,
 }) => {
+    const storedBudgetSetup = readBudgetSetup();
     const [activeView, setActiveView] = useState('compare');
-    const [selectedModelId, setSelectedModelId] = useState('custom');
+    const [selectedModelId, setSelectedModelId] = useState(storedBudgetSetup?.id || 'custom');
+    const [hasChosenBudgetType, setHasChosenBudgetType] = useState(Boolean(storedBudgetSetup?.split));
+    const [budgetTypePrompt, setBudgetTypePrompt] = useState('');
+    const [budgetTypeSuccess, setBudgetTypeSuccess] = useState('');
     const [showModelModal, setShowModelModal] = useState(false);
     const [pendingModel, setPendingModel] = useState(null);
     const [showCustomSplitModal, setShowCustomSplitModal] = useState(false);
     const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
     const [customBudgetName, setCustomBudgetName] = useState('');
-    const [customSplit, setCustomSplit] = useState({ needs: 45, wants: 25, savings: 30 });
+    const [customSplit, setCustomSplit] = useState(storedBudgetSetup?.id === 'custom' && storedBudgetSetup?.split ? storedBudgetSetup.split : { needs: 45, wants: 25, savings: 30 });
     const [expenseFilter, setExpenseFilter] = useState('all');
     const [quickCategories, setQuickCategories] = useState([]);
     const [quickExpenseSubmitting, setQuickExpenseSubmitting] = useState(false);
@@ -284,6 +337,8 @@ const BudgetOverview = ({
     const [shoppingError, setShoppingError] = useState('');
     const [loggingShoppingId, setLoggingShoppingId] = useState(null);
     const compareSectionRef = useRef(null);
+    const compareModelsRef = useRef(null);
+    const budgetItemsRef = useRef(null);
     const expensesSectionRef = useRef(null);
     const [quickExpenseForm, setQuickExpenseForm] = useState({
         amount: '',
@@ -359,10 +414,20 @@ const BudgetOverview = ({
     // Jump straight into the compare tab and scroll the models into view so
     // the user can immediately understand the difference before switching.
     const openCompareView = () => {
+        setBudgetTypePrompt('Choose a budget type first so the planner can set your limits automatically.');
         setActiveView('compare');
         if (typeof window !== 'undefined') {
             window.requestAnimationFrame(() => {
                 compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    };
+
+    const openCompareModels = () => {
+        setActiveView('compare');
+        if (typeof window !== 'undefined') {
+            window.requestAnimationFrame(() => {
+                compareModelsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         }
     };
@@ -376,12 +441,26 @@ const BudgetOverview = ({
         }
     };
 
+    const openBudgetItemsView = () => {
+        setActiveView('categories');
+        if (typeof window !== 'undefined') {
+            window.requestAnimationFrame(() => {
+                budgetItemsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    };
+
     const applyBudgetModel = (model) => {
         if (model.id === 'custom') {
             openCustomSplitModal();
             return;
         }
         setSelectedModelId(model.id);
+        setHasChosenBudgetType(true);
+        setBudgetTypePrompt('');
+        setBudgetTypeSuccess(`${model.label} selected. Now add your items under My Budget Limits.`);
+        saveBudgetSetup({ id: model.id, label: model.label, split: model.split });
+        openBudgetItemsView();
     };
 
     const handleCustomSplitChange = (field, value) => {
@@ -410,9 +489,36 @@ const BudgetOverview = ({
         }
 
         setSelectedModelId('custom');
+        setHasChosenBudgetType(true);
+        setBudgetTypePrompt('');
+        setBudgetTypeSuccess('Custom budget selected. Now add your items under My Budget Limits.');
+        saveBudgetSetup({ id: 'custom', label: customBudgetName.trim() || 'Custom Split', split: customSplit });
         setShowCustomSplitModal(false);
         setPendingModel(null);
         setShowModelModal(false);
+        openBudgetItemsView();
+    };
+
+    const handleStartBudgetTypeSelection = () => {
+        openCompareView();
+    };
+
+    const handleOpenBudgetItems = () => {
+        if (!hasChosenBudgetType) {
+            openCompareView();
+            return;
+        }
+
+        openBudgetItemsView();
+    };
+
+    const handleOpenQuickExpense = () => {
+        if (!hasChosenBudgetType) {
+            openCompareView();
+            return;
+        }
+
+        openExpensesView();
     };
 
     const handleQuickExpenseChange = (event) => {
@@ -442,6 +548,16 @@ const BudgetOverview = ({
         if (!quickExpenseForm.category) {
             setQuickExpenseError('Choose a budget category first.');
             return;
+        }
+
+        const selectedCategoryName = quickCategories.find((item) => String(item.value) === String(quickExpenseForm.category))?.name || '';
+        const matchingBudget = summaryRows.find((item) => String(item.category_name || '').toLowerCase() === selectedCategoryName.toLowerCase());
+        if (matchingBudget) {
+            const remainingAvailable = Math.max(toNumber(matchingBudget.allocated) - toNumber(matchingBudget.spent), 0);
+            if (Number(quickExpenseForm.amount || 0) > remainingAvailable) {
+                setQuickExpenseError(`No. This expense goes over the remaining budget for ${matchingBudget.category_name}. Remaining available is KES ${remainingAvailable.toLocaleString('en-KE')}.`);
+                return;
+            }
         }
 
         setQuickExpenseSubmitting(true);
@@ -739,6 +855,74 @@ const BudgetOverview = ({
         const score = Math.abs(model.split.savings - Math.round(savingsRate || model.split.savings)) + Math.abs(model.split.needs - 50);
         return { ...model, needs, wants, savings, annualSavings: savings * 12, score };
     }).sort((a, b) => a.score - b.score);
+    const budgetLimitRows = [
+        {
+            category: 'Needs',
+            helper: 'Housing, food, transport, utilities',
+            percent: selectedModel.split.needs,
+            setLimit: Math.round((trackedIncome * selectedModel.split.needs) / 100),
+            items: summaryRows.filter((item) => item.meta.type === 'Needs'),
+            icon: Home,
+            tint: 'bg-[#eef8f4] text-[#11814f]',
+        },
+        {
+            category: 'Wants',
+            helper: 'Lifestyle, entertainment, flexible spending',
+            percent: selectedModel.split.wants,
+            setLimit: Math.round((trackedIncome * selectedModel.split.wants) / 100),
+            items: summaryRows.filter((item) => item.meta.type === 'Wants'),
+            icon: Sparkles,
+            tint: 'bg-[#fff6e8] text-[#b56a00]',
+        },
+        {
+            category: 'Savings',
+            helper: 'Goals, investments, emergency fund, debt',
+            percent: selectedModel.split.savings,
+            setLimit: Math.round((trackedIncome * selectedModel.split.savings) / 100),
+            items: summaryRows.filter((item) => item.meta.type === 'Savings'),
+            icon: PiggyBank,
+            tint: 'bg-[#eef4ff] text-[#2f74db]',
+        },
+    ].map((row) => {
+        const currentAmount = row.items.reduce((sum, item) => sum + item.allocated, 0);
+        const itemLabel = row.items.length
+            ? row.items.slice(0, 3).map((item) => item.category_name).join(', ')
+            : `${row.category} items`;
+
+        return {
+            ...row,
+            currentAmount,
+            itemLabel: row.items.length > 3 ? `${itemLabel} +${row.items.length - 3} more` : itemLabel,
+        };
+    });
+    const savingsLimitRow = budgetLimitRows.find((row) => row.category === 'Savings');
+    const savingsSetLimit = savingsLimitRow?.setLimit || getBudgetTypeLimit({ split: selectedModel.split }, trackedIncome, 'Savings');
+    const savingsGuidanceCards = [
+        {
+            title: 'Emergency Buffer in MMF',
+            amount: Math.round(savingsSetLimit * 0.4),
+            helper: 'Keep 3-6 months of essentials liquid in a money market fund for fast access and steadier returns than a normal account.',
+            tone: 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]',
+        },
+        {
+            title: 'Short-Term Goals',
+            amount: Math.round(savingsSetLimit * 0.25),
+            helper: 'Use MMFs or a high-yield savings lane for goals coming up in under 12 months.',
+            tone: 'border-[#f0d39a] bg-[#fff9ec] text-[#9a6200]',
+        },
+        {
+            title: 'Treasury Bills',
+            amount: Math.round(savingsSetLimit * 0.2),
+            helper: 'Put part of your savings into T-Bills when you want low-risk parking for planned cash.',
+            tone: 'border-[#c9d7f4] bg-[#f3f7ff] text-[#2f74db]',
+        },
+        {
+            title: 'Long-Term Wealth',
+            amount: Math.max(savingsSetLimit - Math.round(savingsSetLimit * 0.85), 0),
+            helper: 'Channel the final slice into retirement, long-term investments, or disciplined debt reduction.',
+            tone: 'border-[#ddd0ff] bg-[#f7f1ff] text-[#7a57d1]',
+        },
+    ];
 
     const modelVisuals = {
         classic: { icon: Sparkles, shell: 'border-[#bfe2d6] bg-[#f8fcfa]', accent: 'bg-[#11814f]', cta: 'bg-[#11814f] text-white', badge: 'bg-[#e7f6f1] text-[#11814f]', bestFor: 'Balanced lifestyle', note: 'Best for a balanced lifestyle with steady savings.' },
@@ -795,32 +979,30 @@ const BudgetOverview = ({
                         )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2.5 xl:justify-end">
-                        <label className="relative inline-flex h-10 items-center gap-3 rounded-full bg-white px-4 pr-10 text-sm font-semibold text-[#11814f] shadow-sm">
+                        <button type="button" onClick={handleStartBudgetTypeSelection} className="inline-flex h-10 items-center gap-3 rounded-full bg-white px-4 text-sm font-semibold text-[#11814f] shadow-sm transition-colors hover:bg-[#f5fbf8]">
                             <span>Select Budget Type</span>
-                            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#11814f]" />
-                            <select
-                                value={selectedModelId}
-                                onChange={(event) => {
-                                    const nextModel = allBudgetModels.find((model) => model.id === event.target.value);
-                                    if (nextModel) applyBudgetModel(nextModel);
-                                }}
-                                aria-label="Select Budget Type"
-                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                            >
-                                <option value="custom">Custom Split</option>
-                                {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
-                            </select>
-                        </label>
-                        <button type="button" onClick={() => onNavigate('budgets')} className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white">
-                            <Plus size={15} />
-                            Add Category
+                            <ChevronDown size={16} className="text-[#11814f]" />
                         </button>
-                        <button type="button" onClick={() => setShowQuickExpenseModal(true)} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f8b12d] px-4 text-sm font-semibold text-slate-950 shadow-sm">
+                        <button type="button" onClick={handleOpenBudgetItems} className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white">
+                            <Plus size={15} />
+                            Add Item
+                        </button>
+                        <button type="button" onClick={handleOpenQuickExpense} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f8b12d] px-4 text-sm font-semibold text-slate-950 shadow-sm">
                             <Plus size={15} />
                             Quick Add Expense
                         </button>
                     </div>
                 </div>
+                {!hasChosenBudgetType && budgetTypePrompt ? (
+                    <div className="mt-4 inline-flex rounded-[0.95rem] border border-white/18 bg-white/10 px-4 py-3 text-sm text-white/85">
+                        {budgetTypePrompt}
+                    </div>
+                ) : null}
+                {hasChosenBudgetType && budgetTypeSuccess ? (
+                    <div className="mt-4 inline-flex rounded-[0.95rem] border border-white/18 bg-white/12 px-4 py-3 text-sm text-white/90">
+                        {budgetTypeSuccess}
+                    </div>
+                ) : null}
             </section>
 
             {hasBudgetPlan && (
@@ -847,41 +1029,6 @@ const BudgetOverview = ({
                 </section>
             )}
 
-            <section className="rounded-[1rem] border-2 border-[#a8d4c4] bg-white p-4 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-start gap-3.5">
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.8rem] bg-[linear-gradient(135deg,_#11814f_0%,_#f5a623_100%)] text-white shadow-sm">
-                            <Sparkles size={16} />
-                        </div>
-                        <div>
-                            <p className="text-[1.1rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{selectedModel.label}</p>
-                            <p className="mt-1 text-[13px] text-[#3d6158]">{selectedModel.description}. Income: {formatCurrency(trackedIncome, currency)}/mo</p>
-                            <div className="mt-2.5 flex flex-wrap gap-2">
-                                <SplitChip label={`Needs: ${formatCurrency((trackedIncome * selectedModel.split.needs) / 100, currency)} (${selectedModel.split.needs}%)`} shell="bg-[#e7f6f1] text-[#11814f]" />
-                                <SplitChip label={`Wants: ${formatCurrency((trackedIncome * selectedModel.split.wants) / 100, currency)} (${selectedModel.split.wants}%)`} shell="bg-[#fff3d8] text-[#b56a00]" />
-                                <SplitChip label={`Savings: ${formatCurrency((trackedIncome * selectedModel.split.savings) / 100, currency)} (${selectedModel.split.savings}%)`} shell="bg-[#eef4ff] text-[#2f74db]" />
-                            </div>
-                        </div>
-                    </div>
-                    <label className="relative inline-flex h-9 min-w-[13rem] items-center rounded-full border border-[#a8d4c4] bg-[#f8fcfa] px-3.5 pr-10 text-[13px] font-extrabold text-[#11814f] transition-colors hover:bg-[#e8f5f0]">
-                        <span className="truncate">Change Type</span>
-                        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#11814f]" />
-                        <select
-                            value={selectedModelId}
-                            onChange={(event) => {
-                                const nextModel = allBudgetModels.find((model) => model.id === event.target.value);
-                                if (nextModel) applyBudgetModel(nextModel);
-                            }}
-                            aria-label="Change budget type"
-                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        >
-                            <option value="custom">Custom Split</option>
-                            {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
-                        </select>
-                    </label>
-                </div>
-            </section>
-
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <MetricCard title="Budget Allocated" value={formatCurrency(totalBudgeted, currency)} helper={`${summary?.active_budgets_count || activeBudgets.length} active categories`} accent="text-[#11814f]" line="bg-[#11814f]" />
                 <MetricCard title="Spent So Far" value={formatCurrency(totalSpent, currency)} helper={`${Math.round(spendingProgress)}% of budget used`} accent="text-[#d94d4d]" line="bg-[#e24a4a]" />
@@ -905,13 +1052,13 @@ const BudgetOverview = ({
 
             {activeView === 'categories' && (
                 <div className="space-y-4">
-                    <section className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
+                    <section ref={budgetItemsRef} className="grid gap-4 xl:grid-cols-[1.25fr_0.85fr]">
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                             <SectionTitle
                                 icon={BarChart3}
                                 title="My Budget Limits"
                                 action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">
-                                    Manage Limits
+                                    Add Amount
                                 </button>}
                             />
 
@@ -920,38 +1067,18 @@ const BudgetOverview = ({
                                     <thead>
                                         <tr className="border-b border-[#d8ece3] text-left text-[11px] uppercase tracking-[0.24em] text-slate-400">
                                             <th className="py-3 pr-3">Category</th>
-                                            <th className="py-3 pr-3">Type</th>
-                                            <th className="py-3 pr-3">Allocated</th>
-                                            <th className="py-3 pr-3">Spent</th>
-                                            <th className="py-3 pr-3">Left</th>
-                                            <th className="py-3">Status</th>
+                                            <th className="py-3 pr-3">Set Limit</th>
+                                            <th className="py-3 pr-3">Item</th>
+                                            <th className="py-3">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {summaryRows.map((item) => (
-                                            <tr key={`${item.uuid}-summary`} className="border-b border-[#edf5f1] last:border-b-0">
-                                                <td className="py-3 pr-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${item.meta.tint}`}>
-                                                            <item.meta.icon size={16} />
-                                                        </span>
-                                                        <span className="font-semibold text-slate-900">{item.category_name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 pr-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.meta.chip}`}>{item.meta.type}</span></td>
-                                                <td className="py-3 pr-3 text-slate-700">{formatCurrency(item.allocated, item.currency || currency)}</td>
-                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-slate-900'}`}>{formatCurrency(item.spent, item.currency || currency)}</td>
-                                                <td className={`py-3 pr-3 font-semibold ${item.left < 0 ? 'text-[#d94d4d]' : 'text-[#11814f]'}`}>{item.left < 0 ? `-${formatCurrency(Math.abs(item.left), item.currency || currency)}` : formatCurrency(item.left, item.currency || currency)}</td>
-                                                <td className="py-3"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span></td>
-                                            </tr>
-                                        ))}
+                                        {budgetLimitRows.map((row) => <BudgetLimitRowCard key={row.category} row={row} currency={currency} />)}
                                         <tr className="bg-[#f8fcfa]">
                                             <td className="py-4 pr-3 text-base font-bold text-slate-950">Total</td>
-                                            <td />
                                             <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(totalBudgeted, currency)}</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-[#d94d4d]">{formatCurrency(totalSpent, currency)}</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(totalRemaining, currency)}</td>
-                                            <td />
+                                            <td className="py-4 pr-3 text-base font-bold text-slate-600">{summaryRows.length ? `${summaryRows.length} tracked items` : 'Needs and wants ready'}</td>
+                                            <td className="py-4 text-base font-bold text-[#2f74db]">{formatCurrency(budgetLimitRows.reduce((sum, row) => sum + row.currentAmount, 0), currency)}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -959,20 +1086,23 @@ const BudgetOverview = ({
                         </article>
 
                         <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
-                            <SectionTitle icon={TrendingUp} title="Spending Breakdown" subtitle="Where most of your budget is currently going." />
+                            <SectionTitle icon={TrendingUp} title="Use Your Savings Limit Wisely" subtitle="Turn your allocated savings into action with simple next moves." />
 
-                            <div className="mt-4 space-y-4">
-                                {topSpendingCategories.map((item) => (
-                                    <div key={`${item.uuid}-breakdown`} className="rounded-[1rem] border border-[#edf5f1] bg-[#fbfdfc] px-4 py-4">
+                            <div className="rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-4 text-sm leading-6 text-[#3d6158]">
+                                {savingsSetLimit > 0
+                                    ? `Your selected budget type gives you ${formatCurrency(savingsSetLimit, currency)} for savings and investing. A practical approach is to split that money across safety, short-term goals, and longer-term growth.`
+                                    : 'Choose a budget type and add income so we can suggest how to put your savings allocation to work.'}
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                                {savingsGuidanceCards.map((item) => (
+                                    <div key={item.title} className={`rounded-[1rem] border px-4 py-4 ${item.tone}`}>
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <p className="font-semibold text-slate-900">{item.category_name}</p>
-                                                <p className="mt-1 text-sm text-slate-500">{formatCurrency(item.spent, item.currency || currency)} of {formatCurrency(item.allocated, item.currency || currency)}</p>
+                                                <p className="font-semibold">{item.title}</p>
+                                                <p className="mt-1 text-sm leading-6">{item.helper}</p>
                                             </div>
-                                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${(statusMeta[item.status] || statusMeta.default).badge}`}>{(statusMeta[item.status] || statusMeta.default).label}</span>
-                                        </div>
-                                        <div className="mt-3 h-2.5 rounded-full bg-[#edf5f1]">
-                                            <div className="h-2.5 rounded-full" style={{ width: `${Math.min(item.progress, 100)}%`, backgroundColor: item.meta.bar }} />
+                                            <span className="shrink-0 text-sm font-extrabold">{formatCurrency(item.amount, currency)}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -1032,14 +1162,14 @@ const BudgetOverview = ({
                                 icon={Receipt}
                                 title={`My Budget Limits - ${currentMonthLabel}`}
                                 subtitle="See each category, the live spend, and what action to take next."
-                                action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">+ Add Category</button>}
+                                action={<button type="button" onClick={handleOpenBudgetItems} className="text-sm font-extrabold text-[#11814f]">+ Add Item</button>}
                             />
 
                             <div className="mt-5 space-y-3">
                                 {categoryCards.length ? categoryCards.map((item) => (
                                     <BudgetCategoryCard key={item.uuid} item={item} currency={currency} onNavigate={onNavigate} />
                                 )) : (
-                                    <EmptyCard title="No budget categories yet" body="Start by adding a few categories so your planner can show progress, warnings, and spending insights." cta="Add Category" onClick={() => onNavigate('budgets')} />
+                                    <EmptyCard title="No budget items yet" body="Choose a budget type first, then add your items so the planner can show limits, progress, and spending insights." cta="Add Item" onClick={handleOpenBudgetItems} />
                                 )}
                             </div>
                         </article>
@@ -1065,8 +1195,8 @@ const BudgetOverview = ({
                             <article className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
                                 <SectionTitle icon={Zap} title="Next Best Actions" subtitle="The most useful next steps from this budget." />
                                 <div className="mt-4 space-y-3">
-                                    <ActionCard title="Update categories" body="Adjust category limits if your real spending pattern has changed this month." cta="Manage Budgets" onClick={() => onNavigate('budgets')} />
-                                    <ActionCard title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expense" onClick={() => onNavigate('expenses')} />
+                                    <ActionCard title="Update budget items" body="Adjust your budget items if your real spending pattern has changed this month." cta="Manage Items" onClick={handleOpenBudgetItems} />
+                                    <ActionCard title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expense" onClick={handleOpenQuickExpense} />
                                     <ActionCard title="Compare budget models" body="See how switching to another split would change your monthly allocations." cta="Compare Types" onClick={openCompareView} />
                                 </div>
                             </article>
@@ -1136,20 +1266,47 @@ const BudgetOverview = ({
 
             {activeView === 'compare' && (
                 <div ref={compareSectionRef} className="space-y-4">
-                    <section className="rounded-[1rem] border border-[#d0e8df] bg-white p-5 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p className="text-[1.55rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Compare Budget Models</p>
-                            <p className="mt-1 text-sm leading-6 text-[#3d6158]">See how different needs, wants, and savings splits would look on your {formatCurrency(trackedIncome, currency)}/mo income.</p>
-                        </div>
-                        <button type="button" onClick={openCustomSplitModal} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#11814f] px-4 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-[#0f7044]">
-                            <Pencil size={15} />
-                            Custom Split
-                        </button>
+                    <section className="rounded-[1rem] border-2 border-[#a8d4c4] bg-white p-4 shadow-[0_1px_5px_rgba(27,107,90,0.07)]">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="flex items-start gap-3.5">
+                                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[0.8rem] bg-[linear-gradient(135deg,_#11814f_0%,_#f5a623_100%)] text-white shadow-sm">
+                                    <Sparkles size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[1.1rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>Choose your budget</p>
+                                    <p className="mt-1 text-[13px] leading-6 text-[#3d6158]">Please compare the budget types below before you select the one that fits your lifestyle.</p>
+                                    <div className="mt-2.5 flex flex-wrap gap-2">
+                                        <SplitChip label={`Needs: ${formatCurrency((trackedIncome * selectedModel.split.needs) / 100, currency)} (${selectedModel.split.needs}%)`} shell="bg-[#e7f6f1] text-[#11814f]" />
+                                        <SplitChip label={`Wants: ${formatCurrency((trackedIncome * selectedModel.split.wants) / 100, currency)} (${selectedModel.split.wants}%)`} shell="bg-[#fff3d8] text-[#b56a00]" />
+                                        <SplitChip label={`Savings: ${formatCurrency((trackedIncome * selectedModel.split.savings) / 100, currency)} (${selectedModel.split.savings}%)`} shell="bg-[#eef4ff] text-[#2f74db]" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-3 sm:min-w-[15rem]">
+                                <label className="relative inline-flex h-9 w-full items-center rounded-full border border-[#a8d4c4] bg-[#f8fcfa] px-3.5 pr-10 text-[13px] font-extrabold text-[#11814f] transition-colors hover:bg-[#e8f5f0]">
+                                    <span className="truncate">Select Type</span>
+                                    <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#11814f]" />
+                                    <select
+                                        value={selectedModelId}
+                                        onChange={(event) => {
+                                            const nextModel = allBudgetModels.find((model) => model.id === event.target.value);
+                                            if (nextModel) applyBudgetModel(nextModel);
+                                        }}
+                                        aria-label="Select budget type"
+                                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                    >
+                                        <option value="custom">Choose your budget</option>
+                                        {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
+                                    </select>
+                                </label>
+                                <button type="button" onClick={openCompareModels} className="inline-flex items-center justify-center rounded-full border border-[#bfe2d6] bg-[#eef8f4] px-4 py-2.5 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">
+                                    Compare Budget Models Below
+                                </button>
+                            </div>
                         </div>
                     </section>
 
-                    <section className="grid gap-4 xl:grid-cols-3">
+                    <section ref={compareModelsRef} className="grid gap-4 xl:grid-cols-3">
                         {compareCards.filter((item) => ['custom', 'classic', 'aggressive'].includes(item.id)).map((item) => {
                             const visual = modelVisuals[item.id];
                             const Icon = visual.icon;

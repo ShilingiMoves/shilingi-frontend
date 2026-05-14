@@ -4,7 +4,7 @@ import { formatCurrency, formatDateShort } from '../../../utils/budgetHelpers';
 import { deleteExpense } from '../../../services/budgetApi';
 import ExpenseForm from './ExpenseForm';
 
-const ExpenseList = ({ expenses, onUpdate, compact = false }) => {
+const ExpenseList = ({ expenses, onUpdate, compact = false, budgets = [] }) => {
     const [activeMenu, setActiveMenu] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const [editingExpense, setEditingExpense] = useState(null);
@@ -163,6 +163,7 @@ const ExpenseList = ({ expenses, onUpdate, compact = false }) => {
                                 if (onUpdate) onUpdate();
                             }}
                             onCancel={() => setEditingExpense(null)}
+                            budgets={budgets}
                         />
                     </div>
                 </div>
