@@ -1447,7 +1447,7 @@ const BudgetOverview = ({
                             <SectionTitle
                                 icon={Receipt}
                                 title={`My Expense Tracker - ${currentMonthLabel}`}
-                            action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">+ Add</button>}
+                                action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">+ Add</button>}
                             />
 
                             <div className="mt-4 flex flex-wrap gap-2">
@@ -1874,15 +1874,15 @@ const BudgetOverview = ({
                                 </div>
                             )}
                             <div>
-                               <label htmlFor="quick-expense-amount" className="text-sm font-semibold text-slate-700">Amount ({currency})</label>
-                               <NumericInput
-                                   id="quick-expense-amount"
-                                   name="amount"
-                                   value={quickExpenseForm.amount}
-                                   onChange={handleQuickExpenseChange}
-                                   placeholder="e.g. 1,500"
-                                   className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
-                               />
+                                <label htmlFor="quick-expense-amount" className="text-sm font-semibold text-slate-700">Amount ({currency})</label>
+                                <NumericInput
+                                    id="quick-expense-amount"
+                                    name="amount"
+                                    value={quickExpenseForm.amount}
+                                    onChange={handleQuickExpenseChange}
+                                    placeholder="e.g. 1,500"
+                                    className="mt-2 w-full rounded-[0.8rem] border border-[#d8ece3] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#11814f] focus:ring-4 focus:ring-[#11814f]/10"
+                                />
                             </div>                            <div>
                                 <label htmlFor="quick-expense-description" className="text-sm font-semibold text-slate-700">Description</label>
                                 <input

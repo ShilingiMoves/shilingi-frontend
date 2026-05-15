@@ -26,7 +26,7 @@ import { getDebts } from '../../../services/debtApi';
 import { getNetWorthSummary } from '../../../services/networthApi';
 import { getHealthScore, getHealthScoreBreakdown } from '../../../services/financialHealthApi';
 import { compareModules } from '../explore/ComparisonHubPanel';
-import { DASHBOARD_DATA_KEY } from '../../../utils/dashboardDataState';
+import { DASHBOARD_DATA_KEY, markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 import {
     getDashboardDisplayName,
@@ -80,6 +80,7 @@ const calendarTypeStyles = {
     },
 };
 const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
+const DASHBOARD_STREAK_KEY_PREFIX = 'shilingi_dashboard_streak';
 const toNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const fmtKES = (v) => `KES ${Math.round(toNum(v)).toLocaleString('en-KE')}`;
 const fmtSigned = (v) => `${toNum(v) >= 0 ? '+' : '-'}KES ${Math.round(Math.abs(toNum(v))).toLocaleString('en-KE')}`;
@@ -95,6 +96,48 @@ const findHealthComponentScore = (components, keywords, fallback = 0) => {
 };
 const getDate = (i) => i?.date || i?.created_at || i?.updated_at || '';
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const formatStreakDate = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+const getStreakStorageKey = (user = {}) => {
+    const identifier = user?.uuid || user?.id || user?.email || user?.profile?.user_id || 'guest';
+    return `${DASHBOARD_STREAK_KEY_PREFIX}_${identifier}`;
+};
+const readDashboardStreak = (user = {}) => {
+    if (typeof window === 'undefined') return { count: 0, lastActiveDate: '' };
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(getStreakStorageKey(user)) || '{}');
+        return {
+            count: clamp(Number(parsed.count || 0), 0, 3650),
+            lastActiveDate: parsed.lastActiveDate || '',
+        };
+    } catch {
+        return { count: 0, lastActiveDate: '' };
+    }
+};
+const updateDashboardStreak = (user = {}, referenceDate = new Date()) => {
+    if (typeof window === 'undefined') return { count: 0, lastActiveDate: '' };
+    const today = formatStreakDate(referenceDate);
+    const previous = readDashboardStreak(user);
+    if (previous.lastActiveDate === today) return previous;
+
+    const yesterday = new Date(referenceDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const next = {
+        count: previous.lastActiveDate === formatStreakDate(yesterday) ? previous.count + 1 : 1,
+        lastActiveDate: today,
+    };
+
+    try {
+        window.localStorage.setItem(getStreakStorageKey(user), JSON.stringify(next));
+    } catch (error) {
+        console.warn('Could not persist dashboard streak:', error);
+    }
+    return next;
+};
 const parseDateValue = (value) => {
     if (!value) return null;
     const date = new Date(value);
@@ -544,6 +587,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         raw: { incomes: [], budgets: [], expenses: [], goals: [], investments: [], debts: [] },
     });
     const [healthSnapshot, setHealthSnapshot] = useState({ score: 0, statusDisplay: 'Data pending', components: [] });
+    const [dashboardStreak, setDashboardStreak] = useState(() => readDashboardStreak(user));
     const [selectedCalendarFilter, setSelectedCalendarFilter] = useState('all');
     const [calendarModalOpen, setCalendarModalOpen] = useState(false);
     const [customCalendarEvents, setCustomCalendarEvents] = useState(readCustomCalendarEvents);
@@ -645,11 +689,16 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 };
             });
             const stepFlags = [income > 0, budget.length > 0, spending.length > 0, tx.length > 0, invRows.length > 0, goalRows.length > 0, Math.abs(netWorth) > 0];
+            const hasLiveData = stepFlags.some(Boolean);
             const completion = Math.round((stepFlags.filter(Boolean).length / stepFlags.length) * 100);
             if (!mounted) return;
+            if (hasLiveData) {
+                markDashboardDataExists();
+                setDashboardStreak(updateDashboardStreak(user, new Date()));
+            }
             setLive({
                 loading: false,
-                hasAnyData: stepFlags.some(Boolean),
+                hasAnyData: hasLiveData,
                 netWorth,
                 income,
                 spent,
@@ -671,9 +720,9 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 },
             });
             setHealthSnapshot({
-                score: Number(healthScore?.overall_score ?? 0),
-                statusDisplay: healthScore?.status_display || 'Data pending',
-                components: Array.isArray(healthBreakdown?.components) ? healthBreakdown.components : [],
+                score: hasLiveData ? Number(healthScore?.overall_score ?? 0) : 0,
+                statusDisplay: hasLiveData ? (healthScore?.status_display || 'Score ready') : 'No data yet',
+                components: hasLiveData && Array.isArray(healthBreakdown?.components) ? healthBreakdown.components : [],
             });
         })();
         return () => { mounted = false; };
@@ -681,12 +730,13 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
 
     const hasData = live.hasAnyData;
     const shouldShowNewUserHero = newUser && !hasData && !hasIncomeData;
-    const currentScore = Math.max(0, Math.min(100, Number(healthSnapshot.score || 0)));
-    const streakDays = hasData ? Math.max(1, Math.min(30, (live.tx?.length || 0) + (live.goals?.length || 0) + (live.inv?.length || 0))) : 0;
-    const savingsRateScore = findHealthComponentScore(healthSnapshot.components, ['saving', 'savings'], Math.min(100, Math.max(0, Math.round((live.savings / Math.max(live.income || 1, 1)) * 100))));
-    const debtRatioScore = findHealthComponentScore(healthSnapshot.components, ['debt', 'liabilit'], Math.min(100, Math.max(0, Math.round((Math.abs(live.breakdown.liabilities) / Math.max(live.netWorth || 1, 1)) * 100))));
-    const budgetScore = findHealthComponentScore(healthSnapshot.components, ['budget', 'spending'], Math.min(100, hasData ? live.completion : 0));
-    const investmentScore = findHealthComponentScore(healthSnapshot.components, ['invest', 'net worth', 'wealth'], Math.min(100, Math.round((live.breakdown.investments / Math.max(live.netWorth || 1, 1)) * 100)));
+    const healthComponents = hasData ? healthSnapshot.components : [];
+    const currentScore = hasData ? clamp(Number(healthSnapshot.score || 0), 0, 100) : 0;
+    const streakDays = hasData ? clamp(Number(dashboardStreak.count || 0), 0, 3650) : 0;
+    const savingsRateScore = hasData ? findHealthComponentScore(healthComponents, ['saving', 'savings'], Math.min(100, Math.max(0, Math.round((live.savings / Math.max(live.income || 1, 1)) * 100)))) : 0;
+    const debtRatioScore = hasData ? findHealthComponentScore(healthComponents, ['debt', 'liabilit'], Math.min(100, Math.max(0, Math.round((Math.abs(live.breakdown.liabilities) / Math.max(live.netWorth || 1, 1)) * 100)))) : 0;
+    const budgetScore = hasData ? findHealthComponentScore(healthComponents, ['budget', 'spending'], Math.min(100, live.completion)) : 0;
+    const investmentScore = hasData ? findHealthComponentScore(healthComponents, ['invest', 'net worth', 'wealth'], Math.min(100, Math.round((live.breakdown.investments / Math.max(live.netWorth || 1, 1)) * 100))) : 0;
     const ctaButtons = useMemo(() => {
         if (shouldShowNewUserHero) return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'plan', label: 'Continue planning', target: 'budget', primary: false }];
         return [{ id: 'profile', label: 'Complete profile', target: 'user', primary: true }, { id: 'plan', label: 'Continue planning', target: 'budget', primary: false }];
@@ -815,6 +865,10 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
             window.removeEventListener('storage', handleStorage);
             window.removeEventListener('focus', syncDisplayName);
         };
+    }, [user]);
+
+    useEffect(() => {
+        setDashboardStreak(readDashboardStreak(user));
     }, [user]);
 
     const handleCalendarSubmit = (event) => {

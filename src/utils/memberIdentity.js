@@ -61,6 +61,16 @@ export const getMemberNumber = (user = {}) => {
 export const getMemberLabel = (user = {}) => `Member Number ${getMemberNumber(user)}`;
 
 export const getMemberInitials = (user = {}) => {
+    const preferredName = getStoredPreferredName().trim();
+    if (preferredName) {
+        const nameParts = preferredName.split(/\s+/).filter(Boolean);
+        const initials = nameParts.length > 1
+            ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
+            : preferredName.charAt(0);
+
+        return initials.toUpperCase();
+    }
+
     const firstInitial = String(user?.first_name || '').trim().charAt(0);
     const lastInitial = String(user?.last_name || '').trim().charAt(0);
     const initials = `${firstInitial}${lastInitial}`.trim();

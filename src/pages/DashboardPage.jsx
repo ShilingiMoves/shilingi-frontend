@@ -20,7 +20,9 @@ import incomeService from '../services/incomeService';
 import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
 import {
     clearQueuedPreferredNamePrompt,
+    getStoredPreferredName,
     readQueuedPreferredNamePrompt,
+    setStoredPreferredName,
 } from '../utils/memberIdentity';
 
 const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
@@ -407,49 +409,73 @@ const DashboardPage = () => {
     );
 };
 
-const PreferredNamePrompt = ({ reason, onClose, onOpenProfile }) => (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/38 px-4 py-6 backdrop-blur-[2px]">
-        <section className="w-full max-w-md rounded-[1.4rem] border border-emerald-100 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.22)] sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-primary-700">
-                    <Users size={18} />
+const PreferredNamePrompt = ({ reason, onClose, onOpenProfile }) => {
+    const [preferredName, setPreferredName] = useState(() => getStoredPreferredName());
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        const nextPreferredName = preferredName.trim();
+        if (!nextPreferredName) return;
+        setStoredPreferredName(nextPreferredName);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/38 px-4 py-6 backdrop-blur-[2px]">
+            <section className="w-full max-w-md rounded-[1.4rem] border border-emerald-100 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.22)] sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef8f4] text-primary-700">
+                        <Users size={18} />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        aria-label="Close preferred name reminder"
+                    >
+                        <X size={16} />
+                    </button>
                 </div>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
-                    aria-label="Close preferred name reminder"
-                >
-                    <X size={16} />
-                </button>
-            </div>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">
-                {reason === 'signup' ? 'Finish profile setup' : 'Profile reminder'}
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">Add the name you prefer to be addressed by.</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-                For privacy, your dashboard will keep showing your member number instead of your personal name. Your preferred name stays in your profile workspace so you can edit it any time.
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                    type="button"
-                    onClick={onOpenProfile}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
-                >
-                    Add in Profile
-                    <ArrowRight size={15} />
-                </button>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="inline-flex items-center justify-center rounded-[1rem] border border-emerald-100 bg-[#f6fbf8] px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-[#eef8f4]"
-                >
-                    Later
-                </button>
-            </div>
-        </section>
-    </div>
-);
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">
+                    {reason === 'signup' ? 'Finish profile setup' : 'Profile reminder'}
+                </p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">What should we call you?</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Add your preferred name now so your dashboard can greet you naturally while your account stays tied to your member number.
+                </p>
+                <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                    <label className="block text-sm font-medium text-slate-700">
+                        Preferred name
+                        <input
+                            value={preferredName}
+                            onChange={(event) => setPreferredName(event.target.value)}
+                            placeholder="e.g. Myra"
+                            autoFocus
+                            className="mt-2 w-full rounded-[1rem] border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
+                        />
+                    </label>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <button
+                            type="submit"
+                            disabled={!preferredName.trim()}
+                            className="inline-flex flex-1 items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Save name
+                            <ArrowRight size={15} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onOpenProfile}
+                            className="inline-flex items-center justify-center rounded-[1rem] border border-emerald-100 bg-[#f6fbf8] px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-[#eef8f4]"
+                        >
+                            Profile
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    );
+};
 
 const HighlightsGrid = ({ items }) => (
     <section className="grid gap-4 md:grid-cols-3">
