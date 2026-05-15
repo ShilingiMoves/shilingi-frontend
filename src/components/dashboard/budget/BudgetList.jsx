@@ -1,6 +1,37 @@
 import React, { useState } from 'react';
-import { Trash2, Edit2, MoreVertical, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Edit2, MoreVertical, PiggyBank, ShoppingBasket, Trash2, TrendingUp, Wallet } from 'lucide-react';
 import { formatCurrency } from '../../../utils/budgetHelpers';
+import { deriveBudgetCategoryType } from '../../../utils/budgetSetup';
+
+const laneConfig = {
+    Needs: {
+        icon: Wallet,
+        label: 'Needs',
+        shell: 'border-emerald-200 bg-[#f4fbf8]',
+        accent: 'bg-primary-600',
+        chip: 'bg-emerald-100 text-emerald-800',
+        text: 'text-primary-700',
+        bar: 'bg-primary-600',
+    },
+    Wants: {
+        icon: ShoppingBasket,
+        label: 'Wants',
+        shell: 'border-amber-200 bg-[#fff8ea]',
+        accent: 'bg-amber-500',
+        chip: 'bg-amber-100 text-amber-800',
+        text: 'text-amber-700',
+        bar: 'bg-amber-500',
+    },
+    Savings: {
+        icon: PiggyBank,
+        label: 'Savings',
+        shell: 'border-blue-200 bg-[#f3f7ff]',
+        accent: 'bg-blue-600',
+        chip: 'bg-blue-100 text-blue-800',
+        text: 'text-blue-700',
+        bar: 'bg-blue-600',
+    },
+};
 
 const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) => {
     const [activeMenu, setActiveMenu] = useState(null);
@@ -9,39 +40,31 @@ const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) 
         switch (status) {
             case 'ON_TRACK':
                 return {
-                    color: 'primary',
                     icon: CheckCircle2,
                     label: 'On Track',
-                    bgClass: 'bg-primary-50',
-                    borderClass: 'border-primary-200',
                     textClass: 'text-primary-700',
+                    badgeClass: 'bg-emerald-100 text-emerald-800',
                 };
             case 'WARNING':
                 return {
-                    color: 'amber',
                     icon: AlertTriangle,
                     label: 'Warning',
-                    bgClass: 'bg-amber-50',
-                    borderClass: 'border-amber-200',
                     textClass: 'text-amber-700',
+                    badgeClass: 'bg-amber-100 text-amber-800',
                 };
             case 'OVER_BUDGET':
                 return {
-                    color: 'rose',
                     icon: AlertTriangle,
                     label: 'Over Budget',
-                    bgClass: 'bg-rose-50',
-                    borderClass: 'border-rose-200',
                     textClass: 'text-rose-700',
+                    badgeClass: 'bg-rose-100 text-rose-800',
                 };
             default:
                 return {
-                    color: 'slate',
                     icon: CheckCircle2,
                     label: 'Active',
-                    bgClass: 'bg-slate-50',
-                    borderClass: 'border-slate-200',
                     textClass: 'text-slate-700',
+                    badgeClass: 'bg-slate-100 text-slate-700',
                 };
         }
     };
@@ -67,23 +90,33 @@ const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) 
             {budgets.map((budget) => {
                 const statusConfig = getStatusConfig(budget.status);
                 const StatusIcon = statusConfig.icon;
+                const lane = laneConfig[deriveBudgetCategoryType(budget.category_name)] || laneConfig.Needs;
+                const LaneIcon = lane.icon;
                 const isDeleting = deletingId === budget.uuid;
+                const spentPercent = Number(budget.spent_percentage || 0);
 
                 return (
                     <div
                         key={budget.uuid}
-                        className={`group relative overflow-hidden rounded-[1.75rem] border ${statusConfig.borderClass} ${statusConfig.bgClass} p-6 shadow-sm transition-all hover:shadow-md ${
+                        className={`group relative overflow-hidden rounded-[1.2rem] border ${lane.shell} p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${
                             isDeleting ? 'opacity-50' : ''
                         } ${compact ? 'p-4' : ''}`}
                     >
-                        {/* Header - NO ICON */}
-                        <div className="mb-4 flex items-start justify-between">
-                            <div className="flex-1">
-                                <h4 className="text-lg font-bold text-slate-900">{budget.category_name}</h4>
-                                <p className="mt-0.5 text-xs font-medium text-slate-500">{budget.period_display}</p>
+                        <div className={`absolute inset-y-0 left-0 w-1.5 ${lane.accent}`} />
+                        <div className="mb-5 flex items-start justify-between gap-3 pl-2">
+                            <div className="flex min-w-0 items-start gap-3">
+                                <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.9rem] ${lane.chip}`}>
+                                    <LaneIcon size={18} />
+                                </span>
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h4 className="text-lg font-extrabold text-slate-950">{budget.category_name}</h4>
+                                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${lane.chip}`}>{lane.label}</span>
+                                    </div>
+                                    <p className="mt-0.5 text-xs font-medium text-slate-500">{budget.period_display || 'Monthly'}</p>
+                                </div>
                             </div>
 
-                            {/* Actions Menu */}
                             <div className="relative">
                                 <button
                                     onClick={() => setActiveMenu(activeMenu === budget.uuid ? null : budget.uuid)}
@@ -108,7 +141,7 @@ const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) 
                                                 className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                                             >
                                                 <Edit2 size={16} />
-                                                Edit Budget
+                                                Edit Item
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -120,7 +153,7 @@ const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) 
                                                 className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
                                             >
                                                 <Trash2 size={16} />
-                                                Delete Budget
+                                                Delete Item
                                             </button>
                                         </div>
                                     </>
@@ -128,52 +161,47 @@ const BudgetList = ({ budgets, onEdit, onDelete, deletingId, compact = false }) 
                             </div>
                         </div>
 
-                        {/* Amounts */}
-                        <div className="mb-4 space-y-2">
-                            <div className="flex items-baseline justify-between">
-                                <span className="text-sm font-medium text-slate-600">Budgeted</span>
-                                <span className="text-lg font-bold text-slate-900">
+                        <div className="mb-5 grid gap-2 sm:grid-cols-3">
+                            <div className="rounded-[0.9rem] bg-white/75 px-3 py-3">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Budgeted</span>
+                                <p className="mt-1 text-base font-extrabold text-slate-950">
                                     {formatCurrency(budget.amount, budget.currency)}
-                                </span>
+                                </p>
                             </div>
-                            <div className="flex items-baseline justify-between">
-                                <span className="text-sm font-medium text-slate-600">Spent</span>
-                                <span className={`text-lg font-bold ${statusConfig.textClass}`}>
+                            <div className="rounded-[0.9rem] bg-white/75 px-3 py-3">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Spent</span>
+                                <p className={`mt-1 text-base font-extrabold ${statusConfig.textClass}`}>
                                     {formatCurrency(budget.total_spent, budget.currency)}
-                                </span>
+                                </p>
                             </div>
-                            <div className={`flex items-baseline justify-between rounded-lg ${statusConfig.bgClass} px-3 py-2`}>
-                                <span className={`text-sm font-bold ${statusConfig.textClass}`}>Remaining</span>
-                                <span className={`text-lg font-bold ${statusConfig.textClass}`}>
+                            <div className="rounded-[0.9rem] bg-white/75 px-3 py-3">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Remaining</span>
+                                <p className={`mt-1 text-base font-extrabold ${lane.text}`}>
                                     {formatCurrency(budget.remaining, budget.currency)}
-                                </span>
+                                </p>
                             </div>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="mb-3">
+                        <div className="mb-3 pl-2">
                             <div className="mb-2 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                                <div className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-bold ${statusConfig.badgeClass}`}>
                                     <StatusIcon size={16} className={statusConfig.textClass} />
-                                    <span className={`text-xs font-bold ${statusConfig.textClass}`}>
-                                        {statusConfig.label}
-                                    </span>
+                                    {statusConfig.label}
                                 </div>
                                 <span className="text-sm font-bold text-slate-900">
-                                    {budget.spent_percentage.toFixed(0)}%
+                                    {spentPercent.toFixed(0)}%
                                 </span>
                             </div>
                             <div className="h-2.5 overflow-hidden rounded-full bg-white shadow-inner">
                                 <div
-                                    className={`h-full rounded-full bg-gradient-to-r from-${statusConfig.color}-400 to-${statusConfig.color}-600 transition-all duration-500`}
-                                    style={{ width: `${Math.min(budget.spent_percentage, 100)}%` }}
+                                    className={`h-full rounded-full ${budget.status === 'OVER_BUDGET' ? 'bg-rose-600' : budget.status === 'WARNING' ? 'bg-amber-500' : lane.bar} transition-all duration-500`}
+                                    style={{ width: `${Math.min(spentPercent, 100)}%` }}
                                 />
                             </div>
                         </div>
 
-                        {/* Footer */}
                         {budget.expense_count > 0 && (
-                            <div className="flex items-center gap-2 pt-3 text-xs text-slate-500 border-t border-white/50">
+                            <div className="ml-2 flex items-center gap-2 border-t border-white/70 pt-3 text-xs text-slate-500">
                                 <div className="flex items-center gap-1">
                                     <span className="font-semibold text-slate-700">{budget.expense_count}</span>
                                     <span>expense{budget.expense_count !== 1 ? 's' : ''} recorded</span>

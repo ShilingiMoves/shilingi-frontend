@@ -3,11 +3,11 @@ export const BUDGET_SETUP_STORAGE_KEY = 'shilingi_budget_setup';
 export const deriveBudgetCategoryType = (categoryName = '') => {
     const normalized = String(categoryName || '').toLowerCase();
 
-    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal') || normalized.includes('debt')) {
+    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal') || normalized.includes('debt') || normalized.includes('mmf') || normalized.includes('money market') || normalized.includes('fixed deposit') || normalized.includes('bond') || normalized.includes('share') || normalized.includes('treasury')) {
         return 'Savings';
     }
 
-    if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('shopping') || normalized.includes('lifestyle') || normalized.includes('travel')) {
+    if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('shopping') || normalized.includes('lifestyle') || normalized.includes('travel') || normalized.includes('dining') || normalized.includes('restaurant') || normalized.includes('holiday') || normalized.includes('beauty') || normalized.includes('subscription') || normalized.includes('clothes') || normalized.includes('gift') || normalized.includes('hobbies')) {
         return 'Wants';
     }
 

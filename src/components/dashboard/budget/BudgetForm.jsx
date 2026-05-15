@@ -1,18 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, DollarSign, Tag, TrendingUp, Bell } from 'lucide-react';
-import { getCategories } from '../../../services/budgetApi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Bell, Calendar, CheckCircle2, DollarSign, PiggyBank, ShoppingBasket, Tag, TrendingUp, Wallet } from 'lucide-react';
+import { createCategory, getCategories } from '../../../services/budgetApi';
 import { deriveBudgetCategoryType, getBudgetTypeLimit, readBudgetSetup } from '../../../utils/budgetSetup';
 import NumericInput from '../../common/NumericInput';
+
+const BUDGET_ITEM_GROUPS = [
+    {
+        type: 'Needs',
+        items: [
+            'Food',
+            'Transport',
+            'Rent or Mortgage',
+            'Internet',
+            'Electricity',
+            'Water',
+            'School Fees',
+            'Healthcare',
+            'Insurance',
+            'Household Essentials',
+        ],
+    },
+    {
+        type: 'Wants',
+        items: [
+            'Dining Out',
+            'Entertainment',
+            'Shopping',
+            'Subscriptions',
+            'Travel and Holidays',
+            'Beauty and Grooming',
+            'Gifts',
+            'Hobbies',
+            'Lifestyle',
+        ],
+    },
+    {
+        type: 'Savings',
+        items: [
+            'Money Market Fund',
+            'Fixed Deposit Account',
+            'Emergency Fund',
+            'Treasury Bonds',
+            'Treasury Bills',
+            'Shares',
+            'SACCO Savings',
+            'Pension or Retirement',
+            'Goal Savings',
+        ],
+    },
+];
+
+const normalise = (value = '') => String(value).trim().toLowerCase();
+const getCurrentMonthValue = () => new Date().toISOString().slice(0, 7);
+const monthFromDate = (value) => {
+    if (!value) return getCurrentMonthValue();
+    return String(value).slice(0, 7);
+};
+const laneVisuals = {
+    Needs: {
+        icon: Wallet,
+        helper: 'Essentials you must cover first',
+        shell: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+        active: 'border-primary-500 bg-primary-600 text-white shadow-lg shadow-primary-600/20',
+    },
+    Wants: {
+        icon: ShoppingBasket,
+        helper: 'Lifestyle and flexible spending',
+        shell: 'border-amber-200 bg-amber-50 text-amber-800',
+        active: 'border-amber-500 bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20',
+    },
+    Savings: {
+        icon: PiggyBank,
+        helper: 'Savings and investment allocations',
+        shell: 'border-blue-200 bg-blue-50 text-blue-800',
+        active: 'border-blue-500 bg-blue-600 text-white shadow-lg shadow-blue-600/20',
+    },
+};
 
 const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingBudgets = [], totalIncome = 0 }) => {
     const [categories, setCategories] = useState([]);
     const [formError, setFormError] = useState('');
+    const [selectedLane, setSelectedLane] = useState('Needs');
     const [formData, setFormData] = useState({
         category: '',
         amount: '',
         currency: 'KES',
         period: 'MONTHLY',
-        start_date: new Date().toISOString().split('T')[0],
+        start_month: getCurrentMonthValue(),
         is_recurring: true,
         alert_threshold: 80,
         notes: '',
@@ -33,12 +107,13 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
 
     useEffect(() => {
         if (initialValues) {
+            setSelectedLane(deriveBudgetCategoryType(initialValues.category_name));
             setFormData({
                 category: initialValues.category ? String(initialValues.category) : '',
                 amount: initialValues.amount || '',
-                currency: initialValues.currency || 'KES', 
+                currency: initialValues.currency || 'KES',
                 period: initialValues.period || 'MONTHLY',
-                start_date: initialValues.start_date || new Date().toISOString().split('T')[0],
+                start_month: monthFromDate(initialValues.start_date),
                 is_recurring: initialValues.is_recurring ?? true,
                 alert_threshold: initialValues.alert_threshold || 80,
                 notes: initialValues.notes || '',
@@ -49,18 +124,61 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormError('');
+        if (name === 'category') {
+            const itemLane = BUDGET_ITEM_GROUPS.find((group) => group.items.includes(value.replace('new:', '')))?.type;
+            if (itemLane) setSelectedLane(itemLane);
+        }
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleLaneSelect = (lane) => {
+        setSelectedLane(lane);
+        setFormError('');
+        if (!initialValues) {
+            setFormData((current) => ({ ...current, category: '' }));
+        }
+    };
+
+    const groupedBudgetItems = useMemo(() => {
+        const categoriesByName = new Map(categories.map((item) => [normalise(item.name), item]));
+        return BUDGET_ITEM_GROUPS.map((group) => ({
+            ...group,
+            items: group.items.map((label) => {
+                const matchedCategory = categoriesByName.get(normalise(label));
+                return {
+                    label,
+                    value: matchedCategory?.value || `new:${label}`,
+                };
+            }),
+        }));
+    }, [categories]);
+
+    const visibleBudgetItems = useMemo(
+        () => groupedBudgetItems.find((group) => group.type === selectedLane)?.items || [],
+        [groupedBudgetItems, selectedLane]
+    );
+
+    const selectedBudgetItem = useMemo(() => {
+        const curated = BUDGET_ITEM_GROUPS.flatMap((group) => group.items.map((label) => ({ label, type: group.type })));
+        const selectedCategory = categories.find((item) => String(item.value) === String(formData.category));
+        const fromCurated = String(formData.category || '').startsWith('new:')
+            ? curated.find((item) => item.label === formData.category.replace('new:', ''))
+            : curated.find((item) => normalise(item.label) === normalise(selectedCategory?.name));
+        return {
+            name: fromCurated?.label || selectedCategory?.name || initialValues?.category_name || '',
+            type: fromCurated?.type || deriveBudgetCategoryType(selectedCategory?.name || initialValues?.category_name || ''),
+        };
+    }, [categories, formData.category, initialValues]);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const selectedCategory = categories.find((item) => String(item.value) === String(formData.category));
-        const categoryName = selectedCategory?.name || initialValues?.category_name || '';
-        const categoryType = deriveBudgetCategoryType(categoryName);
+        let selectedCategory = categories.find((item) => String(item.value) === String(formData.category));
+        let categoryName = selectedBudgetItem.name;
+        const categoryType = selectedBudgetItem.type || deriveBudgetCategoryType(categoryName);
         const budgetSetup = readBudgetSetup();
         const allowedLimit = getBudgetTypeLimit(budgetSetup, totalIncome, categoryType);
         const currentlyAllocated = existingBudgets
@@ -71,15 +189,32 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
         const requestedAmount = Number(formData.amount || 0);
 
         if (budgetSetup?.split && allowedLimit > 0 && requestedAmount > remainingLimit) {
-            setFormError(`No. This ${categoryType.toLowerCase()} item goes over your selected budget type. Remaining available is KES ${remainingLimit.toLocaleString('en-KE')}.`);
+            setFormError(`Your amount has exceeded the set ${categoryType.toLowerCase()} limit for this budget type. Remaining available is KES ${remainingLimit.toLocaleString('en-KE')}. Please review your amount or budget model.`);
             return;
         }
 
-        onSubmit({
-            ...formData,
-            category: formData.category || '',
+        if (!selectedCategory && String(formData.category || '').startsWith('new:')) {
+            try {
+                const createdCategory = await createCategory({ name: categoryName });
+                const categoryPayload = createdCategory?.category || createdCategory?.data || createdCategory;
+                selectedCategory = {
+                    ...categoryPayload,
+                    value: String(categoryPayload?.id || categoryPayload?.uuid || categoryPayload?.category_id || categoryName),
+                    name: categoryPayload?.name || categoryName,
+                };
+            } catch (error) {
+                setFormError('We could not create this budget item right now. Please try again.');
+                return;
+            }
+        }
+
+        const { start_month: startMonth, ...payload } = formData;
+        await onSubmit({
+            ...payload,
+            category: selectedCategory?.value || formData.category || '',
             categoryName,
             categoryType,
+            start_date: `${startMonth || getCurrentMonthValue()}-01`,
         });
     };
 
@@ -88,7 +223,7 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
             category: '',
             amount: '',
             period: 'MONTHLY',
-            start_date: new Date().toISOString().split('T')[0],
+            start_month: getCurrentMonthValue(),
             is_recurring: true,
             alert_threshold: 80,
             notes: '',
@@ -97,184 +232,215 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
     };
 
     return (
-        <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900">
-                    {initialValues ? 'Edit Budget' : 'Create New Budget'}
-                </h3>
-                <p className="mt-1 text-sm text-slate-600">
-                    Set spending limits and track your expenses
-                </p>
+        <div className="overflow-hidden rounded-[1.25rem] border border-emerald-100 bg-white shadow-sm">
+            <div className="bg-gradient-to-br from-[#0f7a55] via-[#11814f] to-[#35a86e] px-5 py-5 text-white">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 className="mt-1 text-xl font-extrabold">
+                            {initialValues ? 'Edit Item' : 'Add Item'}
+                        </h3>
+                        <p className="mt-1 max-w-sm text-sm leading-6 text-white/75">
+                            Choose the lane, pick the item, then set the amount for this month.
+                        </p>
+                    </div>
+                    {selectedBudgetItem.name && (
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white ring-1 ring-white/20">
+                            {selectedBudgetItem.type}
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {formError && (
-                <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {formError}
-                </div>
-            )}
+            <div className="p-5">
+                {formError && (
+                    <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {formError}
+                    </div>
+                )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Category */}
-                <div>
-                    <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Tag size={16} className="text-slate-500" />
-                        Category
-                    </label>
-                    <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        required
-                        disabled={!!initialValues}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
-                    >
-                        <option value="">Select a category</option>
-                        {categories.map((cat) => (
-                            <option key={cat.uuid || cat.id} value={cat.value}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <p className="mb-2 text-sm font-bold text-slate-900">Start by choosing where do you want your money to be </p>
+                        <div className="grid gap-2 sm:grid-cols-3">
+                            {BUDGET_ITEM_GROUPS.map((group) => {
+                                const visual = laneVisuals[group.type];
+                                const Icon = visual.icon;
+                                const active = selectedLane === group.type;
+                                return (
+                                    <button
+                                        key={group.type}
+                                        type="button"
+                                        onClick={() => handleLaneSelect(group.type)}
+                                        className={`rounded-[0.95rem] border px-3 py-3 text-left transition-all ${active ? visual.active : visual.shell}`}
+                                    >
+                                        <span className="flex items-center justify-between gap-2">
+                                            <Icon size={16} />
+                                            {active && <CheckCircle2 size={15} />}
+                                        </span>
+                                        <span className="mt-2 block text-sm font-extrabold">{group.type}</span>
+                                        <span className={`mt-1 block text-[11px] leading-4 ${active ? 'text-inherit opacity-80' : 'opacity-70'}`}>{visual.helper}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-                {/* Amount */}
-                <div>
-                    <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <DollarSign size={16} className="text-slate-500" />
-                        Budget Amount
-                    </label>
-                    <div className="relative">
-                        <NumericInput
-                            name="amount"
-                            value={formData.amount}
+                    <div>
+                        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                            <Tag size={16} className="text-slate-500" />
+                            {selectedLane} Item
+                        </label>
+                        <select
+                            name="category"
+                            value={formData.category}
                             onChange={handleChange}
                             required
-                            placeholder="0.00"
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                        />
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                            KES
-                        </span>
+                            disabled={!!initialValues}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
+                        >
+                            <option value="">Select item</option>
+                            {visibleBudgetItems.map((item) => (
+                                <option key={`${selectedLane}-${item.label}`} value={item.value}>
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                        {selectedBudgetItem.name && (
+                            <p className="mt-1.5 text-xs font-semibold text-primary-700">
+                                {selectedBudgetItem.type} item
+                            </p>
+                        )}
                     </div>
-                </div>
 
-                {/* Period & Start Date */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                            <DollarSign size={16} className="text-slate-500" />
+                            Amount Allocated
+                        </label>
+                        <div className="relative">
+                            <NumericInput
+                                name="amount"
+                                value={formData.amount}
+                                onChange={handleChange}
+                                required
+                                placeholder="0.00"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-10 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                            />
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                                KES
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                         <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <TrendingUp size={16} className="text-slate-500" />
                             Period
                         </label>
-                        <select
-                            name="period"
-                            value={formData.period}
-                            onChange={handleChange}
-                            required
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                        >
-                            <option value="WEEKLY">Weekly</option>
-                            <option value="MONTHLY">Monthly</option>
-                            <option value="YEARLY">Yearly</option>
-                        </select>
+                        <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
+                            Monthly
+                        </div>
                     </div>
 
+                        <div>
+                            <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <Calendar size={16} className="text-slate-500" />
+                                Month
+                            </label>
+                            <input
+                                type="month"
+                                name="start_month"
+                                value={formData.start_month}
+                                onChange={handleChange}
+                                required
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Alert Threshold */}
                     <div>
-                        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <Calendar size={16} className="text-slate-500" />
-                            Start Date
+                        <label className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">
+                            <span className="flex items-center gap-2">
+                                <Bell size={16} className="text-slate-500" />
+                                Alert Threshold
+                            </span>
+                            <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+                                {formData.alert_threshold}%
+                            </span>
                         </label>
                         <input
-                            type="date"
-                            name="start_date"
-                            value={formData.start_date}
+                            type="range"
+                            name="alert_threshold"
+                            value={formData.alert_threshold}
                             onChange={handleChange}
-                            required
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                            min="50"
+                            max="100"
+                            step="5"
+                            className="w-full accent-amber-500"
+                        />
+                        <p className="mt-1.5 text-xs text-slate-500">
+                            Get notified when spending reaches this percentage
+                        </p>
+                    </div>
+
+                    {/* Recurring Checkbox */}
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                        <label className="flex cursor-pointer items-center justify-between gap-3">
+                            <div>
+                                <span className="text-sm font-semibold text-slate-900">Repeat monthly</span>
+                                <p className="mt-0.5 text-xs text-slate-600">
+                                    Keep this item active for future months.
+                                </p>
+                            </div>
+                            <input
+                                type="checkbox"
+                                name="is_recurring"
+                                checked={formData.is_recurring}
+                                onChange={handleChange}
+                                className="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+                            />
+                        </label>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            Notes (Optional)
+                        </label>
+                        <textarea
+                            name="notes"
+                            value={formData.notes}
+                            onChange={handleChange}
+                            rows="3"
+                            placeholder="Add any additional notes about this budget..."
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                         />
                     </div>
-                </div>
 
-                {/* Alert Threshold */}
-                <div>
-                    <label className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">
-                        <span className="flex items-center gap-2">
-                            <Bell size={16} className="text-slate-500" />
-                            Alert Threshold
-                        </span>
-                        <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
-                            {formData.alert_threshold}%
-                        </span>
-                    </label>
-                    <input
-                        type="range"
-                        name="alert_threshold"
-                        value={formData.alert_threshold}
-                        onChange={handleChange}
-                        min="50"
-                        max="100"
-                        step="5"
-                        className="w-full accent-amber-500"
-                    />
-                    <p className="mt-1.5 text-xs text-slate-500">
-                        Get notified when spending reaches this percentage
-                    </p>
-                </div>
-
-                {/* Recurring Checkbox */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <label className="flex cursor-pointer items-start gap-3">
-                        <input
-                            type="checkbox"
-                            name="is_recurring"
-                            checked={formData.is_recurring}
-                            onChange={handleChange}
-                            className="mt-0.5 h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
-                        />
-                        <div>
-                            <span className="text-sm font-semibold text-slate-900">Recurring Budget</span>
-                            <p className="mt-0.5 text-xs text-slate-600">
-                                Automatically renew this budget for the next period
-                            </p>
-                        </div>
-                    </label>
-                </div>
-
-                {/* Notes */}
-                <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
-                        Notes (Optional)
-                    </label>
-                    <textarea
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleChange}
-                        rows="3"
-                        placeholder="Add any additional notes about this budget..."
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                    />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-2">
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 rounded-xl bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/30 transition-all hover:bg-primary-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {isSubmitting ? 'Saving...' : initialValues ? 'Update Budget' : 'Create Budget'}
-                    </button>
-                    {(initialValues || onCancel) && (
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-2">
                         <button
-                            type="button"
-                            onClick={handleReset}
+                            type="submit"
                             disabled={isSubmitting}
-                            className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex-1 rounded-xl bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/30 transition-all hover:bg-primary-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Cancel
+                            {isSubmitting ? 'Saving...' : initialValues ? 'Update Item' : 'Add Item'}
                         </button>
-                    )}
-                </div>
-            </form>
+                        {(initialValues || onCancel) && (
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                disabled={isSubmitting}
+                                className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

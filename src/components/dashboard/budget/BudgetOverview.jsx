@@ -52,12 +52,12 @@ const tabOptions = [
 const categoryMeta = (name = '') => {
     const normalized = String(name).toLowerCase();
     if (normalized.includes('housing') || normalized.includes('rent') || normalized.includes('mortgage')) return { type: 'Needs', icon: Home, tint: 'bg-[#fff6e8] text-[#b56a00]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#d38a12' };
-    if (normalized.includes('food') || normalized.includes('grocery') || normalized.includes('dining')) return { type: 'Needs', icon: ShoppingBasket, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
-    if (normalized.includes('transport') || normalized.includes('travel') || normalized.includes('fuel')) return { type: 'Needs', icon: Landmark, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#3b82f6' };
+    if (normalized.includes('food') || normalized.includes('grocery')) return { type: 'Needs', icon: ShoppingBasket, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
+    if (normalized.includes('transport') || normalized.includes('commute') || normalized.includes('fuel')) return { type: 'Needs', icon: Landmark, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#3b82f6' };
     if (normalized.includes('utilit') || normalized.includes('power') || normalized.includes('water') || normalized.includes('internet')) return { type: 'Needs', icon: Zap, tint: 'bg-[#f3ecff] text-[#7a57d1]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#8b5fd3' };
     if (normalized.includes('school') || normalized.includes('fee') || normalized.includes('education')) return { type: 'Needs', icon: GraduationCap, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#4c8ee8' };
-    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal')) return { type: 'Savings', icon: PiggyBank, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#eef4ff] text-[#2f74db]', bar: '#11814f' };
-    if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('game')) return { type: 'Wants', icon: Flame, tint: 'bg-[#fff1ef] text-[#d94d4d]', chip: 'bg-[#fff6e8] text-[#b56a00]', bar: '#e24a4a' };
+    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal') || normalized.includes('mmf') || normalized.includes('money market') || normalized.includes('fixed deposit') || normalized.includes('bond') || normalized.includes('share') || normalized.includes('treasury') || normalized.includes('pension')) return { type: 'Savings', icon: PiggyBank, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#eef4ff] text-[#2f74db]', bar: '#11814f' };
+    if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('game') || normalized.includes('dining') || normalized.includes('restaurant') || normalized.includes('holiday') || normalized.includes('shopping') || normalized.includes('subscription') || normalized.includes('beauty') || normalized.includes('gift') || normalized.includes('hobbies') || normalized.includes('lifestyle')) return { type: 'Wants', icon: Flame, tint: 'bg-[#fff1ef] text-[#d94d4d]', chip: 'bg-[#fff6e8] text-[#b56a00]', bar: '#e24a4a' };
     return { type: 'Needs', icon: Wallet, tint: 'bg-[#f6fbf8] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
 };
 
@@ -199,14 +199,12 @@ const BudgetLimitRowCard = ({ row, currency }) => (
                 </span>
                 <div>
                     <p className="font-semibold text-slate-900">{row.category}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{row.helper}</p>
                 </div>
             </div>
         </td>
         <td className="py-4 pr-3">
             <div>
                 <p className="font-semibold text-[#11814f]">{formatCurrency(row.setLimit, currency)}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{row.percent}% from selected budget type</p>
             </div>
         </td>
         <td className="py-4 pr-3 text-sm text-slate-700">{row.itemLabel}</td>
@@ -324,6 +322,7 @@ const BudgetOverview = ({
     const [showQuickExpenseModal, setShowQuickExpenseModal] = useState(false);
     const [customBudgetName, setCustomBudgetName] = useState('');
     const [customSplit, setCustomSplit] = useState(storedBudgetSetup?.id === 'custom' && storedBudgetSetup?.split ? storedBudgetSetup.split : { needs: 45, wants: 25, savings: 30 });
+    const [budgetLimitFilter, setBudgetLimitFilter] = useState('all');
     const [expenseFilter, setExpenseFilter] = useState('all');
     const [quickCategories, setQuickCategories] = useState([]);
     const [quickExpenseSubmitting, setQuickExpenseSubmitting] = useState(false);
@@ -777,6 +776,11 @@ const BudgetOverview = ({
     });
 
     const displayedExpenses = filteredExpenses.slice(0, 8);
+    const filteredExpenseTrackerRows = summaryRows.filter((item) => {
+        if (expenseFilter === 'all') return true;
+        return item.meta.type.toLowerCase() === expenseFilter;
+    });
+    const displayedExpenseTrackerRows = filteredExpenseTrackerRows.slice(0, 8);
     const monthlySummaryRows = [
         { label: 'Total Income', value: formatCurrency(trackedIncome, currency), shell: 'bg-[#edf8f3] text-[#11814f]' },
         { label: 'Total Spent', value: formatCurrency(totalSpent, currency), shell: 'bg-[#fff3f3] text-[#d94d4d]' },
@@ -896,6 +900,10 @@ const BudgetOverview = ({
             itemLabel: row.items.length > 3 ? `${itemLabel} +${row.items.length - 3} more` : itemLabel,
         };
     });
+    const filteredBudgetLimitRows = budgetLimitRows.filter((row) => {
+        if (budgetLimitFilter === 'all') return true;
+        return row.category.toLowerCase() === budgetLimitFilter;
+    });
     const savingsLimitRow = budgetLimitRows.find((row) => row.category === 'Savings');
     const savingsSetLimit = savingsLimitRow?.setLimit || getBudgetTypeLimit({ split: selectedModel.split }, trackedIncome, 'Savings');
     const savingsGuidanceCards = [
@@ -984,14 +992,6 @@ const BudgetOverview = ({
                             <span>Select Budget Type</span>
                             <ChevronDown size={16} className="text-[#11814f]" />
                         </button>
-                        <button type="button" onClick={handleOpenBudgetItems} className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white">
-                            <Plus size={15} />
-                            Add Item
-                        </button>
-                        <button type="button" onClick={handleOpenQuickExpense} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f8b12d] px-4 text-sm font-semibold text-slate-950 shadow-sm">
-                            <Plus size={15} />
-                            Quick Add Expense
-                        </button>
                     </div>
                 </div>
                 {!hasChosenBudgetType && budgetTypePrompt ? (
@@ -1059,9 +1059,30 @@ const BudgetOverview = ({
                                 icon={BarChart3}
                                 title="My Budget Limits"
                                 action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">
-                                    Add Amount
+                                    Add Item
                                 </button>}
                             />
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {[
+                                    { id: 'all', label: 'All' },
+                                    { id: 'needs', label: 'Needs' },
+                                    { id: 'wants', label: 'Wants' },
+                                    { id: 'savings', label: 'Savings' },
+                                ].map((item) => {
+                                    const isActive = budgetLimitFilter === item.id;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() => setBudgetLimitFilter(item.id)}
+                                            className={`rounded-[0.85rem] border px-4 py-2 text-sm font-semibold ${isActive ? 'border-[#bfe2d6] bg-[#edf8f3] text-[#11814f]' : 'border-[#d8ece3] bg-white text-slate-600'}`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
 
                             <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full text-sm">
@@ -1070,16 +1091,16 @@ const BudgetOverview = ({
                                             <th className="py-3 pr-3">Category</th>
                                             <th className="py-3 pr-3">Set Limit</th>
                                             <th className="py-3 pr-3">Item</th>
-                                            <th className="py-3">Amount</th>
+                                            <th className="py-3">Amount Allocated</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {budgetLimitRows.map((row) => <BudgetLimitRowCard key={row.category} row={row} currency={currency} />)}
+                                        {filteredBudgetLimitRows.map((row) => <BudgetLimitRowCard key={row.category} row={row} currency={currency} />)}
                                         <tr className="bg-[#f8fcfa]">
                                             <td className="py-4 pr-3 text-base font-bold text-slate-950">Total</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(totalBudgeted, currency)}</td>
+                                            <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(filteredBudgetLimitRows.reduce((sum, row) => sum + row.setLimit, 0), currency)}</td>
                                             <td className="py-4 pr-3 text-base font-bold text-slate-600">{summaryRows.length ? `${summaryRows.length} tracked items` : 'Needs and wants ready'}</td>
-                                            <td className="py-4 text-base font-bold text-[#2f74db]">{formatCurrency(budgetLimitRows.reduce((sum, row) => sum + row.currentAmount, 0), currency)}</td>
+                                            <td className="py-4 text-base font-bold text-[#2f74db]">{formatCurrency(filteredBudgetLimitRows.reduce((sum, row) => sum + row.currentAmount, 0), currency)}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1285,7 +1306,7 @@ const BudgetOverview = ({
                             </div>
                             <div className="flex flex-col gap-3 sm:min-w-[15rem]">
                                 <label className="relative inline-flex h-9 w-full items-center rounded-full border border-[#a8d4c4] bg-[#f8fcfa] px-3.5 pr-10 text-[13px] font-extrabold text-[#11814f] transition-colors hover:bg-[#e8f5f0]">
-                                    <span className="truncate">Select Type</span>
+                                    <span className="truncate">{hasChosenBudgetType ? selectedModel.label : 'Select budget type'}</span>
                                     <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#11814f]" />
                                     <select
                                         value={selectedModelId}
@@ -1300,9 +1321,11 @@ const BudgetOverview = ({
                                         {budgetModels.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
                                     </select>
                                 </label>
-                                <button type="button" onClick={openCompareModels} className="inline-flex items-center justify-center rounded-full border border-[#bfe2d6] bg-[#eef8f4] px-4 py-2.5 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">
-                                    Compare Budget Models Below
-                                </button>
+                                {hasChosenBudgetType ? (
+                                    <button type="button" onClick={openBudgetItemsView} className="inline-flex items-center justify-center rounded-full border border-[#bfe2d6] bg-[#eef8f4] px-4 py-2.5 text-sm font-extrabold text-[#11814f] transition-colors hover:bg-[#11814f] hover:text-white">
+                                        Your model is {selectedModel.label}
+                                    </button>
+                                ) : null}
                             </div>
                         </div>
                     </section>
@@ -1447,7 +1470,7 @@ const BudgetOverview = ({
                             <SectionTitle
                                 icon={Receipt}
                                 title={`My Expense Tracker - ${currentMonthLabel}`}
-                                action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">+ Add</button>}
+                                action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">Add Item</button>}
                             />
 
                             <div className="mt-4 flex flex-wrap gap-2">
@@ -1471,7 +1494,44 @@ const BudgetOverview = ({
                                 })}
                             </div>
 
-                            <div className="mt-5 space-y-1">
+                            <div className="mt-5 overflow-x-auto">
+                                {displayedExpenseTrackerRows.length ? (
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-[#d8ece3] text-left text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                                                <th className="py-3 pr-3">Category</th>
+                                                <th className="py-3 pr-3">Set Limit</th>
+                                                <th className="py-3 pr-3">Item</th>
+                                                <th className="py-3">Amount Spent</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {displayedExpenseTrackerRows.map((item) => {
+                                                const Icon = item.meta.icon;
+                                                return (
+                                                    <tr key={item.uuid || item.category_name} className="border-b border-[#edf5f1] last:border-b-0">
+                                                        <td className="py-4 pr-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] ${item.meta.tint}`}>
+                                                                    <Icon size={17} />
+                                                                </span>
+                                                                <p className="font-semibold text-slate-900">{item.meta.type}</p>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 pr-3 font-semibold text-[#11814f]">{formatCurrency(item.allocated, item.currency || currency)}</td>
+                                                        <td className="py-4 pr-3 text-sm text-slate-700">{item.category_name}</td>
+                                                        <td className="py-4 font-semibold text-slate-900">{formatCurrency(item.spent, item.currency || currency)}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <EmptyCard title="No budget items yet" body="Add items under My Budget Limits and they will appear here automatically." cta="Add Budget Item" onClick={() => onNavigate('budgets')} />
+                                )}
+                            </div>
+
+                            <div className="hidden">
                                 {displayedExpenses.length ? displayedExpenses.map((expense) => {
                                     const meta = categoryMeta(expense.category_name);
                                     const amount = toNumber(expense.amount);
@@ -1503,7 +1563,7 @@ const BudgetOverview = ({
                                 )}
                             </div>
 
-                            {filteredExpenses.length > displayedExpenses.length && (
+                            {filteredExpenseTrackerRows.length > displayedExpenseTrackerRows.length && (
                                 <button type="button" onClick={() => onNavigate('expenses')} className="mt-4 inline-flex w-full items-center justify-center rounded-[1rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
                                     Load More
                                 </button>
