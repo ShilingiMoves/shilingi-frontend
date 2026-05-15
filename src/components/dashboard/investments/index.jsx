@@ -466,12 +466,14 @@ const InvestmentTracker = ({ onSelectSection }) => {
 
             <section className="rounded-[1.1rem] border border-primary-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'risk'} onClick={() => setActiveTab('risk')}>My Investment Objectives</TabButton><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Current Investments</TabButton><TabButton active={activeTab === 'explore'} onClick={() => setActiveTab('explore')}>Explore Investment Solutions</TabButton><TabButton active={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')}>Investment Calculators</TabButton></div></section>
 
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <MetricCard title="Total Current Investments" value={formatKES(totals.totalValue)} valueClass="text-primary-700" />
-                <MetricCard title="Target Investments" value={formatKES(investmentPlan.targetAmount)} valueClass="text-[#175f54]" />
-                <MetricCard title="Target Annualized Return" value={`${investmentPlan.expectedReturn.toFixed(1)}% p.a.`} valueClass="text-primary-700" />
-                <MetricCard title="Annualized Target Amount" value={formatKES(investmentPlan.annualizedTargetAmount)} valueClass="text-[#8b5cf6]" />
-            </section>
+            {activeTab === 'portfolio' && (
+                <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <MetricCard title="Total Current Investments" value={formatKES(totals.totalValue)} valueClass="text-primary-700" />
+                    <MetricCard title="Target Investments" value={formatKES(investmentPlan.targetAmount)} valueClass="text-[#175f54]" />
+                    <MetricCard title="Target Annualized Return" value={`${investmentPlan.expectedReturn.toFixed(1)}% p.a.`} valueClass="text-primary-700" />
+                    <MetricCard title="Annualized Target Amount" value={formatKES(investmentPlan.annualizedTargetAmount)} valueClass="text-[#8b5cf6]" />
+                </section>
+            )}
 
             {activeTab === 'portfolio' && (
                 <div className="space-y-4">

@@ -309,9 +309,10 @@ const BudgetOverview = ({
     onNavigate,
     onSelectSection,
     onQuickExpenseAdded,
+    initialView = 'compare',
 }) => {
     const storedBudgetSetup = readBudgetSetup();
-    const [activeView, setActiveView] = useState('compare');
+    const [activeView, setActiveView] = useState(initialView);
     const [selectedModelId, setSelectedModelId] = useState(storedBudgetSetup?.id || 'custom');
     const [hasChosenBudgetType, setHasChosenBudgetType] = useState(Boolean(storedBudgetSetup?.split));
     const [budgetTypePrompt, setBudgetTypePrompt] = useState('');
@@ -374,6 +375,23 @@ const BudgetOverview = ({
     const hasBudgetPlan = activeBudgets.length > 0 && totalBudgeted > 0;
     const currentMonthLabel = getMonthLabel();
     const customSplitTotal = toNumber(customSplit.needs) + toNumber(customSplit.wants) + toNumber(customSplit.savings);
+
+    useEffect(() => {
+        setActiveView(initialView);
+    }, [initialView]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const targetRef = activeView === 'categories'
+            ? budgetItemsRef
+            : activeView === 'expenses'
+                ? expensesSectionRef
+                : null;
+        if (!targetRef?.current) return;
+        window.requestAnimationFrame(() => {
+            targetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }, [activeView]);
 
     // The quick-add card needs real category ids from the API, otherwise expense creation
     // will fail even if the UI shows the correct category label.
@@ -1058,7 +1076,7 @@ const BudgetOverview = ({
                             <SectionTitle
                                 icon={BarChart3}
                                 title="My Budget Limits"
-                                action={<button type="button" onClick={() => onNavigate('budgets')} className="text-sm font-extrabold text-[#11814f]">
+                                action={<button type="button" onClick={() => onNavigate('budgets', 'categories')} className="text-sm font-extrabold text-[#11814f]">
                                     Add Item
                                 </button>}
                             />
@@ -1470,7 +1488,7 @@ const BudgetOverview = ({
                             <SectionTitle
                                 icon={Receipt}
                                 title={`My Expense Tracker - ${currentMonthLabel}`}
-                                action={<button type="button" onClick={() => onNavigate('expenses')} className="text-sm font-extrabold text-[#11814f]">Add Item</button>}
+                                action={<button type="button" onClick={() => onNavigate('expenses', 'expenses')} className="text-sm font-extrabold text-[#11814f]">Add Item</button>}
                             />
 
                             <div className="mt-4 flex flex-wrap gap-2">

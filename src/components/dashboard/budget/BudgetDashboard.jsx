@@ -81,9 +81,14 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
     const [editingBudget, setEditingBudget] = useState(null);
     
     const [internalActiveTab, setInternalActiveTab] = useState('overview');
+    const [overviewReturnView, setOverviewReturnView] = useState('compare');
 
     const activeTab = controlledActiveTab ?? internalActiveTab;
     const setActiveTab = onTabChange ?? setInternalActiveTab;
+    const navigateBudgetTab = (tab, returnView) => {
+        if (returnView) setOverviewReturnView(returnView);
+        setActiveTab(tab);
+    };
 
     // Calculate budget health metrics
     const budgetHealth = useMemo(() => calculateBudgetHealth(budgets), [budgets]);
@@ -159,10 +164,16 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                 setBudgets((current) => [created, ...current]);
             }
             
-            const newSummary = await getBudgetSummary();
+            const [budgetsData, newSummary] = await Promise.all([
+                getBudgets({ current: 'true' }),
+                getBudgetSummary(),
+            ]);
+            setBudgets(Array.isArray(budgetsData) ? budgetsData : []);
             setSummary(newSummary);
             markDashboardDataExists();
             triggerHealthRefresh(editingBudget ? 'budget:update' : 'budget:create');
+            setOverviewReturnView('categories');
+            setActiveTab('overview');
         } catch (err) {
             const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
             setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
@@ -204,6 +215,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             setBudgets(budgetsData);
             setSummary(summaryData);
             triggerHealthRefresh('expense:change');
+            setOverviewReturnView('expenses');
+            setActiveTab('overview');
         } catch (err) {
             console.error('Failed to refresh expenses:', err);
         }
@@ -262,7 +275,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                     expenseTotal={expenseTotal}
                     totalIncome={totalIncome}
                     budgetHealth={budgetHealth}
-                    onNavigate={setActiveTab}
+                    initialView={overviewReturnView}
+                    onNavigate={navigateBudgetTab}
                     onSelectSection={onSelectSection}
                     onQuickExpenseAdded={refreshExpenses}
                 />
