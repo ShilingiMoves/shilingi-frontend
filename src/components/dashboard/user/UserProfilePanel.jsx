@@ -701,16 +701,17 @@ const DependantsTable = ({ dependants, totalMonthly, onEdit, onDelete }) => (
         </div>
     </section>
 );
-const PlanningImpactCard = ({ icon: Icon, title, body, badge, badgeTone, cta, onClick }) => (
-    <div className="rounded-[1.2rem] border border-emerald-100 bg-[linear-gradient(180deg,_#f8fcfb_0%,_#f1f8f5_100%)] px-5 py-5 shadow-sm">
-        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]">
+const PlanningImpactCard = ({ icon: Icon, title, body, badge, cta, onClick }) => (
+    <div className="rounded-[1.2rem] border border-white/60 bg-white/8 px-5 py-5 shadow-sm transition-all hover:bg-white/12 hover:shadow-lg">
+        <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white text-[#1f9c72] shadow-sm">
             <Icon size={18} />
         </div>
-        <p className="mt-4 text-[1.15rem] font-bold text-slate-950">{title}</p>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
-        <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeTone}`}>{badge}</span>
-        <button type="button" onClick={onClick} className="mt-4 block text-sm font-semibold text-[#166a55]">
+        <p className="mt-4 text-[1.15rem] font-bold text-white">{title}</p>
+        <p className="mt-3 text-sm leading-6 text-white/78">{body}</p>
+        <span className="mt-4 inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/16">{badge}</span>
+        <button type="button" onClick={onClick} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#F0C94D]">
             {cta}
+            <ArrowRight size={14} />
         </button>
     </div>
 );
@@ -1110,7 +1111,6 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             action: () => onSelectSection?.('comparehub'),
         },
     ];
-
     useEffect(() => {
         if (initialTab) {
             setActiveTab(validTabIds.includes(initialTab) ? initialTab : 'goals');
@@ -1459,12 +1459,12 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                         )}
                     </article>
 
-                    <article className="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <div className="flex items-center gap-3 text-slate-950">
-                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#fff6e7] text-[#9a6200]">
+                    <article className="overflow-hidden rounded-[1.5rem] bg-[#1f9c72] p-5 text-white shadow-[0_18px_40px_rgba(31,156,114,0.22)]">
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white/95 text-[#1f9c72] shadow-sm">
                                 <LinkIcon size={18} />
                             </div>
-                            <p className="text-[1.4rem] font-bold tracking-tight">See How Your Family Profile Shapes Your Planning</p>
+                            <p className="text-[1.4rem] font-extrabold tracking-tight">See How Your Family Profile Shapes Your Planning</p>
                         </div>
                         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <PlanningImpactCard icon={BarChart3} title="Emergency Fund Target" body={dependantCount > 0 ? `With ${dependantCount} dependants, your recommended emergency fund is about ${fmtKES(estimatedEmergencyFund)}.` : 'Your emergency fund target becomes clearer once household size is added.'} badge={goalCount > 0 ? 'Goal set in profile' : 'Update goal'} badgeTone="bg-[#e7f6f1] text-[#166a55]" cta="View Planner" onClick={() => setActiveTab('goals')} />
@@ -1473,8 +1473,6 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                             <PlanningImpactCard icon={Wallet} title="Retirement Planner" body={dependantCount > 0 ? `Supporting ${dependantCount} people in retirement means your income plan needs a stronger buffer and clearer milestones.` : 'Household details help shape a more realistic retirement target.'} badge={dependantCount > 0 ? 'Family target in focus' : 'Add dependants first'} badgeTone="bg-[#fff6e7] text-[#9a6200]" cta="View Planner" onClick={() => onSelectSection?.('retirement')} />
                         </div>
                     </article>
-
-                    <ProfileEcosystemSection ecosystemCards={ecosystemCards} />
                 </section>
             )}
 
