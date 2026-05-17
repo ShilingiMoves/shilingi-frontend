@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Bell, Calendar, CheckCircle2, DollarSign, PiggyBank, ShoppingBasket, Tag, TrendingUp, Wallet } from 'lucide-react';
 import { createCategory, getCategories } from '../../../services/budgetApi';
 import { deriveBudgetCategoryType, getBudgetTypeLimit, readBudgetSetup } from '../../../utils/budgetSetup';
+import { formatCurrency } from '../../../utils/budgetHelpers';
 import NumericInput from '../../common/NumericInput';
 
 const BUDGET_ITEM_GROUPS = [
@@ -172,6 +173,29 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
             type: fromCurated?.type || deriveBudgetCategoryType(selectedCategory?.name || initialValues?.category_name || ''),
         };
     }, [categories, formData.category, initialValues]);
+    const laneLimitSummary = useMemo(() => {
+        const budgetSetup = readBudgetSetup();
+        const categoryType = selectedBudgetItem.type || selectedLane;
+        const allowedLimit = getBudgetTypeLimit(budgetSetup, totalIncome, categoryType);
+        const allocated = existingBudgets
+            .filter((item) => item.uuid !== initialValues?.uuid)
+            .filter((item) => deriveBudgetCategoryType(item.category_name) === categoryType)
+            .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const requestedAmount = Number(formData.amount || 0);
+        const remainingBeforeThisItem = Math.max(allowedLimit - allocated, 0);
+        const remainingAfterThisItem = Math.max(allowedLimit - allocated - requestedAmount, 0);
+
+        return {
+            hasBudgetModel: Boolean(budgetSetup?.split),
+            categoryType,
+            allowedLimit,
+            allocated,
+            requestedAmount,
+            remainingBeforeThisItem,
+            remainingAfterThisItem,
+            wouldExceed: Boolean(budgetSetup?.split) && allowedLimit > 0 && requestedAmount > remainingBeforeThisItem,
+        };
+    }, [existingBudgets, formData.amount, initialValues?.uuid, selectedBudgetItem.type, selectedLane, totalIncome]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -187,6 +211,16 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
             .reduce((sum, item) => sum + Number(item.amount || 0), 0);
         const remainingLimit = Math.max(allowedLimit - currentlyAllocated, 0);
         const requestedAmount = Number(formData.amount || 0);
+
+        if (!budgetSetup?.split) {
+            setFormError('Choose a budget model first so we can cap Needs, Wants, and Savings correctly.');
+            return;
+        }
+
+        if (totalIncome <= 0 || allowedLimit <= 0) {
+            setFormError('Add or refresh your monthly income before adding budget items. The selected budget model needs income to calculate limits.');
+            return;
+        }
 
         if (budgetSetup?.split && allowedLimit > 0 && requestedAmount > remainingLimit) {
             setFormError(`Your amount has exceeded the set ${categoryType.toLowerCase()} limit for this budget type. Remaining available is KES ${remainingLimit.toLocaleString('en-KE')}. Please review your amount or budget model.`);
@@ -317,6 +351,20 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
                             <DollarSign size={16} className="text-slate-500" />
                             Amount Allocated
                         </label>
+                        <div className="mb-3 grid gap-2 sm:grid-cols-3">
+                            <div className="rounded-[0.85rem] bg-emerald-50 px-3 py-2 text-emerald-800">
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]">{laneLimitSummary.categoryType} limit</p>
+                                <p className="mt-1 text-sm font-extrabold">{formatCurrency(laneLimitSummary.allowedLimit, formData.currency)}</p>
+                            </div>
+                            <div className="rounded-[0.85rem] bg-slate-50 px-3 py-2 text-slate-700">
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]">Allocated</p>
+                                <p className="mt-1 text-sm font-extrabold">{formatCurrency(laneLimitSummary.allocated, formData.currency)}</p>
+                            </div>
+                            <div className={`rounded-[0.85rem] px-3 py-2 ${laneLimitSummary.wouldExceed ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-800'}`}>
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]">Available</p>
+                                <p className="mt-1 text-sm font-extrabold">{formatCurrency(laneLimitSummary.remainingBeforeThisItem, formData.currency)}</p>
+                            </div>
+                        </div>
                         <div className="relative">
                             <NumericInput
                                 name="amount"
@@ -330,6 +378,13 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
                                 KES
                             </span>
                         </div>
+                        {laneLimitSummary.hasBudgetModel && laneLimitSummary.requestedAmount > 0 && (
+                            <p className={`mt-2 text-xs font-semibold ${laneLimitSummary.wouldExceed ? 'text-rose-700' : 'text-primary-700'}`}>
+                                {laneLimitSummary.wouldExceed
+                                    ? `This would exceed your ${laneLimitSummary.categoryType.toLowerCase()} limit by ${formatCurrency(laneLimitSummary.requestedAmount - laneLimitSummary.remainingBeforeThisItem, formData.currency)}.`
+                                    : `${formatCurrency(laneLimitSummary.remainingAfterThisItem, formData.currency)} will remain in ${laneLimitSummary.categoryType.toLowerCase()} after this item.`}
+                            </p>
+                        )}
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">

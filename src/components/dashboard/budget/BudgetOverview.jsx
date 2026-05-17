@@ -31,7 +31,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/budgetHelpers';
-import { getBudgetTypeLimit, readBudgetSetup, saveBudgetSetup } from '../../../utils/budgetSetup';
+import { deriveBudgetCategoryType, getBudgetTypeLimit, readBudgetSetup, saveBudgetSetup } from '../../../utils/budgetSetup';
 import { createExpense, getCategories } from '../../../services/budgetApi';
 
 const budgetModels = [
@@ -51,14 +51,15 @@ const tabOptions = [
 
 const categoryMeta = (name = '') => {
     const normalized = String(name).toLowerCase();
-    if (normalized.includes('housing') || normalized.includes('rent') || normalized.includes('mortgage')) return { type: 'Needs', icon: Home, tint: 'bg-[#fff6e8] text-[#b56a00]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#d38a12' };
-    if (normalized.includes('food') || normalized.includes('grocery')) return { type: 'Needs', icon: ShoppingBasket, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
-    if (normalized.includes('transport') || normalized.includes('commute') || normalized.includes('fuel')) return { type: 'Needs', icon: Landmark, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#3b82f6' };
-    if (normalized.includes('utilit') || normalized.includes('power') || normalized.includes('water') || normalized.includes('internet')) return { type: 'Needs', icon: Zap, tint: 'bg-[#f3ecff] text-[#7a57d1]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#8b5fd3' };
-    if (normalized.includes('school') || normalized.includes('fee') || normalized.includes('education')) return { type: 'Needs', icon: GraduationCap, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#4c8ee8' };
-    if (normalized.includes('saving') || normalized.includes('invest') || normalized.includes('goal') || normalized.includes('mmf') || normalized.includes('money market') || normalized.includes('fixed deposit') || normalized.includes('bond') || normalized.includes('share') || normalized.includes('treasury') || normalized.includes('pension')) return { type: 'Savings', icon: PiggyBank, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#eef4ff] text-[#2f74db]', bar: '#11814f' };
-    if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('game') || normalized.includes('dining') || normalized.includes('restaurant') || normalized.includes('holiday') || normalized.includes('shopping') || normalized.includes('subscription') || normalized.includes('beauty') || normalized.includes('gift') || normalized.includes('hobbies') || normalized.includes('lifestyle')) return { type: 'Wants', icon: Flame, tint: 'bg-[#fff1ef] text-[#d94d4d]', chip: 'bg-[#fff6e8] text-[#b56a00]', bar: '#e24a4a' };
-    return { type: 'Needs', icon: Wallet, tint: 'bg-[#f6fbf8] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
+    const type = deriveBudgetCategoryType(name);
+    if (normalized.includes('housing') || normalized.includes('rent') || normalized.includes('mortgage')) return { type, icon: Home, tint: 'bg-[#fff6e8] text-[#b56a00]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#d38a12' };
+    if (normalized.includes('food') || normalized.includes('grocery')) return { type, icon: ShoppingBasket, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
+    if (normalized.includes('transport') || normalized.includes('commute') || normalized.includes('fuel')) return { type, icon: Landmark, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#3b82f6' };
+    if (normalized.includes('utilit') || normalized.includes('power') || normalized.includes('water') || normalized.includes('internet')) return { type, icon: Zap, tint: 'bg-[#f3ecff] text-[#7a57d1]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#8b5fd3' };
+    if (normalized.includes('school') || normalized.includes('fee') || normalized.includes('education')) return { type, icon: GraduationCap, tint: 'bg-[#eef4ff] text-[#2f74db]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#4c8ee8' };
+    if (type === 'Savings') return { type, icon: PiggyBank, tint: 'bg-[#eef8f4] text-[#11814f]', chip: 'bg-[#eef4ff] text-[#2f74db]', bar: '#11814f' };
+    if (type === 'Wants') return { type, icon: Flame, tint: 'bg-[#fff1ef] text-[#d94d4d]', chip: 'bg-[#fff6e8] text-[#b56a00]', bar: '#e24a4a' };
+    return { type, icon: Wallet, tint: 'bg-[#f6fbf8] text-[#11814f]', chip: 'bg-[#e7f6f1] text-[#11814f]', bar: '#11814f' };
 };
 
 const statusMeta = {
@@ -205,9 +206,27 @@ const BudgetLimitRowCard = ({ row, currency }) => (
         <td className="py-4 pr-3">
             <div>
                 <p className="font-semibold text-[#11814f]">{formatCurrency(row.setLimit, currency)}</p>
+                <p className={`mt-1 text-xs font-semibold ${row.remainingLimit < 0 ? 'text-[#d94d4d]' : 'text-[#7a9e94]'}`}>
+                    {row.remainingLimit < 0
+                        ? `${formatCurrency(Math.abs(row.remainingLimit), currency)} over`
+                        : `${formatCurrency(row.remainingLimit, currency)} left`}
+                </p>
             </div>
         </td>
-        <td className="py-4 pr-3 text-sm text-slate-700">{row.itemLabel}</td>
+        <td className="py-4 pr-3 text-sm text-slate-700">
+            {row.items.length ? (
+                <div className="space-y-2">
+                    {row.items.map((item) => (
+                        <div key={item.uuid || `${row.category}-${item.category_name}`} className="flex min-w-[13rem] items-center justify-between gap-3 rounded-[0.75rem] bg-[#f8fcfa] px-3 py-2">
+                            <span className="font-semibold text-slate-700">{item.category_name}</span>
+                            <span className="shrink-0 font-extrabold text-[#0d2b22]">{formatCurrency(item.allocated, item.currency || currency)}</span>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <span>{row.itemLabel}</span>
+            )}
+        </td>
         <td className="py-4 font-semibold text-slate-900">{formatCurrency(row.currentAmount, currency)}</td>
     </tr>
 );
@@ -273,6 +292,7 @@ const BudgetCategoryCard = ({ item, currency, onNavigate }) => {
                 <div className="mt-4 shrink-0 text-right sm:mt-2">
                     <p className="text-[1.45rem] font-extrabold tracking-tight text-[#0d2b22]" style={displayFont}>{formatCurrency(spent, item.currency || currency)}</p>
                     <p className="text-xs text-[#7a9e94]">of {formatCurrency(allocated, item.currency || currency)} budget</p>
+                    <p className="mt-1 text-xs font-semibold text-[#2f74db]">{item.meta.type} limit {formatCurrency(item.laneLimit || 0, item.currency || currency)}</p>
                     <p className={`mt-1 text-xs font-extrabold ${left < 0 ? 'text-[#d94d4d]' : 'text-[#11814f]'}`}>{left < 0 ? `-${formatCurrency(Math.abs(left), item.currency || currency)} over` : `${formatCurrency(left, item.currency || currency)} left`}</p>
                 </div>
             </div>
@@ -775,8 +795,9 @@ const BudgetOverview = ({
         const spent = toNumber(item.total_spent);
         const allocated = toNumber(item.amount);
         const left = allocated - spent;
-        return { ...item, meta, spent, allocated, left, progress: allocated > 0 ? clamp((spent / allocated) * 100) : 0 };
-    }), [activeBudgets]);
+        const laneLimit = getBudgetTypeLimit({ split: selectedModel.split }, trackedIncome, meta.type);
+        return { ...item, meta, spent, allocated, left, laneLimit, progress: allocated > 0 ? clamp((spent / allocated) * 100) : 0 };
+    }), [activeBudgets, selectedModel.split, trackedIncome]);
 
     const categoryCards = useMemo(() => [...summaryRows].sort((a, b) => b.spent - a.spent), [summaryRows]);
     const topSpendingCategories = [...summaryRows].filter((item) => item.spent > 0 || item.allocated > 0).sort((a, b) => b.spent - a.spent).slice(0, 5);
@@ -911,10 +932,12 @@ const BudgetOverview = ({
         const itemLabel = row.items.length
             ? row.items.slice(0, 3).map((item) => item.category_name).join(', ')
             : `${row.category} items`;
+        const remainingLimit = row.setLimit - currentAmount;
 
         return {
             ...row,
             currentAmount,
+            remainingLimit,
             itemLabel: row.items.length > 3 ? `${itemLabel} +${row.items.length - 3} more` : itemLabel,
         };
     });
@@ -922,6 +945,7 @@ const BudgetOverview = ({
         if (budgetLimitFilter === 'all') return true;
         return row.category.toLowerCase() === budgetLimitFilter;
     });
+    const filteredBudgetItemCount = filteredBudgetLimitRows.reduce((sum, row) => sum + row.items.length, 0);
     const savingsLimitRow = budgetLimitRows.find((row) => row.category === 'Savings');
     const savingsSetLimit = savingsLimitRow?.setLimit || getBudgetTypeLimit({ split: selectedModel.split }, trackedIncome, 'Savings');
     const savingsGuidanceCards = [
@@ -1108,8 +1132,8 @@ const BudgetOverview = ({
                                         <tr className="border-b border-[#d8ece3] text-left text-[11px] uppercase tracking-[0.24em] text-slate-400">
                                             <th className="py-3 pr-3">Category</th>
                                             <th className="py-3 pr-3">Set Limit</th>
-                                            <th className="py-3 pr-3">Item</th>
-                                            <th className="py-3">Amount Allocated</th>
+                                            <th className="py-3 pr-3">Items & Allocations</th>
+                                            <th className="py-3">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1117,7 +1141,7 @@ const BudgetOverview = ({
                                         <tr className="bg-[#f8fcfa]">
                                             <td className="py-4 pr-3 text-base font-bold text-slate-950">Total</td>
                                             <td className="py-4 pr-3 text-base font-bold text-[#11814f]">{formatCurrency(filteredBudgetLimitRows.reduce((sum, row) => sum + row.setLimit, 0), currency)}</td>
-                                            <td className="py-4 pr-3 text-base font-bold text-slate-600">{summaryRows.length ? `${summaryRows.length} tracked items` : 'Needs and wants ready'}</td>
+                                            <td className="py-4 pr-3 text-base font-bold text-slate-600">{filteredBudgetItemCount ? `${filteredBudgetItemCount} tracked items` : 'Needs, wants, and savings ready'}</td>
                                             <td className="py-4 text-base font-bold text-[#2f74db]">{formatCurrency(filteredBudgetLimitRows.reduce((sum, row) => sum + row.currentAmount, 0), currency)}</td>
                                         </tr>
                                     </tbody>
@@ -1536,7 +1560,10 @@ const BudgetOverview = ({
                                                                 <p className="font-semibold text-slate-900">{item.meta.type}</p>
                                                             </div>
                                                         </td>
-                                                        <td className="py-4 pr-3 font-semibold text-[#11814f]">{formatCurrency(item.allocated, item.currency || currency)}</td>
+                                                        <td className="py-4 pr-3">
+                                                            <p className="font-semibold text-[#11814f]">{formatCurrency(item.allocated, item.currency || currency)}</p>
+                                                            <p className="mt-1 text-xs font-semibold text-[#2f74db]">{item.meta.type} cap {formatCurrency(item.laneLimit || 0, item.currency || currency)}</p>
+                                                        </td>
                                                         <td className="py-4 pr-3 text-sm text-slate-700">{item.category_name}</td>
                                                         <td className="py-4 font-semibold text-slate-900">{formatCurrency(item.spent, item.currency || currency)}</td>
                                                     </tr>
