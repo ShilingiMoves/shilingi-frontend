@@ -14,13 +14,13 @@ const API_URL = resolveApiBaseUrl({
     isDev: import.meta.env.DEV,
 });
 
-const LOGIN_ENDPOINT = import.meta.env.VITE_LOGIN_ENDPOINT || `${API_URL}/api/v1/auth/login/`;
-const REGISTER_ENDPOINT = import.meta.env.VITE_REGISTER_ENDPOINT || `${API_URL}/api/v1/auth/register/`;
+const LOGIN_ENDPOINT =`${API_URL}/api/v1/auth/login/`;
+const REGISTER_ENDPOINT = `${API_URL}/api/v1/auth/register/`;
 const PASSWORD_RESET_REQUEST_ENDPOINT = `${API_URL}/api/v1/auth/forgot-password/`;
 const PASSWORD_RESET_CONFIRM_ENDPOINT = `${API_URL}/api/v1/auth/reset-password/`;
 const VERIFY_EMAIL_ENDPOINT = `${API_URL}/api/v1/auth/verify-email/`;
 const RESEND_VERIFICATION_ENDPOINT = `${API_URL}/api/v1/auth/resend-verification/`;
-const PROFILE_ENDPOINT = import.meta.env.VITE_PROFILE_ENDPOINT || `${API_URL}/api/v1/users/me/`;
+const PROFILE_ENDPOINT = `${API_URL}/api/v1/users/me/`;
 const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
 
 async function parseResponse(response) {
