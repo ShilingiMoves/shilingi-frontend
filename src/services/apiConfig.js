@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCTION_API_URL = 'https://shilingibackend-production.up.railway.app';
+const DEFAULT_PRODUCTION_API_URL = 'https://shilingi-backend-dxdyhgahfab4buan.westeurope-01.azurewebsites.net';
 const DEFAULT_LOCAL_API_URL = '';
 
 function sanitizeUrl(candidate) {
