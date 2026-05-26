@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, KeyRound, MailCheck, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { confirmPasswordReset, requestPasswordReset } from '../services/authApi';
 
 const ForgotPasswordPage = () => {
+    const routeParams = useParams();
     const [searchParams] = useSearchParams();
-    const resetToken = searchParams.get('token') || searchParams.get('uid') || '';
+    const resetToken = getResetToken(searchParams, routeParams);
+    const resetUid = getResetUid(searchParams, routeParams);
     const [step, setStep] = useState(resetToken ? 'reset' : 'email');
     const [formValues, setFormValues] = useState({
         email: '',
+        uid: resetUid,
         token: resetToken,
         password: '',
         password_confirm: '',
@@ -35,6 +38,7 @@ const ForgotPasswordPage = () => {
             setIsSubmitting(true);
             await requestPasswordReset({
                 email: formValues.email.trim(),
+                redirect_url: getPasswordResetRedirectUrl(),
             });
             setSuccess('If that email is linked to an account, we sent password reset instructions. Open the secure link in your inbox to continue.');
         } catch (err) {
@@ -56,11 +60,18 @@ const ForgotPasswordPage = () => {
 
         try {
             setIsSubmitting(true);
-            await confirmPasswordReset({
+            const resetPayload = {
                 token: formValues.token.trim(),
                 new_password: formValues.password,
                 new_password_confirm: formValues.password_confirm,
-            });
+            };
+
+            if (formValues.uid.trim()) {
+                resetPayload.uid = formValues.uid.trim();
+                resetPayload.uidb64 = formValues.uid.trim();
+            }
+
+            await confirmPasswordReset(resetPayload);
             setStep('complete');
             setSuccess('Your password has been reset. You can now sign in with your new password.');
         } catch (err) {
@@ -129,6 +140,9 @@ const ForgotPasswordPage = () => {
 
                     {step === 'reset' && (
                         <form onSubmit={handleConfirmReset} className="space-y-4">
+                            {!resetUid && (
+                                <Field label="Reset user ID" name="uid" value={formValues.uid} onChange={handleChange} placeholder="Paste the user ID from your email link" required />
+                            )}
                             {!resetToken && (
                                 <Field label="Reset token" name="token" value={formValues.token} onChange={handleChange} placeholder="Paste the token from your email link" required />
                             )}
@@ -162,6 +176,42 @@ const ForgotPasswordPage = () => {
         </div>
     );
 };
+
+function getResetToken(searchParams, routeParams) {
+    return (
+        searchParams.get('token') ||
+        searchParams.get('reset_token') ||
+        searchParams.get('key') ||
+        searchParams.get('code') ||
+        routeParams.token ||
+        ''
+    );
+}
+
+function getResetUid(searchParams, routeParams) {
+    return (
+        searchParams.get('uid') ||
+        searchParams.get('uidb64') ||
+        searchParams.get('user') ||
+        routeParams.uid ||
+        routeParams.uidb64 ||
+        ''
+    );
+}
+
+function getPasswordResetRedirectUrl() {
+    const configuredUrl = import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL;
+
+    if (configuredUrl) {
+        return configuredUrl;
+    }
+
+    if (typeof window === 'undefined') {
+        return '/forgot-password';
+    }
+
+    return `${window.location.origin}/forgot-password`;
+}
 
 const stepOrder = {
     email: 0,

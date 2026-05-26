@@ -1,7 +1,10 @@
 import { getAccessToken, handleUnauthorizedSession } from './sessionManager';
+import { resolveApiBaseUrl } from './apiConfig';
 
-const DEFAULT_API_URL = 'https://shilingibackend-production.up.railway.app';
-const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+const API_URL = resolveApiBaseUrl({
+    envUrl: import.meta.env.VITE_API_URL,
+    isDev: import.meta.env.DEV,
+});
 const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
 const AUTH_HEADER_NAME = import.meta.env.VITE_AUTH_HEADER_NAME || 'Authorization';
 

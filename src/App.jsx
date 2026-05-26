@@ -107,6 +107,14 @@ function AppLayout() {
                         <Route path="/signin" element={<SignInPage />} />
                         <Route path="/signup" element={<SignUpPage />} />
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="/forgot-password/:token" element={<ForgotPasswordPage />} />
+                        <Route path="/forgot-password/:uid/:token" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password/:token" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password/:uid/:token" element={<ForgotPasswordPage />} />
+                        <Route path="/password-reset" element={<ForgotPasswordPage />} />
+                        <Route path="/password-reset/:token" element={<ForgotPasswordPage />} />
+                        <Route path="/password-reset/:uid/:token" element={<ForgotPasswordPage />} />
                         <Route path="/verify-email" element={<VerifyEmailPage />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
                         <Route path="/data-protection" element={<DataProtectionPage />} />
