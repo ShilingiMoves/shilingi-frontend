@@ -161,9 +161,6 @@ const ForgotPasswordPage = () => {
 
                     {step === 'reset' && (
                         <form onSubmit={handleConfirmReset} className="space-y-4">
-                            {!resetUid && (
-                                <Field label="Reset user ID" name="uid" value={formValues.uid} onChange={handleChange} placeholder="Paste the user ID from your email link" required />
-                            )}
                             {!resetToken && (
                                 <Field label="Reset token" name="token" value={formValues.token} onChange={handleChange} placeholder="Paste the token from your email link" required />
                             )}
