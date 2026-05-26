@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, KeyRound, MailCheck, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
@@ -20,6 +20,20 @@ const ForgotPasswordPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [resetRequestCount, setResetRequestCount] = useState(0);
+    const [resendCooldown, setResendCooldown] = useState(0);
+
+    useEffect(() => {
+        if (resendCooldown <= 0) {
+            return undefined;
+        }
+
+        const timerId = window.setTimeout(() => {
+            setResendCooldown((seconds) => Math.max(seconds - 1, 0));
+        }, 1000);
+
+        return () => window.clearTimeout(timerId);
+    }, [resendCooldown]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -40,6 +54,8 @@ const ForgotPasswordPage = () => {
                 email: formValues.email.trim(),
                 redirect_url: getPasswordResetRedirectUrl(),
             });
+            setResetRequestCount((count) => count + 1);
+            setResendCooldown(RESET_RESEND_COOLDOWN_SECONDS);
             setSuccess('If that email is linked to an account, we sent password reset instructions. Open the secure link in your inbox to continue.');
         } catch (err) {
             setError(err.message || 'We could not send reset instructions right now.');
@@ -132,9 +148,14 @@ const ForgotPasswordPage = () => {
                     {step === 'email' && (
                         <form onSubmit={handleRequestCode} className="space-y-4">
                             <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
-                            <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
-                                {isSubmitting ? 'Sending instructions...' : 'Send reset instructions'}
+                            <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting || resendCooldown > 0}>
+                                {getResetRequestButtonText({ isSubmitting, resetRequestCount, resendCooldown })}
                             </Button>
+                            {resendCooldown > 0 && (
+                                <p className="text-center text-sm font-medium text-gray-500">
+                                    You can request another reset link in {formatCooldown(resendCooldown)}.
+                                </p>
+                            )}
                         </form>
                     )}
 
@@ -176,6 +197,27 @@ const ForgotPasswordPage = () => {
         </div>
     );
 };
+
+const RESET_RESEND_COOLDOWN_SECONDS = 60;
+
+function getResetRequestButtonText({ isSubmitting, resetRequestCount, resendCooldown }) {
+    if (isSubmitting) {
+        return resetRequestCount > 0 ? 'Resending instructions...' : 'Sending instructions...';
+    }
+
+    if (resendCooldown > 0) {
+        return `Resend in ${formatCooldown(resendCooldown)}`;
+    }
+
+    return resetRequestCount > 0 ? 'Resend reset instructions' : 'Send reset instructions';
+}
+
+function formatCooldown(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
 
 function getResetToken(searchParams, routeParams) {
     return (
