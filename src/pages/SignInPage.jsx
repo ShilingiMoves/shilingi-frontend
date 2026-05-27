@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
+import { hasStoredAccessToken, loginUser } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { queuePreferredNamePrompt } from '../utils/memberIdentity';
 import { PENDING_PROFILE_SIGNUP_EMAIL_KEY } from './SignUpPage';
@@ -44,9 +44,6 @@ const SignInPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(hasStoredAccessToken() ? 'You are already signed in on this device. Continue to your dashboard whenever you are ready.' : '');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isResendingVerification, setIsResendingVerification] = useState(false);
-
-    const needsEmailVerification = error.toLowerCase().includes('verify your email');
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -81,23 +78,6 @@ const SignInPage = () => {
         }
     };
 
-    const handleResendVerification = async () => {
-        setError('');
-        setSuccess('');
-
-        try {
-            setIsResendingVerification(true);
-            await resendVerificationEmail({
-                email: formValues.email.trim(),
-            });
-            setSuccess('We sent a new verification email. Please check your inbox and spam folder.');
-        } catch (err) {
-            setError(err.message || 'We could not resend the verification email right now.');
-        } finally {
-            setIsResendingVerification(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[linear-gradient(135deg,_#f7fdfb_0%,_#ffffff_45%,_#eef6ff_100%)] px-4 py-16 sm:px-6 lg:px-8">
             <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -121,21 +101,9 @@ const SignInPage = () => {
                     </div>
 
                     {error && (
-                        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-                            <div className="flex items-start gap-3">
-                                <AlertCircle size={18} className="mt-0.5 shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                            {needsEmailVerification && (
-                                <button
-                                    type="button"
-                                    onClick={handleResendVerification}
-                                    disabled={isResendingVerification || !formValues.email.trim()}
-                                    className="mt-4 inline-flex min-h-[40px] items-center justify-center rounded-full bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-rose-300"
-                                >
-                                    {isResendingVerification ? 'Sending verification email...' : 'Resend verification email'}
-                                </button>
-                            )}
+                        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                            <span>{error}</span>
                         </div>
                     )}
 
