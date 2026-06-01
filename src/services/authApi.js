@@ -207,6 +207,20 @@ export async function confirmPasswordReset(payload) {
     return result?.data || result;
 }
 
+export async function completePasswordSetup(payload) {
+    const result = await confirmPasswordReset(payload);
+    const authenticated = storeTokens(result);
+
+    if (authenticated) {
+        storeUserProfile(extractUser(result));
+    }
+
+    return {
+        authenticated,
+        result,
+    };
+}
+
 export async function verifyEmail(payload) {
     const response = await authRequestWithRetry(
         VERIFY_EMAIL_ENDPOINT,

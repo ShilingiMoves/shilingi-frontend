@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Lock, MailCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { confirmPasswordReset, loginUser, resendVerificationEmail, verifyEmail } from '../services/authApi';
+import { completePasswordSetup, loginUser, resendVerificationEmail, verifyEmail } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { queuePreferredNamePrompt } from '../utils/memberIdentity';
 
@@ -90,7 +90,7 @@ const VerifyEmailPage = () => {
 
         try {
             setIsSubmitting(true);
-            await confirmPasswordReset({
+            const passwordSetup = await completePasswordSetup({
                 token,
                 new_password: formValues.password,
                 new_password_confirm: formValues.password_confirm,
@@ -104,10 +104,12 @@ const VerifyEmailPage = () => {
                 return;
             }
 
-            await loginUser({
-                email,
-                password: formValues.password,
-            });
+            if (!passwordSetup.authenticated) {
+                await loginUser({
+                    email,
+                    password: formValues.password,
+                });
+            }
 
             persistDashboardSection('user');
             queuePreferredNamePrompt('signup');

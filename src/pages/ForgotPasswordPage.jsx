@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, KeyRound, MailCheck, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { confirmPasswordReset, requestPasswordReset } from '../services/authApi';
+import { confirmPasswordReset, loginUser, requestPasswordReset } from '../services/authApi';
+import { persistDashboardSection } from '../utils/dashboardDataState';
+import { queuePreferredNamePrompt } from '../utils/memberIdentity';
 
 const ForgotPasswordPage = () => {
+    const navigate = useNavigate();
     const routeParams = useParams();
     const [searchParams] = useSearchParams();
     const resetToken = getResetToken(searchParams, routeParams);
     const resetUid = getResetUid(searchParams, routeParams);
+    const resetEmail = getResetEmail(searchParams);
     const [step, setStep] = useState(resetToken ? 'reset' : 'email');
     const [formValues, setFormValues] = useState({
-        email: '',
+        email: resetEmail || getStoredResetEmail(),
         uid: resetUid,
         token: resetToken,
         password: '',
@@ -22,6 +26,7 @@ const ForgotPasswordPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [resetRequestCount, setResetRequestCount] = useState(0);
     const [resendCooldown, setResendCooldown] = useState(0);
+    const [isAutoSignedIn, setIsAutoSignedIn] = useState(false);
 
     useEffect(() => {
         if (resendCooldown <= 0) {
@@ -50,10 +55,12 @@ const ForgotPasswordPage = () => {
 
         try {
             setIsSubmitting(true);
+            const email = formValues.email.trim().toLowerCase();
             await requestPasswordReset({
-                email: formValues.email.trim(),
+                email,
                 redirect_url: getPasswordResetRedirectUrl(),
             });
+            storeResetEmail(email);
             setResetRequestCount((count) => count + 1);
             setResendCooldown(RESET_RESEND_COOLDOWN_SECONDS);
             setSuccess('If that email is linked to an account, we sent password reset instructions. Open the secure link in your inbox to continue.');
@@ -89,9 +96,23 @@ const ForgotPasswordPage = () => {
 
             await confirmPasswordReset(resetPayload);
             setStep('complete');
-            setSuccess('Your password has been reset. You can now sign in with your new password.');
+
+            try {
+                await loginUser({
+                    email: formValues.email.trim().toLowerCase(),
+                    password: formValues.password,
+                });
+                clearStoredResetEmail();
+                persistDashboardSection('overview');
+                queuePreferredNamePrompt('returning');
+                setIsAutoSignedIn(true);
+                setSuccess('Your password has been reset and you are signed in.');
+            } catch {
+                setIsAutoSignedIn(false);
+                setSuccess('Your password has been reset. Sign in with your new password to continue.');
+            }
         } catch (err) {
-            setError(err.message || 'We could not reset your password right now.');
+            setError(err.message || 'We could not reset your password right now. Please request a fresh reset link.');
         } finally {
             setIsSubmitting(false);
         }
@@ -164,6 +185,7 @@ const ForgotPasswordPage = () => {
                             {!resetToken && (
                                 <Field label="Reset token" name="token" value={formValues.token} onChange={handleChange} placeholder="Paste the token from your email link" required />
                             )}
+                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                             <Field label="New password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a new password" required />
                             <Field label="Confirm new password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your new password" required />
 
@@ -180,8 +202,13 @@ const ForgotPasswordPage = () => {
 
                     {step === 'complete' && (
                         <div className="space-y-4">
-                            <Button to="/signin" variant="primary" className="w-full justify-center">
-                                Sign in with new password
+                            <Button
+                                type="button"
+                                variant="primary"
+                                className="w-full justify-center"
+                                onClick={() => navigate(isAutoSignedIn ? '/dashboard/app' : '/signin', { replace: true })}
+                            >
+                                {isAutoSignedIn ? 'Continue to dashboard' : 'Sign in with new password'}
                             </Button>
                         </div>
                     )}
@@ -196,6 +223,7 @@ const ForgotPasswordPage = () => {
 };
 
 const RESET_RESEND_COOLDOWN_SECONDS = 60;
+const PASSWORD_RESET_EMAIL_STORAGE_KEY = 'shilingi_password_reset_email';
 
 function getResetRequestButtonText({ isSubmitting, resetRequestCount, resendCooldown }) {
     if (isSubmitting) {
@@ -238,6 +266,14 @@ function getResetUid(searchParams, routeParams) {
     );
 }
 
+function getResetEmail(searchParams) {
+    return (
+        searchParams.get('email') ||
+        searchParams.get('user_email') ||
+        ''
+    );
+}
+
 function getPasswordResetRedirectUrl() {
     const configuredUrl = import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL;
 
@@ -250,6 +286,36 @@ function getPasswordResetRedirectUrl() {
     }
 
     return `${window.location.origin}/forgot-password`;
+}
+
+function storeResetEmail(email) {
+    if (typeof window === 'undefined') return;
+
+    try {
+        sessionStorage.setItem(PASSWORD_RESET_EMAIL_STORAGE_KEY, email);
+    } catch {
+        // The email field remains available if storage is blocked.
+    }
+}
+
+function getStoredResetEmail() {
+    if (typeof window === 'undefined') return '';
+
+    try {
+        return sessionStorage.getItem(PASSWORD_RESET_EMAIL_STORAGE_KEY) || '';
+    } catch {
+        return '';
+    }
+}
+
+function clearStoredResetEmail() {
+    if (typeof window === 'undefined') return;
+
+    try {
+        sessionStorage.removeItem(PASSWORD_RESET_EMAIL_STORAGE_KEY);
+    } catch {
+        // Nothing else to clear.
+    }
 }
 
 const stepOrder = {
@@ -269,7 +335,7 @@ const stepCopy = {
     },
     complete: {
         title: 'Password reset complete',
-        description: 'Your account is ready. Sign in again to continue to your dashboard.',
+        description: 'Your account is ready. Continue to your dashboard.',
     },
 };
 
