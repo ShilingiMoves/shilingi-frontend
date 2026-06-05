@@ -6,6 +6,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppErrorBoundary from './components/AppErrorBoundary';
 import ShilingiBuddy from './components/ShilingiBuddy';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import animatedLogo from './assets/shilingi-logo-animated.gif';
 
 const Home = lazy(() => import('./pages/Home'));
 const LearnPage = lazy(() => import('./pages/LearnPage'));
@@ -30,23 +31,6 @@ const TrustPage = lazy(() =>
     import('./pages/PlaceholderPages').then((module) => ({ default: module.TrustPage }))
 );
 
-function getSplashSeen() {
-    try {
-        return sessionStorage.getItem('sm_splashed') === '1';
-    } catch (error) {
-        console.warn('Session storage unavailable for splash state:', error);
-        return false;
-    }
-}
-
-function setSplashSeen() {
-    try {
-        sessionStorage.setItem('sm_splashed', '1');
-    } catch (error) {
-        console.warn('Could not persist splash state:', error);
-    }
-}
-
 function ScrollToTop() {
     const { pathname } = useLocation();
 
@@ -59,10 +43,16 @@ function ScrollToTop() {
 
 function RouteLoader() {
     return (
-        <div className="flex min-h-[40vh] items-center justify-center px-6">
-            <div className="rounded-[1.25rem] border border-[#d8ece3] bg-white px-6 py-4 text-sm font-medium text-slate-600 shadow-sm">
-                Loading page...
-            </div>
+        <div className="flex min-h-[40vh] flex-col items-center justify-center px-6 text-center">
+            <img
+                src={animatedLogo}
+                alt="Shilingi Moves"
+                className="h-auto w-[clamp(150px,28vw,260px)] animate-pulse select-none"
+            />
+            <p className="mt-6 max-w-xl text-base font-bold leading-7 text-teal-900">
+                Powering every step of your financial journey.<br />
+                One shilingi at a time.
+            </p>
         </div>
     );
 }
@@ -130,12 +120,9 @@ function AppLayout() {
 }
 
 function App() {
-    const [showSplash, setShowSplash] = useState(
-        () => !getSplashSeen()
-    );
+    const [showSplash, setShowSplash] = useState(true);
 
     const handleSplashComplete = () => {
-        setSplashSeen();
         setShowSplash(false);
     };
 

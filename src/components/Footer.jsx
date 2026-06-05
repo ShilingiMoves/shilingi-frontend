@@ -205,7 +205,7 @@ const Footer = () => {
             {/* Ã¢â€â‚¬Ã¢â€â‚¬ MAIN FOOTER BODY Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
             <div className="bg-[#050807]">
             <div className="container-custom pt-14 pb-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-10 lg:gap-6 xl:gap-8">
 
                     {/* Brand column Ã¢â‚¬â€ spans 2 on lg */}
                     <div className="lg:col-span-2 space-y-6">
@@ -335,7 +335,7 @@ const Footer = () => {
                     </div>
 
                     {/* Get in Touch column */}
-                    <div>
+                    <div className="lg:col-span-2">
                         <h3 className="mb-5 text-sm font-bold uppercase tracking-[0.26em] text-white">Get in Touch</h3>
                         <ul className="space-y-4">
                             <li>
@@ -343,9 +343,9 @@ const Footer = () => {
                                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] transition-colors group-hover:bg-white/[0.12]">
                                         <Mail size={14} className="text-emerald-300 transition-colors group-hover:text-white" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="mb-0.5 text-xs !text-white/50">Email us</p>
-                                        <p className="font-semibold !text-white transition-colors group-hover:!text-white">hello@shilingimoves.com</p>
+                                        <p className="whitespace-nowrap text-[13px] font-semibold !text-white transition-colors group-hover:!text-white xl:text-sm">hello@shilingimoves.com</p>
                                     </div>
                                 </a>
                             </li>

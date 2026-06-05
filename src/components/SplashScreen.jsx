@@ -51,35 +51,37 @@ const SplashScreen = ({ onComplete }) => {
                 src={animatedLogo}
                 alt="Shilingi Moves"
                 style={{
-                    width: 'clamp(120px, 22vw, 220px)',
+                    width: 'clamp(150px, 28vw, 260px)',
                     height: 'auto',
                     userSelect: 'none',
-                    animation: 'splashPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
+                    animation: 'splashSpinUp 0.65s cubic-bezier(0.34,1.56,0.64,1) both',
                 }}
             />
 
             {/* Subtle tagline beneath the logo */}
             <p
                 style={{
-                    marginTop: '1.25rem',
-                    fontSize: '0.8rem',
+                    marginTop: '1.5rem',
+                    maxWidth: 'min(34rem, calc(100vw - 3rem))',
+                    textAlign: 'center',
+                    fontSize: 'clamp(0.9rem, 2vw, 1.05rem)',
                     fontFamily: "'DM Sans', sans-serif",
-                    fontWeight: 600,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: '#059669',
+                    fontWeight: 700,
+                    lineHeight: 1.55,
+                    color: '#115e59',
                     opacity: 0,
                     animation: 'splashFadeUp 0.5s ease 0.4s forwards',
                 }}
             >
-                One Shilingi at a Time
+                Powering every step of your financial journey.<br />
+                One shilingi at a time.
             </p>
 
             {/* Inline keyframes */}
             <style>{`
-                @keyframes splashPop {
-                    from { opacity: 0; transform: scale(0.82); }
-                    to   { opacity: 1; transform: scale(1);    }
+                @keyframes splashSpinUp {
+                    from { opacity: 0; transform: scale(0.82) rotate(-18deg); }
+                    to   { opacity: 1; transform: scale(1) rotate(0deg); }
                 }
                 @keyframes splashFadeUp {
                     from { opacity: 0; transform: translateY(8px); }
