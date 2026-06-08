@@ -16,6 +16,7 @@ import {
     Heart,
     Landmark,
     Lightbulb,
+    LogOut,
     MoreHorizontal,
     PiggyBank,
     Search,
@@ -571,7 +572,7 @@ const isNewUser = (user) => {
     return !(profile.monthly_income || profile.primary_financial_goal || ws.shortTermGoal || ws.mediumTermGoal || ws.longTermGoal || hasData);
 };
 
-const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => {
+const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSignOut }) => {
     const [displayName, setDisplayName] = useState(() => getDashboardDisplayName(user));
     const moment = useMemo(() => getMoment(new Date()), []);
     const palette = toneMap[moment];
@@ -932,6 +933,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 live={live}
                 mobileActions={mobileActions}
                 onSelectSection={onSelectSection}
+                onSignOut={onSignOut}
                 palette={palette}
                 savingsRateScore={savingsRateScore}
                 debtRatioScore={debtRatioScore}
@@ -953,6 +955,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 live={live}
                 mobileActions={mobileActions}
                 onSelectSection={onSelectSection}
+                onSignOut={onSignOut}
                 palette={palette}
                 savingsRateScore={savingsRateScore}
                 spendingRows={spendingRows}
@@ -1466,6 +1469,7 @@ const DesktopDashboardOverview = ({
     live,
     mobileActions,
     onSelectSection,
+    onSignOut,
     palette,
     savingsRateScore,
     spendingRows,
@@ -1540,6 +1544,16 @@ const DesktopDashboardOverview = ({
                             <BookOpen size={22} />
                             <span>Go to website</span>
                         </button>
+                        {onSignOut && (
+                            <button
+                                type="button"
+                                onClick={onSignOut}
+                                className="flex items-center gap-5 rounded-full p-3 text-left text-sm font-normal text-[#b91c1c] hover:bg-[#fff5f5]"
+                            >
+                                <LogOut size={22} />
+                                <span>Log Out</span>
+                            </button>
+                        )}
                     </nav>
 
                     <div className="mt-auto max-w-[232px]">
@@ -1747,6 +1761,7 @@ const MobileDashboardOverview = ({
     live,
     mobileActions,
     onSelectSection,
+    onSignOut,
     palette,
     savingsRateScore,
     debtRatioScore,
@@ -1770,7 +1785,7 @@ const MobileDashboardOverview = ({
             <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f8f8f8] px-4 pb-28 pt-4">
                 <section className="mt-2">
                     <p className="text-xs text-[#111827]">{palette.label},</p>
-                    <h1 className="mt-0.5 text-lg font-extrabold leading-tight text-[#0c6060]">{displayName}</h1>
+                    <h1 className="mt-0.5 truncate text-lg font-extrabold leading-tight text-[#0c6060]">{displayName}</h1>
                     <p className="mt-0.5 text-xs text-[#111827]">Your Financial Health score is {currentScore}/100</p>
                 </section>
 

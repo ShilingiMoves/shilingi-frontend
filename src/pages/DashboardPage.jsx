@@ -227,7 +227,7 @@ const DashboardPage = () => {
     const renderActiveSection = () => {
         switch (activeSection) {
             case 'overview':
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} />;
 
             case 'cashflow':
                 return standardShell(
@@ -374,7 +374,7 @@ const DashboardPage = () => {
                 );
 
             default:
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} />;
         }
     };
 
