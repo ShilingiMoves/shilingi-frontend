@@ -3,8 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
     Bot,
+    Calculator,
+    FileText,
     GraduationCap,
     HeartHandshake,
+    Home,
+    LineChart,
+    MoreHorizontal,
     Users,
     X,
 } from 'lucide-react';
@@ -405,9 +410,54 @@ const DashboardPage = () => {
                     onOpenProfile={openProfileFromPrompt}
                 />
             )}
+
+            <MobileDashboardNav
+                activeSection={activeSection}
+                onOpenMore={() => setMobileSidebarOpen(true)}
+                onSelectSection={handleSelectSection}
+            />
         </div>
     );
 };
+
+const mobileDashboardNavItems = [
+    { id: 'overview', label: 'Home', icon: Home },
+    { id: 'budget', label: 'Budget', icon: Calculator },
+    { id: 'debt', label: 'Debt', icon: FileText },
+    { id: 'investments', label: 'Investment', icon: LineChart },
+];
+
+const MobileDashboardNav = ({ activeSection, onOpenMore, onSelectSection }) => (
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:hidden">
+        <div className="mx-auto flex h-16 max-w-[430px] items-stretch">
+            {mobileDashboardNavItems.map(({ id, label, icon: Icon }) => {
+                const isActive = activeSection === id;
+
+                return (
+                    <button
+                        key={id}
+                        type="button"
+                        onClick={() => onSelectSection(id)}
+                        className={`flex flex-1 flex-col items-center justify-center gap-1 border-t-2 text-[10px] ${
+                            isActive ? 'border-[#0c6060] text-[#0c6060]' : 'border-transparent text-[#5e5f60]'
+                        }`}
+                    >
+                        <Icon size={22} />
+                        <span>{label}</span>
+                    </button>
+                );
+            })}
+            <button
+                type="button"
+                onClick={onOpenMore}
+                className="flex flex-1 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-[10px] text-[#5e5f60]"
+            >
+                <MoreHorizontal size={22} />
+                <span>More</span>
+            </button>
+        </div>
+    </nav>
+);
 
 const PreferredNamePrompt = ({ reason, onClose, onOpenProfile }) => {
     const [preferredName, setPreferredName] = useState(() => getStoredPreferredName());

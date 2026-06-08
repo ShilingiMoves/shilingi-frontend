@@ -821,6 +821,36 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         live,
     }), [hasData, currentScore, budgetScore, savingsRateScore, debtRatioScore, investmentScore, live]);
     const bestRatesSnapshot = useMemo(() => buildBestRatesSnapshot(), []);
+    const mobileActions = [
+        { label: 'Compare Hub', icon: TrendingUp, target: 'comparehub' },
+        { label: 'Resources', icon: Calculator, target: 'resourceshub' },
+        { label: 'Learning Hub', icon: BookOpen, target: 'learninghub' },
+        { label: 'Community', icon: Heart, target: 'communityhub' },
+    ];
+    const mobileInvestmentRows = live.inv.length ? live.inv.slice(0, 4) : [
+        { name: 'Money Market', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.39)) : '39.11%', change: '+2.98%', tone: 'text-emerald-700' },
+        { name: 'Special Fund', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.28)) : '28.02%', change: '-3.25%', tone: 'text-rose-600' },
+        { name: 'Treasury Bond', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.23)) : '23.13%', change: '+0.14%', tone: 'text-emerald-700' },
+        { name: 'Whole Life Policy', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.05)) : '5.03%', change: '-1.11%', tone: 'text-rose-600' },
+    ];
+    const mobileInsights = aiInsights.length ? aiInsights.slice(0, 2) : [
+        {
+            title: 'Shopping alert',
+            description: hasData ? 'Review your highest spending category before the month closes.' : 'You have not added budget data yet.',
+            icon: AlertTriangle,
+            shell: 'bg-[#fff7ed]',
+            iconShell: 'bg-[#ffedd4] text-[#b45309]',
+            titleTone: 'text-[#7e2a0c]',
+        },
+        {
+            title: 'Great job',
+            description: hasData ? 'Keep your profile updated so Shilingi can spot better moves.' : 'Complete setup to unlock stronger money insights.',
+            icon: Trophy,
+            shell: 'bg-[#f0fdf4]',
+            iconShell: 'bg-[#dcfce7] text-[#15803d]',
+            titleTone: 'text-[#0d542b]',
+        },
+    ];
 
     useEffect(() => {
         if (!calendarFilters.some((filter) => filter.key === selectedCalendarFilter)) {
@@ -889,7 +919,26 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     };
 
     return (
-        <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+        <>
+            <MobileDashboardOverview
+                aiInsights={mobileInsights}
+                ctaButtons={ctaButtons}
+                currentScore={currentScore}
+                displayName={displayName}
+                hasData={hasData}
+                investmentRows={mobileInvestmentRows}
+                live={live}
+                mobileActions={mobileActions}
+                onSelectSection={onSelectSection}
+                palette={palette}
+                savingsRateScore={savingsRateScore}
+                debtRatioScore={debtRatioScore}
+                budgetScore={budgetScore}
+                investmentScore={investmentScore}
+                spendingRows={spendingRows}
+                stats={stats}
+            />
+            <div className="hidden px-4 py-5 sm:block sm:px-6 lg:px-8 lg:py-6">
             <div className="mx-auto max-w-7xl space-y-5">
                 <section className={`relative overflow-hidden rounded-[1.35rem] bg-gradient-to-br ${palette.shell} p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] sm:p-5`}>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.14),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(240,201,77,0.10),_transparent_24%)]" />
@@ -1379,8 +1428,266 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 )}
             </div>
         </div>
+        </>
     );
 };
+
+const MobileDashboardOverview = ({
+    aiInsights,
+    ctaButtons,
+    currentScore,
+    displayName,
+    hasData,
+    investmentRows,
+    live,
+    mobileActions,
+    onSelectSection,
+    palette,
+    savingsRateScore,
+    debtRatioScore,
+    budgetScore,
+    investmentScore,
+    spendingRows,
+    stats,
+}) => {
+    const totalSpent = toNum(live.spent);
+    const weeklyBars = hasData && spendingRows.length
+        ? spendingRows.slice(0, 7).map((row) => clamp(Number(row.percent || 0), 18, 88))
+        : [28, 58, 38, 72, 52, 92, 36];
+    const avgPerDay = totalSpent > 0 ? Math.round(totalSpent / 30) : 2486;
+    const healthMessage = hasData
+        ? `${palette.label}, ${displayName}. Keep building your money picture.`
+        : 'Complete setup to unlock your personalized health score.';
+    const transaction = live.tx[0] || {
+        name: 'Monthly Salary',
+        category: 'Income',
+        amount: hasData ? fmtSigned(live.income) : '+KES 100,000',
+        when: '1 Month Ago',
+        tone: 'text-[#0c6060]',
+    };
+
+    return (
+        <div className="sm:hidden">
+            <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f8f8f8] px-4 pb-28 pt-4">
+                <section className="mt-2">
+                    <p className="text-xs text-[#111827]">{palette.label},</p>
+                    <h1 className="mt-0.5 text-lg font-extrabold leading-tight text-[#0c6060]">{displayName}</h1>
+                    <p className="mt-0.5 text-xs text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                </section>
+
+                <section className="mt-4 overflow-hidden rounded-[10px] bg-[linear-gradient(104deg,_#0c6060_0%,_#eabb3a_163%)] p-4 text-white">
+                    <div className="flex items-start gap-2">
+                        <p className="min-w-0 flex-1 text-xs leading-5">Please complete your profile and planners to unlock personalized insights tailored to your life.</p>
+                        <span className="text-base leading-none text-white/80">x</span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {ctaButtons.map((button) => (
+                            <button
+                                key={button.id}
+                                type="button"
+                                onClick={() => onSelectSection(button.target)}
+                                className={button.primary
+                                    ? 'rounded-full bg-[#eabb3a] px-3 py-2 text-[10px] font-semibold text-[#111827]'
+                                    : 'rounded-full bg-white/20 px-3 py-2 text-[10px] font-semibold text-white'}
+                            >
+                                {button.label}
+                            </button>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="mt-4 grid grid-cols-4 gap-[5px]">
+                    {stats.map(({ icon: Icon, label, value }) => (
+                        <article key={label} className="min-w-0 rounded-[10px] bg-white p-2 shadow-[0_0_1px_rgba(0,0,0,0.07)]">
+                            <Icon size={9} className="text-[#eabb3a]" />
+                            <p className="mt-1 text-[8px] leading-tight text-[#232e3d]">{label.replace('Total ', '').replace('Monthly ', '').replace('Spent - Current', 'Expenditure')}</p>
+                            <p className="mt-1 truncate text-[10px] font-semibold leading-tight text-[#0c6060]">{value}</p>
+                        </article>
+                    ))}
+                </section>
+
+                <h2 className="mt-4 text-sm font-semibold text-[#0c6060]">What would you like to do today?</h2>
+                <section className="mt-3 grid grid-cols-4 gap-2 rounded-[10px] p-2">
+                    {mobileActions.map(({ label, icon: Icon, target }) => (
+                        <button key={label} type="button" onClick={() => onSelectSection(target)} className="flex min-w-0 flex-col items-center gap-2 text-center">
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#0c6060] text-white">
+                                <Icon size={16} />
+                            </span>
+                            <span className="text-[11px] font-medium leading-tight text-[#262626]">{label}</span>
+                        </button>
+                    ))}
+                </section>
+
+                <MobileCard title="Financial Health Score" action="View More" onAction={() => onSelectSection('health')}>
+                    <MobileNotice>{healthMessage}</MobileNotice>
+                    <div className="mt-4 flex items-center gap-4">
+                        <MobileGauge score={hasData ? currentScore : 72} amount={hasData ? fmtKES(live.savings || live.netWorth) : 'KES 187,000'} />
+                        <div className="min-w-0 flex-1 space-y-2">
+                            <LegendRow label="Savings Rate" value={Math.round(savingsRateScore)} color="bg-[#0c6060]" />
+                            <LegendRow label="Debt Ratio" value={Math.round(debtRatioScore)} color="bg-[#eabb3a]" />
+                            <LegendRow label="Budget" value={Math.round(budgetScore)} color="bg-[#f97316]" />
+                            <LegendRow label="Investments" value={Math.round(investmentScore)} color="bg-[#2563eb]" />
+                        </div>
+                    </div>
+                </MobileCard>
+
+                <MobileSectionHeader title="Spending Breakdown" action="View More" onAction={() => onSelectSection('budget')} />
+                <section className="mt-2 rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.08)]">
+                    <div className="flex items-center justify-center gap-5 text-xs font-semibold text-[#0c6060]">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6a7282]"><ChevronLeft size={14} /></span>
+                        <span>This Week</span>
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6a7282]"><ChevronRight size={14} /></span>
+                    </div>
+                    <div className="mt-4 flex h-24 items-end gap-2">
+                        {weeklyBars.map((height, index) => (
+                            <div key={`${height}-${index}`} className="flex flex-1 flex-col items-center gap-2">
+                                <span
+                                    className={`w-full rounded-t-md ${index === 5 ? 'bg-[#eabb3a]' : 'bg-[#fde7aa]'}`}
+                                    style={{ height: `${height}%` }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-2 grid grid-cols-7 text-center text-[9px] text-[#6a7282]">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day}>{day}</span>)}
+                    </div>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[11px] text-[#6a7282]">Average per day</p>
+                            <p className="text-lg font-extrabold text-[#232e3d]">{fmtKES(avgPerDay)}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[11px] text-[#6a7282]">vs last week</p>
+                            <p className="text-lg font-extrabold text-[#e7000b]">+12%</p>
+                        </div>
+                    </div>
+                </section>
+
+                <MobileSectionHeader title="Recent Transactions" action="View More" onAction={() => onSelectSection('user')} />
+                <section className="mt-2 rounded-[20px] bg-white p-4">
+                    <MobileNotice>Let's remember to live within our means.</MobileNotice>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-[5px] bg-[#eabb3a] text-[#0c6060]">
+                                <Wallet size={16} />
+                            </span>
+                            <div className="min-w-0">
+                                <p className="text-xs text-[#232e3d]">{transaction.category}</p>
+                                <p className="truncate text-sm font-semibold text-[#0c6060]">{transaction.name}</p>
+                            </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                            <p className={`text-sm font-semibold ${transaction.tone}`}>{transaction.amount}</p>
+                            <p className="text-xs text-[#232e3d]">{transaction.when}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <MobileCard title="Investment Portfolio" action="View More" onAction={() => onSelectSection('investments')}>
+                    <MobileNotice>{hasData ? 'Your portfolio mix is ready for review.' : 'Complete investment setup to track your portfolio.'}</MobileNotice>
+                    <div className="mt-4 flex items-center gap-3">
+                        <MobilePie />
+                        <div className="min-w-0 flex-1 space-y-2">
+                            {investmentRows.map((row, index) => (
+                                <LegendRow
+                                    key={`${row.name}-${index}`}
+                                    label={row.name}
+                                    value={row.change || row.value}
+                                    color={['bg-[#0c6060]', 'bg-[#f97316]', 'bg-[#eabb3a]', 'bg-[#2563eb]'][index % 4]}
+                                    valueClassName={row.tone}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </MobileCard>
+
+                <section className="mt-5">
+                    <h2 className="text-base font-bold text-[#232e3d]">Insights</h2>
+                    <p className="mt-1 text-xs text-[#8e97ab]">Analytic breakdown of where your money goes</p>
+                    <div className="mt-3 space-y-3">
+                        {aiInsights.map(({ title, description, icon: Icon, shell, iconShell, titleTone }) => (
+                            <button key={title} type="button" onClick={() => onSelectSection('budget')} className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left ${shell}`}>
+                                <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconShell}`}>
+                                    <Icon size={17} />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className={`block text-sm font-semibold ${titleTone}`}>{title}</span>
+                                    <span className="mt-1 block text-xs leading-4 text-[#4a5565]">{description}</span>
+                                </span>
+                                <ChevronRight size={16} className="shrink-0 text-[#8e97ab]" />
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            </div>
+        </div>
+    );
+};
+
+const MobileSectionHeader = ({ title, action, onAction }) => (
+    <div className="mt-5 flex items-center justify-between">
+        <h2 className="text-xs font-semibold text-[#232e3d]">{title}</h2>
+        <button type="button" onClick={onAction} className="text-xs font-semibold text-[#0c6060]">{action}</button>
+    </div>
+);
+
+const MobileCard = ({ title, action, onAction, children }) => (
+    <section className="mt-4 rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-[#232e3d]">{title}</h2>
+            <button type="button" onClick={onAction} className="text-xs font-semibold text-[#0c6060]">{action}</button>
+        </div>
+        {children}
+    </section>
+);
+
+const MobileNotice = ({ children }) => (
+    <div className="mt-4 rounded-full bg-[linear-gradient(124deg,_rgba(234,187,58,0.44)_0%,_rgba(234,187,58,0)_93%)] px-4 py-2 text-xs text-[#232e3d]">
+        {children}
+    </div>
+);
+
+const LegendRow = ({ label, value, color, valueClassName = 'text-[#0c6060]' }) => (
+    <div className="flex items-center gap-2 text-xs">
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${color}`} />
+        <span className="min-w-0 flex-1 truncate text-[#232e3d]">{label}</span>
+        <span className={`shrink-0 ${valueClassName}`}>{value}{typeof value === 'number' ? '%' : ''}</span>
+    </div>
+);
+
+const MobileGauge = ({ score, amount }) => {
+    const safeScore = clamp(Number(score || 0), 0, 100);
+    const radius = 42;
+    const circumference = Math.PI * radius;
+    const dashOffset = circumference - (safeScore / 100) * circumference;
+
+    return (
+        <div className="relative h-[112px] w-[132px] shrink-0">
+            <svg viewBox="0 0 132 112" className="h-full w-full">
+                <path d="M24 82 A42 42 0 0 1 108 82" fill="none" stroke="#f3f4f6" strokeWidth="10" strokeLinecap="round" />
+                <path
+                    d="M24 82 A42 42 0 0 1 108 82"
+                    fill="none"
+                    stroke="#eabb3a"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashOffset}
+                />
+            </svg>
+            <div className="absolute inset-x-0 top-9 text-center">
+                <p className="text-2xl font-bold text-[#232e3d]">{safeScore}%</p>
+                <p className="mt-1 text-xs text-[#232e3d]">{amount}</p>
+            </div>
+        </div>
+    );
+};
+
+const MobilePie = () => (
+    <div className="h-28 w-28 shrink-0 rounded-full bg-[conic-gradient(#0c6060_0_39%,_#f97316_39%_67%,_#eabb3a_67%_90%,_#2563eb_90%_100%)] p-5">
+        <div className="h-full w-full rounded-full bg-white" />
+    </div>
+);
 
 const Panel = ({ title, action, onAction, children }) => (
     <article className="rounded-[1.25rem] border border-emerald-100 bg-white p-4 shadow-sm">

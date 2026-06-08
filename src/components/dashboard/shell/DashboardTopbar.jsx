@@ -132,8 +132,7 @@ const DashboardTopbar = ({
 
     return (
         <header
-            className="sticky top-0 z-40 border-b border-gray-200 shadow-sm"
-            style={{ backgroundColor: '#f8f8f8' }}
+            className="sticky top-0 z-40 border-gray-200 bg-[#f8f8f8] sm:border-b sm:shadow-sm"
         >
             {anyPanelOpen && (
                 <button
@@ -144,13 +143,13 @@ const DashboardTopbar = ({
                 />
             )}
 
-            <div className="mx-auto max-w-[1600px] px-3 py-2.5 sm:px-6 sm:py-3 lg:px-8">
+            <div className="mx-auto max-w-[1600px] px-4 py-3 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-3">
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={onOpenMobileMenu}
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600 lg:hidden"
+                            className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600 sm:inline-flex lg:hidden"
                             aria-label="Open dashboard menu"
                         >
                             <Menu size={18} />
@@ -165,7 +164,7 @@ const DashboardTopbar = ({
                             <img
                                 src={animatedLogo}
                                 alt="Shilingi Moves"
-                                className="h-12 object-contain sm:h-14 lg:h-16"
+                                className="h-[51px] w-[85px] object-contain sm:h-14 sm:w-auto lg:h-16"
                             />
                         </button>
                     </div>
@@ -199,7 +198,7 @@ const DashboardTopbar = ({
                                     setNotificationsOpen(false);
                                     setAccountOpen(false);
                                 }}
-                                className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600"
+                                className="relative hidden h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600 sm:inline-flex"
                                 aria-label="Open search"
                             >
                                 <Search size={18} />
@@ -229,7 +228,7 @@ const DashboardTopbar = ({
                                     setAccountOpen(false);
                                     setSearchOpen(false);
                                 }}
-                                className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600"
+                                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600 sm:rounded-2xl"
                                 aria-label="Open notifications"
                             >
                                 <Bell size={18} />
@@ -259,9 +258,9 @@ const DashboardTopbar = ({
                                     setNotificationsOpen(false);
                                     setSearchOpen(false);
                                 }}
-                                className="inline-flex items-center gap-3 rounded-full border border-gray-200 bg-white py-1 pl-1 pr-3 shadow-sm transition-colors hover:border-primary-200 hover:bg-gray-50"
+                                className="inline-flex h-12 w-12 items-center justify-center gap-3 rounded-full border border-gray-200 bg-white p-0 shadow-sm transition-colors hover:border-primary-200 hover:bg-gray-50 sm:h-auto sm:w-auto sm:py-1 sm:pl-1 sm:pr-3"
                             >
-                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#8c8f3f] text-xs font-bold text-white">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0c6060] sm:bg-[#8c8f3f] sm:text-white">
                                     {memberInitials}
                                 </span>
                                 <span className="hidden min-w-0 text-left md:block">
@@ -331,7 +330,7 @@ const DashboardTopbar = ({
                     </div>
                 </div>
 
-                <div className="-mx-3 mt-3 overflow-x-auto px-3 pb-1 sm:hidden">
+                <div className="hidden">
                     <div className="flex min-w-max items-center gap-2">
                         {dashboardTopTabs.map((tab) => {
                             const isActive = activeSection === tab.id;

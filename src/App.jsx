@@ -60,6 +60,7 @@ function RouteLoader() {
 function AppLayout() {
     const location = useLocation();
     const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts';
+    const hideShilingiBuddy = location.pathname === '/dashboard/app' || location.pathname === '/debts';
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -113,7 +114,7 @@ function AppLayout() {
                     </Routes>
                 </Suspense>
             </main>
-            <ShilingiBuddy />
+            {!hideShilingiBuddy && <ShilingiBuddy />}
             <CookieConsentBanner />
         </div>
     );
