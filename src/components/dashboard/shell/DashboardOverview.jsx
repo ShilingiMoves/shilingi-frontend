@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
     AlertTriangle,
     ArrowRight,
+    Bell,
     BookOpen,
     Briefcase,
     Calculator,
@@ -9,16 +10,22 @@ import {
     ChevronLeft,
     ChevronRight,
     Coins,
+    FileText,
     Flame,
+    Home,
     Heart,
     Landmark,
     Lightbulb,
+    MoreHorizontal,
     PiggyBank,
+    Search,
+    Shield,
     Target,
     TrendingUp,
     Trophy,
     Wallet,
 } from 'lucide-react';
+import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
 import incomeService from '../../../services/incomeService';
 import { getBudgetSummary, getBudgets, getExpenses, getGoals } from '../../../services/budgetApi';
 import { getAssets as getInvestmentAssets } from '../../../services/investmentTrackerApi';
@@ -827,12 +834,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
         { label: 'Learning Hub', icon: BookOpen, target: 'learninghub' },
         { label: 'Community', icon: Heart, target: 'communityhub' },
     ];
-    const mobileInvestmentRows = live.inv.length ? live.inv.slice(0, 4) : [
-        { name: 'Money Market', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.39)) : '39.11%', change: '+2.98%', tone: 'text-emerald-700' },
-        { name: 'Special Fund', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.28)) : '28.02%', change: '-3.25%', tone: 'text-rose-600' },
-        { name: 'Treasury Bond', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.23)) : '23.13%', change: '+0.14%', tone: 'text-emerald-700' },
-        { name: 'Whole Life Policy', value: hasData ? fmtKES(Math.round(live.breakdown.investments * 0.05)) : '5.03%', change: '-1.11%', tone: 'text-rose-600' },
-    ];
+    const mobileInvestmentRows = live.inv.length ? live.inv.slice(0, 4) : [];
     const mobileInsights = aiInsights.length ? aiInsights.slice(0, 2) : [
         {
             title: 'Shopping alert',
@@ -938,7 +940,26 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
                 spendingRows={spendingRows}
                 stats={stats}
             />
-            <div className="hidden px-4 py-5 sm:block sm:px-6 lg:px-8 lg:py-6">
+            <DesktopDashboardOverview
+                aiInsights={mobileInsights}
+                budgetScore={budgetScore}
+                ctaButtons={ctaButtons}
+                currentScore={currentScore}
+                debtRatioScore={debtRatioScore}
+                displayName={displayName}
+                hasData={hasData}
+                investmentRows={mobileInvestmentRows}
+                investmentScore={investmentScore}
+                live={live}
+                mobileActions={mobileActions}
+                onSelectSection={onSelectSection}
+                palette={palette}
+                savingsRateScore={savingsRateScore}
+                spendingRows={spendingRows}
+                stats={stats}
+                user={user}
+            />
+            <div className="hidden px-4 py-5 sm:block sm:px-6 lg:hidden lg:px-8 lg:py-6">
             <div className="mx-auto max-w-7xl space-y-5">
                 <section className={`relative overflow-hidden rounded-[1.35rem] bg-gradient-to-br ${palette.shell} p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.14)] sm:p-5`}>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.14),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(240,201,77,0.10),_transparent_24%)]" />
@@ -1432,6 +1453,290 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection }) => 
     );
 };
 
+const DesktopDashboardOverview = ({
+    aiInsights,
+    budgetScore,
+    ctaButtons,
+    currentScore,
+    debtRatioScore,
+    displayName,
+    hasData,
+    investmentRows,
+    investmentScore,
+    live,
+    mobileActions,
+    onSelectSection,
+    palette,
+    savingsRateScore,
+    spendingRows,
+    stats,
+    user,
+}) => {
+    const initials = String(displayName || 'SM')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase() || 'SM';
+    const actionItems = [
+        ...mobileActions,
+        { label: 'Market Watch', icon: Landmark, target: 'marketwatch' },
+    ];
+    const weeklyBars = hasData && spendingRows.length
+        ? spendingRows.slice(0, 7).map((row) => clamp(Number(row.percent || 0), 20, 88))
+        : [0, 0, 0, 0, 0, 0, 0];
+    const avgPerDay = live.spent > 0 ? Math.round(toNum(live.spent) / 30) : 0;
+    const desktopNav = [
+        { type: 'item', label: 'Home', icon: Home, target: 'overview', active: true },
+        { type: 'label', label: 'Planning Tools' },
+        { type: 'item', label: 'Budget Planner', icon: Search, target: 'budget' },
+        { type: 'item', label: 'Debt Manager', icon: Bell, target: 'debt' },
+        { type: 'item', label: 'Protection Planner', icon: Shield, target: 'protection' },
+        { type: 'item', label: 'Retirement Planner', icon: FileText, target: 'retirement' },
+        { type: 'item', label: 'Net Worth Tracker', icon: BookOpen, target: 'networth' },
+        { type: 'label', label: 'Support' },
+        { type: 'item', label: 'Help Center', icon: BookOpen, target: 'resourceshub' },
+    ];
+    const healthNotice = hasData
+        ? `${palette.label}, ${displayName}. Keep up the progress.`
+        : 'Complete setup to unlock your personalized health score.';
+    const tierLabel = user?.tier || user?.subscription_tier || user?.plan || 'Basic';
+
+    return (
+        <div className="hidden min-h-screen bg-[#f8f8f8] lg:block">
+            <div className="mx-auto grid min-h-screen max-w-[1280px] grid-cols-[296px_minmax(0,1fr)_343px] overflow-hidden rounded-[40px] bg-[#f8f8f8]">
+                <aside className="flex min-h-screen flex-col bg-white px-8 py-8">
+                    <button type="button" onClick={() => onSelectSection('overview')} className="h-[61px] w-[102px]" aria-label="Dashboard home">
+                        <img src={animatedLogo} alt="Shilingi Moves" className="h-full w-full object-contain" />
+                    </button>
+
+                    <nav className="mt-10 flex flex-1 flex-col gap-1">
+                        {desktopNav.map((item, index) => {
+                            if (item.type === 'label') {
+                                return <p key={`${item.label}-${index}`} className="px-1 py-3 text-sm font-medium tracking-[-0.01em] text-[#acacac]">{item.label}</p>;
+                            }
+
+                            const Icon = item.icon;
+                            return (
+                                <button
+                                    key={item.label}
+                                    type="button"
+                                    onClick={() => onSelectSection(item.target)}
+                                    className={`flex items-center gap-5 rounded-full p-3 text-left text-sm ${
+                                        item.active ? 'font-bold text-[#0c6060]' : 'font-normal text-[#5e5f60] hover:bg-[#f8f8f8]'
+                                    }`}
+                                >
+                                    <Icon size={22} />
+                                    <span>{item.label}</span>
+                                </button>
+                            );
+                        })}
+                        <button
+                            type="button"
+                            onClick={() => { if (typeof window !== 'undefined') window.location.href = '/'; }}
+                            className="flex items-center gap-5 rounded-full p-3 text-left text-sm font-normal text-[#5e5f60] hover:bg-[#f8f8f8]"
+                        >
+                            <BookOpen size={22} />
+                            <span>Go to website</span>
+                        </button>
+                    </nav>
+
+                    <div className="mt-auto max-w-[232px]">
+                        <p className="text-xs font-bold leading-5 tracking-[-0.02em] text-[#232e3d]">©Kaizen Publishers Limited All rights reserved.</p>
+                        <p className="mt-1 text-[10px] leading-4 text-[#8e97ab]">
+                            Shilingi Moves is a financial wellness platform and does not provide regulated financial advice.
+                        </p>
+                    </div>
+                </aside>
+
+                <main className="px-8 py-8">
+                    <section>
+                        <p className="text-base text-[#111827]">{palette.label},</p>
+                        <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName}</h1>
+                        <p className="mt-2 text-base text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                    </section>
+
+                    <section className="mt-4 overflow-hidden rounded-[10px] bg-[linear-gradient(107deg,_#0c6060_0%,_#eabb3a_163%)] p-6 text-white">
+                        <div className="flex items-start gap-4">
+                            <p className="min-w-0 flex-1 text-base leading-6">Please complete your profile and planners to unlock personalized insights tailored to your life.</p>
+                            <span className="text-xl leading-none text-white/85">x</span>
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                            {ctaButtons.map((button) => (
+                                <button
+                                    key={button.id}
+                                    type="button"
+                                    onClick={() => onSelectSection(button.target)}
+                                    className={button.primary
+                                        ? 'rounded-full bg-[#eabb3a] px-3 py-2 text-sm font-semibold text-[#111827]'
+                                        : 'rounded-full bg-white/20 px-3 py-2 text-sm font-semibold text-white'}
+                                >
+                                    {button.label}
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className="mt-3 grid grid-cols-4 gap-[5px]">
+                        {stats.map(({ icon: Icon, label, value }) => (
+                            <article key={label} className="min-w-0 rounded-[10px] bg-white px-2 py-3 shadow-[0_0_1px_rgba(0,0,0,0.07)]">
+                                <Icon size={16} className="text-[#eabb3a]" />
+                                <p className="mt-2 text-xs text-[#232e3d]">{label.replace('Total ', '').replace('Monthly ', '').replace('Spent - Current', 'Expenditure')}</p>
+                                <p className="mt-2 truncate text-base font-semibold text-[#0c6060]">{value}</p>
+                            </article>
+                        ))}
+                    </section>
+
+                    <section className="mt-4">
+                        <h2 className="text-sm font-semibold text-[#0c6060]">What would you like to do today?</h2>
+                        <div className="mt-4 flex items-center justify-between rounded-[10px] p-2">
+                            {actionItems.map(({ label, icon: Icon, target }) => (
+                                <button key={label} type="button" onClick={() => onSelectSection(target)} className="flex w-[76px] flex-col items-center gap-2 text-center">
+                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#e9eeee] text-[#0c6060]">
+                                        <Icon size={18} />
+                                    </span>
+                                    <span className="text-xs font-medium leading-tight tracking-[-0.01em] text-[#262626]">{label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className="mt-7">
+                        <DesktopSectionHeader title="Spending Breakdown" action="View More" onAction={() => onSelectSection('budget')} />
+                        <div className="mt-2 rounded-[10px] bg-white pt-4">
+                            <div className="flex items-center justify-center gap-2 text-sm font-medium text-[#0c6060]">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6a7282]"><ChevronLeft size={16} /></span>
+                                <span className="rounded-[14px] bg-[#fbffff] px-2 py-1.5">This Week</span>
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6a7282]"><ChevronRight size={16} /></span>
+                            </div>
+                            <div className="mt-5 flex h-40 items-end justify-between px-3">
+                                {weeklyBars.map((height, index) => (
+                                    <div key={`${height}-${index}`} className="flex flex-1 flex-col items-center gap-2">
+                                        <span
+                                            className={`w-[58px] rounded-t-[10px] ${index === 5 ? 'bg-[#eabb3a]' : 'bg-[#ffecb8]'}`}
+                                            style={{ height: `${height}%` }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 px-3 text-center text-xs font-medium text-[#6a7282]">
+                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day}>{day}</span>)}
+                            </div>
+                            <div className="mt-4 flex items-end justify-between border-t border-[#f3f4f6] px-4 py-3">
+                                <div>
+                                    <p className="text-xs text-[#6a7282]">Average per day</p>
+                                    <p className="text-lg font-extrabold text-[#232e3d]">{fmtKES(avgPerDay)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-[#6a7282]">vs last week</p>
+                                    <p className="text-lg font-extrabold text-[#232e3d]">0%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+
+                <aside className="min-h-screen bg-white px-4 py-8">
+                    <div className="flex items-center justify-end gap-2">
+                        <button type="button" className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-[#232e3d]" aria-label="Notifications">
+                            <Bell size={20} />
+                            <span className="absolute right-2.5 top-2 h-2 w-2 rounded-full bg-[#ea3434]" />
+                        </button>
+                        <button type="button" onClick={() => onSelectSection('user')} className="flex w-60 items-center gap-3 py-4 text-left">
+                            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eabb3a] text-sm font-bold text-[#0c6060]">{initials}</span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[15px] font-bold leading-5 text-[#232e3d]">{displayName}</span>
+                                <span className="block truncate text-[15px] leading-5 text-[#8b98a5]">{tierLabel}</span>
+                            </span>
+                            <MoreHorizontal size={20} />
+                        </button>
+                    </div>
+
+                    <label className="mt-2 flex h-11 items-center gap-3 rounded-full bg-[#e5e5e5] px-4 text-[#8b98a5]">
+                        <Search size={17} />
+                        <input className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#8b98a5]" placeholder="Search" />
+                    </label>
+
+                    <DesktopRailCard title="Financial Health Score" action="View More" onAction={() => onSelectSection('health')}>
+                        <DesktopNotice>{healthNotice}</DesktopNotice>
+                        <div className="mt-3 flex items-center gap-3">
+                            <MobileGauge score={currentScore} amount={fmtKES(live.savings || live.netWorth)} />
+                            <div className="min-w-0 flex-1 space-y-2">
+                                <LegendRow label="Savings Rate" value={Math.round(savingsRateScore)} color="bg-[#0c6060]" />
+                                <LegendRow label="Debt Ratio" value={Math.round(debtRatioScore)} color="bg-[#eabb3a]" />
+                                <LegendRow label="Budget" value={Math.round(budgetScore)} color="bg-[#f97316]" />
+                                <LegendRow label="Investments" value={Math.round(investmentScore)} color="bg-[#2563eb]" />
+                            </div>
+                        </div>
+                    </DesktopRailCard>
+
+                    <DesktopRailCard title="Investment Portfolio" action="View More" onAction={() => onSelectSection('investments')}>
+                        <DesktopNotice>{hasData ? 'Your portfolio mix is ready for review.' : 'Complete investment setup to track your portfolio.'}</DesktopNotice>
+                        <div className="mt-4 flex items-center gap-3">
+                            <MobilePie />
+                            <div className="min-w-0 flex-1 space-y-2">
+                                {investmentRows.length ? investmentRows.map((row, index) => (
+                                    <LegendRow
+                                        key={`${row.name}-${index}`}
+                                        label={row.name}
+                                        value={row.change || row.value}
+                                        color={['bg-[#0c6060]', 'bg-[#f97316]', 'bg-[#eabb3a]', 'bg-[#2563eb]'][index % 4]}
+                                        valueClassName={row.tone}
+                                    />
+                                )) : (
+                                    <p className="text-xs leading-5 text-[#6a7282]">No investment data yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    </DesktopRailCard>
+
+                    <section className="mt-5 px-4">
+                        <h2 className="text-base font-bold text-[#232e3d]">Insights</h2>
+                        <p className="mt-1 text-xs text-[#8e97ab]">Analytic breakdown of where your money goes</p>
+                        <div className="mt-3 space-y-3">
+                            {aiInsights.map(({ title, description, icon: Icon, shell, iconShell, titleTone }) => (
+                                <button key={title} type="button" onClick={() => onSelectSection('budget')} className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left ${shell}`}>
+                                    <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconShell}`}>
+                                        <Icon size={17} />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className={`block text-sm font-semibold ${titleTone}`}>{title}</span>
+                                        <span className="mt-1 block text-xs leading-4 text-[#4a5565]">{description}</span>
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </div>
+    );
+};
+
+const DesktopSectionHeader = ({ title, action, onAction }) => (
+    <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-[#232e3d]">{title}</h2>
+        <button type="button" onClick={onAction} className="text-base font-semibold text-[#0c6060]">{action}</button>
+    </div>
+);
+
+const DesktopRailCard = ({ title, action, onAction, children }) => (
+    <section className="mt-5 rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-[#232e3d]">{title}</h2>
+            <button type="button" onClick={onAction} className="text-xs font-semibold text-[#0c6060]">{action}</button>
+        </div>
+        {children}
+    </section>
+);
+
+const DesktopNotice = ({ children }) => (
+    <div className="mt-4 rounded-full bg-[linear-gradient(124deg,_rgba(234,187,58,0.44)_0%,_rgba(234,187,58,0)_93%)] px-4 py-2 text-xs text-[#232e3d]">
+        {children}
+    </div>
+);
+
 const MobileDashboardOverview = ({
     aiInsights,
     ctaButtons,
@@ -1453,18 +1758,12 @@ const MobileDashboardOverview = ({
     const totalSpent = toNum(live.spent);
     const weeklyBars = hasData && spendingRows.length
         ? spendingRows.slice(0, 7).map((row) => clamp(Number(row.percent || 0), 18, 88))
-        : [28, 58, 38, 72, 52, 92, 36];
-    const avgPerDay = totalSpent > 0 ? Math.round(totalSpent / 30) : 2486;
+        : [0, 0, 0, 0, 0, 0, 0];
+    const avgPerDay = totalSpent > 0 ? Math.round(totalSpent / 30) : 0;
     const healthMessage = hasData
         ? `${palette.label}, ${displayName}. Keep building your money picture.`
         : 'Complete setup to unlock your personalized health score.';
-    const transaction = live.tx[0] || {
-        name: 'Monthly Salary',
-        category: 'Income',
-        amount: hasData ? fmtSigned(live.income) : '+KES 100,000',
-        when: '1 Month Ago',
-        tone: 'text-[#0c6060]',
-    };
+    const transaction = live.tx[0] || null;
 
     return (
         <div className="sm:hidden">
@@ -1521,7 +1820,7 @@ const MobileDashboardOverview = ({
                 <MobileCard title="Financial Health Score" action="View More" onAction={() => onSelectSection('health')}>
                     <MobileNotice>{healthMessage}</MobileNotice>
                     <div className="mt-4 flex items-center gap-4">
-                        <MobileGauge score={hasData ? currentScore : 72} amount={hasData ? fmtKES(live.savings || live.netWorth) : 'KES 187,000'} />
+                        <MobileGauge score={currentScore} amount={fmtKES(live.savings || live.netWorth)} />
                         <div className="min-w-0 flex-1 space-y-2">
                             <LegendRow label="Savings Rate" value={Math.round(savingsRateScore)} color="bg-[#0c6060]" />
                             <LegendRow label="Debt Ratio" value={Math.round(debtRatioScore)} color="bg-[#eabb3a]" />
@@ -1558,7 +1857,7 @@ const MobileDashboardOverview = ({
                         </div>
                         <div className="text-right">
                             <p className="text-[11px] text-[#6a7282]">vs last week</p>
-                            <p className="text-lg font-extrabold text-[#e7000b]">+12%</p>
+                            <p className="text-lg font-extrabold text-[#232e3d]">0%</p>
                         </div>
                     </div>
                 </section>
@@ -1566,21 +1865,27 @@ const MobileDashboardOverview = ({
                 <MobileSectionHeader title="Recent Transactions" action="View More" onAction={() => onSelectSection('user')} />
                 <section className="mt-2 rounded-[20px] bg-white p-4">
                     <MobileNotice>Let's remember to live within our means.</MobileNotice>
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-[5px] bg-[#eabb3a] text-[#0c6060]">
-                                <Wallet size={16} />
-                            </span>
-                            <div className="min-w-0">
-                                <p className="text-xs text-[#232e3d]">{transaction.category}</p>
-                                <p className="truncate text-sm font-semibold text-[#0c6060]">{transaction.name}</p>
+                    {transaction ? (
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[5px] bg-[#eabb3a] text-[#0c6060]">
+                                    <Wallet size={16} />
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="text-xs text-[#232e3d]">{transaction.category}</p>
+                                    <p className="truncate text-sm font-semibold text-[#0c6060]">{transaction.name}</p>
+                                </div>
+                            </div>
+                            <div className="shrink-0 text-right">
+                                <p className={`text-sm font-semibold ${transaction.tone}`}>{transaction.amount}</p>
+                                <p className="text-xs text-[#232e3d]">{transaction.when}</p>
                             </div>
                         </div>
-                        <div className="shrink-0 text-right">
-                            <p className={`text-sm font-semibold ${transaction.tone}`}>{transaction.amount}</p>
-                            <p className="text-xs text-[#232e3d]">{transaction.when}</p>
-                        </div>
-                    </div>
+                    ) : (
+                        <p className="mt-4 rounded-[10px] bg-[#f8f8f8] px-3 py-3 text-xs leading-5 text-[#6a7282]">
+                            No transactions yet. Add income or expenses to see recent activity.
+                        </p>
+                    )}
                 </section>
 
                 <MobileCard title="Investment Portfolio" action="View More" onAction={() => onSelectSection('investments')}>
@@ -1588,7 +1893,7 @@ const MobileDashboardOverview = ({
                     <div className="mt-4 flex items-center gap-3">
                         <MobilePie />
                         <div className="min-w-0 flex-1 space-y-2">
-                            {investmentRows.map((row, index) => (
+                            {investmentRows.length ? investmentRows.map((row, index) => (
                                 <LegendRow
                                     key={`${row.name}-${index}`}
                                     label={row.name}
@@ -1596,7 +1901,9 @@ const MobileDashboardOverview = ({
                                     color={['bg-[#0c6060]', 'bg-[#f97316]', 'bg-[#eabb3a]', 'bg-[#2563eb]'][index % 4]}
                                     valueClassName={row.tone}
                                 />
-                            ))}
+                            )) : (
+                                <p className="text-xs leading-5 text-[#6a7282]">No investment data yet.</p>
+                            )}
                         </div>
                     </div>
                 </MobileCard>

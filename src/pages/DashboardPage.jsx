@@ -216,6 +216,7 @@ const DashboardPage = () => {
             <p className="text-sm font-medium text-slate-600">Loading dashboard section...</p>
         </div>
     );
+    const overviewActive = activeSection === 'overview';
 
     const standardShell = (children) => (
         <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
@@ -379,24 +380,50 @@ const DashboardPage = () => {
 
     return (
         <div className="dashboard-brand-theme min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)] lg:h-screen lg:overflow-hidden">
-            <DashboardTopbar
-                activeSection={activeSection}
-                onSelectSection={handleSelectSection}
-                onOpenMobileMenu={() => setMobileSidebarOpen(true)}
-                onSignOut={handleSignOut}
-                user={profile}
-            />
-
-            <div className="lg:flex lg:h-[calc(100vh-92px)]">
-                <DashboardSidebar
-                    collapsed={sidebarCollapsed}
-                    onToggle={() => setSidebarCollapsed((current) => !current)}
-                    onOpenWebsite={handleOpenWebsite}
+            {overviewActive ? (
+                <div className="lg:hidden">
+                    <DashboardTopbar
+                        activeSection={activeSection}
+                        onSelectSection={handleSelectSection}
+                        onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+                        onSignOut={handleSignOut}
+                        user={profile}
+                    />
+                </div>
+            ) : (
+                <DashboardTopbar
                     activeSection={activeSection}
                     onSelectSection={handleSelectSection}
-                    mobileOpen={mobileSidebarOpen}
-                    onCloseMobile={() => setMobileSidebarOpen(false)}
+                    onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+                    onSignOut={handleSignOut}
+                    user={profile}
                 />
+            )}
+
+            <div className={overviewActive ? 'lg:h-screen' : 'lg:flex lg:h-[calc(100vh-92px)]'}>
+                {overviewActive ? (
+                    <div className="lg:hidden">
+                        <DashboardSidebar
+                            collapsed={sidebarCollapsed}
+                            onToggle={() => setSidebarCollapsed((current) => !current)}
+                            onOpenWebsite={handleOpenWebsite}
+                            activeSection={activeSection}
+                            onSelectSection={handleSelectSection}
+                            mobileOpen={mobileSidebarOpen}
+                            onCloseMobile={() => setMobileSidebarOpen(false)}
+                        />
+                    </div>
+                ) : (
+                    <DashboardSidebar
+                        collapsed={sidebarCollapsed}
+                        onToggle={() => setSidebarCollapsed((current) => !current)}
+                        onOpenWebsite={handleOpenWebsite}
+                        activeSection={activeSection}
+                        onSelectSection={handleSelectSection}
+                        mobileOpen={mobileSidebarOpen}
+                        onCloseMobile={() => setMobileSidebarOpen(false)}
+                    />
+                )}
 
                 <main ref={mainContentRef} className="min-w-0 flex-1 pb-6 lg:h-full lg:overflow-y-auto lg:pb-0 lg:[scrollbar-gutter:stable]">
                     {renderActiveSection()}
