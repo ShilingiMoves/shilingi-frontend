@@ -157,8 +157,6 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel, budgets = [] }) => {
                 // When editing, EXCLUDE the category field entirely
                 const { category, ...dataWithoutCategory } = formData;
                 submitData = dataWithoutCategory;
-                
-                console.log('Updating expense (without category):', submitData);
                 await updateExpense(initialValues.uuid, submitData);
             } else {
                 // When creating, include category
@@ -166,8 +164,6 @@ const ExpenseForm = ({ initialValues, onSuccess, onCancel, budgets = [] }) => {
                     ...formData,
                     category: formData.category || '',
                 };
-                
-                console.log('Creating expense:', submitData);
                 await createExpense(submitData);
                 
                 // Reset form only for new expenses

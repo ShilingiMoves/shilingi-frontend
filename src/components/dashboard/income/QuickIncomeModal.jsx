@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useIncome } from '../../../contexts/IncomeContext';
 import NumericInput from '../../common/NumericInput';
 
+const DEFAULT_INCOME_CATEGORIES = ['Salary', 'Business', 'Freelance', 'Investment Income', 'Other Income'];
+
 const QuickIncomeModal = ({ isOpen, onClose }) => {
-    const { addQuickIncome, categories, fetchIncomes, fetchSummary } = useIncome();
+    const { addQuickIncome, categories, createCategory, fetchCategories, fetchIncomes, fetchSummary, loading } = useIncome();
     const [formData, setFormData] = useState({
         category: '',
         amount: '',
@@ -11,13 +13,68 @@ const QuickIncomeModal = ({ isOpen, onClose }) => {
         income_date: new Date().toISOString().split('T')[0]
     });
     const [submitting, setSubmitting] = useState(false);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const categoryOptions = useMemo(
+        () => (categories || [])
+            .map((category) => ({
+                ...category,
+                value: String(category.value ?? category.uuid ?? category.id ?? category.pk ?? category.category_id ?? ''),
+                name: category.name || category.label || 'Income category',
+            }))
+            .filter((category) => category.value),
+        [categories]
+    );
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        let cancelled = false;
+        const ensureCategories = async () => {
+            try {
+                setCategoriesLoading(true);
+                setError('');
+                const fetched = await fetchCategories?.();
+                if (cancelled) return;
+
+                if ((fetched || []).length > 0) return;
+
+                const created = [];
+                for (const name of DEFAULT_INCOME_CATEGORIES) {
+                    try {
+                        const category = await createCategory?.({ name });
+                        if (category?.value) created.push(category);
+                    } catch {
+                        // Keep trying the remaining default categories.
+                    }
+                }
+
+                if (!cancelled && created.length === 0) {
+                    setError('We could not load income categories. Please try again.');
+                }
+            } finally {
+                if (!cancelled) setCategoriesLoading(false);
+            }
+        };
+
+        ensureCategories();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [createCategory, fetchCategories, isOpen]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
+
+        if (!formData.category) {
+            setError('Select an income category before adding income.');
+            return;
+        }
+
         setSubmitting(true);
 
         try {
@@ -95,15 +152,21 @@ const QuickIncomeModal = ({ isOpen, onClose }) => {
                             required
                             value={formData.category}
                             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            disabled={(loading || categoriesLoading) && categoryOptions.length === 0}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-500"
                         >
-                            <option value="">Select a category...</option>
-                            {categories.map((cat) => (
-                                <option key={cat.uuid} value={cat.uuid}>
+                            <option value="">{(loading || categoriesLoading) && categoryOptions.length === 0 ? 'Loading categories...' : 'Select a category...'}</option>
+                            {categoryOptions.map((cat) => (
+                                <option key={cat.value} value={cat.value}>
                                     {cat.name}
                                 </option>
                             ))}
                         </select>
+                        {!loading && !categoriesLoading && categoryOptions.length === 0 && (
+                            <p className="mt-2 text-xs text-red-600">
+                                No income categories were found. Please try again.
+                            </p>
+                        )}
                     </div>
 
                     {/* Amount */}
@@ -156,7 +219,7 @@ const QuickIncomeModal = ({ isOpen, onClose }) => {
                     {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={submitting || !formData.category || !formData.amount || !formData.description}
+                        disabled={submitting || categoriesLoading || !formData.category || !formData.amount || !formData.description || categoryOptions.length === 0}
                         className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 shadow-lg hover:shadow-xl"
                     >
                         {submitting ? 'Adding Income...' : 'Add Income'}

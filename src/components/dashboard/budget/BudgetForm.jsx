@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bell, Calendar, CheckCircle2, DollarSign, PiggyBank, ShoppingBasket, Tag, TrendingUp, Wallet } from 'lucide-react';
+import { Bell, Calculator, Calendar, CheckCircle2, DollarSign, PiggyBank, ShoppingBasket, Tag, TrendingUp, Wallet } from 'lucide-react';
 import { createCategory, getCategories } from '../../../services/budgetApi';
 import { deriveBudgetCategoryType, getBudgetTypeLimit, readBudgetSetup } from '../../../utils/budgetSetup';
 import { formatCurrency } from '../../../utils/budgetHelpers';
@@ -78,10 +78,10 @@ const laneVisuals = {
     },
 };
 
-const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingBudgets = [], totalIncome = 0 }) => {
+const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingBudgets = [], totalIncome = 0, initialLane = 'Needs' }) => {
     const [categories, setCategories] = useState([]);
     const [formError, setFormError] = useState('');
-    const [selectedLane, setSelectedLane] = useState('Needs');
+    const [selectedLane, setSelectedLane] = useState(initialLane);
     const [formData, setFormData] = useState({
         category: '',
         amount: '',
@@ -121,6 +121,14 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
             });
         }
     }, [initialValues]);
+
+    useEffect(() => {
+        if (initialValues) return;
+        // Mobile advances one lane at a time, so reset entry fields when the parent moves to the next lane.
+        setSelectedLane(initialLane);
+        setFormData((current) => ({ ...current, category: '', amount: '', notes: '' }));
+        setFormError('');
+    }, [initialLane, initialValues]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -265,8 +273,177 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
         if (onCancel) onCancel();
     };
 
+    const mobileDateValue = formData.start_month ? `${formData.start_month}-01` : '';
+    const handleMobileDateChange = (event) => {
+        setFormError('');
+        setFormData((current) => ({
+            ...current,
+            start_month: String(event.target.value || '').slice(0, 7),
+        }));
+    };
+
     return (
-        <div className="overflow-hidden rounded-[1.25rem] border border-emerald-100 bg-white shadow-sm">
+        <>
+        <div className="sm:hidden">
+            <form onSubmit={handleSubmit} className="space-y-[18px] pb-24">
+                <section className="flex items-end justify-between gap-3 pt-5">
+                    <div className="min-w-0 pb-2">
+                        <p className="text-[12px] font-medium leading-4 text-[#111827]">Welcome to your</p>
+                        <h1 className="mt-[10px] flex items-center gap-1 text-[18px] font-extrabold leading-6 text-[#0c6060]">
+                            Budget Planner
+                            <Calculator size={13} strokeWidth={2.4} />
+                        </h1>
+                        <p className="mt-[7px] text-[12px] leading-5 text-[#111827]">Let's take your budgeting to the next level</p>
+                    </div>
+                    <MobileBudgetIllustration />
+                </section>
+
+                {formError && (
+                    <div className="rounded-[10px] border border-rose-200 bg-rose-50 px-4 py-3 text-xs leading-5 text-rose-700">
+                        {formError}
+                    </div>
+                )}
+
+                <MobileField label="Income Category" required>
+                    <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        required
+                        disabled={!!initialValues}
+                        className="h-[50px] w-full rounded-[10px] border border-[rgba(133,133,133,0.3)] bg-[rgba(217,217,217,0.3)] px-4 text-xs font-medium text-[#111827] outline-none disabled:text-[#858585]"
+                    >
+                        <option value="">Eg. Salary</option>
+                        {visibleBudgetItems.map((item) => (
+                            <option key={`${selectedLane}-${item.label}`} value={item.value}>
+                                {item.label}
+                            </option>
+                        ))}
+                    </select>
+                </MobileField>
+
+                <MobileField label="Amount" required>
+                    <NumericInput
+                        name="amount"
+                        value={formData.amount}
+                        onChange={handleChange}
+                        required
+                        placeholder="Eg. KES 20,000"
+                        className="h-[50px] w-full rounded-[10px] border border-[rgba(133,133,133,0.3)] bg-[rgba(217,217,217,0.3)] px-4 text-xs font-medium text-[#111827] outline-none placeholder:text-[#858585]"
+                    />
+                </MobileField>
+
+                <MobileField label="Date" required>
+                    <input
+                        type="date"
+                        value={mobileDateValue}
+                        onChange={handleMobileDateChange}
+                        required
+                        className="h-[50px] w-full rounded-[10px] border border-[rgba(133,133,133,0.3)] bg-[rgba(217,217,217,0.3)] px-4 text-xs font-medium text-[#111827] outline-none"
+                    />
+                </MobileField>
+
+                <MobileField label="Source" helper="Optional">
+                    <select
+                        value={selectedLane}
+                        onChange={(event) => handleLaneSelect(event.target.value)}
+                        className="h-[50px] w-full rounded-[10px] border border-[rgba(133,133,133,0.3)] bg-[rgba(217,217,217,0.3)] px-4 text-xs font-medium text-[#111827] outline-none"
+                    >
+                        {BUDGET_ITEM_GROUPS.map((group) => (
+                            <option key={group.type} value={group.type}>
+                                {group.type}
+                            </option>
+                        ))}
+                    </select>
+                </MobileField>
+
+                <MobileField label="Status">
+                    <div className="grid grid-cols-3 gap-[6px]">
+                        {BUDGET_ITEM_GROUPS.map((group) => {
+                            const active = selectedLane === group.type;
+                            return (
+                                <button
+                                    key={`mobile-status-${group.type}`}
+                                    type="button"
+                                    onClick={() => handleLaneSelect(group.type)}
+                                    className={`flex h-[41px] items-center justify-center gap-[8px] rounded-[10px] bg-white px-2 text-[11px] font-medium shadow-[0_0_1px_rgba(0,0,0,0.25)] ${
+                                        active ? 'text-[#eabb3a]' : 'text-[#717182]'
+                                    }`}
+                                >
+                                    <span className={`h-5 w-5 rounded-full border-2 p-[3px] ${active ? 'border-[#eabb3a]' : 'border-[#8e8e93]'}`}>
+                                        <span className={`block h-full w-full rounded-full ${active ? 'bg-[#eabb3a]' : 'bg-transparent'}`} />
+                                    </span>
+                                    <span className="truncate">{group.type}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </MobileField>
+
+                <MobileField label="Description" required>
+                    <textarea
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleChange}
+                        rows="3"
+                        placeholder="Type something"
+                        className="h-[78px] w-full resize-none rounded-[10px] border border-[rgba(133,133,133,0.3)] bg-[rgba(217,217,217,0.3)] px-4 py-4 text-xs font-medium text-[#111827] outline-none placeholder:text-[#858585]"
+                    />
+                </MobileField>
+
+                {laneLimitSummary.hasBudgetModel && (
+                    <div className="grid grid-cols-3 gap-2 text-[10px]">
+                        <div className="rounded-[10px] bg-[#f0fdf4] px-2 py-2 text-[#0c6060]">
+                            <p>Limit</p>
+                            <p className="font-bold">{formatCurrency(laneLimitSummary.allowedLimit, formData.currency)}</p>
+                        </div>
+                        <div className="rounded-[10px] bg-white px-2 py-2 text-[#6b7280] shadow-[0_0_1px_rgba(0,0,0,0.16)]">
+                            <p>Allocated</p>
+                            <p className="font-bold">{formatCurrency(laneLimitSummary.allocated, formData.currency)}</p>
+                        </div>
+                        <div className={`rounded-[10px] px-2 py-2 ${laneLimitSummary.wouldExceed ? 'bg-rose-50 text-rose-700' : 'bg-[#fff7df] text-[#8a6500]'}`}>
+                            <p>Available</p>
+                            <p className="font-bold">{formatCurrency(laneLimitSummary.remainingBeforeThisItem, formData.currency)}</p>
+                        </div>
+                    </div>
+                )}
+
+                <label className="flex items-center gap-[9px] py-1">
+                    <input
+                        type="checkbox"
+                        name="is_recurring"
+                        checked={formData.is_recurring}
+                        onChange={handleChange}
+                        className="peer sr-only"
+                    />
+                    <span className={`relative h-5 w-[33px] shrink-0 rounded-full transition-colors ${formData.is_recurring ? 'bg-[#0c6060]' : 'bg-[#8e8e93]'}`}>
+                        <span className={`absolute left-0 top-0 h-5 w-5 rounded-full border border-[#0c6060] bg-white transition-transform ${formData.is_recurring ? 'translate-x-[13px]' : ''}`} />
+                    </span>
+                    <span className="text-sm font-semibold text-[#6b7280]">Is this a recurring income?</span>
+                </label>
+
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="mt-[3px] flex h-[55px] w-full items-center justify-center rounded-full bg-[#0c6060] px-4 text-base font-bold text-white disabled:opacity-70"
+                >
+                    {isSubmitting ? 'Saving...' : initialValues ? 'Update' : 'Continue'}
+                </button>
+
+                {(initialValues || onCancel) && (
+                    <button
+                        type="button"
+                        onClick={handleReset}
+                        disabled={isSubmitting}
+                        className="flex h-11 w-full items-center justify-center rounded-full border border-[#d1d5db] bg-white px-4 text-sm font-bold text-[#6b7280] disabled:opacity-70"
+                    >
+                        Cancel
+                    </button>
+                )}
+            </form>
+        </div>
+
+        <div className="hidden overflow-hidden rounded-[1.25rem] border border-emerald-100 bg-white shadow-sm sm:block">
             <div className="bg-gradient-to-br from-[#0f7a55] via-[#11814f] to-[#35a86e] px-5 py-5 text-white">
                 <div className="flex items-start justify-between gap-4">
                     <div>
@@ -497,7 +674,40 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
                 </form>
             </div>
         </div>
+        </>
     );
 };
+
+const MobileBudgetIllustration = () => (
+    <div className="relative h-[103px] w-[112px] shrink-0">
+        <div className="absolute bottom-2 right-1 h-[72px] w-[72px] rounded-full bg-[#f6cf6c]" />
+        <div className="absolute bottom-5 right-[18px] h-[48px] w-[44px] rotate-[-10deg] rounded-[22px_22px_16px_16px] bg-[#8f4d2e]" />
+        <div className="absolute bottom-2 right-[22px] h-[34px] w-[52px] rotate-[12deg] rounded-[18px] bg-[#c95b35]" />
+        <div className="absolute bottom-[51px] right-[26px] h-[25px] w-[25px] rounded-full bg-[#bd7a4b]" />
+        <div className="absolute bottom-[64px] right-[18px] h-[25px] w-[31px] rotate-[22deg] rounded-full bg-[#4a2f29]" />
+        <div className="absolute bottom-[21px] right-[60px] h-[14px] w-[42px] rotate-[18deg] rounded-full bg-[#704630]" />
+        <div className="absolute bottom-[6px] right-[53px] h-[13px] w-[44px] rotate-[-18deg] rounded-full bg-[#e7c2a4]" />
+        <div className="absolute bottom-[5px] right-[70px] h-[9px] w-[20px] rounded-full bg-[#222222]" />
+        <div className="absolute bottom-[47px] right-[8px] h-[12px] w-[26px] rotate-[-18deg] rounded-full bg-[#e7c2a4]" />
+        <div className="absolute right-[2px] top-[2px] h-2 w-2 rounded-full bg-[#eabb3a]" />
+        <div className="absolute right-[31px] top-[7px] h-[9px] w-[9px] rotate-45 border-b-2 border-r-2 border-[#eabb3a]" />
+        <div className="absolute left-[6px] top-[34px] h-[17px] w-[17px] rotate-[-9deg] rounded-[4px] border-2 border-[#15a8c8]" />
+        <div className="absolute left-[11px] top-[29px] h-[17px] w-[17px] rotate-[-9deg] rounded-[4px] border-2 border-[#15a8c8] bg-[#e7fbff]" />
+        <div className="absolute right-[3px] top-[42px] text-[14px] font-black text-[#15a8c8]">80</div>
+    </div>
+);
+
+const MobileField = ({ label, required = false, helper = '', children }) => (
+    <div className="space-y-[9px]">
+        <div>
+            <div className="flex items-center gap-[9px] text-xs font-medium text-[#707070]">
+                <span>{label}</span>
+                {required && <span className="font-semibold text-[#ef4444]">*</span>}
+            </div>
+            {helper && <p className="mt-[7px] text-[10px] font-medium text-[#16a34a]">{helper}</p>}
+        </div>
+        {children}
+    </div>
+);
 
 export default BudgetForm;

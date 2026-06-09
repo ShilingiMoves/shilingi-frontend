@@ -5,6 +5,28 @@ import { useHealthRefresh } from '../hooks/useHealthRefresh';
 
 const IncomeContext = createContext();
 
+const normalizeCategory = (category = {}) => {
+    const value = category.uuid ?? category.id ?? category.pk ?? category.category_id ?? category.value ?? '';
+    return {
+        ...category,
+        uuid: String(value),
+        value: String(value),
+        name: category.name || category.label || 'Income category',
+    };
+};
+
+const normalizeCategories = (data) => {
+    const rows = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.categories)
+            ? data.categories
+            : Array.isArray(data?.results)
+                ? data.results
+                : [];
+
+    return rows.map(normalizeCategory).filter((category) => category.value);
+};
+
 export const useIncome = () => {
     const context = useContext(IncomeContext);
     if (!context) {
@@ -28,11 +50,14 @@ export const IncomeProvider = ({ children }) => {
         try {
             setLoading(true);
             const data = await incomeService.getCategories();
-            setCategories(data.categories || []);
+            const normalized = normalizeCategories(data);
+            setCategories(normalized);
             setError(null);
+            return normalized;
         } catch (err) {
             setError(err.message);
             console.error('Error fetching income categories:', err);
+            return [];
         } finally {
             setLoading(false);
         }
@@ -42,9 +67,16 @@ export const IncomeProvider = ({ children }) => {
         try {
             setLoading(true);
             const newCategory = await incomeService.createCategory(categoryData);
-            setCategories(prev => [...prev, newCategory]);
+            const normalized = normalizeCategory(newCategory?.category || newCategory?.data || newCategory);
+            setCategories(prev => {
+                if (!normalized.value) return prev;
+                const next = prev.some((category) => String(category.value) === String(normalized.value))
+                    ? prev
+                    : [...prev, normalized];
+                return next.filter((category) => category.value);
+            });
             setError(null);
-            return newCategory;
+            return normalized;
         } catch (err) {
             setError(err.message);
             throw err;
