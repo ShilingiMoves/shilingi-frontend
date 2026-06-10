@@ -4,6 +4,7 @@ import { createCategory, getCategories } from '../../../services/budgetApi';
 import { deriveBudgetCategoryType, getBudgetTypeLimit, readBudgetSetup } from '../../../utils/budgetSetup';
 import { formatCurrency } from '../../../utils/budgetHelpers';
 import NumericInput from '../../common/NumericInput';
+import budgetPlannerHero from '../../../assets/budget-planner-hero.png';
 
 const BUDGET_ITEM_GROUPS = [
     {
@@ -680,20 +681,12 @@ const BudgetForm = ({ initialValues, onSubmit, onCancel, isSubmitting, existingB
 
 const MobileBudgetIllustration = () => (
     <div className="relative h-[103px] w-[112px] shrink-0">
-        <div className="absolute bottom-2 right-1 h-[72px] w-[72px] rounded-full bg-[#f6cf6c]" />
-        <div className="absolute bottom-5 right-[18px] h-[48px] w-[44px] rotate-[-10deg] rounded-[22px_22px_16px_16px] bg-[#8f4d2e]" />
-        <div className="absolute bottom-2 right-[22px] h-[34px] w-[52px] rotate-[12deg] rounded-[18px] bg-[#c95b35]" />
-        <div className="absolute bottom-[51px] right-[26px] h-[25px] w-[25px] rounded-full bg-[#bd7a4b]" />
-        <div className="absolute bottom-[64px] right-[18px] h-[25px] w-[31px] rotate-[22deg] rounded-full bg-[#4a2f29]" />
-        <div className="absolute bottom-[21px] right-[60px] h-[14px] w-[42px] rotate-[18deg] rounded-full bg-[#704630]" />
-        <div className="absolute bottom-[6px] right-[53px] h-[13px] w-[44px] rotate-[-18deg] rounded-full bg-[#e7c2a4]" />
-        <div className="absolute bottom-[5px] right-[70px] h-[9px] w-[20px] rounded-full bg-[#222222]" />
-        <div className="absolute bottom-[47px] right-[8px] h-[12px] w-[26px] rotate-[-18deg] rounded-full bg-[#e7c2a4]" />
-        <div className="absolute right-[2px] top-[2px] h-2 w-2 rounded-full bg-[#eabb3a]" />
-        <div className="absolute right-[31px] top-[7px] h-[9px] w-[9px] rotate-45 border-b-2 border-r-2 border-[#eabb3a]" />
-        <div className="absolute left-[6px] top-[34px] h-[17px] w-[17px] rotate-[-9deg] rounded-[4px] border-2 border-[#15a8c8]" />
-        <div className="absolute left-[11px] top-[29px] h-[17px] w-[17px] rotate-[-9deg] rounded-[4px] border-2 border-[#15a8c8] bg-[#e7fbff]" />
-        <div className="absolute right-[3px] top-[42px] text-[14px] font-black text-[#15a8c8]">80</div>
+        <img
+            src={budgetPlannerHero}
+            alt=""
+            className="absolute inset-0 h-full w-full object-contain"
+            aria-hidden="true"
+        />
     </div>
 );
 

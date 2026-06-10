@@ -5,8 +5,11 @@ import {
     ArrowRight,
     Calculator,
     CalendarDays,
+    CheckCircle2,
     CircleDot,
     Coins,
+    FileWarning,
+    Landmark,
     Loader2,
     X,
     ShieldAlert,
@@ -20,6 +23,7 @@ import { calculateDebtSummary, createDebt, deleteDebt, getDebts, updateDebt } fr
 import incomeService from '../../../services/incomeService';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
+import debtManagerHero from '../../../assets/debt-manager-hero.png';
 
 const currency = (value) => `KES ${Math.round(Number(value || 0)).toLocaleString('en-KE')}`;
 const PERFORMANCE_SNAPSHOT_KEY = 'shilingi_debt_performance_snapshot_v1';
@@ -442,6 +446,41 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle size={15} className="mr-2 inline" />{error}</div>}
             {submitError && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{submitError}</div>}
 
+            <MobileDebtManager
+                activeView={activeView}
+                crbReportProviders={crbReportProviders}
+                crbStatus={crbStatus}
+                debtFreeDate={debtFreeDate}
+                debts={debts}
+                getDebtPaidThisMonth={getDebtPaidThisMonth}
+                handleCalculatorDebtSelect={handleCalculatorDebtSelect}
+                handleDelete={handleDelete}
+                loanCalculator={loanCalculator}
+                loanCalculatorRate={loanCalculatorRate}
+                orderedDebts={orderedDebts}
+                paymentError={paymentError}
+                paymentInputs={paymentInputs}
+                recordDebtPayment={recordDebtPayment}
+                recommendedDebt={recommendedDebt}
+                selectedCalculatorDebtId={selectedCalculatorDebtId}
+                setActiveView={setActiveView}
+                setEditingDebt={setEditingDebt}
+                setIsModalOpen={setIsModalOpen}
+                setLoanCalculator={setLoanCalculator}
+                setPaymentInputs={setPaymentInputs}
+                setSimulatorExtraPayment={setSimulatorExtraPayment}
+                setStrategy={setStrategy}
+                setSuperCalculator={setSuperCalculator}
+                simulatorExtraPayment={simulatorExtraPayment}
+                simulatorProjection={simulatorProjection}
+                strategy={strategy}
+                summary={summary}
+                superCalculator={superCalculator}
+                superCalculatorRate={superCalculatorRate}
+                totalDebtWithLiabilities={totalDebtWithLiabilities}
+            />
+
+            <div className="hidden space-y-4 md:block">
             <section className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
@@ -713,9 +752,401 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                     </section>
                 </section>
             )}
+            </div>
         </div>
     );
 };
+
+const MobileDebtManager = ({
+    activeView,
+    crbReportProviders,
+    crbStatus,
+    debtFreeDate,
+    debts,
+    getDebtPaidThisMonth,
+    handleCalculatorDebtSelect,
+    handleDelete,
+    loanCalculator,
+    loanCalculatorRate,
+    orderedDebts,
+    paymentError,
+    paymentInputs,
+    recordDebtPayment,
+    recommendedDebt,
+    selectedCalculatorDebtId,
+    setActiveView,
+    setEditingDebt,
+    setIsModalOpen,
+    setLoanCalculator,
+    setPaymentInputs,
+    setSimulatorExtraPayment,
+    setStrategy,
+    setSuperCalculator,
+    simulatorExtraPayment,
+    simulatorProjection,
+    strategy,
+    summary,
+    superCalculator,
+    superCalculatorRate,
+    totalDebtWithLiabilities,
+}) => {
+    const activeDebts = orderedDebts.filter((debt) => String(debt.status || '').toUpperCase() !== 'PAID_OFF');
+    const hasCrbScore = false;
+    const mobileTabs = [
+        { id: 'crb', label: 'All' },
+        { id: 'portfolio', label: 'My Loans' },
+        { id: 'solutions', label: 'Solutions' },
+        { id: 'simulator', label: 'Calculator' },
+    ];
+
+    return (
+        <section className="md:hidden">
+            <div className="mx-auto min-h-[calc(100vh-9rem)] max-w-[390px] bg-[#f8f8f8] px-3 pb-24 pt-1">
+                <div className="flex items-end justify-between gap-2">
+                    <div className="min-w-0 pb-2">
+                        <p className="text-[12px] leading-4 text-[#111827]">Welcome to your</p>
+                        <h1 className="text-[18px] font-extrabold leading-6 text-[#0c6060]">Debt Manager</h1>
+                        <p className="mt-0.5 text-[12px] leading-4 text-[#111827]">Let&apos;s take your debt management seriously</p>
+                    </div>
+                    <img src={debtManagerHero} alt="" className="h-24 w-[143px] shrink-0 object-contain object-bottom" />
+                </div>
+
+                <div className="mt-6 flex gap-1.5 overflow-x-auto pb-3">
+                    {mobileTabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveView(tab.id)}
+                            className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium ${activeView === tab.id ? 'border-[#eabb3a] bg-[#eabb3a] text-white' : 'border-[#dde1ea] bg-white text-[#5e6a80]'}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {activeView === 'crb' && (
+                    <div className="space-y-4">
+                        <MobileDebtStats
+                            crbStatus={crbStatus}
+                            debtFreeDate={debtFreeDate}
+                            summary={summary}
+                            totalDebtWithLiabilities={totalDebtWithLiabilities}
+                        />
+                        <MobileCrbStatusCard crbStatus={crbStatus} hasCrbScore={hasCrbScore} onPrepare={() => setActiveView('crb')} />
+                        <MobileProviderCards providers={crbReportProviders} />
+                        <MobileCrbChecklist />
+                    </div>
+                )}
+
+                {activeView === 'portfolio' && (
+                    <MobileLoansPanel
+                        debts={activeDebts}
+                        getDebtPaidThisMonth={getDebtPaidThisMonth}
+                        handleDelete={handleDelete}
+                        paymentError={paymentError}
+                        paymentInputs={paymentInputs}
+                        recordDebtPayment={recordDebtPayment}
+                        setEditingDebt={setEditingDebt}
+                        setIsModalOpen={setIsModalOpen}
+                        setPaymentInputs={setPaymentInputs}
+                    />
+                )}
+
+                {activeView === 'solutions' && (
+                    <MobileSolutionsPanel orderedDebts={orderedDebts} recommendedDebt={recommendedDebt} setActiveView={setActiveView} />
+                )}
+
+                {activeView === 'simulator' && (
+                    <MobileCalculatorsPanel
+                        debts={debts}
+                        handleCalculatorDebtSelect={handleCalculatorDebtSelect}
+                        loanCalculator={loanCalculator}
+                        loanCalculatorRate={loanCalculatorRate}
+                        selectedCalculatorDebtId={selectedCalculatorDebtId}
+                        setLoanCalculator={setLoanCalculator}
+                        setSimulatorExtraPayment={setSimulatorExtraPayment}
+                        setStrategy={setStrategy}
+                        setSuperCalculator={setSuperCalculator}
+                        simulatorExtraPayment={simulatorExtraPayment}
+                        simulatorProjection={simulatorProjection}
+                        strategy={strategy}
+                        superCalculator={superCalculator}
+                        superCalculatorRate={superCalculatorRate}
+                    />
+                )}
+            </div>
+        </section>
+    );
+};
+
+const MobileDebtStats = ({ crbStatus, debtFreeDate, summary, totalDebtWithLiabilities }) => {
+    const items = [
+        { label: 'Total Debt', value: currency(totalDebtWithLiabilities), helper: totalDebtWithLiabilities > 0 ? 'Add more if you have more' : 'No debt added yet', icon: WalletCards },
+        { label: 'Monthly Repayments', value: currency(summary.totalMinimumPayment), helper: 'Monthly repayments', icon: CalendarDays },
+        { label: 'CRB Status', value: crbStatus.label, helper: crbStatus.helper, icon: ShieldAlert },
+        { label: 'Debt-free date', value: debtFreeDate, helper: 'At current pace', icon: Target, wide: true },
+    ];
+
+    return (
+        <div className="grid grid-cols-3 gap-[5px]">
+            {items.map((item) => {
+                const Icon = item.icon;
+                return (
+                    <article key={item.label} className={`rounded-[10px] bg-white p-2 shadow-[0_0_1px_rgba(0,0,0,0.12)] ${item.wide ? 'col-span-3' : ''}`}>
+                        <Icon size={16} className="text-[#eabb3a]" />
+                        <p className="mt-1 text-[8px] leading-3 text-[#232e3d]">{item.label}</p>
+                        <p className="mt-0.5 break-words text-[12px] font-semibold leading-4 text-[#0c6060]">{item.value}</p>
+                        <p className="mt-0.5 line-clamp-2 text-[8px] leading-3 text-[#232e3d]">{item.helper}</p>
+                    </article>
+                );
+            })}
+        </div>
+    );
+};
+
+const MobileCrbStatusCard = ({ crbStatus, hasCrbScore, onPrepare }) => (
+    <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4 shadow-[0_32px_25.5px_rgba(0,0,0,0.06)]">
+        <div className="border-b border-[#dde1ea] pb-2">
+            <h2 className="text-[16px] font-semibold leading-6 text-[#0c6060]">CRB Status</h2>
+            <p className="text-[12px] leading-[18px] text-[#707974]">Use this section to understand where to request your CRB report, what to check, and what to do after reviewing your listing.</p>
+        </div>
+        {hasCrbScore ? (
+            <div className="py-5 text-center">
+                <div className="mx-auto flex h-36 w-36 items-center justify-center rounded-full border-[12px] border-[#eabb3a] bg-white">
+                    <div>
+                        <p className="text-[14px] font-semibold text-[#707974]">Good</p>
+                        <p className="text-[44px] font-extrabold leading-none text-[#141c2b]">660</p>
+                        <p className="text-[12px] text-[#eabb3a]">+6pts</p>
+                    </div>
+                </div>
+                <p className="mt-2 text-[12px] text-[#707974]">Last update from your CRB data</p>
+            </div>
+        ) : (
+            <div className="py-5 text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5]">
+                    <FileWarning size={34} className="text-[#0c6060]" />
+                </div>
+                <h3 className="mt-5 text-[18px] font-bold leading-6 text-[#141c2b]">No CRB Status</h3>
+                <p className="mx-auto mt-2 max-w-[17rem] text-[13px] leading-5 text-[#8e97ab]">Prepare your CRB Status to get your most recent Credit score on your debts</p>
+                <button type="button" onClick={onPrepare} className="mt-3 rounded-full bg-[#0c6060] px-7 py-3 text-[14px] font-semibold text-white">Prepare Request</button>
+            </div>
+        )}
+        <div className="rounded-full bg-[linear-gradient(124deg,rgba(234,187,58,0.44)_0%,rgba(234,187,58,0)_93%)] px-4 py-2 text-[12px] text-[#232e3d]">
+            {hasCrbScore ? 'Congrats! you are managing your debts well' : crbStatus.helper || 'Kindly request your CRB Status!'}
+        </div>
+    </article>
+);
+
+const MobileProviderCards = ({ providers }) => (
+    <div className="space-y-3">
+        {providers.map((provider) => (
+            <article key={provider.name} className="flex min-h-[180px] items-center justify-between gap-2 rounded-lg bg-[linear-gradient(180deg,rgba(243,240,208,0.4)_0%,#f9fbf8_100%)] px-6 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                <div className="max-w-[218px] text-[#aa5d04]">
+                    <h3 className="text-[14px] font-semibold leading-4 tracking-[0.5px]">{provider.name}</h3>
+                    <p className="mt-2 text-[12px] font-light leading-4 tracking-[0.4px]">{provider.helper}</p>
+                    <button type="button" className="mt-6 rounded-full border border-[#aa5d04] bg-white/50 px-4 py-1.5 text-[12px] text-[#aa5d04]">Prepare Request</button>
+                </div>
+                <div className="shrink-0 text-right text-[10px] font-bold uppercase tracking-wide text-[#0c6060]">{provider.name}</div>
+            </article>
+        ))}
+    </div>
+);
+
+const MobileCrbChecklist = () => {
+    const checks = [
+        'All active loans match debts you recognise',
+        'There are no unknown lenders or duplicate facilities',
+        'Default or overdue listings have a clear lender to follow up with',
+        'Closed accounts are marked as closed or paid off',
+        'Repayment history reflects recent payments',
+        'Personal details match your ID and phone details',
+    ];
+
+    return (
+        <article className="overflow-hidden rounded-2xl">
+            <div className="flex items-start justify-between bg-[#eabb3a] p-4 text-white">
+                <div>
+                    <h2 className="text-[14px] font-bold capitalize leading-5">What to Check in Your CRB Report</h2>
+                    <p className="mt-1 text-[12px] leading-5">what to check, and what to do after reviewing your listing.</p>
+                </div>
+                <CheckCircle2 size={16} />
+            </div>
+            <div className="bg-[#f4f5f5] p-2">
+                <div className="overflow-hidden rounded-2xl border border-[#ededed]">
+                    {checks.map((check) => (
+                        <div key={check} className="flex items-start gap-4 border-b border-[#ededed] bg-white px-6 py-4 last:border-b-0">
+                            <p className="flex-1 text-[12px] leading-5 text-[#171717]">{check}</p>
+                            <CheckCircle2 size={16} className="shrink-0 text-[#eabb3a]" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </article>
+    );
+};
+
+const MobileLoansPanel = ({ debts, getDebtPaidThisMonth, handleDelete, paymentError, paymentInputs, recordDebtPayment, setEditingDebt, setIsModalOpen, setPaymentInputs }) => (
+    <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4 shadow-[0_32px_25.5px_rgba(0,0,0,0.06)]">
+        <div className="border-b border-[#dde1ea] pb-2">
+            <h2 className="text-[16px] font-semibold leading-6 text-[#0c6060]">Active Debts</h2>
+            <p className="text-[12px] leading-[18px] text-[#707974]">Track all your active debts and manage them to be able to pay them off swiftly</p>
+        </div>
+        {debts.length === 0 ? (
+            <div className="py-5 text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5]">
+                    <Landmark size={34} className="text-[#0c6060]" />
+                </div>
+                <h3 className="mt-5 text-[18px] font-bold leading-6 text-[#141c2b]">No Active Debts</h3>
+                <p className="mx-auto mt-2 max-w-[17rem] text-[13px] leading-5 text-[#8e97ab]">Add your debts to manage them and pay them off swiftly to be safe</p>
+                <button type="button" onClick={() => { setEditingDebt(null); setIsModalOpen(true); }} className="mt-3 rounded-full bg-[#0c6060] px-7 py-3 text-[14px] font-semibold text-white">Add Debt</button>
+                <div className="mt-4 rounded-full bg-[linear-gradient(124deg,rgba(234,187,58,0.44)_0%,rgba(234,187,58,0)_93%)] px-4 py-2 text-left text-[12px] text-[#232e3d]">Kindly add your debts to track them easily!</div>
+            </div>
+        ) : (
+            <div className="mt-4 space-y-3">
+                {debts.map((debt) => {
+                    const paidThisMonth = getDebtPaidThisMonth(debt.id);
+                    const remaining = Math.max(Number(debt.minimumPayment || 0) - paidThisMonth, 0);
+                    return (
+                        <article key={debt.id} className="rounded-xl border border-[#dde1ea] bg-[#fbfdfc] p-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h3 className="truncate text-[14px] font-bold text-[#141c2b]">{debt.name}</h3>
+                                    <p className="mt-1 text-[11px] text-[#707974]">{formatDebtType(debt.debtType)} • {debt.interestRate || 0}% interest</p>
+                                </div>
+                                <p className="shrink-0 text-right text-[14px] font-extrabold text-[#0c6060]">{currency(debt.balance)}</p>
+                            </div>
+                            <div className="mt-3 rounded-lg bg-white px-3 py-2 text-[11px] text-[#5e6a80]">
+                                Monthly repayment: <span className="font-semibold text-[#0c6060]">{currency(debt.minimumPayment)}</span>
+                                <br />
+                                Remaining this month: <span className="font-semibold text-[#aa5d04]">{currency(remaining)}</span>
+                            </div>
+                            <div className="mt-3 flex gap-2">
+                                <NumericInput value={paymentInputs[debt.id] ?? ''} onChange={(event) => setPaymentInputs((current) => ({ ...current, [debt.id]: event.target.value }))} placeholder={`Pay ${currency(debt.minimumPayment)}`} className="min-w-0 flex-1 rounded-xl border border-[#dde1ea] px-3 py-2 text-[12px]" />
+                                <button type="button" onClick={() => recordDebtPayment(debt)} className="rounded-xl bg-[#0c6060] px-3 py-2 text-[12px] font-semibold text-white">Pay</button>
+                            </div>
+                            <div className="mt-2 flex gap-2">
+                                <button type="button" onClick={() => { setEditingDebt(debt); setIsModalOpen(true); }} className="flex-1 rounded-xl border border-[#dde1ea] bg-white px-3 py-2 text-[12px] font-semibold text-[#0c6060]">Edit</button>
+                                <button type="button" onClick={() => handleDelete(debt.id)} className="flex-1 rounded-xl border border-rose-200 bg-white px-3 py-2 text-[12px] font-semibold text-rose-600">Delete</button>
+                            </div>
+                        </article>
+                    );
+                })}
+                {paymentError && <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{paymentError}</div>}
+            </div>
+        )}
+    </article>
+);
+
+const MobileSolutionsPanel = ({ orderedDebts, recommendedDebt, setActiveView }) => (
+    <div className="space-y-3">
+        <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4">
+            <h2 className="text-[16px] font-semibold leading-6 text-[#0c6060]">Explore My Loan Solutions</h2>
+            <p className="mt-1 text-[12px] leading-[18px] text-[#707974]">Compare safer repayment moves using the debts you have added.</p>
+            {orderedDebts.length === 0 ? (
+                <p className="mt-4 rounded-xl border border-dashed border-[#dde1ea] bg-[#f8f8f8] p-4 text-[13px] text-[#707974]">Add debts first so we can suggest refinancing and restructuring options.</p>
+            ) : (
+                <div className="mt-4 space-y-3">
+                    {orderedDebts.slice(0, 3).map((debt) => (
+                        <div key={`${debt.id}-mobile-solution`} className="rounded-xl border border-[#dde1ea] bg-[#fbfdfc] p-3">
+                            <p className="text-[14px] font-bold text-[#141c2b]">{debt.name}</p>
+                            <p className="mt-1 text-[12px] text-[#707974]">{currency(debt.balance)} balance • {debt.interestRate || 0}% interest</p>
+                            <button type="button" onClick={() => setActiveView('simulator')} className="mt-3 rounded-full border border-[#0c6060] px-4 py-2 text-[12px] font-semibold text-[#0c6060]">Simulate savings</button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </article>
+        <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4">
+            <h3 className="text-[14px] font-bold text-[#141c2b]">Recommended next move</h3>
+            <p className="mt-2 text-[12px] leading-5 text-[#707974]">{recommendedDebt ? `Focus on ${recommendedDebt.name} first, then roll freed payments into the next debt.` : 'Once debts are added, Shilingi Moves will show the strongest payoff move.'}</p>
+        </article>
+    </div>
+);
+
+const MobileCalculatorsPanel = ({
+    debts,
+    handleCalculatorDebtSelect,
+    loanCalculator,
+    loanCalculatorRate,
+    selectedCalculatorDebtId,
+    setLoanCalculator,
+    setSimulatorExtraPayment,
+    setStrategy,
+    setSuperCalculator,
+    simulatorExtraPayment,
+    simulatorProjection,
+    strategy,
+    superCalculator,
+    superCalculatorRate,
+}) => (
+    <div className="space-y-3">
+        <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4">
+            <h2 className="text-[16px] font-semibold leading-6 text-[#0c6060]">Debt Payoff Calculator</h2>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+                {['avalanche', 'snowball'].map((option) => (
+                    <button key={option} type="button" onClick={() => setStrategy(option)} className={`rounded-full border px-3 py-2 text-[12px] font-semibold capitalize ${strategy === option ? 'border-[#eabb3a] bg-[#eabb3a] text-white' : 'border-[#dde1ea] bg-white text-[#5e6a80]'}`}>{option}</button>
+                ))}
+            </div>
+            <div className="mt-4 rounded-xl bg-[#f8fcfa] p-3">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-[#707974]">Extra Monthly Payment</p>
+                <p className="mt-1 text-[24px] font-extrabold text-[#0c6060]">{currency(simulatorExtraPayment)}</p>
+                <input type="range" min="0" max="50000" step="1000" value={simulatorExtraPayment} onChange={(event) => setSimulatorExtraPayment(Number(event.target.value))} className="mt-3 w-full accent-[#0c6060]" />
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <MobileMiniMetric label="Debt-free" value={simulatorProjection.debtFreeDate} />
+                <MobileMiniMetric label="Months saved" value={simulatorProjection.freedMonths} />
+                <MobileMiniMetric label="Saved" value={currency(simulatorProjection.extraSavings)} />
+            </div>
+        </article>
+        <MobileLoanCalculatorCard
+            debts={debts}
+            handleCalculatorDebtSelect={handleCalculatorDebtSelect}
+            loanCalculator={loanCalculator}
+            rate={loanCalculatorRate}
+            selectedCalculatorDebtId={selectedCalculatorDebtId}
+            setLoanCalculator={setLoanCalculator}
+            title="Normal Loan Calculator"
+        />
+        <MobileLoanCalculatorCard
+            debts={debts}
+            handleCalculatorDebtSelect={handleCalculatorDebtSelect}
+            loanCalculator={superCalculator}
+            rate={superCalculatorRate}
+            selectedCalculatorDebtId={selectedCalculatorDebtId}
+            setLoanCalculator={setSuperCalculator}
+            title="Super Loan Calculator"
+        />
+    </div>
+);
+
+const MobileLoanCalculatorCard = ({ debts, handleCalculatorDebtSelect, loanCalculator, rate, selectedCalculatorDebtId, setLoanCalculator, title }) => (
+    <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4">
+        <h3 className="text-[14px] font-bold text-[#141c2b]">{title}</h3>
+        <label className="mt-3 block text-[12px] font-semibold text-[#707974]">
+            Prefill from saved debt
+            <select value={selectedCalculatorDebtId} onChange={(event) => handleCalculatorDebtSelect(event.target.value)} className="mt-1 w-full rounded-xl border border-[#dde1ea] bg-white px-3 py-2 text-[12px] text-[#141c2b]">
+                <option value="">Choose saved debt</option>
+                {debts.map((debt) => <option key={`${title}-${debt.id}`} value={debt.id}>{debt.name}</option>)}
+            </select>
+        </label>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+            <NumericInput value={loanCalculator.amount} onChange={(event) => setLoanCalculator((current) => ({ ...current, amount: event.target.value }))} placeholder="Loan amount" className="rounded-xl border border-[#dde1ea] px-3 py-2 text-[12px]" />
+            <NumericInput value={loanCalculator.monthlyPayment} onChange={(event) => setLoanCalculator((current) => ({ ...current, monthlyPayment: event.target.value }))} placeholder="Monthly repayment" className="rounded-xl border border-[#dde1ea] px-3 py-2 text-[12px]" />
+            <input type="number" min="1" value={loanCalculator.months} onChange={(event) => setLoanCalculator((current) => ({ ...current, months: event.target.value }))} placeholder="Months" className="rounded-xl border border-[#dde1ea] px-3 py-2 text-[12px]" />
+            <div className="rounded-xl bg-[#f8fcfa] px-3 py-2 text-[12px]">
+                <p className="text-[#707974]">Est. rate</p>
+                <p className="font-bold text-[#0c6060]">{rate.toFixed(2)}%</p>
+            </div>
+        </div>
+    </article>
+);
+
+const MobileMiniMetric = ({ label, value }) => (
+    <div className="rounded-xl border border-[#dde1ea] bg-white px-2 py-3">
+        <p className="text-[10px] leading-3 text-[#707974]">{label}</p>
+        <p className="mt-1 break-words text-[11px] font-bold text-[#0c6060]">{value}</p>
+    </div>
+);
 
 const StatCard = ({ title, subtitle, value, valueClass }) => (<article className="rounded-[1.2rem] border border-emerald-100 bg-white px-4 py-4 shadow-sm"><p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-[#9bb8af]">{title}</p><p className={`dashboard-metric-value mt-2 text-[1.42rem] font-extrabold leading-none sm:text-[1.58rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{subtitle}</p></article>);
 const TabButton = ({ active, onClick, children }) => (<button type="button" onClick={onClick} className={`rounded-[0.9rem] px-4 py-2.5 text-sm font-semibold transition-colors ${active ? 'bg-[#0f5d50] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>{children}</button>);
