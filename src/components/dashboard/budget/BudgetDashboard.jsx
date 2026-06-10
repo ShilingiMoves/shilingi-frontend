@@ -16,15 +16,17 @@ import {
     updateBudget,
     deleteBudget,
     getExpenses,
+    createExpense,
     getGoals,
     getGoalSummary,
 } from '../../../services/budgetApi';
 import incomeService from '../../../services/incomeService';
 import { getStoredUserProfile } from '../../../services/authApi';
-import { calculateBudgetHealth } from '../../../utils/budgetHelpers';
+import { calculateBudgetHealth, formatCurrency } from '../../../utils/budgetHelpers';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 import NumericInput from '../../common/NumericInput';
+import budgetPlannerHero from '../../../assets/budget-planner-hero.png';
 
 const resolvePayload = (result, fallback) =>
     result?.status === 'fulfilled' ? result.value : fallback;
@@ -143,6 +145,20 @@ const normalizeCategoryOption = (category) => {
 const normalizeLabel = (value = '') => String(value).trim().toLowerCase();
 const todayDate = () => new Date().toISOString().split('T')[0];
 const monthStartDate = () => `${todayDate().slice(0, 7)}-01`;
+const getBudgetCategoryValue = (budget) => String(
+    budget?.category || budget?.category_id || budget?.category_uuid || budget?.categoryId || budget?.category_name || ''
+);
+const getBudgetCategoryIdentifier = (budget) => String(
+    budget?.category || budget?.category_id || budget?.category_uuid || budget?.categoryId || ''
+);
+
+const getExpenseCategoryName = (expense, budgetRows = []) => {
+    if (expense?.category_name) return expense.category_name;
+    const expenseCategory = String(expense?.category || expense?.category_id || expense?.category_uuid || '');
+    return budgetRows.find((budget) => getBudgetCategoryValue(budget) === expenseCategory)?.category_name || '';
+};
+
+const getExpenseLane = (expense, budgetRows = []) => deriveBudgetCategoryType(getExpenseCategoryName(expense, budgetRows));
 
 const getNextMobileBudgetLane = (budgetRows = []) => (
     mobileBudgetLaneOrder.find((lane) => (
@@ -492,6 +508,10 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                                 expenses={expenses}
                                 setup={mobileBudgetSetup}
                                 onExpenseSaved={refreshExpenses}
+                                onComparePlans={() => {
+                                    setSubmitError('');
+                                    setMobileBudgetStage('plans');
+                                }}
                                 onAddBudgetItem={() => {
                                     setMobileBudgetStage('items');
                                     setMobileBudgetLane(getNextMobileBudgetLane(budgets) || 'Needs');
@@ -894,14 +914,12 @@ const MobilePlanCard = ({ plan, onSelect, disabled = false }) => {
 
 const MobilePlanHero = () => (
     <div className="relative h-[110px] w-[110px] shrink-0">
-        <div className="absolute bottom-3 right-1 h-[74px] w-[74px] rounded-full bg-[#f6cf6c]" />
-        <div className="absolute bottom-8 right-7 h-11 w-10 rounded-[19px] bg-[#8f4d2e]" />
-        <div className="absolute bottom-4 right-5 h-8 w-14 rotate-[12deg] rounded-[18px] bg-[#c95b35]" />
-        <div className="absolute bottom-[58px] right-[34px] h-6 w-6 rounded-full bg-[#bd7a4b]" />
-        <div className="absolute bottom-[73px] right-[22px] h-5 w-8 rotate-[20deg] rounded-full bg-[#4a2f29]" />
-        <div className="absolute left-2 top-9 h-[18px] w-[18px] rotate-[-10deg] rounded border-2 border-[#15a8c8] bg-[#e7fbff]" />
-        <div className="absolute right-2 top-7 h-2 w-2 rounded-full bg-[#eabb3a]" />
-        <div className="absolute right-7 top-2 h-[9px] w-[9px] rotate-45 border-b-2 border-r-2 border-[#eabb3a]" />
+        <img
+            src={budgetPlannerHero}
+            alt=""
+            className="absolute inset-0 h-full w-full object-contain"
+            aria-hidden="true"
+        />
     </div>
 );
 
@@ -928,7 +946,7 @@ const MobilePlanIllustration = ({ type, tone }) => {
     );
 };
 
-const MobileExpenseStage = ({ budgets = [], expenses = [], setup, onExpenseSaved, onAddBudgetItem }) => {
+const MobileExpenseStage = ({ budgets = [], expenses = [], setup, onExpenseSaved, onAddBudgetItem, onComparePlans }) => {
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [activeFilter, setActiveFilter] = useState('All');
     const hasBudgetLimits = budgets.length > 0;
@@ -937,11 +955,42 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, onExpenseSaved
         () => (
             activeFilter === 'All'
                 ? expenses
-                : expenses.filter((expense) => deriveBudgetCategoryType(expense?.category_name) === activeFilter)
+                : expenses.filter((expense) => getExpenseLane(expense, budgets) === activeFilter)
         ),
-        [activeFilter, expenses]
+        [activeFilter, budgets, expenses]
     );
     const visibleExpenses = filteredExpenses.slice(0, 3);
+    const filteredBudgets = activeFilter === 'All'
+        ? budgets
+        : budgets.filter((budget) => deriveBudgetCategoryType(budget?.category_name) === activeFilter);
+    const totalAllocated = filteredBudgets.reduce((sum, item) => sum + toNumber(item?.amount), 0);
+    const totalSpent = filteredBudgets.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
+    const remainingBudget = Math.max(totalAllocated - totalSpent, 0);
+    const spendingPercent = totalAllocated > 0 ? Math.min(Math.round((totalSpent / totalAllocated) * 100), 100) : 0;
+    const laneRows = mobileBudgetLaneOrder.map((lane) => {
+        const laneBudgets = budgets.filter((budget) => deriveBudgetCategoryType(budget?.category_name) === lane);
+        const laneExpenses = expenses.filter((expense) => getExpenseLane(expense, budgets) === lane);
+        const laneLimit = laneBudgets.reduce((sum, item) => sum + toNumber(item?.amount), 0);
+        const laneSpent = laneBudgets.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
+        const ratio = laneLimit > 0 ? laneSpent / laneLimit : 0;
+        const status = ratio > 1 ? 'Over Budget' : ratio >= 0.75 ? 'Watch' : 'OnTrack';
+        return { lane, itemCount: laneExpenses.length, laneLimit, status };
+    });
+    const monthBuckets = useMemo(() => {
+        const now = new Date();
+        return Array.from({ length: 6 }, (_, index) => {
+            const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+            const month = date.toLocaleString('en-US', { month: 'short' });
+            const amount = expenses
+                .filter((expense) => {
+                    const expenseDate = new Date(expense?.expense_date || expense?.created_at || '');
+                    return expenseDate.getMonth() === date.getMonth() && expenseDate.getFullYear() === date.getFullYear();
+                })
+                .reduce((sum, expense) => sum + toNumber(expense?.amount), 0);
+            return { month, amount };
+        });
+    }, [expenses]);
+    const maxMonthlySpend = Math.max(...monthBuckets.map((item) => item.amount), 1);
     const emptyTitle = activeFilter === 'All'
         ? 'No recurring transactions'
         : `No ${activeFilter.toLowerCase()} transactions`;
@@ -978,93 +1027,468 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, onExpenseSaved
                 ))}
             </div>
 
-            <div className="mt-8 rounded-[20px] bg-white px-5 py-7 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-                <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#f4f8fb] text-[#0c6060]">
-                    <Receipt size={30} strokeWidth={1.8} />
-                </div>
-                <h2 className="mt-5 text-[15px] font-extrabold text-[#111827]">
-                    {visibleExpenses.length ? `${activeFilter} transactions` : emptyTitle}
-                </h2>
-                <p className="mx-auto mt-2 max-w-[250px] text-[12px] leading-5 text-[#9ca3af]">
-                    {visibleExpenses.length
-                        ? `Showing spending tracked under ${activeFilter === 'All' ? 'your full budget plan' : activeFilter.toLowerCase()}.`
-                        : activeFilter === 'All'
-                            ? 'Add your transactions for your budget to see the magic and turn your allocated savings into action with simple next moves.'
-                            : `You have not added any ${activeFilter.toLowerCase()} transactions yet.`}
-                </p>
-
-                {visibleExpenses.length > 0 && (
-                    <div className="mt-5 space-y-2 text-left">
-                        {visibleExpenses.map((expense) => (
-                            <div key={expense.uuid || expense.id} className="flex items-center justify-between rounded-[12px] bg-[#f8fcfa] px-3 py-2">
-                                <span className="min-w-0 truncate text-[12px] font-semibold text-[#111827]">
-                                    {expense.description || expense.category_name || 'Expense'}
-                                </span>
-                                <span className="text-[12px] font-bold text-[#0c6060]">
-                                    KES {toNumber(expense.amount).toLocaleString('en-KE')}
-                                </span>
-                            </div>
-                        ))}
+            {visibleExpenses.length === 0 ? (
+                <>
+                    <div className="mt-8 rounded-[20px] bg-white px-5 py-7 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                        <div className="mx-auto flex h-[80px] w-[80px] items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5] text-[36px]">
+                            📭
+                        </div>
+                        <h2 className="mt-5 text-[18px] font-bold text-[#141c2b]">{emptyTitle}</h2>
+                        <p className="mx-auto mt-2 max-w-[285px] text-[13px] leading-5 text-[#8e97ab]">
+                            {activeFilter === 'All'
+                                ? 'Add your transactions for your budget to see the magic and turn your allocated savings into action with simple next moves.'
+                                : `You have not added any ${activeFilter.toLowerCase()} transactions yet.`}
+                        </p>
+                        <MobileExpenseActions
+                            hasBudgetLimits={hasBudgetLimits}
+                            onAddBudgetItem={onAddBudgetItem}
+                            onAddTransaction={() => setShowExpenseModal(true)}
+                        />
                     </div>
-                )}
 
-                <div className="mt-6 space-y-3">
-                    <button
-                        type="button"
-                        onClick={() => setShowExpenseModal(true)}
-                        disabled={!hasBudgetLimits}
-                        className="mx-auto flex h-11 w-full max-w-[230px] items-center justify-center rounded-full bg-[#0c6060] px-4 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:bg-[#c7cdd4]"
-                    >
-                        Add Transactions
-                    </button>
-                    {!hasBudgetLimits && (
-                        <button
-                            type="button"
-                            onClick={onAddBudgetItem}
-                            className="mx-auto flex h-10 w-full max-w-[230px] items-center justify-center rounded-full border border-[#d9d9d9] bg-white px-4 text-[12px] font-bold text-[#0c6060]"
-                        >
-                            Add budget limits first
-                        </button>
-                    )}
-                </div>
-            </div>
+                    <div className="mt-5">
+                        <p className="text-[16px] font-bold tracking-[-0.02em] text-[#232e3d]">Use Your Savings Limit Wisely</p>
+                        <p className="mt-1 text-[12px] leading-4 text-[#8e97ab]">
+                            Choose a budget type and add income so we can suggest how to put your savings allocation to work.
+                        </p>
+                        <div className="mt-3 space-y-3">
+                            <MobileSavingsSuggestion tone="amber" title="Emergency Buffer in MMF" body="Keep 3-6 months of essentials liquid in a money market fund for fast access and steadier returns than a normal account." />
+                            <MobileSavingsSuggestion tone="green" title="Short-Term Goals" body="Use MMFs or a high-yield savings lane for goals coming up in under 12 months." />
+                            <MobileSavingsSuggestion tone="purple" title="Treasury Bills" body="Put part of your savings into T-Bills when you want low-risk parking for planned cash." />
+                            <MobileSavingsSuggestion tone="rose" title="Long-Term Wealth" body="Channel the final slice into retirement, long-term investments, or disciplined debt reduction." />
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="mt-4 space-y-4">
+                        <section className="px-2 py-4 text-center">
+                            <p className="text-[12px] leading-5 text-[#67677a]">
+                                {activeFilter === 'All' ? 'Your remaining budget balance' : `${activeFilter} remaining budget balance`}
+                            </p>
+                            <p className="mt-1 text-[36px] font-bold leading-tight text-[#303048]">
+                                {formatCurrency(remainingBudget)}
+                            </p>
+                            <div className="mx-auto mt-3 flex min-h-[34px] max-w-[311px] items-center rounded-full px-4 text-left text-[12px] text-[#232e3d]" style={{ backgroundImage: 'linear-gradient(124deg, rgba(234,187,58,0.44) 0%, rgba(234,187,58,0) 92%)' }}>
+                                😎 Congrats! your month is moving well
+                            </div>
+                        </section>
 
-            <div className="mt-5">
-                <p className="text-[13px] font-bold text-[#111827]">Use Your Savings Limit Wisely</p>
-                <p className="mt-1 text-[11px] leading-4 text-[#9ca3af]">
-                    Choose a budget type and we can suggest how to put your savings allocation to work.
-                </p>
-                <div className="mt-3 space-y-3">
-                    <MobileSavingsSuggestion tone="amber" title="Emergency Buffer in MMF" body="Keep 3-6 months of essentials liquid in a money market fund." />
-                    <MobileSavingsSuggestion tone="green" title="Short-Term Goals" body="Use MMFs or high-yield savings for goals coming up within 12 months." />
-                    <MobileSavingsSuggestion tone="purple" title="Treasury Bills" body="Put part of your savings into T-Bills when you want a low-risk parking option." />
-                </div>
-            </div>
+                        <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-4 py-[18px] shadow-[0_32px_51px_-13px_rgba(34,24,63,0.06)]">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <p className="text-[10px] text-[#67677a]">Spent so far</p>
+                                    <p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(totalSpent)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-[#67677a]">Budget Allocated</p>
+                                    <p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(totalAllocated)}</p>
+                                </div>
+                            </div>
+                            <div className="mt-3 flex items-center justify-between">
+                                <p className="text-[10px] text-[#8e97ab]">Spending Progress</p>
+                                <span className="rounded-full bg-[#eabb3a] px-2 text-[10px] text-[#eff1f5]">{spendingPercent}%</span>
+                            </div>
+                            <div className="mt-2 grid h-1 w-full grid-cols-[50fr_30fr_20fr] overflow-hidden rounded-full bg-[#e3e3e5]">
+                                <span className="bg-[#f46040]" />
+                                <span className="bg-[#56bada]" />
+                                <span className="bg-[#6347eb]" />
+                            </div>
+                            <div className="mt-2 flex gap-4 text-[10px] font-medium">
+                                <span className="text-[#f46040]">• Needs</span>
+                                <span className="text-[#56bada]">• Wants</span>
+                                <span className="text-[#6347eb]">• Savings</span>
+                            </div>
+                        </section>
+
+                        <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-[26px] py-4 shadow-[0_32px_51px_-13px_rgba(0,0,0,0.06)]">
+                            {laneRows.map((row) => (
+                                <MobileBudgetLaneRow key={row.lane} row={row} />
+                            ))}
+                        </section>
+
+                        <section className="rounded-[16px] border border-[#e3e3e5] bg-white py-4 shadow-[0_32px_26px_rgba(0,0,0,0.05)]">
+                            <div className="grid grid-cols-4 gap-2 px-5">
+                                {['3M', '6M', '1Y', 'All'].map((range) => (
+                                    <span key={range} className={`rounded-[12px] border px-2 py-2 text-center text-[12px] ${range === '6M' ? 'border-[#0c6060] bg-[#0c6060] text-white' : 'border-[#dde1ea] text-[#8e97ab]'}`}>
+                                        {range}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="mt-4 px-5">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <p className="text-[13px] font-semibold text-[#141c2b]">March spending</p>
+                                        <p className="text-[24px] font-bold text-[#0c6060]">{formatCurrency(monthBuckets[5]?.amount || totalSpent)}</p>
+                                    </div>
+                                    <span className="rounded-[6px] border border-[#ecedf0] bg-[#fafafa] px-3 py-2 text-[10px] font-semibold text-[#555e67]">
+                                        This month
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex h-[88px] items-end justify-center gap-2">
+                                    {monthBuckets.map((bucket, index) => (
+                                        <div key={bucket.month} className="flex flex-1 flex-col items-center gap-2">
+                                            <span
+                                                className={`w-full rounded-t-[4px] ${index === monthBuckets.length - 1 ? 'bg-[#eabb3a]' : 'bg-[rgba(234,187,58,0.28)]'}`}
+                                                style={{ height: `${Math.max((bucket.amount / maxMonthlySpend) * 88, 18)}px` }}
+                                            />
+                                            <span className="text-[10px] text-[#8e97ab]">{bucket.month}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div className="mt-5">
+                        <p className="text-[16px] font-bold tracking-[-0.02em] text-[#232e3d]">Next Best Actions</p>
+                        <p className="mt-1 text-[12px] leading-4 text-[#8e97ab]">The most useful next steps from this budget.</p>
+                        <div className="mt-3 space-y-3">
+                            <MobileActionCard tone="amber" title="Update budget items" body="Adjust your budget items if your real spending pattern has changed this month." cta="Manage Items" onClick={onAddBudgetItem} />
+                            <MobileActionCard tone="green" title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expenses" onClick={() => setShowExpenseModal(true)} />
+                            <MobileActionCard tone="purple" title="Compare budget models" body="See how switching to another split would change your monthly allocations." cta="Compare Types" onClick={onComparePlans} />
+                        </div>
+                    </div>
+                </>
+            )}
 
             {showExpenseModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 px-3 pb-3 pt-16 sm:hidden">
-                    <div className="max-h-[86vh] w-full overflow-y-auto rounded-t-[22px] bg-white shadow-2xl">
-                        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eeeeee] bg-white px-4 py-3">
-                            <div>
-                                <p className="text-[11px] font-medium text-[#707974]">{setup?.label || 'Budget plan'}</p>
-                                <h3 className="text-[15px] font-extrabold text-[#111827]">Add Item</h3>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowExpenseModal(false)}
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f5f7] text-[#9ca3af]"
-                                aria-label="Close add transaction"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <div className="p-3">
-                            <ExpenseForm onSuccess={handleSaved} onCancel={() => setShowExpenseModal(false)} budgets={budgets} />
-                        </div>
-                    </div>
+                    <MobileTransactionSheet
+                        budgets={budgets}
+                        defaultLane={activeFilter === 'All' ? 'Needs' : activeFilter}
+                        setup={setup}
+                        onClose={() => setShowExpenseModal(false)}
+                        onSaved={handleSaved}
+                    />
                 </div>
             )}
         </section>
+    );
+};
+
+const MobileExpenseActions = ({ hasBudgetLimits, onAddBudgetItem, onAddTransaction }) => (
+    <div className="mt-6 space-y-3">
+        <button
+            type="button"
+            onClick={onAddTransaction}
+            disabled={!hasBudgetLimits}
+            className="mx-auto flex h-11 w-full max-w-[230px] items-center justify-center rounded-full bg-[#0c6060] px-4 text-[13px] font-bold text-white disabled:cursor-not-allowed disabled:bg-[#c7cdd4]"
+        >
+            Add Transactions
+        </button>
+        {!hasBudgetLimits && (
+            <button
+                type="button"
+                onClick={onAddBudgetItem}
+                className="mx-auto flex h-10 w-full max-w-[230px] items-center justify-center rounded-full border border-[#d9d9d9] bg-white px-4 text-[12px] font-bold text-[#0c6060]"
+            >
+                Add budget limits first
+            </button>
+        )}
+    </div>
+);
+
+const MobileBudgetLaneRow = ({ row }) => {
+    const styles = {
+        Needs: { dot: 'bg-[#f46040]', badge: row.status === 'Over Budget' ? 'bg-[#fde0e0] text-[#ef4444]' : 'bg-[#ffd19c] text-[#eb7e00]' },
+        Wants: { dot: 'bg-[#00a63e]', badge: 'bg-[#dbfce7] text-[#00a63e]' },
+        Savings: { dot: 'bg-[#eb7e00]', badge: 'bg-[#ffd19c] text-[#eb7e00]' },
+    }[row.lane];
+
+    return (
+        <div className="flex items-start gap-3 py-2">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${styles.dot}`}>
+                <Home size={15} />
+            </div>
+            <div className="flex min-w-0 flex-1 items-center justify-between">
+                <div className="min-w-0">
+                    <p className="text-[14px] text-[#67677a]">{row.lane}</p>
+                    <p className="text-[12px] font-medium text-[#39444d]">{row.itemCount} Item{row.itemCount === 1 ? '' : 's'}</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-[14px] font-bold text-[#303048]">Limit: {formatCurrency(row.laneLimit)}</p>
+                    <span className={`mt-1 inline-flex rounded-[10px] px-2 py-[3px] text-[9px] ${styles.badge}`}>
+                        {row.status}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MobileActionCard = ({ tone, title, body, cta, onClick }) => {
+    const toneClasses = {
+        amber: { shell: 'bg-[#fff7ed]', icon: 'bg-[#ffedd4] text-[#f54900]', text: 'text-[#7e2a0c]', button: 'border-[#f65e1b] text-[#f54900]' },
+        green: { shell: 'bg-[#f0fdf4]', icon: 'bg-[#dcfce7] text-[#00a63e]', text: 'text-[#00a63e]', button: 'border-[#00a63e] text-[#00a63e]' },
+        purple: { shell: 'bg-[#f3f0fd]', icon: 'bg-[#e7dfff] text-[#4b1d8f]', text: 'text-[#4b1d8f]', button: 'border-[#4b1d8f] text-[#4b1d8f]' },
+    }[tone];
+
+    return (
+        <article className={`flex gap-[26px] rounded-[10px] p-4 ${toneClasses.shell}`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${toneClasses.icon}`}>
+                <Plus size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+                <h3 className={`text-[14px] font-semibold leading-5 tracking-[-0.01em] ${toneClasses.text}`}>{title}</h3>
+                <p className="mt-2 text-[12px] leading-4 text-[#4a5565]">{body}</p>
+                <button
+                    type="button"
+                    onClick={onClick}
+                    className={`mt-3 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] ${toneClasses.button}`}
+                >
+                    <Check size={10} />
+                    {cta}
+                </button>
+            </div>
+        </article>
+    );
+};
+
+const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, onClose, onSaved }) => {
+    const [selectedLane, setSelectedLane] = useState(defaultLane);
+    const [status, setStatus] = useState('Received');
+    const [budgetCategories, setBudgetCategories] = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+    const [formData, setFormData] = useState({
+        category: '',
+        amount: '',
+        expense_date: todayDate(),
+        period: 'Monthly',
+        alert_threshold: 80,
+        is_recurring: true,
+    });
+    const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const categoryOptions = useMemo(
+        () => {
+            const categoriesByName = new Map(
+                budgetCategories.map((category) => [normalizeLabel(category.name), category])
+            );
+
+            return budgets
+                .filter((budget) => deriveBudgetCategoryType(budget?.category_name) === selectedLane)
+                .map((budget) => {
+                    const matchedCategory = categoriesByName.get(normalizeLabel(budget?.category_name));
+                    return {
+                        value: matchedCategory?.value || getBudgetCategoryIdentifier(budget),
+                        name: matchedCategory?.name || budget?.category_name || selectedLane,
+                        remaining: Math.max(toNumber(budget?.amount) - toNumber(budget?.total_spent), 0),
+                    };
+                })
+                .filter((item) => item.name && item.value);
+        },
+        [budgetCategories, budgets, selectedLane]
+    );
+    const selectedCategory = categoryOptions.find((item) => String(item.value) === String(formData.category));
+
+    useEffect(() => {
+        setSelectedLane(defaultLane);
+        setFormData((current) => ({ ...current, category: '' }));
+    }, [defaultLane]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadBudgetCategories = async () => {
+            try {
+                setCategoriesLoading(true);
+                const rows = await getBudgetCategories();
+                if (!cancelled) {
+                    setBudgetCategories((Array.isArray(rows) ? rows : []).map(normalizeCategoryOption));
+                }
+            } catch (err) {
+                if (!cancelled) setError(err.message || 'We could not load budget categories right now.');
+            } finally {
+                if (!cancelled) setCategoriesLoading(false);
+            }
+        };
+
+        loadBudgetCategories();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const updateField = (name, value) => {
+        setError('');
+        setFormData((current) => ({ ...current, [name]: value }));
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setError('');
+
+        if (!formData.category) {
+            setError(`Choose a ${selectedLane.toLowerCase()} item before adding a transaction.`);
+            return;
+        }
+        if (!formData.amount || Number(formData.amount) <= 0) {
+            setError('Enter a valid transaction amount greater than zero.');
+            return;
+        }
+
+        const expenseAmount = Number(formData.amount || 0);
+        if (selectedCategory && expenseAmount > selectedCategory.remaining) {
+            setError(`This transaction exceeds the remaining ${selectedLane.toLowerCase()} limit for ${selectedCategory.name}. Remaining available is ${formatCurrency(selectedCategory.remaining)}.`);
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            // The sheet keeps the Figma status controls for planning context, while
+            // the actual save uses the existing expense endpoint and budget category id.
+            await createExpense({
+                category: formData.category,
+                amount: formData.amount,
+                description: selectedCategory?.name || `${selectedLane} transaction`,
+                expense_date: formData.expense_date,
+                payment_method: 'CASH',
+                currency: 'KES',
+                notes: `${status}; ${formData.period}; ${formData.is_recurring ? 'recurring' : 'one-off'}`,
+            });
+            markDashboardDataExists();
+            await onSaved();
+        } catch (err) {
+            const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
+            setError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="max-h-[86vh] w-full overflow-y-auto rounded-t-[24px] bg-white pt-3 shadow-[0_-8px_20px_rgba(10,16,24,0.2)]">
+            <div className="mx-auto h-1 w-[38px] rounded-full bg-[#dde1ea]" />
+            <div className="relative px-5 pb-2 pt-4">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute right-[18px] top-[14px] flex h-7 w-7 items-center justify-center rounded-[14px] border border-[#dde1ea] bg-[#eff1f5] text-[#5e6a80]"
+                    aria-label="Close add transaction"
+                >
+                    <X size={14} />
+                </button>
+                <p className="text-[11px] text-[#8e97ab]">{setup?.label || 'Budget plan'}</p>
+                <h3 className="mt-1 text-[18px] font-bold text-[#0a1018]">Add Item</h3>
+            </div>
+
+            {error && (
+                <div className="mx-5 mb-3 rounded-[10px] border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-700">
+                    {error}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4 px-5 pb-7">
+                <p className="text-[12px] leading-none text-[#707070]">Start by choosing where do you want your money to be</p>
+                <div className="grid grid-cols-3 gap-2">
+                    {['Received', 'Expected', 'Cancelled'].map((option) => {
+                        const active = status === option;
+                        return (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => setStatus(option)}
+                                className={`flex h-[42px] items-center justify-center gap-2 rounded-[10px] bg-white px-2 text-[12px] shadow-[0_0_1px_rgba(0,0,0,0.25)] ${active ? 'text-[#eabb3a]' : 'text-[#717182]'}`}
+                            >
+                                <span className={`h-5 w-5 rounded-[10px] border-2 ${active ? 'border-[#eabb3a] bg-[#eabb3a]/20' : 'border-[#8e8e93]'}`} />
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div>
+                    <MobileFieldLabel label={`${selectedLane} Item`} />
+                    <select
+                        value={formData.category}
+                        onChange={(event) => updateField('category', event.target.value)}
+                        disabled={categoriesLoading}
+                        className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
+                    >
+                        <option value="">
+                            {categoriesLoading ? 'Loading items...' : categoryOptions.length ? `Eg. ${categoryOptions[0].name}` : `No ${selectedLane.toLowerCase()} items`}
+                        </option>
+                        {categoryOptions.map((item) => (
+                            <option key={item.value} value={item.value}>{item.name}</option>
+                        ))}
+                    </select>
+                    {selectedCategory && (
+                        <p className="mt-1 text-[11px] font-semibold text-[#0c6060]">
+                            Remaining: {formatCurrency(selectedCategory.remaining)}
+                        </p>
+                    )}
+                </div>
+
+                <div>
+                    <MobileFieldLabel label="Amount" />
+                    <NumericInput
+                        value={formData.amount}
+                        onChange={(event) => updateField('amount', event.target.value)}
+                        placeholder="Eg. KES 30,000"
+                        className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                        <MobileFieldLabel label="Period" />
+                        <select
+                            value={formData.period}
+                            onChange={(event) => updateField('period', event.target.value)}
+                            className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
+                        >
+                            <option>Monthly</option>
+                            <option>Weekly</option>
+                            <option>One-off</option>
+                        </select>
+                    </div>
+                    <div>
+                        <MobileFieldLabel label="Date" />
+                        <input
+                            type="date"
+                            value={formData.expense_date}
+                            onChange={(event) => updateField('expense_date', event.target.value)}
+                            className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <div className="flex items-center justify-between">
+                        <MobileFieldLabel label="Alert Threshold" />
+                        <span className="rounded-full bg-[#eabb3a] px-2 text-[10px] text-[#eff1f5]">{formData.alert_threshold}%</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={formData.alert_threshold}
+                        onChange={(event) => updateField('alert_threshold', event.target.value)}
+                        className="mt-3 h-2 w-full accent-[#eabb3a]"
+                    />
+                </div>
+
+                <label className="flex items-center gap-2 py-2 text-[14px] font-semibold tracking-[0.2px] text-[#6b7280]">
+                    <input
+                        type="checkbox"
+                        checked={formData.is_recurring}
+                        onChange={(event) => updateField('is_recurring', event.target.checked)}
+                        className="h-5 w-5 accent-[#0c6060]"
+                    />
+                    Is this a recurring transaction?
+                </label>
+
+                <button
+                    type="submit"
+                    disabled={submitting || categoriesLoading || categoryOptions.length === 0}
+                    className="flex h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#0c6060] p-4 text-[16px] font-bold text-white disabled:cursor-not-allowed disabled:bg-[#c7cdd4]"
+                >
+                    <Plus size={20} />
+                    {submitting ? 'Adding...' : 'Add Transaction'}
+                </button>
+            </form>
+        </div>
     );
 };
 
@@ -1073,6 +1497,7 @@ const MobileSavingsSuggestion = ({ tone, title, body }) => {
         amber: 'bg-[#fff4e8] text-[#e28a17]',
         green: 'bg-[#eaf8ef] text-[#26a96c]',
         purple: 'bg-[#f3ecff] text-[#7c4dff]',
+        rose: 'bg-[#fdf0f0] text-[#d45757]',
     };
 
     return (
