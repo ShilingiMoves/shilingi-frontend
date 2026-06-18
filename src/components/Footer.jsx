@@ -350,13 +350,13 @@ const Footer = () => {
                                 </a>
                             </li>
                             <li>
-                                <a href="tel:+254700000000" className="group flex items-start gap-3 text-sm !text-white/80 transition-colors hover:!text-white">
+                                <a href="tel:+254727005993" className="group flex items-start gap-3 text-sm !text-white/80 transition-colors hover:!text-white">
                                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] transition-colors group-hover:bg-white/[0.12]">
                                         <Phone size={14} className="text-emerald-300 transition-colors group-hover:text-white" />
                                     </div>
                                     <div>
                                         <p className="mb-0.5 text-xs !text-white/50">Contact us</p>
-                                        <p className="font-semibold !text-white transition-colors group-hover:!text-white">+254 700 000 000</p>
+                                        <p className="font-semibold !text-white transition-colors group-hover:!text-white">+254 727 005 993</p>
                                     </div>
                                 </a>
                             </li>

@@ -98,8 +98,13 @@ const SignUpPage = () => {
                 email,
                 redirect_url: getEmailVerificationRedirectUrl(),
             });
+            try {
+                sessionStorage.setItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY, email);
+            } catch {
+                // If storage is blocked, the email can still be entered manually when resending.
+            }
             setVerificationEmail(email);
-            setSuccess('We sent a fresh verification email. Please check your inbox and spam folder.');
+            setSuccess('We sent a fresh verification email. Please check your inbox and spam folder, then open the verification link to set your password.');
         } catch (err) {
             setError(err.message || 'We could not resend the verification email right now.');
         } finally {

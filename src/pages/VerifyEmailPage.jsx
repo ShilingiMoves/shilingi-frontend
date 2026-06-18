@@ -30,6 +30,7 @@ const VerifyEmailPage = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isResendingVerification, setIsResendingVerification] = useState(false);
+    const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
 
     const passedRules = useMemo(
         () => passwordRules.filter((rule) => rule.test(formValues.password)),
@@ -37,7 +38,7 @@ const VerifyEmailPage = () => {
     );
     const isPasswordStrong = passedRules.length === passwordRules.length;
     const passwordsMatch = formValues.password && formValues.password === formValues.password_confirm;
-    const canSubmit = isPasswordStrong && passwordsMatch && Boolean(recoveryEmail.trim()) && !isSubmitting;
+    const canSubmit = isPasswordStrong && passwordsMatch && !isSubmitting;
     const shouldShowRecoveryHint = status === 'setup' && !message.toLowerCase().includes('verified');
 
     useEffect(() => {
@@ -47,13 +48,19 @@ const VerifyEmailPage = () => {
 
         async function completeVerification() {
             try {
-                await verifyEmail({ token });
+                const verificationResult = await verifyEmail({ token });
 
                 if (!isMounted) return;
+                const verifiedEmail = extractEmailFromPayload(verificationResult);
+                if (verifiedEmail) {
+                    setRecoveryEmail(verifiedEmail);
+                    storeVerificationEmail(verifiedEmail);
+                }
                 setStatus('setup');
                 setMessage('Your email is verified. Create a strong password to secure your Shilingi Moves account.');
             } catch (error) {
                 if (!isMounted) return;
+                setResendCooldownSeconds(getRetryDelaySeconds(error.message));
                 setStatus('error');
                 setMessage(error.message || 'We could not verify this email link. Please request a new verification email.');
             }
@@ -66,11 +73,21 @@ const VerifyEmailPage = () => {
         };
     }, [token]);
 
+    useEffect(() => {
+        if (resendCooldownSeconds <= 0) return undefined;
+
+        const timer = window.setInterval(() => {
+            setResendCooldownSeconds((seconds) => Math.max(seconds - 1, 0));
+        }, 1000);
+
+        return () => window.clearInterval(timer);
+    }, [resendCooldownSeconds]);
+
     const handleChange = (event) => {
         const { name, value } = event.target;
         setFormValues((current) => ({
             ...current,
-            [name]: value,
+            [name]: sanitizePasswordInput(value),
         }));
     };
 
@@ -93,18 +110,16 @@ const VerifyEmailPage = () => {
             const passwordSetup = await completePasswordSetup({
                 token,
                 new_password: formValues.password,
-                new_password_confirm: formValues.password_confirm,
+                new_password_confirm: formValues.password,
             });
 
-            const email = recoveryEmail.trim().toLowerCase();
-
-            if (!email) {
-                setStatus('complete');
-                setMessage('Your account password is set. You can now sign in with the email and password you used to create your account.');
-                return;
-            }
+            const email = (extractEmailFromPayload(passwordSetup.result) || recoveryEmail).trim().toLowerCase();
 
             if (!passwordSetup.authenticated) {
+                if (!email) {
+                    throw new Error('Your password was saved, but the server did not return a login session. Please sign in with your verified email and new password.');
+                }
+
                 await loginUser({
                     email,
                     password: formValues.password,
@@ -133,14 +148,26 @@ const VerifyEmailPage = () => {
             return;
         }
 
+        if (resendCooldownSeconds > 0) {
+            setMessage(`Please wait ${resendCooldownSeconds} seconds before requesting a fresh verification link.`);
+            return;
+        }
+
         try {
             setIsResendingVerification(true);
             await resendVerificationEmail({
                 email,
                 redirect_url: getEmailVerificationRedirectUrl(),
             });
-            setMessage('We sent a fresh verification email. Please check your inbox and spam folder.');
+            storeVerificationEmail(email);
+            setRecoveryEmail(email);
+            setStatus('resent');
+            setMessage('We sent a fresh verification email. Please check your inbox and spam folder, then open the verification link to set your password.');
         } catch (error) {
+            const retryDelay = getRetryDelaySeconds(error.message);
+            if (retryDelay > 0) {
+                setResendCooldownSeconds(retryDelay);
+            }
             setMessage(error.message || 'We could not send a fresh verification email right now.');
         } finally {
             setIsResendingVerification(false);
@@ -183,13 +210,50 @@ const VerifyEmailPage = () => {
                                 className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500"
                             />
                         </label>
-                        <Button type="submit" variant="primary" className="w-full justify-center" disabled={isResendingVerification}>
-                            {isResendingVerification ? 'Sending fresh link...' : 'Send fresh verification link'}
+                        <Button type="submit" variant="primary" className="w-full justify-center" disabled={isResendingVerification || resendCooldownSeconds > 0}>
+                            {isResendingVerification
+                                ? 'Sending fresh link...'
+                                : resendCooldownSeconds > 0
+                                    ? `Try again in ${resendCooldownSeconds}s`
+                                    : 'Send fresh verification link'}
                         </Button>
                         <p className="text-center text-sm leading-6 text-gray-500">
                             Use the same email you used when creating your account. If you do not see the new email, check spam or junk.
                         </p>
                     </form>
+                </StatusPanel>
+            </VerificationShell>
+        );
+    }
+
+    if (status === 'resent') {
+        return (
+            <VerificationShell>
+                <StatusPanel
+                    icon={<MailCheck size={32} />}
+                    tone="emerald"
+                    eyebrow="Verification email sent"
+                    title="Check your email"
+                    message={message}
+                >
+                    <div className="mx-auto mt-8 max-w-md space-y-4 text-center">
+                        <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+                            We sent it to <span className="font-semibold">{recoveryEmail}</span>. If you do not see it, check spam or junk before requesting another one.
+                        </p>
+                        <form onSubmit={handleResendVerification}>
+                            <button
+                                type="submit"
+                                disabled={isResendingVerification || resendCooldownSeconds > 0 || !recoveryEmail.trim()}
+                                className="text-sm font-semibold text-primary-700 transition-colors hover:text-primary-600 disabled:cursor-not-allowed disabled:text-gray-400"
+                            >
+                                {isResendingVerification
+                                    ? 'Sending fresh verification link...'
+                                    : resendCooldownSeconds > 0
+                                        ? `Try again in ${resendCooldownSeconds}s`
+                                        : 'Send another verification link'}
+                            </button>
+                        </form>
+                    </div>
                 </StatusPanel>
             </VerificationShell>
         );
@@ -235,16 +299,6 @@ const VerifyEmailPage = () => {
                 )}
 
                 <form onSubmit={handlePasswordSetup} className="mt-8 space-y-5">
-                    <label className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.08)] focus-within:border-primary-500">
-                        <span className="text-xs font-medium text-gray-600">Email address<span className="text-rose-500">*</span></span>
-                        <input
-                            type="email"
-                            value={recoveryEmail}
-                            onChange={(event) => setRecoveryEmail(event.target.value)}
-                            required
-                            className="mt-1 w-full border-0 bg-transparent p-0 text-base text-gray-900 outline-none placeholder:text-gray-400"
-                        />
-                    </label>
                     <PasswordField
                         label="Enter password"
                         name="password"
@@ -291,10 +345,14 @@ const VerifyEmailPage = () => {
                 <form onSubmit={handleResendVerification} className="mx-auto mt-6 max-w-md text-center">
                     <button
                         type="submit"
-                        disabled={isResendingVerification || !recoveryEmail.trim()}
+                        disabled={isResendingVerification || resendCooldownSeconds > 0 || !recoveryEmail.trim()}
                         className="text-sm font-semibold text-primary-700 transition-colors hover:text-primary-600 disabled:cursor-not-allowed disabled:text-gray-400"
                     >
-                        {isResendingVerification ? 'Sending fresh verification link...' : 'Request a fresh verification link'}
+                        {isResendingVerification
+                            ? 'Sending fresh verification link...'
+                            : resendCooldownSeconds > 0
+                                ? `Try again in ${resendCooldownSeconds}s`
+                                : 'Request a fresh verification link'}
                     </button>
                 </form>
             </section>
@@ -332,6 +390,40 @@ function getStoredVerificationEmail() {
     }
 }
 
+function storeVerificationEmail(email) {
+    if (typeof window === 'undefined' || !email) return;
+
+    try {
+        sessionStorage.setItem('shilingi_pending_profile_signup_email', email.trim().toLowerCase());
+    } catch {
+        // Session storage can be unavailable in private or restricted browser contexts.
+    }
+}
+
+function sanitizePasswordInput(value) {
+    return String(value || '').replace(/[\r\n]/g, '');
+}
+
+function extractEmailFromPayload(payload) {
+    const candidates = [
+        payload?.email,
+        payload?.user?.email,
+        payload?.data?.email,
+        payload?.data?.user?.email,
+        payload?.result?.email,
+        payload?.result?.user?.email,
+        payload?.result?.data?.email,
+        payload?.result?.data?.user?.email,
+    ];
+
+    return candidates.find((candidate) => typeof candidate === 'string' && candidate.includes('@')) || '';
+}
+
+function getRetryDelaySeconds(message) {
+    const match = String(message || '').match(/(?:in|available in)\s+(\d+)\s+seconds?/i);
+    return match ? Number(match[1]) : 0;
+}
+
 const StatusPanel = ({ children, eyebrow, icon, message, title, tone }) => {
     const toneClasses = {
         amber: 'bg-amber-50 text-amber-700',
@@ -362,6 +454,7 @@ const PasswordField = ({ label, name, onChange, onToggleVisibility, value, visib
                 type={visible ? 'text' : 'password'}
                 value={value}
                 onChange={onChange}
+                autoComplete="new-password"
                 minLength={8}
                 maxLength={15}
                 required
