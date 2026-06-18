@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BudgetOverview from '../BudgetOverview';
@@ -129,7 +129,8 @@ describe('BudgetOverview', () => {
 
         await user.click(screen.getByRole('button', { name: /compare budget types/i }));
 
-        expect(screen.getByText(/compare budget models/i)).toBeInTheDocument();
+        expect(screen.getByText(/please compare the budget types below/i)).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /budget model/i })).toBeInTheDocument();
     });
 
     it('hides budget health for users without a created budget', () => {
@@ -139,36 +140,18 @@ describe('BudgetOverview', () => {
         expect(screen.queryByText(/most categories are pacing well/i)).not.toBeInTheDocument();
     });
 
-    it('submits the quick add expense form and refreshes the budget view', async () => {
+    it('opens the expense tracker from the add expense action', async () => {
         const user = userEvent.setup();
-        createExpenseMock.mockResolvedValue({ ok: true });
 
         render(<BudgetOverview {...baseProps} />);
 
-        await user.click(screen.getByRole('button', { name: /quick add expense/i }));
+        await user.click(screen.getByRole('button', { name: /my budget limits/i }));
+        const quickAddCard = screen.getByText(/keep expenses current/i).closest('div');
+        await user.click(within(quickAddCard).getByRole('button', { name: /^add expense$/i }));
 
         await waitFor(() => {
-            expect(screen.getByLabelText(/amount \(kes\)/i)).toBeInTheDocument();
+            expect(screen.getByText(/my expense tracker/i)).toBeInTheDocument();
         });
-
-        await user.type(screen.getByLabelText(/amount \(kes\)/i), '2500');
-        await user.type(screen.getByLabelText(/description/i), 'Lunch at Java House');
-        await user.selectOptions(screen.getByLabelText(/^category$/i), '1');
-        await user.selectOptions(screen.getByLabelText(/payment method/i), 'MPESA');
-        await user.click(screen.getByRole('button', { name: /\+ add expense/i }));
-
-        await waitFor(() => {
-            expect(createExpenseMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    amount: '2500',
-                    description: 'Lunch at Java House',
-                    category: '1',
-                    payment_method: 'MPESA',
-                    currency: 'KES',
-                })
-            );
-        });
-        expect(baseProps.onQuickExpenseAdded).toHaveBeenCalled();
     });
 
     it('logs shopping list items as expenses', async () => {

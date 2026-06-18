@@ -23,6 +23,15 @@ const RESEND_VERIFICATION_ENDPOINT = `${API_URL}/api/v1/auth/resend-verification
 const PROFILE_ENDPOINT = `${API_URL}/api/v1/users/me/`;
 const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
 
+export class AuthApiError extends Error {
+    constructor(message, { payload = null, status = null } = {}) {
+        super(message);
+        this.name = 'AuthApiError';
+        this.payload = payload;
+        this.status = status;
+    }
+}
+
 async function parseResponse(response) {
     const rawText = await response.text();
     let payload = null;
@@ -44,7 +53,7 @@ async function parseResponse(response) {
             ? Object.values(payload.errors).flat().find(Boolean)
             : null;
         const message = payload?.message || payload?.detail || firstFieldError || `Request failed with status ${response.status}`;
-        throw new Error(message);
+        throw new AuthApiError(message, { payload, status: response.status });
     }
 
     return payload;

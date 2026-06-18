@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, MailCheck, UserRoundPlus } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Lock, MailCheck, UserRoundPlus } from 'lucide-react';
 import Button from '../components/Button';
 import { registerUser, resendVerificationEmail } from '../services/authApi';
 import VerifyEmailPage from './VerifyEmailPage';
 
 export const PENDING_PROFILE_SIGNUP_EMAIL_KEY = 'shilingi_pending_profile_signup_email';
+
+const passwordRules = [
+    { id: 'length', label: 'Password has at least 8 characters.', test: (value) => value.length >= 8 && value.length <= 15 },
+    { id: 'special', label: 'Password has special characters.', test: (value) => /[^A-Za-z0-9]/.test(value) },
+    { id: 'number', label: 'Password has a number.', test: (value) => /\d/.test(value) },
+    { id: 'capital', label: 'Password has a capital letter.', test: (value) => /[A-Z]/.test(value) },
+    { id: 'lowercase', label: 'Password has a lowercase letter.', test: (value) => /[a-z]/.test(value) },
+];
 
 function getEmailVerificationRedirectUrl() {
     const configuredUrl = import.meta.env.VITE_EMAIL_VERIFICATION_REDIRECT_URL;
@@ -30,12 +38,17 @@ const SignUpPage = () => {
         last_name: '',
         email: '',
         phone_number: '',
+        password: '',
+        password_confirm: '',
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isResendingVerification, setIsResendingVerification] = useState(false);
     const [verificationEmail, setVerificationEmail] = useState('');
+    const [isAccountAlreadyVerified, setIsAccountAlreadyVerified] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     if (verificationToken) {
         return <VerifyEmailPage />;
@@ -45,37 +58,67 @@ const SignUpPage = () => {
         const { name, value } = event.target;
         setFormValues((current) => ({
             ...current,
-            [name]: value,
+            [name]: name.includes('password') ? sanitizePasswordInput(value) : value,
         }));
     };
 
-    const handleSubmit = async (event) => {
+    const handleDetailsSubmit = (event) => {
         event.preventDefault();
         setError('');
         setSuccess('');
+        setIsAccountAlreadyVerified(false);
+        setFormValues((current) => ({
+            ...current,
+            email: current.email.trim().toLowerCase(),
+        }));
+        setStep('password');
+    };
+
+    const handleRegisterSubmit = async (event) => {
+        event.preventDefault();
+        setError('');
+        setSuccess('');
+        setIsAccountAlreadyVerified(false);
+
+        const passwordIssues = getPasswordIssues(formValues.password, formValues.password_confirm);
+        if (passwordIssues) {
+            setError(passwordIssues);
+            return;
+        }
 
         try {
             setIsSubmitting(true);
             const normalizedEmail = formValues.email.trim().toLowerCase();
-            const provisionalPassword = createProvisionalSignupPassword();
-            // Include default_currency as 'KES' by default as required by backend
             await registerUser({
-                ...formValues,
+                first_name: formValues.first_name.trim(),
+                last_name: formValues.last_name.trim(),
                 email: normalizedEmail,
-                password: provisionalPassword,
-                password_confirm: provisionalPassword,
+                phone_number: formValues.phone_number.trim(),
+                password: formValues.password,
+                password_confirm: formValues.password,
                 default_currency: 'KES',
                 redirect_url: getEmailVerificationRedirectUrl(),
             });
-            try {
-                sessionStorage.setItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY, normalizedEmail);
-            } catch {
-                // If storage is blocked, sign-in will still use profile completeness.
-            }
+            storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
             setStep('verify');
             setSuccess('Your account was created. Please verify your email before signing in.');
         } catch (err) {
+            const normalizedEmail = formValues.email.trim().toLowerCase();
+            if (normalizedEmail && isExistingAccountError(err)) {
+                try {
+                    const resendResult = await sendVerificationForExistingAccount(normalizedEmail);
+                    setVerificationEmail(normalizedEmail);
+                    setStep('verify');
+                    setIsAccountAlreadyVerified(isAlreadyVerifiedResponse(resendResult));
+                    setSuccess(getVerificationResendSuccessMessage(resendResult, 'This account already exists but still needs verification. We sent a fresh verification email. Please check your inbox and spam folder, then open the link to verify your email.'));
+                    return;
+                } catch (resendError) {
+                    setError(getExistingAccountRecoveryMessage(resendError));
+                    return;
+                }
+            }
+
             setError(err.message || 'We could not create your account right now.');
         } finally {
             setIsSubmitting(false);
@@ -86,6 +129,7 @@ const SignUpPage = () => {
         const email = verificationEmail || formValues.email.trim().toLowerCase();
         setError('');
         setSuccess('');
+        setIsAccountAlreadyVerified(false);
 
         if (!email) {
             setError('Enter your email address so we can send a verification link.');
@@ -94,17 +138,14 @@ const SignUpPage = () => {
 
         try {
             setIsResendingVerification(true);
-            await resendVerificationEmail({
+            const resendResult = await resendVerificationEmail({
                 email,
                 redirect_url: getEmailVerificationRedirectUrl(),
             });
-            try {
-                sessionStorage.setItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY, email);
-            } catch {
-                // If storage is blocked, the email can still be entered manually when resending.
-            }
+            storePendingSignupEmail(email);
             setVerificationEmail(email);
-            setSuccess('We sent a fresh verification email. Please check your inbox and spam folder, then open the verification link to set your password.');
+            setIsAccountAlreadyVerified(isAlreadyVerifiedResponse(resendResult));
+            setSuccess(getVerificationResendSuccessMessage(resendResult, 'We sent a fresh verification email. Please check your inbox and spam folder, then open the verification link to activate your account.'));
         } catch (err) {
             setError(err.message || 'We could not resend the verification email right now.');
         } finally {
@@ -135,23 +176,42 @@ const SignUpPage = () => {
                 </section>
 
                 <section className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm sm:p-10">
-                    {step === 'form' ? (
+                    {step === 'form' && (
                         <div className="mb-8">
                             <h2 className="text-3xl font-extrabold text-gray-900">Create your account</h2>
                             <p className="mt-2 text-sm leading-6 text-gray-600">Fill in your details below. We will verify your email before you set your password.</p>
                         </div>
-                    ) : (
+                    )}
+
+                    {step === 'password' && (
+                        <div className="mb-8">
+                            <h2 className="text-3xl font-extrabold text-gray-900">Create your password</h2>
+                            <p className="mt-2 text-sm leading-6 text-gray-600">Use a strong password now, then verify your email before signing in.</p>
+                        </div>
+                    )}
+
+                    {step === 'verify' && (
                         <div className="mb-8">
                             <div className="mb-5 inline-flex rounded-3xl bg-emerald-50 p-4 text-emerald-700">
                                 <MailCheck size={28} />
                             </div>
-                            <h2 className="text-3xl font-extrabold text-gray-900">Verify this account is yours</h2>
-                            <p className="mt-2 text-sm leading-6 text-gray-600">
-                                We have sent you an email at <span className="font-semibold text-gray-900">{verificationEmail}</span>. Click the link in your inbox to verify your email and continue setting up your account.
-                            </p>
-                            <p className="mt-3 text-sm leading-6 text-gray-500">
-                                If you do not see the email, please check your spam or junk folder.
-                            </p>
+                            <h2 className="text-3xl font-extrabold text-gray-900">
+                                {isAccountAlreadyVerified ? 'Account already verified' : 'Verify this account is yours'}
+                            </h2>
+                            {isAccountAlreadyVerified ? (
+                                <p className="mt-2 text-sm leading-6 text-gray-600">
+                                    <span className="font-semibold text-gray-900">{verificationEmail}</span> is already verified, so we will not send another verification email. Sign in to continue, or reset your password if you cannot remember it.
+                                </p>
+                            ) : (
+                                <>
+                                    <p className="mt-2 text-sm leading-6 text-gray-600">
+                                        We have sent you an email at <span className="font-semibold text-gray-900">{verificationEmail}</span>. Click the link in your inbox to verify your email and continue setting up your account.
+                                    </p>
+                                    <p className="mt-3 text-sm leading-6 text-gray-500">
+                                        If you do not see the email, please check your spam or junk folder.
+                                    </p>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -169,7 +229,7 @@ const SignUpPage = () => {
                     )}
 
                     {step === 'form' ? (
-                        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+                        <form onSubmit={handleDetailsSubmit} className="grid gap-4 sm:grid-cols-2">
                             <Field label="First name" name="first_name" value={formValues.first_name} onChange={handleChange} placeholder="John" required />
                             <Field label="Last name" name="last_name" value={formValues.last_name} onChange={handleChange} placeholder="Doe" required />
                             <div className="sm:col-span-2">
@@ -179,19 +239,72 @@ const SignUpPage = () => {
                                 <Field label="Phone number (optional)" name="phone_number" value={formValues.phone_number} onChange={handleChange} placeholder="0700 000 000" />
                             </div>
                             <div className="sm:col-span-2">
+                                <Button type="submit" variant="primary" className="w-full justify-center">
+                                    Create account
+                                </Button>
+                            </div>
+                        </form>
+                    ) : step === 'password' ? (
+                        <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                            <PasswordField
+                                label="Enter password"
+                                name="password"
+                                value={formValues.password}
+                                onChange={handleChange}
+                                visible={showPassword}
+                                onToggleVisibility={() => setShowPassword((current) => !current)}
+                            />
+                            <PasswordField
+                                label="Confirm password"
+                                name="password_confirm"
+                                value={formValues.password_confirm}
+                                onChange={handleChange}
+                                visible={showConfirmPassword}
+                                onToggleVisibility={() => setShowConfirmPassword((current) => !current)}
+                            />
+
+                            <div className="space-y-3 pt-1">
+                                {passwordRules.map((rule) => (
+                                    <PasswordRule key={rule.id} passed={rule.test(formValues.password)} label={rule.label} />
+                                ))}
+                                <PasswordRule passed={Boolean(formValues.password && formValues.password === formValues.password_confirm)} label="Passwords match." />
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-[0.45fr_1fr]">
+                                <button
+                                    type="button"
+                                    onClick={() => setStep('form')}
+                                    className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-gray-200 px-6 py-3 text-base font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+                                >
+                                    Back
+                                </button>
                                 <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
-                                    {isSubmitting ? 'Creating your account...' : 'Create account and verify email'}
+                                    {isSubmitting ? 'Creating your account...' : 'Proceed'}
                                 </Button>
                             </div>
                         </form>
                     ) : (
                         <div className="space-y-3">
-                            <Button type="button" variant="outline" className="w-full justify-center" onClick={handleResendVerification} disabled={isResendingVerification}>
-                                {isResendingVerification ? 'Sending verification email...' : 'Resend verification email'}
-                            </Button>
+                            {isAccountAlreadyVerified ? (
+                                <>
+                                    <Button to="/signin" variant="primary" className="w-full justify-center">
+                                        Sign in
+                                    </Button>
+                                    <Button to="/forgot-password" variant="outline" className="w-full justify-center">
+                                        Forgot password
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button type="button" variant="outline" className="w-full justify-center" onClick={handleResendVerification} disabled={isResendingVerification}>
+                                    {isResendingVerification ? 'Sending verification email...' : 'Resend verification email'}
+                                </Button>
+                            )}
                             <button
                                 type="button"
-                                onClick={() => setStep('form')}
+                                onClick={() => {
+                                    setIsAccountAlreadyVerified(false);
+                                    setStep('form');
+                                }}
                                 className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-200 hover:text-primary-700"
                             >
                                 Edit email details
@@ -208,20 +321,85 @@ const SignUpPage = () => {
     );
 };
 
-function createProvisionalSignupPassword() {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-    const bytes = new Uint8Array(8);
+async function sendVerificationForExistingAccount(email) {
+    const result = await resendVerificationEmail({
+        email,
+        redirect_url: getEmailVerificationRedirectUrl(),
+    });
+    storePendingSignupEmail(email);
+    return result;
+}
 
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-        crypto.getRandomValues(bytes);
-    } else {
-        for (let index = 0; index < bytes.length; index += 1) {
-            bytes[index] = Math.floor(Math.random() * 256);
-        }
+function storePendingSignupEmail(email) {
+    if (typeof window === 'undefined') return;
+
+    try {
+        sessionStorage.setItem(PENDING_PROFILE_SIGNUP_EMAIL_KEY, email);
+    } catch {
+        // If storage is blocked, the email can still be entered manually when resending.
+    }
+}
+
+function isExistingAccountError(error) {
+    const payloadText = JSON.stringify(error?.payload || {}).toLowerCase();
+    const message = `${error?.message || ''} ${payloadText}`.toLowerCase();
+    return error?.status === 409
+        || message.includes('already exists')
+        || message.includes('already registered')
+        || message.includes('email exists')
+        || message.includes('user exists')
+        || message.includes('account exists');
+}
+
+function getExistingAccountRecoveryMessage(error) {
+    const message = String(error?.message || '').toLowerCase();
+    if (message.includes('already verified') || message.includes('active')) {
+        return 'This account already exists and appears to be verified. Please sign in, or use forgot password if you cannot remember your password.';
     }
 
-    const randomPart = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
-    return `Sm${randomPart}9!`;
+    return error?.message || 'This account already exists, but we could not send a fresh verification email right now.';
+}
+
+function getVerificationResendSuccessMessage(payload, fallback) {
+    const backendMessage = extractBackendMessage(payload);
+    return backendMessage || fallback;
+}
+
+function isAlreadyVerifiedResponse(payload) {
+    const backendMessage = extractBackendMessage(payload).toLowerCase();
+    return Boolean(payload?.already_verified)
+        || Boolean(payload?.data?.already_verified)
+        || backendMessage.includes('already verified')
+        || backendMessage.includes('already active');
+}
+
+function extractBackendMessage(payload) {
+    const candidates = [
+        payload?.message,
+        payload?.detail,
+        payload?.data?.message,
+        payload?.data?.detail,
+    ];
+
+    return candidates.find((candidate) => typeof candidate === 'string' && candidate.trim()) || '';
+}
+
+function sanitizePasswordInput(value) {
+    return String(value || '').replace(/[\r\n]/g, '');
+}
+
+function getPasswordIssues(password, passwordConfirm) {
+    const isStrong = passwordRules.every((rule) => rule.test(password));
+
+    if (!isStrong) {
+        return 'Please create a strong password: 8 to 15 characters with uppercase, lowercase, number, and symbol.';
+    }
+
+    if (!password || password !== passwordConfirm) {
+        return 'Your passwords do not match. Please enter the same password in both fields.';
+    }
+
+    return '';
 }
 
 const Field = ({ label, ...props }) => (
@@ -232,6 +410,45 @@ const Field = ({ label, ...props }) => (
             className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500"
         />
     </label>
+);
+
+const PasswordField = ({ label, name, onChange, onToggleVisibility, value, visible }) => (
+    <label className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.08)] focus-within:border-primary-500">
+        <span className="text-xs font-medium text-gray-600">{label}<span className="text-rose-500">*</span></span>
+        <span className="mt-1 flex items-center gap-3">
+            <Lock size={18} className="text-gray-500" />
+            <input
+                name={name}
+                type={visible ? 'text' : 'password'}
+                value={value}
+                onChange={onChange}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={15}
+                required
+                className="min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-gray-900 outline-none placeholder:text-gray-400"
+            />
+            <button
+                type="button"
+                onClick={onToggleVisibility}
+                className="rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-700"
+                aria-label={visible ? 'Hide password' : 'Show password'}
+            >
+                {visible ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+        </span>
+    </label>
+);
+
+const PasswordRule = ({ label, passed }) => (
+    <div className="flex items-center gap-4 text-sm font-medium text-gray-700">
+        {passed ? (
+            <CheckCircle2 size={17} className="shrink-0 text-emerald-500" />
+        ) : (
+            <span className="h-[17px] w-[17px] shrink-0 rounded-full border-2 border-gray-300 bg-white" aria-hidden="true" />
+        )}
+        <span>{label}</span>
+    </div>
 );
 
 export default SignUpPage;

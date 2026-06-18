@@ -107,6 +107,7 @@ function ShilingiBuddy() {
     const [messages, setMessages] = useState(initialMessages);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const nextMessageIdRef = useRef(initialMessages.length + 1);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -154,8 +155,11 @@ function ShilingiBuddy() {
         const cleanMessage = messageText.trim();
         if (!cleanMessage || isTyping) return;
 
+        const userMessageId = nextMessageIdRef.current;
+        nextMessageIdRef.current += 1;
+
         const userMessage = {
-            id: Date.now(),
+            id: userMessageId,
             sender: 'user',
             text: cleanMessage,
         };
@@ -165,8 +169,11 @@ function ShilingiBuddy() {
         setIsTyping(true);
 
         window.setTimeout(() => {
+            const buddyMessageId = nextMessageIdRef.current;
+            nextMessageIdRef.current += 1;
+
             const buddyMessage = {
-                id: Date.now() + 1,
+                id: buddyMessageId,
                 sender: 'buddy',
                 text: getBuddyReply(cleanMessage),
             };

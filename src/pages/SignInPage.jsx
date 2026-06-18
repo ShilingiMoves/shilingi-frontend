@@ -49,7 +49,7 @@ const SignInPage = () => {
         const { name, value } = event.target;
         setFormValues((current) => ({
             ...current,
-            [name]: value,
+            [name]: name === 'password' ? sanitizePasswordInput(value) : value,
         }));
     };
 
@@ -61,7 +61,7 @@ const SignInPage = () => {
         try {
             setIsSubmitting(true);
             await loginUser({
-                email: formValues.email,
+                email: formValues.email.trim().toLowerCase(),
                 password: formValues.password,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
@@ -169,5 +169,9 @@ const Field = ({ label, ...props }) => (
         />
     </label>
 );
+
+function sanitizePasswordInput(value) {
+    return String(value || '').replace(/[\r\n]/g, '');
+}
 
 export default SignInPage;

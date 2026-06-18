@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, KeyRound, MailCheck, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { confirmPasswordReset, loginUser, requestPasswordReset } from '../services/authApi';
+import { completePasswordSetup, loginUser, requestPasswordReset } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { queuePreferredNamePrompt } from '../utils/memberIdentity';
 
@@ -44,7 +44,7 @@ const ForgotPasswordPage = () => {
         const { name, value } = event.target;
         setFormValues((current) => ({
             ...current,
-            [name]: value,
+            [name]: name.includes('password') ? sanitizePasswordInput(value) : value,
         }));
     };
 
@@ -86,7 +86,7 @@ const ForgotPasswordPage = () => {
             const resetPayload = {
                 token: formValues.token.trim(),
                 new_password: formValues.password,
-                new_password_confirm: formValues.password_confirm,
+                new_password_confirm: formValues.password,
             };
 
             if (formValues.uid.trim()) {
@@ -94,14 +94,16 @@ const ForgotPasswordPage = () => {
                 resetPayload.uidb64 = formValues.uid.trim();
             }
 
-            await confirmPasswordReset(resetPayload);
+            const resetResult = await completePasswordSetup(resetPayload);
             setStep('complete');
 
             try {
-                await loginUser({
-                    email: formValues.email.trim().toLowerCase(),
-                    password: formValues.password,
-                });
+                if (!resetResult.authenticated) {
+                    await loginUser({
+                        email: formValues.email.trim().toLowerCase(),
+                        password: formValues.password,
+                    });
+                }
                 clearStoredResetEmail();
                 persistDashboardSection('overview');
                 queuePreferredNamePrompt('returning');
@@ -186,8 +188,8 @@ const ForgotPasswordPage = () => {
                                 <Field label="Reset token" name="token" value={formValues.token} onChange={handleChange} placeholder="Paste the token from your email link" required />
                             )}
                             <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
-                            <Field label="New password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a new password" required />
-                            <Field label="Confirm new password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your new password" required />
+                            <Field label="New password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a new password" autoComplete="new-password" required />
+                            <Field label="Confirm new password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your new password" autoComplete="new-password" required />
 
                             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                                 <Button type="submit" variant="primary" className="w-full justify-center" disabled={isSubmitting}>
@@ -316,6 +318,10 @@ function clearStoredResetEmail() {
     } catch {
         // Nothing else to clear.
     }
+}
+
+function sanitizePasswordInput(value) {
+    return String(value || '').replace(/[\r\n]/g, '');
 }
 
 const stepOrder = {
