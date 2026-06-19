@@ -33,7 +33,6 @@ import { getAssets as getInvestmentAssets } from '../../../services/investmentTr
 import { getDebts } from '../../../services/debtApi';
 import { getNetWorthSummary } from '../../../services/networthApi';
 import { getHealthScore, getHealthScoreBreakdown } from '../../../services/financialHealthApi';
-import { compareModules } from '../explore/ComparisonHubPanel';
 import { DASHBOARD_DATA_KEY, markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
 import {
@@ -89,6 +88,51 @@ const calendarTypeStyles = {
 };
 const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
 const DASHBOARD_STREAK_KEY_PREFIX = 'shilingi_dashboard_streak';
+const COMPARED_PRODUCTS_COUNT = 70;
+const overviewCompareModules = [
+    {
+        id: 'loans',
+        segments: [
+            {
+                rows: [
+                    ['Equity Bank', 'Salary Advance', 'Up to 3M', '14.0 - 16.0%'],
+                    ['NCBA Bank', 'Loop Personal', 'Up to 4M', '14.5 - 16.5%'],
+                    ['Stanbic Bank', 'Commercial Bank', '100K - 7M', '11.8 - 13.5%'],
+                    ['Standard Chartered', 'Commercial Bank', '50K - 5M', '12.7 - 14.0%'],
+                    ['KCB Bank', 'Commercial Bank', 'Up to 5M', '13.8 - 15.5%'],
+                    ['Stima DT SACCO', 'Development Loan', 'Up to 10M+', '10.5 - 12.5%'],
+                    ['Mwalimu National', 'Wezesha / Normal', 'Up to 5M', '11.5 - 13.5%'],
+                ],
+            },
+        ],
+    },
+    {
+        id: 'savings',
+        segments: [
+            {
+                id: 'mmf',
+                rows: [
+                    ['Nabo Africa MMF', '~12.9%'],
+                    ['Gulfcap MMF', '10.8 - 11.4%'],
+                    ['Etica MMF', '10.9 - 11.3%'],
+                    ['Lofty-Corban MMF', '10.5 - 11.1%'],
+                ],
+            },
+        ],
+    },
+    {
+        id: 'banking',
+        segments: [
+            {
+                id: 'saccos',
+                rows: [
+                    ['Stima DT SACCO', 'Ordinary / Alpha Savings', 'KES 0', 'Up to 10-12%'],
+                    ['Mwalimu National', 'Teachers Savings', 'Low (0-100)', '10-13%'],
+                ],
+            },
+        ],
+    },
+];
 const toNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const fmtKES = (v) => `KES ${Math.round(toNum(v)).toLocaleString('en-KE')}`;
 const fmtSigned = (v) => `${toNum(v) >= 0 ? '+' : '-'}KES ${Math.round(Math.abs(toNum(v))).toLocaleString('en-KE')}`;
@@ -518,9 +562,9 @@ const buildLearningSnapshot = ({ hasData, healthScore, budgetScore, savingsRateS
     };
 };
 const buildBestRatesSnapshot = () => {
-    const savingsModule = compareModules.find((module) => module.id === 'savings');
-    const loanModule = compareModules.find((module) => module.id === 'loans');
-    const bankingModule = compareModules.find((module) => module.id === 'banking');
+    const savingsModule = overviewCompareModules.find((module) => module.id === 'savings');
+    const loanModule = overviewCompareModules.find((module) => module.id === 'loans');
+    const bankingModule = overviewCompareModules.find((module) => module.id === 'banking');
 
     const mmfRows = savingsModule?.segments?.find((segment) => segment.id === 'mmf')?.rows || [];
     const saccoRows = bankingModule?.segments?.find((segment) => segment.id === 'saccos')?.rows || [];
@@ -536,7 +580,7 @@ const buildBestRatesSnapshot = () => {
     const bestLoan = loanRows.reduce((best, row) => (extractPercent(row[3]) < extractPercent(best?.[3]) ? row : best), loanRows[0]);
 
     return {
-        comparedCount: compareModules.reduce((count, module) => count + (module.segments || []).reduce((segmentCount, segment) => segmentCount + (segment.rows?.length || 0), 0), 0),
+        comparedCount: COMPARED_PRODUCTS_COUNT,
         rates: [
             { value: bestLoan?.[3] || '--', label: 'Best Loan APR', helper: bestLoan?.[0] || 'Lowest tracked rate', shell: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
             { value: bestMmf?.[1] || '--', label: 'Best MMF Yield', helper: bestMmf?.[0] || 'Highest tracked yield', shell: 'bg-amber-50 text-[#9a6200] border-amber-100' },

@@ -28,6 +28,7 @@ import debtManagerHero from '../../../assets/debt-manager-hero.png';
 const currency = (value) => `KES ${Math.round(Number(value || 0)).toLocaleString('en-KE')}`;
 const PERFORMANCE_SNAPSHOT_KEY = 'shilingi_debt_performance_snapshot_v1';
 const DEBT_PAYMENTS_LOG_KEY = 'shilingi_debt_payments_log_v1';
+const DEBT_ONBOARDING_SEEN_KEY = 'shilingi_debt_onboarding_seen_v1';
 
 const toneByType = {
     MORTGAGE: { bar: 'bg-primary-600', pill: 'bg-rose-100 text-rose-600', label: 'High Priority' },
@@ -55,6 +56,10 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
     const [paymentInputs, setPaymentInputs] = useState({});
     const [simulatorExtraPayment, setSimulatorExtraPayment] = useState(5000);
     const [showDebtAddedModal, setShowDebtAddedModal] = useState(false);
+    const [hasSeenDebtOnboarding, setHasSeenDebtOnboarding] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.localStorage.getItem(DEBT_ONBOARDING_SEEN_KEY) === 'true';
+    });
     const [selectedCalculatorDebtId, setSelectedCalculatorDebtId] = useState('');
     const [loanCalculator, setLoanCalculator] = useState({ type: 'PERSONAL_LOAN', amount: '', monthlyPayment: '', months: '' });
     const [superCalculator, setSuperCalculator] = useState({ type: 'BANK_LOAN', amount: '', monthlyPayment: '', months: '' });
@@ -297,6 +302,15 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
         }
     };
 
+    const markDebtOnboardingSeen = () => {
+        setHasSeenDebtOnboarding(true);
+        try {
+            localStorage.setItem(DEBT_ONBOARDING_SEEN_KEY, 'true');
+        } catch {
+            // no-op
+        }
+    };
+
     const loadDebts = async () => {
         try {
             setLoading(true);
@@ -353,6 +367,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                 setDebts((current) => [created, ...current]);
                 markDashboardDataExists();
                 triggerHealthRefresh('debt:create');
+                setActiveView('crb');
                 setShowDebtAddedModal(true);
             }
             setEditingDebt(null);
@@ -420,11 +435,11 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                         <p className="mt-4 text-[1.35rem] font-extrabold text-slate-950">Debt added successfully</p>
                         <p className="mt-2 text-sm leading-6 text-slate-600">You can now record repayments, choose a payoff strategy, and check how this debt affects your CRB profile.</p>
                         <div className="mt-5 grid gap-2">
-                            <button type="button" onClick={() => { setShowDebtAddedModal(false); setActiveView('portfolio'); }} className="inline-flex items-center justify-center rounded-[0.95rem] bg-[#11814f] px-4 py-3 text-sm font-semibold text-white">
-                                Review payoff strategy
+                            <button type="button" onClick={() => { setShowDebtAddedModal(false); setActiveView('crb'); }} className="inline-flex items-center justify-center rounded-[0.95rem] bg-[#11814f] px-4 py-3 text-sm font-semibold text-white">
+                                Continue to CRB status
                             </button>
-                            <button type="button" onClick={() => { setShowDebtAddedModal(false); setActiveView('crb'); }} className="inline-flex items-center justify-center rounded-[0.95rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
-                                View CRB report
+                            <button type="button" onClick={() => { setShowDebtAddedModal(false); setActiveView('portfolio'); }} className="inline-flex items-center justify-center rounded-[0.95rem] border border-[#bfe2d6] bg-[#f8fcfa] px-4 py-3 text-sm font-semibold text-[#11814f]">
+                                Review payoff strategy
                             </button>
                         </div>
                     </div>
@@ -450,6 +465,7 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                 activeView={activeView}
                 crbReportProviders={crbReportProviders}
                 crbStatus={crbStatus}
+                debtBreakdown={debtBreakdown}
                 debtFreeDate={debtFreeDate}
                 debts={debts}
                 getDebtPaidThisMonth={getDebtPaidThisMonth}
@@ -460,11 +476,15 @@ const DebtManagerPanel = ({ requestAddDebtSignal = 0, onSelectSection }) => {
                 orderedDebts={orderedDebts}
                 paymentError={paymentError}
                 paymentInputs={paymentInputs}
+                performance={performance}
+                quickRateComparisons={quickRateComparisons}
                 recordDebtPayment={recordDebtPayment}
                 recommendedDebt={recommendedDebt}
                 selectedCalculatorDebtId={selectedCalculatorDebtId}
                 setActiveView={setActiveView}
                 setEditingDebt={setEditingDebt}
+                hasSeenDebtOnboarding={hasSeenDebtOnboarding}
+                markDebtOnboardingSeen={markDebtOnboardingSeen}
                 setIsModalOpen={setIsModalOpen}
                 setLoanCalculator={setLoanCalculator}
                 setPaymentInputs={setPaymentInputs}
@@ -761,6 +781,7 @@ const MobileDebtManager = ({
     activeView,
     crbReportProviders,
     crbStatus,
+    debtBreakdown,
     debtFreeDate,
     debts,
     getDebtPaidThisMonth,
@@ -771,11 +792,15 @@ const MobileDebtManager = ({
     orderedDebts,
     paymentError,
     paymentInputs,
+    performance,
+    quickRateComparisons,
     recordDebtPayment,
     recommendedDebt,
     selectedCalculatorDebtId,
     setActiveView,
     setEditingDebt,
+    hasSeenDebtOnboarding,
+    markDebtOnboardingSeen,
     setIsModalOpen,
     setLoanCalculator,
     setPaymentInputs,
@@ -792,6 +817,7 @@ const MobileDebtManager = ({
 }) => {
     const activeDebts = orderedDebts.filter((debt) => String(debt.status || '').toUpperCase() !== 'PAID_OFF');
     const hasCrbScore = false;
+    const shouldShowOnboarding = !hasSeenDebtOnboarding && debts.length === 0;
     const mobileTabs = [
         { id: 'crb', label: 'All' },
         { id: 'portfolio', label: 'My Loans' },
@@ -811,6 +837,20 @@ const MobileDebtManager = ({
                     <img src={debtManagerHero} alt="" className="h-24 w-[143px] shrink-0 object-contain object-bottom" />
                 </div>
 
+                {shouldShowOnboarding ? (
+                    <MobileDebtOnboarding
+                        onGetStarted={() => {
+                            markDebtOnboardingSeen();
+                            setEditingDebt(null);
+                            setIsModalOpen(true);
+                        }}
+                        onSkip={() => {
+                            markDebtOnboardingSeen();
+                            setActiveView('crb');
+                        }}
+                    />
+                ) : (
+                    <>
                 <div className="mt-6 flex gap-1.5 overflow-x-auto pb-3">
                     {mobileTabs.map((tab) => (
                         <button
@@ -839,25 +879,30 @@ const MobileDebtManager = ({
                 )}
 
                 {activeView === 'portfolio' && (
-                    <MobileLoansPanel
-                        debts={activeDebts}
-                        getDebtPaidThisMonth={getDebtPaidThisMonth}
-                        handleDelete={handleDelete}
-                        paymentError={paymentError}
-                        paymentInputs={paymentInputs}
-                        recordDebtPayment={recordDebtPayment}
-                        setEditingDebt={setEditingDebt}
-                        setIsModalOpen={setIsModalOpen}
-                        setPaymentInputs={setPaymentInputs}
-                    />
+                    <div className="space-y-3">
+                        <MobileLoansOverviewPanel
+                            debts={activeDebts}
+                            debtBreakdown={debtBreakdown}
+                            getDebtPaidThisMonth={getDebtPaidThisMonth}
+                            handleDelete={handleDelete}
+                            paymentError={paymentError}
+                            paymentInputs={paymentInputs}
+                            performance={performance}
+                            recordDebtPayment={recordDebtPayment}
+                            setEditingDebt={setEditingDebt}
+                            setIsModalOpen={setIsModalOpen}
+                            setPaymentInputs={setPaymentInputs}
+                            totalDebtWithLiabilities={totalDebtWithLiabilities}
+                        />
+                    </div>
                 )}
 
                 {activeView === 'solutions' && (
-                    <MobileSolutionsPanel orderedDebts={orderedDebts} recommendedDebt={recommendedDebt} setActiveView={setActiveView} />
+                    <MobileSolutionsOverviewPanel orderedDebts={orderedDebts} quickRateComparisons={quickRateComparisons} recommendedDebt={recommendedDebt} setActiveView={setActiveView} />
                 )}
 
                 {activeView === 'simulator' && (
-                    <MobileCalculatorsPanel
+                    <MobileCalculatorsOverviewPanel
                         debts={debts}
                         handleCalculatorDebtSelect={handleCalculatorDebtSelect}
                         loanCalculator={loanCalculator}
@@ -874,8 +919,83 @@ const MobileDebtManager = ({
                         superCalculatorRate={superCalculatorRate}
                     />
                 )}
+                    </>
+                )}
             </div>
         </section>
+    );
+};
+
+const MobileDebtOnboarding = ({ onGetStarted, onSkip }) => {
+    const steps = [
+        {
+            title: 'Add your debts',
+            helper: 'Start with the loan type, balance, monthly payment, and due date.',
+        },
+        {
+            title: 'Check your CRB path',
+            helper: 'Know where to request a report and what details to review.',
+        },
+        {
+            title: 'Choose a payoff strategy',
+            helper: 'Use avalanche or snowball guidance to decide what to clear first.',
+        },
+    ];
+
+    return (
+        <article className="mt-5 pb-2">
+            <div className="rounded-[18px] bg-white px-4 py-5 shadow-[0_0_1px_rgba(0,0,0,0.08)]">
+                <div className="flex flex-col items-center text-center">
+                    <div className="relative flex h-[176px] w-full items-center justify-center">
+                        <div className="absolute inset-x-8 top-4 h-[132px] rounded-[16px] bg-[#f6fbff]" />
+                        <img src={debtManagerHero} alt="" className="relative h-[154px] w-[230px] object-contain object-bottom" />
+                    </div>
+
+                    <h2 className="mt-1 text-[16px] font-extrabold leading-6 text-[#232e3d]">Welcome,</h2>
+                    <div className="mt-3 rounded-full bg-[linear-gradient(124deg,rgba(234,187,58,0.44)_0%,rgba(234,187,58,0)_93%)] px-4 py-2 text-[12px] leading-4 text-[#232e3d]">
+                        Let&apos;s get you started
+                    </div>
+                    <p className="mt-4 max-w-[19rem] text-[12px] leading-5 text-[#707974]">
+                        Let&apos;s set your debt manager to get you ready for the next steps to manage your debts.
+                    </p>
+                </div>
+
+                <div className="mt-6 space-y-0">
+                    {steps.map((step, index) => {
+                        const isLast = index === steps.length - 1;
+                        return (
+                            <div key={step.title} className="grid grid-cols-[32px_1fr] gap-3">
+                                <div className="flex flex-col items-center">
+                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#11814f] text-white">
+                                        {isLast ? <CheckCircle2 size={14} /> : <CircleDot size={14} />}
+                                    </span>
+                                    {!isLast && <span className="h-8 w-px bg-[#b7dfd0]" />}
+                                </div>
+                                <div className={isLast ? 'pb-0' : 'pb-4'}>
+                                    <h3 className="text-[13px] font-bold leading-4 text-[#232e3d]">{step.title}</h3>
+                                    <p className="mt-1 text-[11px] leading-4 text-[#707974]">{step.helper}</p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <button
+                type="button"
+                onClick={onGetStarted}
+                className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 py-3 text-[14px] font-semibold text-white shadow-[0_10px_24px_rgba(12,96,96,0.22)]"
+            >
+                Get Started
+            </button>
+            <button
+                type="button"
+                onClick={onSkip}
+                className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-[#0c6060] bg-white px-5 py-3 text-[13px] font-semibold text-[#0c6060]"
+            >
+                Skip
+            </button>
+        </article>
     );
 };
 
@@ -985,6 +1105,193 @@ const MobileCrbChecklist = () => {
     );
 };
 
+const MobileLoansOverviewPanel = ({
+    debtBreakdown,
+    debts,
+    getDebtPaidThisMonth,
+    handleDelete,
+    paymentError,
+    paymentInputs,
+    performance,
+    recordDebtPayment,
+    setEditingDebt,
+    setIsModalOpen,
+    setPaymentInputs,
+    totalDebtWithLiabilities,
+}) => {
+    const progress = Math.max(0, Math.min(100, Number(performance?.progressPercent || 0)));
+    const circumference = 2 * Math.PI * 42;
+    const offset = circumference - (progress / 100) * circumference;
+
+    return (
+        <div className="space-y-3">
+            <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+                <div className="flex items-start justify-between gap-3 border-b border-[#edf0f3] pb-2">
+                    <div>
+                        <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Active Debts</h2>
+                        <p className="mt-1 text-[10px] leading-4 text-[#707974]">Track all your active debts and manage them to be able to pay them off swiftly</p>
+                    </div>
+                    <button type="button" onClick={() => { setEditingDebt(null); setIsModalOpen(true); }} className="shrink-0 text-[10px] font-semibold text-[#eabb3a]">+ Add Debt</button>
+                </div>
+
+                {debts.length === 0 ? (
+                    <div className="py-5 text-center">
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5]">
+                            <Landmark size={34} className="text-[#0c6060]" />
+                        </div>
+                        <h3 className="mt-5 text-[18px] font-bold leading-6 text-[#141c2b]">No Active Debts</h3>
+                        <p className="mx-auto mt-2 max-w-[17rem] text-[13px] leading-5 text-[#8e97ab]">Add your debts to manage them and pay them off swiftly to be safe</p>
+                        <button type="button" onClick={() => { setEditingDebt(null); setIsModalOpen(true); }} className="mt-3 rounded-full bg-[#0c6060] px-7 py-3 text-[14px] font-semibold text-white">Add Debt</button>
+                    </div>
+                ) : (
+                    <div className="mt-4 space-y-3">
+                        {debts.map((debt) => {
+                            const paidThisMonth = getDebtPaidThisMonth(debt.id);
+                            const remaining = Math.max(Number(debt.minimumPayment || 0) - paidThisMonth, 0);
+                            return (
+                                <article key={debt.id} className="rounded-[10px] border border-[#edf0f3] bg-[#fbfdfc] p-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="inline-flex rounded-full bg-rose-50 px-2 py-0.5 text-[9px] font-semibold text-rose-600">{formatDebtType(debt.debtType)}</p>
+                                            <h3 className="mt-2 truncate text-[13px] font-bold text-[#141c2b]">{debt.name}</h3>
+                                            <p className="mt-1 text-[10px] text-[#707974]">Interest rate: {debt.interestRate || 0}%</p>
+                                        </div>
+                                        <div className="shrink-0 text-right">
+                                            <p className="text-[10px] text-[#707974]">Current Balance</p>
+                                            <p className="text-[13px] font-extrabold text-[#0c6060]">{currency(debt.balance)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 rounded-lg bg-white px-3 py-2 text-[10px] text-[#5e6a80]">
+                                        Monthly repayment: <span className="font-semibold text-[#0c6060]">{currency(debt.minimumPayment)}</span>
+                                        <br />
+                                        Remaining this month: <span className="font-semibold text-[#aa5d04]">{currency(remaining)}</span>
+                                    </div>
+                                    <div className="mt-3 flex gap-2">
+                                        <NumericInput value={paymentInputs[debt.id] ?? ''} onChange={(event) => setPaymentInputs((current) => ({ ...current, [debt.id]: event.target.value }))} placeholder={`Pay ${currency(debt.minimumPayment)}`} className="min-w-0 flex-1 rounded-full border border-[#dde1ea] px-3 py-2 text-[11px]" />
+                                        <button type="button" onClick={() => recordDebtPayment(debt)} className="rounded-full bg-[#0c6060] px-4 py-2 text-[11px] font-semibold text-white">Pay</button>
+                                    </div>
+                                    <div className="mt-2 flex gap-2">
+                                        <button type="button" onClick={() => { setEditingDebt(debt); setIsModalOpen(true); }} className="flex-1 rounded-full border border-[#dde1ea] bg-white px-3 py-2 text-[11px] font-semibold text-[#0c6060]">Edit</button>
+                                        <button type="button" onClick={() => handleDelete(debt.id)} className="flex-1 rounded-full border border-rose-200 bg-white px-3 py-2 text-[11px] font-semibold text-rose-600">Delete</button>
+                                    </div>
+                                </article>
+                            );
+                        })}
+                        {paymentError && <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{paymentError}</div>}
+                    </div>
+                )}
+            </article>
+
+            <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+                <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Loan Performance</h2>
+                <p className="mt-1 text-[10px] leading-4 text-[#707974]">Here is your overall loan performance after you started tracking your loans.</p>
+                <div className="mt-4 flex items-center justify-center">
+                    <div className="relative h-[132px] w-[132px]">
+                        <svg viewBox="0 0 112 112" className="h-full w-full -rotate-90">
+                            <circle cx="56" cy="56" r="42" fill="none" stroke="#d9eeee" strokeWidth="12" />
+                            <circle cx="56" cy="56" r="42" fill="none" stroke="#0c6060" strokeWidth="12" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span className="text-[10px] text-[#707974]">Amount Repaid</span>
+                            <span className="mt-1 text-[14px] font-extrabold text-[#232e3d]">{currency(performance?.repaidAmount || 0)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-3 rounded-[10px] bg-[#e9fff1] px-3 py-2">
+                    <p className="text-[11px] font-semibold text-[#11814f]">Monthly Installment Tracker</p>
+                    <p className="mt-1 text-[10px] leading-4 text-[#707974]">
+                        {progress > 0 ? `You have repaid ${progress.toFixed(1)}% from your starting balance.` : `Track payments against ${currency(totalDebtWithLiabilities)} in active balances.`}
+                    </p>
+                </div>
+            </article>
+
+            <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+                <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Debt Breakdown by Category</h2>
+                <p className="mt-1 text-[10px] leading-4 text-[#707974]">Here is your overall debt breakdown by category</p>
+                <div className="mt-4 space-y-2">
+                    {debtBreakdown.length === 0 ? (
+                        <p className="rounded-[10px] border border-dashed border-[#dde1ea] bg-[#f8f8f8] p-3 text-[11px] text-[#707974]">Add debts to see category breakdown.</p>
+                    ) : debtBreakdown.map((item, index) => (
+                        <div key={item.label} className="rounded-[10px] border border-[#edf0f3] bg-[#fbfdfc] p-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-[11px] font-semibold text-[#232e3d]">{index + 1}. {item.label}</span>
+                                <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-semibold text-[#7c3aed]">{item.percent.toFixed(0)}%</span>
+                            </div>
+                            <div className="mt-2 h-1.5 rounded-full bg-[#edf0f3]">
+                                <div className={`h-1.5 rounded-full ${item.color}`} style={{ width: `${Math.max(item.percent, 2)}%` }} />
+                            </div>
+                            <p className="mt-2 text-[10px] text-[#707974]">{currency(item.amount)}</p>
+                        </div>
+                    ))}
+                </div>
+            </article>
+        </div>
+    );
+};
+
+const MobileSolutionsOverviewPanel = ({ orderedDebts, quickRateComparisons, recommendedDebt, setActiveView }) => (
+    <div className="space-y-3">
+        <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+            <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Explore Solutions</h2>
+            <p className="mt-1 text-[10px] leading-4 text-[#707974]">Manage your loans by applying one of the strategies to clear your debt early.</p>
+            {orderedDebts.length === 0 ? (
+                <p className="mt-4 rounded-xl border border-dashed border-[#dde1ea] bg-[#f8f8f8] p-4 text-[12px] text-[#707974]">Add debts first so we can suggest refinancing and restructuring options.</p>
+            ) : (
+                <div className="mt-4 space-y-3">
+                    {orderedDebts.slice(0, 2).map((debt) => (
+                        <div key={`${debt.id}-mobile-solution-overview`} className="rounded-[10px] border border-[#edf0f3] bg-[#fbfdfc] p-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="truncate text-[13px] font-bold text-[#141c2b]">{debt.name}</p>
+                                    <p className="mt-1 text-[10px] text-[#707974]">{formatDebtType(debt.debtType)} - {debt.interestRate || 0}% interest</p>
+                                </div>
+                                <div className="shrink-0 text-right">
+                                    <p className="text-[10px] text-[#707974]">Current Balance</p>
+                                    <p className="text-[12px] font-bold text-[#0c6060]">{currency(debt.balance)}</p>
+                                </div>
+                            </div>
+                            <div className="mt-3 flex gap-2">
+                                <button type="button" onClick={() => setActiveView('simulator')} className="rounded-full bg-[#0c6060] px-4 py-2 text-[11px] font-semibold text-white">Simulate Savings</button>
+                                <button type="button" className="rounded-full border border-[#dde1ea] bg-white px-4 py-2 text-[11px] font-semibold text-[#707974]">Compare Options</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </article>
+        <article className="rounded-[10px] bg-[#fff7e8] p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+            <h3 className="text-[13px] font-bold text-[#aa5d04]">What to Compare</h3>
+            <p className="mt-1 text-[10px] leading-4 text-[#aa5d04]">What to check, and what to do after reviewing your debts.</p>
+            <div className="mt-3 space-y-2">
+                {[
+                    'Lower interest rate than your current debt',
+                    'Reduced monthly installment pressure',
+                    'Lower total repayment cost over time',
+                    'Penalty-free early repayment if possible',
+                    'Products that support consolidation for multiple debts',
+                ].map((item) => (
+                    <div key={item} className="flex items-start gap-3 rounded-[8px] bg-white px-3 py-2">
+                        <p className="flex-1 text-[11px] leading-4 text-[#232e3d]">{item}</p>
+                        <CheckCircle2 size={14} className="shrink-0 text-[#eabb3a]" />
+                    </div>
+                ))}
+            </div>
+        </article>
+        <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+            <h3 className="text-[13px] font-bold text-[#141c2b]">Quick Rate Snapshot</h3>
+            <div className="mt-3 space-y-2">
+                {(quickRateComparisons || []).slice(0, 3).map((item) => (
+                    <div key={item.lender} className="flex items-center justify-between rounded-[8px] border border-[#edf0f3] px-3 py-2">
+                        <span className="text-[11px] font-semibold text-[#232e3d]">{item.lender}</span>
+                        <span className="text-[11px] font-bold text-[#0c6060]">{item.rate}</span>
+                    </div>
+                ))}
+            </div>
+            <p className="mt-3 text-[11px] leading-4 text-[#707974]">{recommendedDebt ? `Start with ${recommendedDebt.name}, then compare cost before switching lenders.` : 'Once debts are added, Shilingi Moves will show the strongest payoff move.'}</p>
+        </article>
+    </div>
+);
+
 const MobileLoansPanel = ({ debts, getDebtPaidThisMonth, handleDelete, paymentError, paymentInputs, recordDebtPayment, setEditingDebt, setIsModalOpen, setPaymentInputs }) => (
     <article className="rounded-2xl border border-[#e3e3e5] bg-white p-4 shadow-[0_32px_25.5px_rgba(0,0,0,0.06)]">
         <div className="border-b border-[#dde1ea] pb-2">
@@ -1062,6 +1369,115 @@ const MobileSolutionsPanel = ({ orderedDebts, recommendedDebt, setActiveView }) 
         </article>
     </div>
 );
+
+const MobileCalculatorsOverviewPanel = ({
+    debts,
+    handleCalculatorDebtSelect,
+    loanCalculator,
+    loanCalculatorRate,
+    selectedCalculatorDebtId,
+    setLoanCalculator,
+    setSimulatorExtraPayment,
+    setStrategy,
+    setSuperCalculator,
+    simulatorExtraPayment,
+    simulatorProjection,
+    strategy,
+    superCalculator,
+    superCalculatorRate,
+}) => {
+    const calculatorOptions = [
+        {
+            title: 'Normal Loan Calculator',
+            description: 'Use this when your lender gives you the principal, duration, and monthly repayment.',
+            active: true,
+        },
+        {
+            title: 'Super Loan Calculator',
+            description: 'Use this when you want to compare a new offer against your saved debt.',
+            active: false,
+        },
+        {
+            title: 'Payoff Strategy',
+            description: 'Choose avalanche or snowball, then test how extra payments change your debt-free date.',
+            active: false,
+        },
+    ];
+
+    return (
+        <div className="space-y-3">
+            <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+                <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Debt Payoff Calculator</h2>
+                <p className="mt-1 text-[10px] leading-4 text-[#707974]">Test how much faster you could become debt-free by adding a little more each month.</p>
+                <div className="mt-4 rounded-[10px] bg-[#f8f8f8] p-4">
+                    <label className="block text-[10px] font-semibold text-[#707974]">
+                        Extra Monthly Payment
+                        <div className="mt-2 rounded-[10px] bg-white px-4 py-3 text-center">
+                            <span className="text-[18px] font-extrabold text-[#0c6060]">{currency(simulatorExtraPayment)}</span>
+                        </div>
+                    </label>
+                    <input type="range" min="0" max="50000" step="1000" value={simulatorExtraPayment} onChange={(event) => setSimulatorExtraPayment(Number(event.target.value))} className="mt-4 w-full accent-[#eabb3a]" />
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                        <MobileMiniMetric label="Debt-free" value={simulatorProjection.debtFreeDate} />
+                        <MobileMiniMetric label="Months" value={simulatorProjection.freedMonths} />
+                        <MobileMiniMetric label="Saved" value={currency(simulatorProjection.extraSavings)} />
+                    </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                    {['avalanche', 'snowball'].map((option) => (
+                        <button key={option} type="button" onClick={() => setStrategy(option)} className={`rounded-full border px-3 py-2 text-[11px] font-semibold capitalize ${strategy === option ? 'border-[#eabb3a] bg-[#eabb3a] text-white' : 'border-[#dde1ea] bg-white text-[#5e6a80]'}`}>{option}</button>
+                    ))}
+                </div>
+            </article>
+
+            <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+                <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Recommendations</h2>
+                <p className="mt-1 text-[10px] leading-4 text-[#707974]">Apply these recommendations to clear your debt faster.</p>
+                <div className="mt-4 rounded-[10px] bg-[#fff7e8] p-3">
+                    <p className="text-[12px] font-bold text-[#aa5d04]">Extra Payment</p>
+                    <p className="mt-1 text-[11px] leading-4 text-[#232e3d]">
+                        Add {currency(simulatorExtraPayment)} to your selected loan and roll freed payments into the next debt after payoff.
+                    </p>
+                </div>
+            </article>
+
+            <article className="rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+                <h2 className="text-[14px] font-semibold leading-5 text-[#0c6060]">Select Calculator</h2>
+                <p className="mt-1 text-[10px] leading-4 text-[#707974]">Kindly select calculator to start with.</p>
+                <div className="mt-4 space-y-2">
+                    {calculatorOptions.map((option, index) => (
+                        <button key={option.title} type="button" className={`flex w-full items-start gap-3 rounded-[10px] border px-3 py-3 text-left ${option.active ? 'border-[#0c6060] bg-[#f2fbf8]' : 'border-[#edf0f3] bg-white'}`}>
+                            <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${option.active ? 'bg-[#0c6060] text-white' : 'bg-[#f8f8f8] text-[#707974]'}`}>{index + 1}</span>
+                            <span className="min-w-0">
+                                <span className="block text-[12px] font-bold text-[#232e3d]">{option.title}</span>
+                                <span className="mt-1 block text-[10px] leading-4 text-[#707974]">{option.description}</span>
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </article>
+
+            <MobileLoanCalculatorCard
+                debts={debts}
+                handleCalculatorDebtSelect={handleCalculatorDebtSelect}
+                loanCalculator={loanCalculator}
+                rate={loanCalculatorRate}
+                selectedCalculatorDebtId={selectedCalculatorDebtId}
+                setLoanCalculator={setLoanCalculator}
+                title="Normal Loan Calculator"
+            />
+            <MobileLoanCalculatorCard
+                debts={debts}
+                handleCalculatorDebtSelect={handleCalculatorDebtSelect}
+                loanCalculator={superCalculator}
+                rate={superCalculatorRate}
+                selectedCalculatorDebtId={selectedCalculatorDebtId}
+                setLoanCalculator={setSuperCalculator}
+                title="Super Loan Calculator"
+            />
+        </div>
+    );
+};
 
 const MobileCalculatorsPanel = ({
     debts,

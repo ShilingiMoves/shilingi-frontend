@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import DebtForm from './DebtForm';
 
 const DebtEntryModal = ({ isOpen, initialValues, onSubmit, onClose, isSubmitting }) => {
@@ -29,38 +29,24 @@ const DebtEntryModal = ({ isOpen, initialValues, onSubmit, onClose, isSubmitting
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 px-2 pb-7 pt-16 backdrop-blur-[1px] md:items-center md:px-4 md:py-6"
             onClick={() => {
                 if (!isSubmitting) {
                     onClose();
                 }
             }}
         >
-            <div className="flex max-h-[90vh] w-full max-w-[30rem] flex-col overflow-hidden rounded-[1.15rem] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                <div className="flex shrink-0 items-center justify-between bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-3 text-white">
-                    <div className="flex items-center gap-3">
-                        <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/12">
-                            <Plus size={16} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-100">Debt Management</p>
-                            <h2 className="text-base font-bold">
-                                {initialValues ? 'Update debt' : 'Add new debt'}
-                            </h2>
-                        </div>
-                    </div>
+            <div className="relative flex max-h-[76vh] w-full max-w-[343px] flex-col overflow-hidden rounded-[18px] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.24)] md:max-h-[90vh] md:max-w-[30rem]" onClick={(event) => event.stopPropagation()}>
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-5">
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#e3e7ed] bg-[#f7f8fa] text-[#9aa3af] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                         aria-label="Close debt modal"
                     >
-                        <X size={17} />
+                        <X size={13} />
                     </button>
-                </div>
-
-                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
                     <DebtForm
                         initialValues={initialValues}
                         onSubmit={onSubmit}
