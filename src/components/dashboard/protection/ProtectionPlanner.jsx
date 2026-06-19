@@ -4,8 +4,11 @@ import NumericInput from '../../common/NumericInput';
 import {
     Activity,
     ArrowRight,
+    Bell,
     Calculator,
     Car,
+    Check,
+    ChevronLeft,
     FileText,
     FolderOpen,
     Heart,
@@ -26,6 +29,9 @@ import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { usePlannerFinancialContext } from '../../../hooks/usePlannerFinancialContext';
 import { buildFinancialSnapshot, buildProtectionInsights } from '../../../utils/financialIntelligence';
 import { USER_PROFILE_WORKSPACE_KEY } from '../user/UserGoalsFamilyForm';
+import { getStoredUserProfile } from '../../../services/sessionManager';
+import { getDashboardDisplayName } from '../../../utils/memberIdentity';
+import protectionPlannerHero from '../../../assets/protection-planner-hero.png';
 
 const PROTECTION_CATEGORY_NAME = 'Protection Policy';
 const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
@@ -44,10 +50,61 @@ const POLICY_LIBRARY = {
 const POLICY_OPTIONS = Object.keys(POLICY_LIBRARY);
 const defaultPolicyForm = { policyType: 'Life Insurance', provider: '', coverageAmount: '', monthlyPremium: '', status: 'ACTIVE', notes: '' };
 const defaultCalculator = { annualIncome: '1140000', dependents: '2', yearsToCover: '10', outstandingDebts: '0' };
+const PROTECTION_ONBOARDING_KEY = 'shilingi_protection_onboarding_seen_v1';
 const defaultCompareRates = [
     { provider: 'Jubilee Protection', premium: 3200, cover: 5000000, fit: 'Strong fit', delta: '-KES 250/mo' },
     { provider: 'Britam Family Cover', premium: 3600, cover: 6000000, fit: 'Balanced', delta: '+KES 150/mo' },
     { provider: 'APA Shield Plus', premium: 4100, cover: 5500000, fit: 'Highest cover', delta: '+KES 650/mo' },
+];
+
+const protectionQuestions = [
+    {
+        id: 'dependents',
+        question: 'How many people depend on your income?',
+        helper: 'Count dependants who rely on your income, emergency support, and day-to-day care.',
+        options: [
+            { label: '0', value: '0', patch: { dependents: '0' } },
+            { label: '1', value: '1', patch: { dependents: '1' } },
+            { label: '2', value: '2', patch: { dependents: '2' } },
+            { label: '3', value: '3', patch: { dependents: '3' } },
+            { label: '4+', value: '4', patch: { dependents: '4' } },
+        ],
+        compact: true,
+    },
+    {
+        id: 'income',
+        question: 'What is your take-home monthly income?',
+        helper: 'We use this to estimate the income your household would need protected.',
+        options: [
+            { label: 'Under KES 50,000', value: 'under-50', patch: { annualIncome: '480000' } },
+            { label: 'KES 50,000 - KES 100,000', value: '50-100', patch: { annualIncome: '900000' } },
+            { label: 'KES 100,000 - KES 250,000', value: '100-250', patch: { annualIncome: '1140000' } },
+            { label: 'Over KES 250,000', value: 'over-250', patch: { annualIncome: '3600000' } },
+        ],
+    },
+    {
+        id: 'debt',
+        question: 'Total outstanding debt - loans, mortgage, etc.?',
+        helper: 'Debt cover keeps repayments from becoming a family burden.',
+        options: [
+            { label: 'Under KES 500,000', value: 'under-500', patch: { outstandingDebts: '250000' } },
+            { label: 'KES 500,000 - KES 2,000,000', value: '500-2000', patch: { outstandingDebts: '1000000' } },
+            { label: 'Over KES 2,000,000', value: 'over-2000', patch: { outstandingDebts: '2500000' } },
+            { label: 'None', value: 'none', patch: { outstandingDebts: '0' } },
+        ],
+    },
+    {
+        id: 'lifeStage',
+        question: 'Which best describes your life stage?',
+        helper: 'Your life stage helps rank medical, life, and disability cover.',
+        options: [
+            { label: 'Single, no dependants', value: 'single' },
+            { label: 'Married, no children', value: 'married' },
+            { label: 'Young family with children', value: 'young-family' },
+            { label: 'Established family', value: 'established-family' },
+            { label: 'Approaching retirement', value: 'retirement' },
+        ],
+    },
 ];
 
 const normalize = (value) => String(value || '').trim().toLowerCase();
@@ -75,6 +132,11 @@ const readProfileWorkspace = () => {
     } catch {
         return {};
     }
+};
+
+const getPlannerDisplayName = (user) => {
+    const displayName = getDashboardDisplayName(user || getStoredUserProfile() || {}).trim();
+    return displayName && displayName !== 'My Profile' ? displayName : '';
 };
 
 const buildPremiumCalendarDate = (index = 0) => {
@@ -112,7 +174,7 @@ const findCategoryId = (categories) => {
     return matched ? getCategoryIdentifier(matched) : null;
 };
 
-const ProtectionPlanner = ({ onSelectSection }) => {
+const ProtectionPlanner = ({ onSelectSection, user }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -127,7 +189,19 @@ const ProtectionPlanner = ({ onSelectSection }) => {
     const [totalDebt, setTotalDebt] = useState(0);
     const [activeTab, setActiveTab] = useState('dependents');
     const [profileWorkspace, setProfileWorkspace] = useState(() => readProfileWorkspace());
+    const [showProtectionOnboarding, setShowProtectionOnboarding] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        return window.localStorage.getItem(PROTECTION_ONBOARDING_KEY) !== 'true';
+    });
+    const [protectionStep, setProtectionStep] = useState(0);
+    const [protectionAnswers, setProtectionAnswers] = useState({});
+    const [mobileProtectionView, setMobileProtectionView] = useState('overview');
+    const [protectionFlowComplete, setProtectionFlowComplete] = useState(() => {
+        const workspace = readProfileWorkspace();
+        return Boolean(workspace.protectionProfileCompletedAt);
+    });
     const plannerContext = usePlannerFinancialContext();
+    const displayName = useMemo(() => getPlannerDisplayName(user), [user]);
 
     const loadData = async () => {
         setLoading(true);
@@ -275,6 +349,56 @@ const ProtectionPlanner = ({ onSelectSection }) => {
 
     const handleCalcChange = (key, value) => setCalculator((current) => ({ ...current, [key]: value }));
     const handleFormChange = (key, value) => setPolicyForm((current) => ({ ...current, [key]: value }));
+    const startProtectionFlow = () => {
+        setShowProtectionOnboarding(false);
+        setProtectionFlowComplete(false);
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
+        }
+    };
+    const updateProtectionAnswer = (question, option) => {
+        setProtectionAnswers((current) => ({ ...current, [question.id]: option.value }));
+        if (option.patch) {
+            setCalculator((current) => ({ ...current, ...option.patch }));
+        }
+    };
+    const completeProtectionFlow = () => {
+        const nextWorkspace = {
+            ...profileWorkspace,
+            dependentsCount: protectionAnswers.dependents ?? calculator.dependents,
+            protectionIncomeBand: protectionAnswers.income || '',
+            protectionDebtBand: protectionAnswers.debt || '',
+            protectionLifeStage: protectionAnswers.lifeStage || '',
+            protectionProfileCompletedAt: new Date().toISOString(),
+        };
+        setProfileWorkspace(nextWorkspace);
+        setProtectionFlowComplete(true);
+        setMobileProtectionView('overview');
+        setShowProtectionOnboarding(false);
+        setActiveTab('dependents');
+        setSuccess('Protection objectives saved.');
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(USER_PROFILE_WORKSPACE_KEY, JSON.stringify(nextWorkspace));
+            window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
+        }
+    };
+    const goToNextProtectionStep = () => {
+        const question = protectionQuestions[protectionStep];
+        if (!protectionAnswers[question.id]) return;
+        if (protectionStep >= protectionQuestions.length - 1) {
+            completeProtectionFlow();
+            return;
+        }
+        setProtectionStep((current) => Math.min(current + 1, protectionQuestions.length - 1));
+    };
+    const goToPreviousProtectionStep = () => {
+        if (protectionStep > 0) {
+            setProtectionStep((current) => Math.max(current - 1, 0));
+            return;
+        }
+        setShowProtectionOnboarding(true);
+        setProtectionFlowComplete(false);
+    };
 
     const ensureCategory = async () => {
         let resolvedCategories = categories;
@@ -317,6 +441,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                 notes: `status:${policyForm.status.toLowerCase()}${policyForm.notes ? ` | ${policyForm.notes}` : ''}`,
             });
             setShowAddModal(false);
+            setMobileProtectionView('policies');
             setPolicyForm(defaultPolicyForm);
             markDashboardDataExists();
             setSuccess('Protection policy added.');
@@ -353,7 +478,45 @@ const ProtectionPlanner = ({ onSelectSection }) => {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-700">{success}</div>}
 
-            <section className="overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-4 py-4 text-white shadow-sm sm:px-5">
+            <MobileProtectionFlow
+                answers={protectionAnswers}
+                activePolicies={activePolicies}
+                calculator={calculator}
+                complete={protectionFlowComplete}
+                compareRows={defaultCompareRates}
+                coverageAdequacy={coverageAdequacy}
+                coverageGap={coverageGap}
+                coverageTotal={coverageTotal}
+                currentStep={protectionStep}
+                displayName={displayName}
+                insightCards={insightCards}
+                missingPolicies={missingPolicies}
+                monthlyPremiums={monthlyPremiums}
+                onAnswer={updateProtectionAnswer}
+                onBack={goToPreviousProtectionStep}
+                onCalcChange={handleCalcChange}
+                onCompare={() => setMobileProtectionView('compare')}
+                onFormChange={handleFormChange}
+                onNext={goToNextProtectionStep}
+                onPolicySubmit={addPolicy}
+                onRestart={() => {
+                    setProtectionFlowComplete(false);
+                    setProtectionStep(0);
+                    setShowProtectionOnboarding(false);
+                    setMobileProtectionView('overview');
+                }}
+                onSetMobileView={setMobileProtectionView}
+                onStart={startProtectionFlow}
+                policies={protectionAssets}
+                policyForm={policyForm}
+                recommendedByType={recommendedByType}
+                recommendedCover={recommendedCover}
+                saving={saving}
+                showOnboarding={showProtectionOnboarding}
+                view={mobileProtectionView}
+            />
+
+            <section className="hidden overflow-hidden rounded-[1.45rem] bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 px-4 py-4 text-white shadow-sm sm:px-5 md:block">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="max-w-3xl">
                         <p className="inline-flex items-center gap-3 dashboard-display-title text-[1.38rem] font-extrabold leading-none sm:text-[1.55rem]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#b91c1c]"><ShieldCheck size={16} /></span>Protection Planner</p>
@@ -366,17 +529,17 @@ const ProtectionPlanner = ({ onSelectSection }) => {
                 </div>
             </section>
 
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <section className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-4">
                 <MetricCard title="My Active Policies" value={String(activePolicies.length)} helper={activePolicies.map((item) => item.protectionMeta.label).slice(0, 2).join(' + ') || 'No active cover'} valueClass="text-[#175f54]" />
                 <MetricCard title="Total Monthly Premiums" value={formatKES(monthlyPremiums)} helper={`${calculator.annualIncome ? ((monthlyPremiums * 12 / Math.max(asNumber(calculator.annualIncome), 1)) * 100).toFixed(1) : '0.0'}% of yearly income`} valueClass="text-[#c37a00]" />
                 <MetricCard title="Total Cover Value" value={formatKES(coverageTotal)} helper={activePolicies.map((item) => item.protectionMeta.label).slice(0, 3).join(' + ') || 'No active policies'} valueClass="text-[#175f54]" />
                 <MetricCard title="Recommended Value" value={formatKES(recommendedCover)} helper={coverageGap > 0 ? `${formatKES(coverageGap)} gap` : 'Cover target met'} valueClass="text-[#2167d8]" cardTone="bg-[linear-gradient(180deg,_#fffef7_0%,_#fff5df_100%)]" />
             </section>
 
-            <section className="rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'dependents'} onClick={() => setActiveTab('dependents')}>My Protection Objectives</TabButton><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Active Policies</TabButton><TabButton active={activeTab === 'solutions'} onClick={() => setActiveTab('solutions')}>Explore Protection Solutions</TabButton><TabButton active={activeTab === 'calculators'} onClick={() => setActiveTab('calculators')}>Protection Calculators</TabButton></div></section>
+            <section className="hidden rounded-[1.1rem] border border-emerald-100 bg-white p-1 shadow-sm md:block"><div className="flex flex-wrap gap-2"><TabButton active={activeTab === 'dependents'} onClick={() => setActiveTab('dependents')}>My Protection Objectives</TabButton><TabButton active={activeTab === 'portfolio'} onClick={() => setActiveTab('portfolio')}>My Active Policies</TabButton><TabButton active={activeTab === 'solutions'} onClick={() => setActiveTab('solutions')}>Explore Protection Solutions</TabButton><TabButton active={activeTab === 'calculators'} onClick={() => setActiveTab('calculators')}>Protection Calculators</TabButton></div></section>
 
             {activeTab === 'portfolio' && (
-                <div className="space-y-4">
+                <div className="hidden space-y-4 md:block">
                     <section className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
                         <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                             <div className="mb-4 flex items-center justify-between"><PanelHeading icon={FileText} title="My Active Policies" noMargin /><button type="button" onClick={() => setShowAddModal(true)} className="text-sm font-semibold text-[#175f54]">+ Add Policy</button></div>
@@ -448,7 +611,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
             )}
 
             {activeTab === 'dependents' && (
-                <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                <section className="hidden gap-4 md:grid xl:grid-cols-[0.92fr_1.08fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                         <PanelHeading icon={User} title="My Protection Objectives" />
                         <div className="mt-4 rounded-[1rem] bg-[#eef8f3] p-5">
@@ -470,7 +633,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
             )}
 
             {activeTab === 'solutions' && (
-                <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                <section className="hidden gap-4 md:grid xl:grid-cols-[1.05fr_0.95fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
                         <PanelHeading icon={Sparkles} title="Explore Protection Solutions" />
                         <div className="mt-4 grid gap-3">
@@ -511,7 +674,7 @@ const ProtectionPlanner = ({ onSelectSection }) => {
             )}
 
             {activeTab === 'calculators' && (
-                <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                <section className="hidden gap-4 md:grid xl:grid-cols-[1.05fr_0.95fr]">
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={Calculator} title="Coverage Calculator" /><p className="mt-3 text-sm text-slate-600">Estimate how much family protection you need based on income, dependants, and outstanding obligations.</p><div className="mt-5 grid gap-4 sm:grid-cols-2"><CalcInput label="Annual income (KES)" value={calculator.annualIncome} onChange={(value) => handleCalcChange('annualIncome', value)} /><CalcInput label="Dependants" value={calculator.dependents} onChange={(value) => handleCalcChange('dependents', value)} /><CalcInput label="Outstanding debts (KES)" value={calculator.outstandingDebts} onChange={(value) => handleCalcChange('outstandingDebts', value)} /><CalcInput label="Years to cover" value={calculator.yearsToCover} onChange={(value) => handleCalcChange('yearsToCover', value)} /></div><div className="mt-5 rounded-[1rem] border border-amber-200 bg-[linear-gradient(180deg,_#fffef7_0%,_#fff4df_100%)] p-5"><p className="text-xs uppercase tracking-[0.18em] text-[#9bb8af]">Recommended Cover</p><p className="mt-2 text-[2.6rem] font-extrabold leading-none text-[#175f54]">{formatKES(recommendedCover)}</p><p className="mt-2 text-sm text-slate-600">Formula: annual income x years + debts + dependent support cushion.</p></div><div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => setShowCompareModal(true)} className="inline-flex items-center gap-1.5 rounded-[0.8rem] bg-[#1c6c5d] px-3.5 py-2 text-[12px] font-semibold text-white">Compare Insurance<ArrowRight size={12} /></button><button type="button" onClick={() => setShowAddModal(true)} className="inline-flex items-center gap-1.5 rounded-[0.8rem] border border-emerald-200 bg-[#eef8f3] px-3.5 py-2 text-[12px] font-semibold text-[#175f54]">Add Policy</button></div></article>
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm"><PanelHeading icon={ShieldAlert} title="Coverage Guidance" /><div className="mt-4 space-y-3"><GuidanceRow label="Current cover" value={formatKES(coverageTotal)} tone="text-[#175f54]" /><GuidanceRow label="Recommended cover" value={formatKES(recommendedCover)} tone="text-[#2167d8]" /><GuidanceRow label="Coverage gap" value={coverageGap > 0 ? formatKES(coverageGap) : 'Covered'} tone={coverageGap > 0 ? 'text-rose-500' : 'text-[#175f54]'} /><GuidanceRow label="Monthly premiums" value={formatKES(monthlyPremiums)} tone="text-[#c37a00]" /></div><div className="mt-5 space-y-3">{missingPolicies.slice(0, 3).map((type) => <InsightCard key={type} title={`${POLICY_LIBRARY[type]?.label || type} gap`} text={`Recommended cover: ${formatKES(recommendedByType[type])}. Add this if you want broader family protection.`} tone="border-rose-200 bg-rose-50 text-rose-700" />)}</div></article>
                 </section>
@@ -533,6 +696,761 @@ const ProtectionPlanner = ({ onSelectSection }) => {
         </div>
     );
 };
+
+const MobileProtectionFlow = ({
+    activePolicies,
+    answers,
+    calculator,
+    complete,
+    compareRows,
+    coverageAdequacy,
+    coverageGap,
+    coverageTotal,
+    currentStep,
+    displayName,
+    insightCards,
+    missingPolicies,
+    monthlyPremiums,
+    onAnswer,
+    onBack,
+    onCalcChange,
+    onCompare,
+    onFormChange,
+    onNext,
+    onPolicySubmit,
+    onRestart,
+    onSetMobileView,
+    onStart,
+    policies,
+    policyForm,
+    recommendedByType,
+    recommendedCover,
+    saving,
+    showOnboarding,
+    view,
+}) => {
+    if (showOnboarding) {
+        return <MobileProtectionWelcome displayName={displayName} onStart={onStart} />;
+    }
+    if (complete) {
+        if (view === 'add-policy') {
+            return (
+                <MobileAddPolicyScreen
+                    form={policyForm}
+                    onBack={() => onSetMobileView('policies')}
+                    onChange={onFormChange}
+                    onSubmit={onPolicySubmit}
+                    saving={saving}
+                />
+            );
+        }
+        if (view === 'compare') {
+            return (
+                <MobileCompareInsuranceScreen
+                    onBack={() => onSetMobileView('policies')}
+                    rows={compareRows}
+                />
+            );
+        }
+        return (
+            <MobileExistingProtectionDashboard
+                activePolicies={activePolicies}
+                calculator={calculator}
+                coverageAdequacy={coverageAdequacy}
+                coverageGap={coverageGap}
+                coverageTotal={coverageTotal}
+                insightCards={insightCards}
+                missingPolicies={missingPolicies}
+                monthlyPremiums={monthlyPremiums}
+                onAddPolicy={() => onSetMobileView('add-policy')}
+                onCalcChange={onCalcChange}
+                onCompare={onCompare}
+                onRestart={onRestart}
+                onSetMobileView={onSetMobileView}
+                policies={policies}
+                recommendedByType={recommendedByType}
+                recommendedCover={recommendedCover}
+                view={view}
+            />
+        );
+    }
+
+    const question = protectionQuestions[currentStep] || protectionQuestions[0];
+    const selected = answers[question.id];
+
+    return (
+        <MobileProtectionShell>
+            <MobileProtectionTopbar onBack={onBack} />
+            <div className="px-4 pb-5">
+                <MobileProtectionTitle />
+                <div className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white px-3 py-3 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-2 text-[0.7rem] font-bold text-[#2e7d6f]"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#e6f4ed] text-[#006d67]"><Check size={11} /></span>Set your objectives</span>
+                        <span className="text-[0.68rem] font-bold text-slate-400">{currentStep + 2} / 5</span>
+                    </div>
+                    <MobileProtectionProgress step={currentStep} />
+                    <h3 className="mt-4 text-[0.98rem] font-extrabold leading-5 text-slate-950">{question.question}</h3>
+                    <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">{question.helper}</p>
+                    <div className={question.compact ? 'mt-3 grid grid-cols-5 gap-2' : 'mt-3 space-y-2'}>
+                        {question.options.map((option) => (
+                            <MobileProtectionOption
+                                compact={question.compact}
+                                key={option.value}
+                                option={option}
+                                selected={selected === option.value}
+                                onClick={() => onAnswer(question, option)}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <MobileProtectionGuide />
+                <MobileRecommendedCoverCard calculator={calculator} coverageGap={coverageGap} recommendedCover={recommendedCover} />
+                <div className="mt-4 grid grid-cols-[0.82fr_1.28fr] gap-3">
+                    <button type="button" onClick={onBack} className="h-11 rounded-full border border-[#dce9e3] bg-white text-[0.72rem] font-extrabold text-[#006d67]">Back</button>
+                    <button type="button" onClick={onNext} disabled={!selected} className="h-11 rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm disabled:bg-slate-300">Next</button>
+                </div>
+            </div>
+        </MobileProtectionShell>
+    );
+};
+
+const MobileExistingProtectionDashboard = ({
+    activePolicies,
+    calculator,
+    coverageAdequacy,
+    coverageGap,
+    coverageTotal,
+    insightCards,
+    missingPolicies,
+    monthlyPremiums,
+    onAddPolicy,
+    onCalcChange,
+    onCompare,
+    onRestart,
+    onSetMobileView,
+    policies,
+    recommendedByType,
+    recommendedCover,
+    view,
+}) => {
+    const selectedView = ['overview', 'policies', 'solutions', 'calculator'].includes(view) ? view : 'overview';
+    return (
+        <MobileProtectionShell>
+            <MobileProtectionTopbar onBack={onRestart} />
+            <div className="px-4 pb-5">
+                <MobileProtectionTitle />
+                <MobileProtectionTabs active={selectedView} onChange={onSetMobileView} />
+                {selectedView === 'overview' && (
+                    <MobileProtectionOverview
+                        activePolicies={activePolicies}
+                        coverageAdequacy={coverageAdequacy}
+                        coverageGap={coverageGap}
+                        coverageTotal={coverageTotal}
+                        insightCards={insightCards}
+                        monthlyPremiums={monthlyPremiums}
+                        onAddPolicy={onAddPolicy}
+                        onSetMobileView={onSetMobileView}
+                        policies={policies}
+                        recommendedCover={recommendedCover}
+                    />
+                )}
+                {selectedView === 'policies' && (
+                    <MobilePoliciesScreenContent
+                        onAddPolicy={onAddPolicy}
+                        onCompare={onCompare}
+                        policies={policies}
+                    />
+                )}
+                {selectedView === 'solutions' && (
+                    <MobileProtectionSolutions
+                        missingPolicies={missingPolicies}
+                        onCalc={() => onSetMobileView('calculator')}
+                        onCompare={onCompare}
+                        policies={policies}
+                        recommendedByType={recommendedByType}
+                    />
+                )}
+                {selectedView === 'calculator' && (
+                    <MobileProtectionCalculator
+                        calculator={calculator}
+                        coverageGap={coverageGap}
+                        coverageTotal={coverageTotal}
+                        onCalcChange={onCalcChange}
+                        onCompare={onCompare}
+                        recommendedCover={recommendedCover}
+                    />
+                )}
+            </div>
+        </MobileProtectionShell>
+    );
+};
+
+const MobileProtectionTabs = ({ active, onChange }) => (
+    <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1">
+        {[
+            ['overview', 'All'],
+            ['policies', 'My Policies'],
+            ['solutions', 'Solutions'],
+            ['calculator', 'Calculator'],
+        ].map(([key, label]) => (
+            <button
+                key={key}
+                type="button"
+                onClick={() => onChange(key)}
+                className={`h-8 shrink-0 rounded-full border px-3 text-[0.64rem] font-extrabold ${active === key ? 'border-[#f2c230] bg-[#f2c230] text-white' : 'border-[#dce9e3] bg-white text-slate-600'}`}
+            >
+                {label}
+            </button>
+        ))}
+    </div>
+);
+
+const MobileProtectionOverview = ({ activePolicies, coverageAdequacy, coverageGap, coverageTotal, insightCards, monthlyPremiums, onAddPolicy, onSetMobileView, policies, recommendedCover }) => {
+    const incomePercent = Math.min(Math.round((asNumber(monthlyPremiums) * 12 / Math.max(asNumber(recommendedCover), 1)) * 100), 100);
+    return (
+        <div className="mt-3 space-y-3">
+            <article className="rounded-[1rem] bg-[linear-gradient(135deg,_#006d67_0%,_#3f7c5a_52%,_#879346_100%)] p-4 text-white shadow-sm">
+                <p className="text-[0.68rem] font-semibold text-white/80">Total Monthly Premiums</p>
+                <p className="mt-1 text-[1.4rem] font-extrabold leading-none">{formatKES(monthlyPremiums)}</p>
+                <div className="mt-3 flex items-center justify-between text-[0.58rem] font-semibold text-white/80">
+                    <span>percentage of income</span>
+                    <span className="rounded-full bg-[#f2c230] px-2 py-0.5 text-[#3f4b20]">{incomePercent}%</span>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-white/30">
+                    <div className="h-1.5 rounded-full bg-[#f2c230]" style={{ width: `${Math.max(Math.min(incomePercent, 100), 8)}%` }} />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-[0.55rem] font-semibold text-white/80">
+                    <span>Medical</span>
+                    <span>Life cover</span>
+                    <span>Premiums</span>
+                </div>
+            </article>
+
+            <div className="grid grid-cols-[1fr_1.2fr_0.72fr] gap-2">
+                <MobileMiniMetric label="Total Value Cover" value={formatKES(coverageTotal)} helper="Current policies" />
+                <MobileMiniMetric label="Recommended Value" value={formatKES(recommendedCover)} helper={`${formatKES(coverageGap)} gap`} />
+                <MobileMiniMetric label="Active Policies" value={String(activePolicies.length)} helper="Active covers" />
+            </div>
+
+            <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-[0.84rem] font-extrabold text-slate-950">My Policies</h3>
+                        <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Add your current policies to track and push your cover goals.</p>
+                    </div>
+                    <button type="button" onClick={onAddPolicy} className="text-[0.62rem] font-extrabold text-[#d99a00]">Add Policies</button>
+                </div>
+                <div className="mt-3 space-y-2">
+                    {(policies.length ? policies.slice(0, 2) : []).map((policy) => <MobileDetailedPolicyCard key={policy.uuid || policy.name} policy={policy} recommended={recommendedCover} />)}
+                    {policies.length === 0 && <p className="rounded-[0.85rem] bg-[#f8faf9] px-3 py-4 text-center text-[0.66rem] font-semibold text-slate-500">No policies yet. Add one to unlock cover analytics.</p>}
+                </div>
+                <button type="button" onClick={() => onSetMobileView('policies')} className="mt-3 w-full text-[0.64rem] font-extrabold text-[#d99a00]">View More</button>
+            </article>
+
+            <section>
+                <div>
+                    <h3 className="text-[0.86rem] font-extrabold text-slate-950">Insights</h3>
+                    <p className="text-[0.62rem] text-slate-500">Analytic breakdown of how to protect your money.</p>
+                </div>
+                <div className="mt-3 space-y-2">
+                    {(insightCards.length ? insightCards : [
+                        { title: 'Medical Cover Comes First', text: 'Prioritise health cover before optional policies.', tone: 'border-orange-100 bg-orange-50 text-orange-700' },
+                        { title: 'Income Protection Gap', text: 'Income protection keeps essentials paid if income stops.', tone: 'border-emerald-100 bg-emerald-50 text-emerald-700' },
+                        { title: 'Recommended Cover Shortfall', text: 'Compare plans that reduce your cover gap.', tone: 'border-purple-100 bg-purple-50 text-purple-700' },
+                    ]).slice(0, 3).map((item) => <MobileInsightRow key={item.title} item={item} />)}
+                </div>
+            </section>
+
+            <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-4 shadow-sm">
+                <h3 className="text-[0.86rem] font-extrabold text-slate-950">Protection Analytics</h3>
+                <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Here is your protection analytics to understand what you need to protect next.</p>
+                <div className="mt-4 flex items-center gap-4">
+                    <ScoreRing value={coverageAdequacy} />
+                    <div className="space-y-2 text-[0.62rem]">
+                        {['Life Insurance', 'Medical Cover', 'Car Insurance', 'Disability Cover'].map((item) => (
+                            <div key={item} className="flex items-center gap-2">
+                                <span className="h-2.5 w-2.5 rounded-sm bg-[linear-gradient(135deg,_#006d67_0%,_#3f7c5a_52%,_#879346_100%)]" />
+                                <span className="font-semibold text-slate-700">{item}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="mt-3 rounded-[0.85rem] bg-[#fff5e8] p-3">
+                    <p className="text-[0.72rem] font-extrabold text-[#c36a1b]">Needs Attention</p>
+                    <p className="mt-1 text-[0.62rem] leading-4 text-[#9a5a18]">Your next best action is to compare cover options for the largest remaining gaps.</p>
+                </div>
+            </article>
+        </div>
+    );
+};
+
+const MobileMiniMetric = ({ helper, label, value }) => (
+    <article className="min-w-0 rounded-[0.85rem] border border-[#e4efe9] bg-white p-2 shadow-sm">
+        <p className="text-[0.55rem] font-bold text-slate-500">{label}</p>
+        <p className="mt-1 truncate text-[0.72rem] font-extrabold text-[#006d67]">{value}</p>
+        <p className="mt-1 truncate text-[0.52rem] font-semibold text-slate-400">{helper}</p>
+    </article>
+);
+
+const MobileDetailedPolicyCard = ({ policy, recommended }) => {
+    const coverValue = asNumber(policy.currentValue);
+    const adequacy = Math.min(Math.round((coverValue / Math.max(asNumber(recommended), 1)) * 100), 100);
+    const meta = policy.protectionMeta?.policyMeta || POLICY_LIBRARY['Life Insurance'];
+    return (
+        <article className="rounded-[0.9rem] border border-[#e1ece7] bg-[#fbfdfc] p-3">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <span className="rounded-full bg-[#e7f6ef] px-2 py-0.5 text-[0.52rem] font-extrabold text-[#006d67]">{meta.label}</span>
+                    <p className="mt-1 text-[0.78rem] font-extrabold text-slate-950">{policy.institution || 'Jubilee Insurance'}</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-[0.55rem] font-bold text-[#006d67]">Active</p>
+                    <p className="text-[0.72rem] font-extrabold text-[#006d67]">{formatKES(policy.currentValue)}</p>
+                </div>
+            </div>
+            <div className="mt-3 grid grid-cols-4 gap-2 text-[0.54rem]">
+                <MobileTinyDetail label="Cover" value={formatKES(policy.currentValue)} />
+                <MobileTinyDetail label="Beneficiary" value="Family" />
+                <MobileTinyDetail label="Type" value={meta.label} />
+                <MobileTinyDetail label="Premiums" value="Monthly" />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[0.58rem] text-slate-500">
+                <span>Cover adequacy</span>
+                <span className="font-extrabold text-[#006d67]">{adequacy}%</span>
+            </div>
+            <div className="mt-1.5 h-1.5 rounded-full bg-[#dfe9e3]">
+                <div className="h-1.5 rounded-full bg-[linear-gradient(135deg,_#006d67_0%,_#3f7c5a_52%,_#879346_100%)]" style={{ width: `${Math.max(adequacy, 8)}%` }} />
+            </div>
+            <div className="mt-3 grid grid-cols-[1fr_1fr_1fr_30px] gap-1.5">
+                {['Manage', 'Compare', 'File Claim'].map((item) => <button key={item} type="button" className="h-8 rounded-full bg-[#006d67] text-[0.56rem] font-extrabold text-white">{item}</button>)}
+                <button type="button" className="h-8 rounded-full border border-rose-100 bg-rose-50 text-[0.6rem] font-extrabold text-rose-500">X</button>
+            </div>
+        </article>
+    );
+};
+
+const MobileTinyDetail = ({ label, value }) => (
+    <div className="min-w-0">
+        <p className="truncate font-bold text-slate-400">{label}</p>
+        <p className="mt-1 truncate font-extrabold text-slate-700">{value}</p>
+    </div>
+);
+
+const MobileInsightRow = ({ item }) => (
+    <article className={`rounded-[0.95rem] border p-3 ${item.tone || 'border-[#e4efe9] bg-white text-slate-700'}`}>
+        <div className="flex gap-3">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70"><ShieldAlert size={14} /></span>
+            <div>
+                <p className="text-[0.72rem] font-extrabold">{item.title}</p>
+                <p className="mt-1 text-[0.62rem] leading-4 opacity-80">{item.text}</p>
+            </div>
+        </div>
+    </article>
+);
+
+const MobilePoliciesScreen = ({ onAddPolicy, onCompare, onRestart, policies }) => (
+    <MobileProtectionShell>
+        <MobileProtectionTopbar onBack={onRestart} />
+        <div className="px-4 pb-5">
+            <MobileProtectionTitle />
+            <MobilePoliciesScreenContent onAddPolicy={onAddPolicy} onCompare={onCompare} policies={policies} />
+        </div>
+    </MobileProtectionShell>
+);
+
+const MobilePoliciesScreenContent = ({ onAddPolicy, onCompare, policies }) => (
+    <>
+            <article className="mt-3 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-[0.84rem] font-extrabold text-[#006d67]">My Policies</h3>
+                        <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Add your current policies to track and push your financial transfer, gaps and options.</p>
+                    </div>
+                    <button type="button" onClick={onAddPolicy} className="text-[0.62rem] font-extrabold text-[#d99a00]">+ Add Policy</button>
+                </div>
+                {policies.length === 0 ? (
+                    <div className="py-7 text-center">
+                        <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#eef3f7] text-[#006d67]"><FolderOpen size={24} /></span>
+                        <p className="mt-4 text-[0.78rem] font-extrabold text-slate-950">No Policies</p>
+                        <p className="mx-auto mt-1 max-w-[220px] text-[0.62rem] leading-4 text-slate-500">Let's get to know your current policies, then you can decide where to improve.</p>
+                    </div>
+                ) : (
+                    <div className="mt-3 space-y-2">
+                        {policies.slice(0, 4).map((policy) => <MobilePolicyRow key={policy.uuid || policy.name} policy={policy} />)}
+                    </div>
+                )}
+            </article>
+            {policies.length === 0 ? (
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                    <button type="button" onClick={onAddPolicy} className="h-10 rounded-full bg-[#006d67] text-[0.68rem] font-extrabold text-white">Add Policy</button>
+                    <button type="button" onClick={onCompare} className="h-10 rounded-full border border-[#cfe7dd] bg-white text-[0.68rem] font-extrabold text-[#006d67]">I don't have any</button>
+                </div>
+            ) : (
+                <button type="button" onClick={onCompare} className="mt-4 h-11 w-full rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white">Continue</button>
+            )}
+            <div className="mt-3 rounded-full bg-[#fff2c6] px-3 py-2 text-[0.62rem] font-bold text-[#8b6a00]">Let's get your policies set up</div>
+    </>
+);
+
+const MobilePolicyRow = ({ policy }) => {
+    const meta = policy.protectionMeta?.policyMeta || POLICY_LIBRARY['Life Insurance'];
+    const label = policy.protectionMeta?.policyType || parsePolicyType(policy);
+    return (
+        <div className="rounded-[0.85rem] border border-[#e1ece7] bg-[#fbfdfc] px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e7f6ef] text-[#006d67]"><ShieldCheck size={13} /></span>
+                    <div className="min-w-0">
+                        <p className="truncate text-[0.66rem] font-extrabold text-slate-900">{policy.institution || 'Provider'} - {meta.label || label}</p>
+                        <p className="text-[0.56rem] text-slate-500">Renewal: {policy.lastValuedDate ? formatDate(policy.lastValuedDate) : 'Not set'}</p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <p className="text-[0.66rem] font-extrabold text-slate-900">{formatKES(policy.currentValue)}</p>
+                    <p className="text-[0.56rem] text-slate-500">{formatKES(policy.purchaseValue)}/mo</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MobileAddPolicyScreen = ({ form, onBack, onChange, onSubmit, saving }) => (
+    <MobileProtectionShell>
+        <MobileProtectionTopbar onBack={onBack} />
+        <form onSubmit={onSubmit} className="px-4 pb-5">
+            <MobileProtectionTitle />
+            <article className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-[0.84rem] font-extrabold text-[#006d67]">Add your Policy</h3>
+                        <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Kindly provide the following to add your policy.</p>
+                    </div>
+                    <button type="button" onClick={onBack} className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-400"><X size={12} /></button>
+                </div>
+                <div className="mt-3 space-y-2.5">
+                    <MobileFormSelect label="Policy Type" value={form.policyType} onChange={(value) => onChange('policyType', value)} options={POLICY_OPTIONS} />
+                    <MobileFormInput label="Insurer" value={form.provider} onChange={(value) => onChange('provider', value)} placeholder="Eg. Jubilee, AAR, Britam" />
+                    <MobileFormInput label="Policy Number" value={form.notes} onChange={(value) => onChange('notes', value)} placeholder="Eg. Policy Number" />
+                    <div className="grid grid-cols-2 gap-2">
+                        <MobileFormInput label="Cover Value" type="number" value={form.coverageAmount} onChange={(value) => onChange('coverageAmount', value)} placeholder="KES 250,000" />
+                        <MobileFormInput label="Premium Per Month" type="number" value={form.monthlyPremium} onChange={(value) => onChange('monthlyPremium', value)} placeholder="KES 10,000" />
+                    </div>
+                    <MobileFormInput label="Renewal Date" value="" onChange={() => {}} placeholder="26-06-2026" />
+                </div>
+            </article>
+            <button type="submit" disabled={saving || !form.coverageAmount || !form.monthlyPremium} className="mt-4 h-11 w-full rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm disabled:bg-slate-300">{saving ? 'Adding Policy...' : '+ Add Policy'}</button>
+        </form>
+    </MobileProtectionShell>
+);
+
+const MobileCompareInsuranceScreen = ({ onBack, rows }) => (
+    <MobileProtectionShell>
+        <MobileProtectionTopbar onBack={onBack} />
+        <div className="px-4 pb-5">
+            <MobileProtectionTitle />
+            <div className="mt-4">
+                <span className="inline-flex items-center gap-2 text-[0.72rem] font-extrabold text-[#006d67]"><ShieldCheck size={13} />Compare Insurance</span>
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                    {['Medical', 'Life', 'Disability', 'Car'].map((item, index) => (
+                        <button key={item} type="button" className={`h-[46px] rounded-[0.75rem] border px-1 text-[0.58rem] font-extrabold ${index === 0 ? 'border-[#f2c230] bg-[#f2c230] text-white' : 'border-[#e1ece7] bg-white text-slate-500'}`}>{item}<br /><span className="font-semibold">KES {index === 0 ? '1,950' : index === 1 ? '2,500' : index === 2 ? '3,000' : '4,500'}</span></button>
+                    ))}
+                </div>
+                <p className="mt-2 text-[0.62rem] text-slate-500">These options fit your information. Let us narrow this to the best match.</p>
+            </div>
+            <div className="mt-3 space-y-3">
+                {rows.map((row, index) => <MobileInsurancePlan key={row.provider} row={row} featured={index === 0} />)}
+            </div>
+        </div>
+    </MobileProtectionShell>
+);
+
+const MobileProtectionSolutions = ({ missingPolicies, onCalc, onCompare, policies, recommendedByType }) => {
+    const suggested = (missingPolicies.length ? missingPolicies : POLICY_OPTIONS.slice(0, 3)).slice(0, 3);
+    return (
+        <div className="mt-3 space-y-3">
+            <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <h3 className="text-[0.86rem] font-extrabold text-slate-950">Protection Solutions</h3>
+                <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Get a gap analysis on your insurances that you need to protect yourself financially.</p>
+                <div className="mt-3 space-y-2.5">
+                    {suggested.map((type) => {
+                        const meta = POLICY_LIBRARY[type] || POLICY_LIBRARY['Life Insurance'];
+                        const covered = policies.some((policy) => policy.protectionMeta?.policyType === type);
+                        return (
+                            <article key={type} className="rounded-[0.9rem] border border-[#e1ece7] bg-[#fbfdfc] p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-[0.76rem] font-extrabold text-slate-950">{meta.label}</p>
+                                        <p className="mt-1 text-[0.58rem] leading-4 text-slate-500">{meta.subtitle} - suggested cover {formatKES(recommendedByType[type])}</p>
+                                    </div>
+                                    <span className={`rounded-full px-2 py-1 text-[0.52rem] font-extrabold ${covered ? 'bg-[#e7f6ef] text-[#006d67]' : 'bg-rose-50 text-rose-500'}`}>{covered ? 'Covered' : 'Not Covered'}</span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={onCalc} className="h-8 rounded-full bg-[#006d67] text-[0.58rem] font-extrabold text-white">Calculate Need</button>
+                                    <button type="button" onClick={onCompare} className="h-8 rounded-full border border-[#cfe7dd] bg-white text-[0.58rem] font-extrabold text-[#006d67]">Compare Options</button>
+                                </div>
+                            </article>
+                        );
+                    })}
+                </div>
+            </article>
+            <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <h3 className="text-[0.86rem] font-extrabold text-slate-950">What to compare</h3>
+                <div className="mt-3 space-y-2">
+                    {['Waiting periods, exclusions, and claim approval speed', 'Cover value against income, dependants and debt', 'Premium affordability without disrupting savings', 'Renewal terms, lapse rules, and portability'].map((item, index) => (
+                        <div key={item} className="flex items-start gap-2 rounded-[0.8rem] bg-[#fff9e8] px-3 py-2">
+                            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f2c230] text-[0.56rem] font-extrabold text-white">{index + 1}</span>
+                            <p className="text-[0.62rem] leading-4 text-slate-600">{item}</p>
+                        </div>
+                    ))}
+                </div>
+            </article>
+        </div>
+    );
+};
+
+const MobileProtectionCalculator = ({ calculator, coverageGap, coverageTotal, onCalcChange, onCompare, recommendedCover }) => (
+    <div className="mt-3 space-y-3">
+        <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+            <h3 className="text-[0.86rem] font-extrabold text-slate-950">Coverage Calculator</h3>
+            <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Estimate how much family protection you need based on income, dependants, and outstanding obligations.</p>
+            <div className="mt-3 rounded-[0.9rem] bg-[linear-gradient(135deg,_#006d67_0%,_#3f7c5a_52%,_#879346_100%)] p-4 text-white">
+                <p className="text-[0.62rem] font-semibold text-white/80">Recommended Cover</p>
+                <p className="mt-1 text-[1.3rem] font-extrabold leading-none">{formatKES(recommendedCover)}</p>
+                <p className="mt-2 text-[0.58rem] leading-4 text-white/80">Formula: annual income x years + debts + dependent support cushion.</p>
+            </div>
+            <div className="mt-3 space-y-2.5">
+                <MobileFormInput label="Annual income" type="number" value={calculator.annualIncome} onChange={(value) => onCalcChange('annualIncome', value)} placeholder="KES 1,200,000" />
+                <MobileFormInput label="Dependants" type="number" value={calculator.dependents} onChange={(value) => onCalcChange('dependents', value)} placeholder="2" />
+                <MobileFormInput label="Outstanding debt" type="number" value={calculator.outstandingDebts} onChange={(value) => onCalcChange('outstandingDebts', value)} placeholder="KES 850,000" />
+                <MobileFormInput label="Years to Cover" type="number" value={calculator.yearsToCover} onChange={(value) => onCalcChange('yearsToCover', value)} placeholder="10" />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" className="h-9 rounded-full bg-[#006d67] text-[0.62rem] font-extrabold text-white">Calculate</button>
+                <button type="button" onClick={onCompare} className="h-9 rounded-full border border-[#cfe7dd] bg-white text-[0.62rem] font-extrabold text-[#006d67]">Compare Insurance</button>
+            </div>
+        </article>
+        <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+            <h3 className="text-[0.86rem] font-extrabold text-slate-950">Coverage Guidance</h3>
+            <div className="mt-3 divide-y divide-[#edf3ef] text-[0.64rem]">
+                <MobileGuidanceLine label="Current Portfolio" value={formatKES(coverageTotal)} />
+                <MobileGuidanceLine label="Projected Value" value={formatKES(recommendedCover)} />
+                <MobileGuidanceLine label="Target Gap" value={coverageGap > 0 ? formatKES(coverageGap) : 'Covered'} />
+                <MobileGuidanceLine label="Gap to Target" value={coverageGap > 0 ? formatKES(coverageGap) : 'KES 0'} />
+            </div>
+        </article>
+        <article className="rounded-[1rem] border border-orange-100 bg-orange-50 p-3 text-orange-700">
+            <p className="text-[0.72rem] font-extrabold">Medical Cover gap</p>
+            <p className="mt-1 text-[0.62rem] leading-4">Recommended cover should come first if you want the fastest reduction in household risk.</p>
+        </article>
+    </div>
+);
+
+const MobileGuidanceLine = ({ label, value }) => (
+    <div className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+        <span className="font-semibold text-slate-500">{label}</span>
+        <span className="font-extrabold text-slate-950">{value}</span>
+    </div>
+);
+
+const MobileInsurancePlan = ({ featured, row }) => (
+    <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+            <div>
+                <p className="text-[0.76rem] font-extrabold text-slate-950">{featured ? 'Afya Premier' : row.provider}</p>
+                <p className="mt-0.5 text-[0.58rem] text-slate-500">{featured ? 'Inpatient + outpatient' : 'Insurance plan'}</p>
+            </div>
+            {featured && <span className="rounded-full bg-[#e7f6ef] px-2 py-1 text-[0.54rem] font-extrabold text-[#006d67]">Best fit</span>}
+        </div>
+        <div className="mt-3 space-y-1.5 text-[0.62rem]">
+            <MobileCompareLine label="Cover value" value={formatKES(row.cover)} />
+            <MobileCompareLine label="Monthly premium" value={formatKES(row.premium)} />
+            <MobileCompareLine label="Waiting period" value={featured ? '30 days' : '60 days'} />
+            <MobileCompareLine label="Claim turnaround" value={featured ? '3 - 5 days' : '5 - 7 days'} />
+            <MobileCompareLine label="Renewal / portability" value={featured ? 'Portable' : 'Limited'} />
+        </div>
+        <button type="button" className={`mt-3 h-9 w-full rounded-full text-[0.64rem] font-extrabold ${featured ? 'bg-[#006d67] text-white' : 'border border-[#cfe7dd] bg-white text-[#006d67]'}`}>{featured ? 'Choose this plan' : 'Compare'}</button>
+    </article>
+);
+
+const MobileCompareLine = ({ label, value }) => (
+    <div className="flex items-center justify-between gap-3">
+        <span className="text-slate-500">{label}</span>
+        <span className="font-extrabold text-[#006d67]">{value}</span>
+    </div>
+);
+
+const MobileFormSelect = ({ label, onChange, options, value }) => (
+    <label className="block text-[0.6rem] font-bold text-slate-500">
+        {label}
+        <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-9 w-full rounded-[0.7rem] border border-[#e1e7ea] bg-[#f7f8fa] px-3 text-[0.66rem] font-semibold text-slate-700">
+            {options.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+    </label>
+);
+
+const MobileFormInput = ({ label, onChange, placeholder, type = 'text', value }) => (
+    <label className="block text-[0.6rem] font-bold text-slate-500">
+        {label}
+        {type === 'number' ? (
+            <NumericInput value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-9 w-full rounded-[0.7rem] border border-[#e1e7ea] bg-[#f7f8fa] px-3 text-[0.66rem] font-semibold text-slate-700" />
+        ) : (
+            <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-1 h-9 w-full rounded-[0.7rem] border border-[#e1e7ea] bg-[#f7f8fa] px-3 text-[0.66rem] font-semibold text-slate-700" />
+        )}
+    </label>
+);
+
+const MobileProtectionWelcome = ({ displayName, onStart }) => (
+    <MobileProtectionShell>
+        <MobileProtectionTopbar />
+        <div className="px-4 pb-5">
+            <MobileProtectionTitle />
+            <ProtectionMiniHero imageSrc={protectionPlannerHero} />
+            <div className="mx-auto mt-2 inline-flex max-w-full items-center rounded-full bg-[#fff2c6] px-3 py-1.5 text-[0.64rem] font-extrabold text-[#8b6a00]">{displayName ? `Welcome ${displayName}, let's get you started` : "Welcome, let's get you started"}</div>
+            <p className="mt-3 text-[0.72rem] leading-5 text-slate-500">Protect your income, health, family and legacy with the right cover, tailored to your life stage.</p>
+            <MobileInfoGroup
+                title="Why it matters"
+                rows={[
+                    ['Protect years of progress', 'One hospital cover or life income plan can keep bills, fees, and family needs on track.'],
+                    ['Road to who depends on you', 'We factor in dependants, debt, and income, so cover matches your real life.'],
+                    ['Clarity before you commit', 'Compare waiting periods, claim speed, and premiums before you buy the right cover.'],
+                ]}
+            />
+            <MobileInfoGroup
+                title="How it works"
+                rows={[
+                    ['Set your objectives', 'A few quick questions about your life and finances.'],
+                    ['Add policies you have', 'Record existing cover, so you know what is missing.'],
+                    ['Compare options', 'See suggested cover and providers side by side.'],
+                    ['See your dashboard', 'Track cover, premiums, and gaps in one place.'],
+                ]}
+            />
+            <button type="button" onClick={onStart} className="mt-4 h-11 w-full rounded-full bg-[#006d67] text-[0.78rem] font-extrabold text-white shadow-sm">Get Started</button>
+        </div>
+    </MobileProtectionShell>
+);
+
+const MobileProtectionShell = ({ children }) => (
+    <section className="mx-auto max-w-[390px] overflow-hidden rounded-[1.35rem] bg-[#f8f9f8] shadow-sm md:hidden">
+        {children}
+    </section>
+);
+
+const MobileProtectionTopbar = ({ onBack }) => (
+    <div className="flex items-center justify-between px-4 pt-3">
+        <div className="flex items-center gap-2">
+            {onBack && <button type="button" onClick={onBack} className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm"><ChevronLeft size={17} /></button>}
+            <span className="inline-flex h-9 w-11 items-center justify-center rounded-lg bg-[#ecf8f4] text-[0.56rem] font-extrabold leading-[0.6rem] text-[#006d67]">Shilingi<br />Moves</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm"><Bell size={14} /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#ef4444]" /></span>
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#006d67] shadow-sm"><User size={14} /></span>
+        </div>
+    </div>
+);
+
+const MobileProtectionTitle = () => (
+    <div className="mt-4">
+        <p className="text-[0.62rem] font-semibold text-slate-500">Welcome to your</p>
+        <h2 className="text-[1.06rem] font-extrabold leading-5 text-[#006d67]">Protection Planner</h2>
+        <p className="mt-0.5 text-[0.62rem] text-slate-500">Let's protect what you have built over the years</p>
+    </div>
+);
+
+const ProtectionMiniHero = ({ compact = false, imageSrc }) => (
+    <div className={`mx-auto ${compact ? 'mt-3 h-[82px] w-[124px]' : 'mt-5 h-[118px] w-[170px]'} relative`}>
+        {imageSrc ? (
+            <img src={imageSrc} alt="" className="h-full w-full object-contain" />
+        ) : (
+            <>
+        <div className="absolute bottom-0 left-3 right-3 h-8 rounded-full bg-[#fde8b4]" />
+        <div className="absolute bottom-6 left-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#e5f5ec] text-[#006d67]"><ShieldCheck size={compact ? 24 : 30} /></div>
+        <div className="absolute bottom-4 left-16 flex h-20 w-20 items-center justify-center rounded-[1.1rem] bg-[#fff7df] text-[#d49600] shadow-sm"><Heart size={compact ? 22 : 28} /></div>
+        <div className="absolute bottom-3 right-2 h-12 w-8 rounded-full bg-[#f7c27b]" />
+        <div className="absolute bottom-6 right-5 h-7 w-7 rounded-full bg-[#5c3b2e]" />
+        <div className="absolute bottom-3 right-12 h-9 w-6 rounded-full bg-[#0f8c76]" />
+        <div className="absolute bottom-9 left-2 h-5 w-5 rounded-full bg-[#f6bd30]" />
+        <div className="absolute right-4 top-2 h-5 w-5 rounded-full bg-[#f6bd30]" />
+            </>
+        )}
+    </div>
+);
+
+const MobileInfoGroup = ({ title, rows }) => (
+    <article className="mt-3 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+        <p className="text-[0.72rem] font-extrabold text-[#006d67]">{title}</p>
+        <div className="mt-2 space-y-2">
+            {rows.map(([heading, text], index) => (
+                <div key={heading} className="flex gap-2 rounded-[0.8rem] bg-[#fff9e8] px-3 py-2">
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f2c230] text-[0.58rem] font-extrabold text-white">{index + 1}</span>
+                    <div>
+                        <p className="text-[0.68rem] font-extrabold text-slate-800">{heading}</p>
+                        <p className="mt-0.5 text-[0.62rem] leading-4 text-slate-500">{text}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </article>
+);
+
+const MobileProtectionProgress = ({ step }) => (
+    <div className="flex items-center gap-1.5">
+        {[0, 1, 2, 3, 4].map((item) => (
+            <React.Fragment key={item}>
+                <span className={`h-3.5 w-3.5 rounded-full border ${item <= step + 1 ? 'border-[#f2c230] bg-[#f2c230]' : 'border-[#d8e5df] bg-white'}`} />
+                {item < 4 && <span className={`h-0.5 flex-1 rounded-full ${item < step + 1 ? 'bg-[#f2c230]' : 'bg-[#d8e5df]'}`} />}
+            </React.Fragment>
+        ))}
+    </div>
+);
+
+const MobileProtectionOption = ({ compact, onClick, option, selected }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`${compact ? 'h-9 justify-center px-1' : 'h-11 justify-between px-3'} flex w-full items-center rounded-[0.8rem] border text-left text-[0.68rem] font-bold transition ${selected ? 'border-[#f2c230] bg-[#fff5cf] text-[#7a5a00]' : 'border-[#dfeae5] bg-white text-slate-700'}`}
+    >
+        <span>{option.label}</span>
+        {!compact && <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${selected ? 'border-[#f2c230] bg-[#f2c230]' : 'border-slate-300 bg-white'}`}>{selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}</span>}
+    </button>
+);
+
+const MobileProtectionGuide = () => (
+    <article className="mt-3 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+        <div className="space-y-2">
+            {['What is your monthly income?', 'Any outstanding loan or debt?', 'Which best describes your life stage?', 'What matters most to protect first?'].map((item, index) => (
+                <div key={item} className="flex items-center justify-between rounded-[0.8rem] bg-[#f8faf9] px-3 py-2">
+                    <span className="inline-flex items-center gap-2 text-[0.66rem] font-semibold text-slate-600"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#edf7f2] text-[0.58rem] font-extrabold text-[#006d67]">{index + 1}</span>{item}</span>
+                    <span className="h-2 w-2 rounded-full bg-[#f2c230]" />
+                </div>
+            ))}
+        </div>
+    </article>
+);
+
+const MobileRecommendedCoverCard = ({ calculator, coverageGap, recommendedCover }) => {
+    const incomeCover = asNumber(calculator.annualIncome) * Math.max(asNumber(calculator.yearsToCover), 1);
+    const familySupport = asNumber(calculator.dependents) * 600000;
+    return (
+        <article className="mt-3 rounded-[1rem] border border-[#f0dca4] bg-[#fff8e6] p-3 shadow-sm">
+            <p className="text-[0.58rem] font-extrabold uppercase tracking-[0.08em] text-[#b88300]">Recommended cover - feeling</p>
+            <p className="mt-1 text-[1.08rem] font-extrabold text-[#006d67]">{formatKES(recommendedCover)}</p>
+            <p className="text-[0.62rem] text-slate-500">Based on 10-year income replacement</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[0.62rem]">
+                <MobileCoverLine label="Income replacement" value={formatKES(incomeCover)} />
+                <MobileCoverLine label="Outstanding debt" value={formatKES(calculator.outstandingDebts)} />
+                <MobileCoverLine label="Education & family support" value={formatKES(familySupport)} />
+                <MobileCoverLine label="Coverage gap" value={coverageGap > 0 ? formatKES(coverageGap) : 'Covered'} />
+            </div>
+        </article>
+    );
+};
+
+const MobileCoverLine = ({ label, value }) => (
+    <div className="rounded-[0.75rem] bg-white/80 px-2.5 py-2">
+        <p className="font-semibold text-slate-500">{label}</p>
+        <p className="mt-1 font-extrabold text-slate-900">{value}</p>
+    </div>
+);
 
 const MetricCard = ({ title, value, helper, valueClass, cardTone = 'bg-white' }) => <article className={`rounded-[1.2rem] border border-primary-100 px-4 py-4 shadow-sm ${cardTone}`}><p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-[#9bb8af]">{title}</p><p className={`dashboard-metric-value mt-2 text-[1.42rem] font-extrabold leading-none sm:text-[1.58rem] ${valueClass}`}>{value}</p><p className="mt-2 text-[0.82rem] text-slate-500">{helper}</p></article>;
 const ScoreRing = ({ value }) => <div className="relative flex h-24 w-24 items-center justify-center"><div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#179b6e ${value * 3.6}deg, #e8f3ef 0deg)` }} /><div className="absolute inset-[8px] rounded-full bg-white" /><div className="relative text-center"><p className="text-[1.6rem] font-extrabold leading-none text-primary-700">{value}</p><p className="text-xs text-slate-500">/100</p></div></div>;

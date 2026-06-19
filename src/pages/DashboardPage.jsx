@@ -328,7 +328,7 @@ const DashboardPage = () => {
             case 'protection':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ProtectionPlanner onSelectSection={handleSelectSection} />
+                        <ProtectionPlanner onSelectSection={handleSelectSection} user={profile} />
                     </Suspense>
                 );
 
