@@ -335,7 +335,7 @@ const DashboardPage = () => {
             case 'retirement':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <RetirementPlanner onSelectSection={handleSelectSection} />
+                        <RetirementPlanner onSelectSection={handleSelectSection} user={profile} />
                     </Suspense>
                 );
 

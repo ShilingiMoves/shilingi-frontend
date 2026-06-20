@@ -4,7 +4,6 @@ import NumericInput from '../../common/NumericInput';
 import {
     Activity,
     ArrowRight,
-    Bell,
     Calculator,
     Car,
     Check,
@@ -780,9 +779,8 @@ const MobileProtectionFlow = ({
 
     return (
         <MobileProtectionShell>
-            <MobileProtectionTopbar onBack={onBack} />
             <div className="px-4 pb-5">
-                <MobileProtectionTitle />
+                <MobileProtectionTitle onBack={onBack} />
                 <div className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white px-3 py-3 shadow-sm">
                     <div className="mb-3 flex items-center justify-between gap-3">
                         <span className="inline-flex items-center gap-2 text-[0.7rem] font-bold text-[#2e7d6f]"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#e6f4ed] text-[#006d67]"><Check size={11} /></span>Set your objectives</span>
@@ -836,9 +834,8 @@ const MobileExistingProtectionDashboard = ({
     const selectedView = ['overview', 'policies', 'solutions', 'calculator'].includes(view) ? view : 'overview';
     return (
         <MobileProtectionShell>
-            <MobileProtectionTopbar onBack={onRestart} />
             <div className="px-4 pb-5">
-                <MobileProtectionTitle />
+                <MobileProtectionTitle onBack={onRestart} />
                 <MobileProtectionTabs active={selectedView} onChange={onSetMobileView} />
                 {selectedView === 'overview' && (
                     <MobileProtectionOverview
@@ -1050,9 +1047,8 @@ const MobileInsightRow = ({ item }) => (
 
 const MobilePoliciesScreen = ({ onAddPolicy, onCompare, onRestart, policies }) => (
     <MobileProtectionShell>
-        <MobileProtectionTopbar onBack={onRestart} />
         <div className="px-4 pb-5">
-            <MobileProtectionTitle />
+            <MobileProtectionTitle onBack={onRestart} />
             <MobilePoliciesScreenContent onAddPolicy={onAddPolicy} onCompare={onCompare} policies={policies} />
         </div>
     </MobileProtectionShell>
@@ -1116,9 +1112,8 @@ const MobilePolicyRow = ({ policy }) => {
 
 const MobileAddPolicyScreen = ({ form, onBack, onChange, onSubmit, saving }) => (
     <MobileProtectionShell>
-        <MobileProtectionTopbar onBack={onBack} />
         <form onSubmit={onSubmit} className="px-4 pb-5">
-            <MobileProtectionTitle />
+            <MobileProtectionTitle onBack={onBack} />
             <article className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                     <div>
@@ -1145,9 +1140,8 @@ const MobileAddPolicyScreen = ({ form, onBack, onChange, onSubmit, saving }) => 
 
 const MobileCompareInsuranceScreen = ({ onBack, rows }) => (
     <MobileProtectionShell>
-        <MobileProtectionTopbar onBack={onBack} />
         <div className="px-4 pb-5">
-            <MobileProtectionTitle />
+            <MobileProtectionTitle onBack={onBack} />
             <div className="mt-4">
                 <span className="inline-flex items-center gap-2 text-[0.72rem] font-extrabold text-[#006d67]"><ShieldCheck size={13} />Compare Insurance</span>
                 <div className="mt-3 grid grid-cols-4 gap-2">
@@ -1301,7 +1295,6 @@ const MobileFormInput = ({ label, onChange, placeholder, type = 'text', value })
 
 const MobileProtectionWelcome = ({ displayName, onStart }) => (
     <MobileProtectionShell>
-        <MobileProtectionTopbar />
         <div className="px-4 pb-5">
             <MobileProtectionTitle />
             <ProtectionMiniHero imageSrc={protectionPlannerHero} />
@@ -1335,24 +1328,23 @@ const MobileProtectionShell = ({ children }) => (
     </section>
 );
 
-const MobileProtectionTopbar = ({ onBack }) => (
-    <div className="flex items-center justify-between px-4 pt-3">
-        <div className="flex items-center gap-2">
-            {onBack && <button type="button" onClick={onBack} className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm"><ChevronLeft size={17} /></button>}
-            <span className="inline-flex h-9 w-11 items-center justify-center rounded-lg bg-[#ecf8f4] text-[0.56rem] font-extrabold leading-[0.6rem] text-[#006d67]">Shilingi<br />Moves</span>
+const MobileProtectionTitle = ({ onBack }) => (
+    <div className="flex items-start gap-3 pt-4">
+        {onBack ? (
+            <button
+                type="button"
+                onClick={onBack}
+                className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-100"
+                aria-label="Go back"
+            >
+                <ChevronLeft size={17} />
+            </button>
+        ) : null}
+        <div className="min-w-0">
+            <p className="text-[0.62rem] font-semibold text-slate-500">Welcome to your</p>
+            <h2 className="text-[1.06rem] font-extrabold leading-5 text-[#006d67]">Protection Planner</h2>
+            <p className="mt-0.5 text-[0.62rem] text-slate-500">Let's protect what you have built over the years</p>
         </div>
-        <div className="flex items-center gap-2">
-            <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm"><Bell size={14} /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#ef4444]" /></span>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#006d67] shadow-sm"><User size={14} /></span>
-        </div>
-    </div>
-);
-
-const MobileProtectionTitle = () => (
-    <div className="mt-4">
-        <p className="text-[0.62rem] font-semibold text-slate-500">Welcome to your</p>
-        <h2 className="text-[1.06rem] font-extrabold leading-5 text-[#006d67]">Protection Planner</h2>
-        <p className="mt-0.5 text-[0.62rem] text-slate-500">Let's protect what you have built over the years</p>
     </div>
 );
 

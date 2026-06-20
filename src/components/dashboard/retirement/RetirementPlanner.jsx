@@ -1,19 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import NumericInput from "../../common/NumericInput";
 import {
+  ArrowLeft,
   ArrowRight,
-  CalendarDays,
+  CheckCircle2,
   FileText,
-  Flame,
   Landmark,
   Loader2,
   PiggyBank,
-  Plus,
   Sparkles,
-  Trash2,
   WalletCards,
   X,
 } from "lucide-react";
+import retirementHeroImage from "../../../assets/retirement-planner-hero.png";
 import {
   createAsset,
   createAssetCategory,
@@ -27,9 +26,12 @@ import {
   buildFinancialSnapshot,
   buildRetirementInsights,
 } from "../../../utils/financialIntelligence";
+import { getStoredUserProfile } from "../../../services/sessionManager";
+import { getDashboardDisplayName } from "../../../utils/memberIdentity";
 import { USER_PROFILE_WORKSPACE_KEY } from "../user/UserGoalsFamilyForm";
 
 const RETIREMENT_CATEGORY_NAME = "Retirement Account";
+const RETIREMENT_ONBOARDING_KEY = "shilingi_retirement_onboarding_seen_v1";
 const ACCOUNT_OPTIONS = [
   "NSSF - National Social Security Fund",
   "Sanlam Umbrella Pension",
@@ -53,6 +55,140 @@ const defaultCalculator = {
   expectedReturn: "12",
   monthlyExpensesAtRetirement: "80000",
 };
+const retirementWelcomeItems = [
+  "Retirement lasts decades. Your plan turns that future income need into today's action.",
+  "NSSF and basic schemes may only cover part of your lifestyle, so Shilingi helps you see the gap early.",
+  "Starting now gives compounding more years to work, even if you begin with a small monthly amount.",
+  "A clear number makes the goal feel manageable instead of vague or stressful.",
+];
+const retirementHowItWorks = [
+  {
+    title: "Set your objectives",
+    text: "Your age, target retirement age and the monthly income you'll want.",
+  },
+  {
+    title: "Add pensions & funds",
+    text: "NSSF, employer pension, personal plans, SACCO and other savings.",
+  },
+  {
+    title: "Compare provider options",
+    text: "Review returns, fees and flexibility side by side.",
+  },
+  {
+    title: "See your projection",
+    text: "Track your projected retirement income and any gap to close.",
+  },
+];
+const retirementQuestionFlow = [
+  {
+    id: "currentAge",
+    title: "How old are you now?",
+    helper:
+      "Your current age helps us estimate how many earning years are left.",
+    options: [
+      { label: "Under 30", value: "under-30", calculator: { currentAge: "28" } },
+      { label: "30 - 39", value: "30-39", calculator: { currentAge: "36" } },
+      { label: "40 - 49", value: "40-49", calculator: { currentAge: "45" } },
+    ],
+  },
+  {
+    id: "targetAge",
+    title: "When do you want to retire?",
+    helper:
+      "This sets the number of years your retirement pot has to grow.",
+    options: [
+      { label: "50 Years", value: "50", calculator: { targetAge: "50" } },
+      { label: "55 Years", value: "55", calculator: { targetAge: "55" } },
+      { label: "60 Years", value: "60", calculator: { targetAge: "60" } },
+    ],
+  },
+  {
+    id: "monthlyIncome",
+    title: "What monthly income do you want in retirement?",
+    helper:
+      "Your retirement goal determines the size of the fund you need to build.",
+    options: [
+      {
+        label: "KES 30,000",
+        value: "30000",
+        calculator: { monthlyExpensesAtRetirement: "30000" },
+      },
+      {
+        label: "KES 50,000",
+        value: "50000",
+        calculator: { monthlyExpensesAtRetirement: "50000" },
+      },
+      {
+        label: "KES 100,000",
+        value: "100000",
+        calculator: { monthlyExpensesAtRetirement: "100000" },
+      },
+      {
+        label: "Over KES 150,000",
+        value: "150000",
+        calculator: { monthlyExpensesAtRetirement: "150000" },
+      },
+    ],
+  },
+  {
+    id: "monthlyContribution",
+    title: "How much of your current income can you save towards retirement?",
+    helper:
+      "A realistic monthly contribution keeps the projection grounded.",
+    options: [
+      {
+        label: "Under KES 10,000",
+        value: "8000",
+        calculator: { monthlyContribution: "8000" },
+      },
+      {
+        label: "KES 10,000 - KES 20,000",
+        value: "15000",
+        calculator: { monthlyContribution: "15000" },
+      },
+      {
+        label: "KES 20,000 - KES 50,000",
+        value: "30000",
+        calculator: { monthlyContribution: "30000" },
+      },
+      {
+        label: "Over KES 50,000",
+        value: "50000",
+        calculator: { monthlyContribution: "50000" },
+      },
+    ],
+  },
+  {
+    id: "currentSavings",
+    title: "How much have you already saved for retirement?",
+    helper:
+      "Include NSSF, pension, SACCO savings and any dedicated retirement funds.",
+    options: [
+      { label: "Nothing Yet", value: "0", calculator: { currentSavings: "0" } },
+      {
+        label: "Under KES 1M",
+        value: "500000",
+        calculator: { currentSavings: "500000" },
+      },
+      {
+        label: "KES 1M - 5M",
+        value: "3000000",
+        calculator: { currentSavings: "3000000" },
+      },
+      {
+        label: "Over KES 5M",
+        value: "6000000",
+        calculator: { currentSavings: "6000000" },
+      },
+    ],
+  },
+];
+const retirementGuideQuestions = [
+  "When do you want to retire?",
+  "What monthly income do you want in retirement?",
+  "How much can you save each month?",
+  "How much have you already saved for retirement?",
+];
 const normalize = (value) =>
   String(value || "")
     .trim()
@@ -63,6 +199,14 @@ const toNumber = (value) => {
 };
 const formatKES = (value) =>
   `KES ${Math.round(toNumber(value)).toLocaleString("en-KE")}`;
+const formatCompactKES = (value) => {
+  const numericValue = toNumber(value);
+  if (numericValue >= 1000000)
+    return `KES ${(numericValue / 1000000).toFixed(numericValue % 1000000 === 0 ? 0 : 1)}M`;
+  if (numericValue >= 1000)
+    return `KES ${(numericValue / 1000).toFixed(numericValue % 1000 === 0 ? 0 : 1)}K`;
+  return formatKES(numericValue);
+};
 const readProfileWorkspace = () => {
   if (typeof window === "undefined") return {};
   try {
@@ -70,6 +214,20 @@ const readProfileWorkspace = () => {
   } catch {
     return {};
   }
+};
+const readRetirementOnboardingSeen = () => {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(RETIREMENT_ONBOARDING_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const getPlannerDisplayName = (user) => {
+  const displayName = getDashboardDisplayName(
+    user || getStoredUserProfile() || {},
+  ).trim();
+  return displayName && displayName !== "My Profile" ? displayName : "";
 };
 const getCategoryIdentifier = (category) => {
   if (!category) return null;
@@ -160,12 +318,13 @@ const getAccountMeta = (name) => {
   };
 };
 
-const RetirementPlanner = ({ onSelectSection }) => {
+const RetirementPlanner = ({ onSelectSection, user }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showMobileAddFund, setShowMobileAddFund] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [deletingAccountId, setDeletingAccountId] = useState("");
@@ -174,10 +333,20 @@ const RetirementPlanner = ({ onSelectSection }) => {
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("objectives");
+  const [mobileFlowStep, setMobileFlowStep] = useState(() =>
+    readRetirementOnboardingSeen() ? "complete" : "welcome",
+  );
+  const [mobileFundView, setMobileFundView] = useState(() =>
+    readRetirementOnboardingSeen() ? "dashboard" : "funds",
+  );
+  const [mobileDashboardTab, setMobileDashboardTab] = useState("all");
+  const [mobileQuestionIndex, setMobileQuestionIndex] = useState(0);
+  const [retirementAnswers, setRetirementAnswers] = useState({});
   const [profileWorkspace, setProfileWorkspace] = useState(() =>
     readProfileWorkspace(),
   );
   const plannerContext = usePlannerFinancialContext();
+  const displayName = getPlannerDisplayName(user);
 
   const loadData = async () => {
     setLoading(true);
@@ -391,6 +560,52 @@ const RetirementPlanner = ({ onSelectSection }) => {
     setCalculator((current) => ({ ...current, [key]: value }));
   const handleFormChange = (key, value) =>
     setAccountForm((current) => ({ ...current, [key]: value }));
+  const applyMobileRetirementAnswer = (question, option) => {
+    setRetirementAnswers((current) => ({
+      ...current,
+      [question.id]: option.value,
+    }));
+    setCalculator((current) => ({ ...current, ...option.calculator }));
+  };
+  const completeMobileRetirementOnboarding = () => {
+    const completedAt = new Date().toISOString();
+    const nextWorkspace = {
+      ...readProfileWorkspace(),
+      retirementPlanner: {
+        ...(profileWorkspace.retirementPlanner || {}),
+        answers: retirementAnswers,
+        calculator,
+        completedAt,
+      },
+      retirementPlannerCompletedAt: completedAt,
+    };
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          USER_PROFILE_WORKSPACE_KEY,
+          JSON.stringify(nextWorkspace),
+        );
+        window.localStorage.setItem(RETIREMENT_ONBOARDING_KEY, "1");
+      } catch {
+        // The interactive state still updates even when storage is unavailable.
+      }
+    }
+    setProfileWorkspace(nextWorkspace);
+    setMobileFlowStep("complete");
+    setActiveTab("objectives");
+  };
+  const handleMobileRetirementNext = () => {
+    const currentQuestion = retirementQuestionFlow[mobileQuestionIndex];
+    if (!retirementAnswers[currentQuestion.id]) {
+      const fallback = currentQuestion.options[0];
+      applyMobileRetirementAnswer(currentQuestion, fallback);
+    }
+    if (mobileQuestionIndex >= retirementQuestionFlow.length - 1) {
+      completeMobileRetirementOnboarding();
+      return;
+    }
+    setMobileQuestionIndex((current) => current + 1);
+  };
   const ensureCategoryId = async () => {
     let resolved = categories;
     let categoryId = findRetirementCategoryId(resolved);
@@ -445,6 +660,7 @@ const RetirementPlanner = ({ onSelectSection }) => {
       markDashboardDataExists();
       setSuccess("Retirement account added and included in net worth.");
       setShowAddModal(false);
+      setShowMobileAddFund(false);
       setAccountForm(defaultAccountForm);
       await loadData();
     } catch (err) {
@@ -483,6 +699,45 @@ const RetirementPlanner = ({ onSelectSection }) => {
           {success}
         </div>
       )}
+      <MobileRetirementOnboarding
+        answers={retirementAnswers}
+        displayName={displayName}
+        fireNumber={fireNumber}
+        flowStep={mobileFlowStep}
+        loading={loading}
+        onAddAccount={() => setShowMobileAddFund(true)}
+        onAnswer={applyMobileRetirementAnswer}
+        onBack={() =>
+          mobileQuestionIndex === 0
+            ? setMobileFlowStep("welcome")
+            : setMobileQuestionIndex((current) => Math.max(current - 1, 0))
+        }
+        onGetStarted={() => {
+          setMobileFlowStep("questions");
+          setMobileQuestionIndex(0);
+        }}
+        onNext={handleMobileRetirementNext}
+        onGoToDashboard={() => {
+          setMobileFundView("dashboard");
+          setActiveTab("objectives");
+        }}
+        onNewToThis={() => setMobileFlowStep("welcome")}
+        onOpenCompare={() => setMobileFundView("compare")}
+        projectedPot={projectedPot}
+        questionIndex={mobileQuestionIndex}
+        calculator={calculator}
+        fireProgress={fireProgress}
+        insightCards={insightCards}
+        mobileDashboardTab={mobileDashboardTab}
+        onDashboardTabChange={setMobileDashboardTab}
+        retirementAssets={retirementAssets}
+        targetYear={targetYear}
+        totalRetirementBalance={totalRetirementBalance}
+        effectiveMonthlyContribution={effectiveMonthlyContribution}
+        yearsRemaining={yearsRemaining}
+        view={mobileFundView}
+      />
+      <div className="hidden space-y-4 md:block">
       <section className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm sm:px-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-[39rem]">
@@ -1213,12 +1468,22 @@ const RetirementPlanner = ({ onSelectSection }) => {
           </article>
         </section>
       )}
+      </div>
       {showAddModal && (
         <AddRetirementModal
           form={accountForm}
           saving={saving}
           onClose={() => setShowAddModal(false)}
           onChange={handleFormChange}
+          onSubmit={addRetirementAccount}
+        />
+      )}
+      {showMobileAddFund && (
+        <MobileAddRetirementFundSheet
+          form={accountForm}
+          saving={saving}
+          onChange={handleFormChange}
+          onClose={() => setShowMobileAddFund(false)}
           onSubmit={addRetirementAccount}
         />
       )}
@@ -1239,6 +1504,1255 @@ const RetirementPlanner = ({ onSelectSection }) => {
     </div>
   );
 };
+
+const MobileRetirementOnboarding = ({
+  answers,
+  calculator,
+  displayName,
+  effectiveMonthlyContribution,
+  fireNumber,
+  fireProgress,
+  flowStep,
+  insightCards,
+  loading,
+  mobileDashboardTab,
+  onAddAccount,
+  onAnswer,
+  onDashboardTabChange,
+  onBack,
+  onGoToDashboard,
+  onGetStarted,
+  onNext,
+  onNewToThis,
+  onOpenCompare,
+  projectedPot,
+  questionIndex,
+  retirementAssets,
+  targetYear,
+  totalRetirementBalance,
+  yearsRemaining,
+  view,
+}) => {
+  const question = retirementQuestionFlow[questionIndex];
+  const selectedValue = answers[question?.id];
+  const gap = Math.max(fireNumber - projectedPot, 0);
+  const welcomeLabel = displayName
+    ? `Welcome ${displayName}, let's get you started`
+    : "Welcome, let's get you started";
+
+  return (
+    <section className="md:hidden">
+      <div className="mx-auto max-w-[390px] overflow-hidden rounded-[1.35rem] bg-[#f8f9f8] shadow-sm ring-1 ring-slate-900/5">
+        <div className="px-4 pb-5">
+          <div className="flex items-start gap-3 pt-5">
+            <button
+              type="button"
+              onClick={onBack}
+              className={`mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-100 ${flowStep === "welcome" ? "invisible" : ""}`}
+              aria-label="Go back"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div className="min-w-0">
+              <p className="text-[0.72rem] font-semibold text-slate-500">
+                Welcome to your
+              </p>
+              <h2 className="dashboard-display-title text-[1.05rem] font-extrabold leading-6 text-[#075e57]">
+                Retirement Planner
+              </h2>
+              <p className="mt-0.5 text-[0.72rem] leading-4 text-slate-500">
+                Let's plan for the life you want in your older age
+              </p>
+            </div>
+          </div>
+
+          {flowStep === "welcome" && (
+            <div className="pt-5">
+              <div className="flex justify-center">
+                <img
+                  src={retirementHeroImage}
+                  alt="Retirement planner"
+                  className="h-[170px] w-[256px] object-contain"
+                />
+              </div>
+              <p className="mt-2 text-center text-[0.78rem] font-extrabold text-slate-900">
+                Welcome{displayName ? ` ${displayName}` : ""}
+              </p>
+              <div className="mt-3 rounded-xl bg-[#fff2c8] px-3 py-2 text-center text-[0.7rem] font-semibold text-[#8b6a10]">
+                {welcomeLabel}
+              </div>
+              <p className="mt-4 text-center text-[0.75rem] leading-5 text-slate-500">
+                Plan a comfortable life after your career. This quick setup
+                helps Shilingi understand your target income, timing and saving
+                power.
+              </p>
+              <MobileRetirementSection
+                icon={CheckCircle2}
+                title="Why it matters"
+                className="mt-5"
+              >
+                <div className="space-y-3">
+                  {retirementWelcomeItems.map((item) => (
+                    <MobileRetirementListItem key={item} text={item} />
+                  ))}
+                </div>
+              </MobileRetirementSection>
+              <MobileRetirementSection
+                icon={PiggyBank}
+                title="How it works"
+                className="mt-4"
+              >
+                <div className="divide-y divide-emerald-100">
+                  {retirementHowItWorks.map((item, index) => (
+                    <div key={item.title} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+                      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e2f4eb] text-[0.72rem] font-extrabold text-[#0b6b61]">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <p className="text-[0.78rem] font-extrabold text-slate-900">
+                          {item.title}
+                        </p>
+                        <p className="mt-0.5 text-[0.7rem] leading-4 text-slate-500">
+                          {item.text}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </MobileRetirementSection>
+              <button
+                type="button"
+                onClick={onGetStarted}
+                className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white shadow-sm"
+              >
+                Get Started
+              </button>
+            </div>
+          )}
+
+          {flowStep === "questions" && question && (
+            <div className="pt-5">
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[0.72rem] font-extrabold text-[#0b6f66]">
+                    Set your objectives
+                  </p>
+                  <p className="text-[0.68rem] font-semibold text-slate-400">
+                    {questionIndex + 1} / {retirementQuestionFlow.length}
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  {retirementQuestionFlow.map((item, index) => (
+                    <span
+                      key={item.id}
+                      className={`h-2 flex-1 rounded-full ${index <= questionIndex ? "bg-[#eab62d]" : "bg-slate-200"}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                <h3 className="text-[1rem] font-extrabold leading-5 text-slate-950">
+                  {question.title}
+                </h3>
+                <p className="mt-1 text-[0.72rem] leading-4 text-slate-500">
+                  {question.helper}
+                </p>
+                <div className="mt-4 grid gap-2">
+                  {question.options.map((option) => {
+                    const active = selectedValue === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onAnswer(question, option)}
+                        className={`flex min-h-11 items-center justify-between rounded-xl border px-3 py-2 text-left text-[0.76rem] font-semibold transition-colors ${active ? "border-[#e6b72d] bg-[#fff4cf] text-[#765600]" : "border-slate-200 bg-white text-slate-700"}`}
+                      >
+                        <span>{option.label}</span>
+                        <span
+                          className={`h-4 w-4 rounded-full border ${active ? "border-[#d99d0b] bg-[#eab62d]" : "border-slate-300"}`}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </article>
+
+              <div className="mt-4 rounded-[1.15rem] border border-emerald-100 bg-white p-3 shadow-sm">
+                <div className="space-y-2">
+                  {retirementGuideQuestions.map((item, index) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-3 rounded-xl bg-[#f7fbf9] px-3 py-3"
+                    >
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dff3eb] text-[0.68rem] font-extrabold text-[#0b6f66]">
+                        {index + 1}
+                      </span>
+                      <span className="flex-1 text-[0.7rem] font-semibold text-slate-700">
+                        {item}
+                      </span>
+                      <span className="h-2 w-2 rounded-full bg-[#eab62d]" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-[1.15rem] border border-[#f4dfab] bg-[#fff8e8] p-4">
+                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-[#d39808]">
+                  Recommended gap - feeling
+                </p>
+                <p className="mt-2 dashboard-metric-value text-[1.35rem] font-extrabold text-[#075e57]">
+                  {formatKES(gap || fireNumber)}
+                </p>
+                <div className="mt-3 space-y-2 text-[0.68rem] text-slate-600">
+                  <div className="flex justify-between gap-3">
+                    <span>Target retirement year</span>
+                    <strong className="text-slate-900">{targetYear}</strong>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>Projected retirement pot</span>
+                    <strong className="text-slate-900">
+                      {formatKES(projectedPot)}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>Estimated gap to close</span>
+                    <strong className="text-[#0b6f66]">
+                      {formatKES(gap)}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="h-11 w-[96px] rounded-full bg-white text-[0.76rem] font-extrabold text-[#0b6f66] ring-1 ring-emerald-100"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={onNext}
+                  className="h-11 flex-1 rounded-full bg-[#0b6f66] text-[0.76rem] font-extrabold text-white"
+                >
+                  {questionIndex === retirementQuestionFlow.length - 1
+                    ? "Finish"
+                    : "Next"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {flowStep === "complete" && (
+            <div className="pt-5">
+              {view === "compare" ? (
+                <MobileCompareRetirementFunds
+                  onGoToDashboard={onGoToDashboard}
+                />
+              ) : view === "dashboard" ? (
+                <MobileExistingRetirementDashboard
+                  activeTab={mobileDashboardTab}
+                  calculator={calculator}
+                  effectiveMonthlyContribution={effectiveMonthlyContribution}
+                  fireNumber={fireNumber}
+                  fireProgress={fireProgress}
+                  insightCards={insightCards}
+                  onAddFund={onAddAccount}
+                  onOpenCompare={onOpenCompare}
+                  onTabChange={onDashboardTabChange}
+                  projectedPot={projectedPot}
+                  retirementAssets={retirementAssets}
+                  targetYear={targetYear}
+                  totalRetirementBalance={totalRetirementBalance}
+                  yearsRemaining={yearsRemaining}
+                />
+              ) : (
+                <MobileRetirementFundStage
+                  loading={loading}
+                  onAddFund={onAddAccount}
+                  onContinue={onOpenCompare}
+                  onNewToThis={onNewToThis}
+                  retirementAssets={retirementAssets}
+                  totalRetirementBalance={totalRetirementBalance}
+                />
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-center bg-[#f8f9f8] pb-2">
+          <span className="h-1 w-28 rounded-full bg-slate-950" />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const MobileRetirementSection = ({
+  children,
+  className = "",
+  icon: Icon,
+  title,
+}) => (
+  <div className={className}>
+    <div className="mb-3 flex items-center gap-3">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+        <Icon size={16} />
+      </span>
+      <h3 className="text-[0.92rem] font-extrabold text-slate-900">{title}</h3>
+    </div>
+    <div className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      {children}
+    </div>
+  </div>
+);
+
+const MobileRetirementFundStage = ({
+  loading,
+  onAddFund,
+  onContinue,
+  onNewToThis,
+  retirementAssets,
+  totalRetirementBalance,
+}) => {
+  const hasFunds = retirementAssets.length > 0;
+
+  return (
+    <>
+      <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-[0.95rem] font-extrabold text-[#075e57]">
+              My Retirement Fund
+            </h3>
+            <p className="mt-1 max-w-[15.5rem] text-[0.68rem] leading-4 text-slate-500">
+              Add your current retirement funds to track and push your forward
+              towards your goals and objectives.
+            </p>
+          </div>
+          {hasFunds ? (
+            <button
+              type="button"
+              onClick={onAddFund}
+              className="shrink-0 text-[0.66rem] font-extrabold text-[#d39a08]"
+            >
+              + Add Fund
+            </button>
+          ) : null}
+        </div>
+
+        {loading ? (
+          <div className="mt-8 flex items-center justify-center gap-2 text-[0.75rem] font-semibold text-slate-500">
+            <Loader2 size={15} className="animate-spin" />
+            Loading retirement funds...
+          </div>
+        ) : hasFunds ? (
+          <div className="mt-5 space-y-3">
+            {retirementAssets.slice(0, 3).map((asset, index) => (
+              <MobileRetirementFundCard
+                key={asset.uuid || `${asset.name}-${index}`}
+                asset={asset}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 text-center">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-emerald-100 bg-[#f0f5f3] text-[2rem]">
+              📭
+            </div>
+            <h4 className="mt-5 text-[0.95rem] font-extrabold text-slate-900">
+              No Retirement Funds
+            </h4>
+            <p className="mx-auto mt-2 max-w-[17rem] text-[0.72rem] leading-5 text-slate-500">
+              Lets get to know any current funds that you might have already
+              set up.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onAddFund}
+                className="inline-flex h-10 items-center justify-center rounded-full bg-[#0b6f66] text-[0.72rem] font-extrabold text-white"
+              >
+                Add Funds
+              </button>
+              <button
+                type="button"
+                onClick={onNewToThis}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-[#0b6f66] bg-white text-[0.72rem] font-extrabold text-[#0b6f66]"
+              >
+                New to this
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 rounded-xl bg-[#fff2c8] px-3 py-2 text-center text-[0.68rem] font-semibold text-[#8b6a10]">
+          {hasFunds
+            ? "Great! your Funds have been added"
+            : "Let's get your retirement fund set up!"}
+        </div>
+      </article>
+
+      {hasFunds ? (
+        <>
+          <div className="mt-4 rounded-[1rem] border border-emerald-100 bg-[#e9f8ef] px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[0.72rem] font-semibold text-[#246f58]">
+                Total retirement savings
+              </span>
+              <strong className="dashboard-metric-value text-[0.9rem] text-[#075e57]">
+                {formatKES(totalRetirementBalance)}
+              </strong>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onContinue}
+            className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white shadow-sm"
+          >
+            Continue
+          </button>
+        </>
+      ) : null}
+    </>
+  );
+};
+
+const existingRetirementTabs = [
+  { id: "all", label: "All" },
+  { id: "fund", label: "My Retirement Fund" },
+  { id: "solutions", label: "Solutions" },
+  { id: "calculator", label: "Calculator" },
+];
+
+const MobileExistingRetirementDashboard = ({
+  activeTab,
+  calculator,
+  effectiveMonthlyContribution,
+  fireNumber,
+  fireProgress,
+  insightCards,
+  onAddFund,
+  onOpenCompare,
+  onTabChange,
+  projectedPot,
+  retirementAssets,
+  targetYear,
+  totalRetirementBalance,
+  yearsRemaining,
+}) => {
+  const visibleAssets =
+    retirementAssets.length > 0
+      ? retirementAssets
+      : [
+          {
+            uuid: "sample-nssf",
+            name: "NSSF - Tier I + II",
+            institution: "National scheme",
+            currentValue: 480000,
+            purchaseValue: 2160,
+            accountMeta: getAccountMeta("NSSF"),
+          },
+          {
+            uuid: "sample-employer",
+            name: "Employer Pension Scheme",
+            institution: "Occupational",
+            currentValue: 1850000,
+            purchaseValue: 12000,
+            accountMeta: getAccountMeta("Employer Pension Scheme"),
+          },
+        ];
+  const dashboardTotal =
+    totalRetirementBalance > 0
+      ? totalRetirementBalance
+      : visibleAssets.reduce((sum, item) => sum + toNumber(item.currentValue), 0);
+
+  return (
+    <div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {existingRetirementTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onTabChange(tab.id)}
+            className={`h-8 shrink-0 rounded-full border px-3 text-[0.66rem] font-extrabold ${activeTab === tab.id ? "border-[#e5b42b] bg-[#f4c242] text-[#654900]" : "border-slate-200 bg-white text-slate-500"}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "all" && (
+        <MobileRetirementOverviewTab
+          calculator={calculator}
+          dashboardTotal={dashboardTotal}
+          effectiveMonthlyContribution={effectiveMonthlyContribution}
+          fireNumber={fireNumber}
+          fireProgress={fireProgress}
+          onAddFund={onAddFund}
+          onTabChange={onTabChange}
+          projectedPot={projectedPot}
+          retirementAssets={visibleAssets}
+          targetYear={targetYear}
+          yearsRemaining={yearsRemaining}
+        />
+      )}
+      {activeTab === "fund" && (
+        <MobileRetirementFundDashboardTab
+          dashboardTotal={dashboardTotal}
+          insightCards={insightCards}
+          onAddFund={onAddFund}
+          retirementAssets={visibleAssets}
+        />
+      )}
+      {activeTab === "solutions" && (
+        <MobileRetirementSolutionsTab onOpenCompare={onOpenCompare} />
+      )}
+      {activeTab === "calculator" && (
+        <MobileRetirementCalculatorTab
+          calculator={calculator}
+          fireNumber={fireNumber}
+          projectedPot={projectedPot}
+          targetYear={targetYear}
+          yearsRemaining={yearsRemaining}
+        />
+      )}
+    </div>
+  );
+};
+
+const MobileRetirementOverviewTab = ({
+  calculator,
+  dashboardTotal,
+  effectiveMonthlyContribution,
+  fireNumber,
+  fireProgress,
+  onAddFund,
+  onTabChange,
+  projectedPot,
+  retirementAssets,
+  targetYear,
+  yearsRemaining,
+}) => (
+  <div className="mt-4 space-y-4">
+    <article className="rounded-[1.15rem] bg-[linear-gradient(135deg,_#006d67_0%,_#3f7c5a_52%,_#879346_100%)] p-4 text-white shadow-sm">
+      <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-white/70">
+        Total Retirement Fund
+      </p>
+      <p className="mt-2 dashboard-metric-value text-[1.65rem] font-extrabold">
+        {formatKES(dashboardTotal)}
+      </p>
+      <div className="mt-3 flex items-center justify-between text-[0.68rem] font-semibold text-white/80">
+        <span>Average Return p.a</span>
+        <span className="rounded-full bg-[#f5c242] px-2 py-0.5 text-[#654900]">
+          14.3%
+        </span>
+      </div>
+      <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/30">
+        <div
+          className="h-full rounded-full bg-[#f5c242]"
+          style={{ width: `${Math.max(Math.min(fireProgress, 100), 8)}%` }}
+        />
+      </div>
+      <p className="mt-1 text-[0.6rem] font-semibold text-white/70">
+        {Math.round(fireProgress)}% of target
+      </p>
+    </article>
+
+    <div className="grid grid-cols-2 gap-2.5">
+      <MobileRetirementMetricTile
+        label="Target retirement age"
+        value={`Age ${calculator.targetAge}`}
+        helper={`${yearsRemaining} yrs from now`}
+      />
+      <MobileRetirementMetricTile
+        label="Target retirement amount"
+        value={formatCompactKES(fireNumber)}
+        helper="300x monthly expenses"
+      />
+      <MobileRetirementMetricTile
+        label="Target monthly savings"
+        value={formatKES(effectiveMonthlyContribution)}
+        helper="NSSF + pension + invest."
+      />
+      <MobileRetirementMetricTile
+        label="Target monthly income"
+        value={formatKES(calculator.monthlyExpensesAtRetirement)}
+        helper="Planned income need"
+      />
+    </div>
+
+    <MobileRetirementObjectivesCard
+      calculator={calculator}
+      effectiveMonthlyContribution={effectiveMonthlyContribution}
+      fireNumber={fireNumber}
+      onAdjust={() => onTabChange("calculator")}
+    />
+
+    <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-[0.95rem] font-extrabold text-[#075e57]">
+            My Retirement Fund
+          </h3>
+          <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">
+            Track funds already linked to your retirement goal.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onAddFund}
+          className="text-[0.66rem] font-extrabold text-[#d39a08]"
+        >
+          + Add Fund
+        </button>
+      </div>
+      <div className="mt-4 space-y-2">
+        {retirementAssets.slice(0, 2).map((asset) => (
+          <MobileRetirementFundCard key={asset.uuid || asset.name} asset={asset} />
+        ))}
+      </div>
+      <div className="mt-3 rounded-xl bg-[#fff2c8] px-3 py-2 text-center text-[0.66rem] font-semibold text-[#8b6a10]">
+        This is great! Your retirement fund is growing.
+      </div>
+    </article>
+  </div>
+);
+
+const MobileRetirementMetricTile = ({ helper, label, value }) => (
+  <div className="rounded-[1rem] border border-emerald-100 bg-white p-3 shadow-sm">
+    <p className="text-[0.64rem] font-bold text-slate-500">{label}</p>
+    <p className="mt-2 dashboard-metric-value text-[0.95rem] font-extrabold text-[#075e57]">
+      {value}
+    </p>
+    <p className="mt-1 text-[0.62rem] font-semibold text-slate-400">{helper}</p>
+  </div>
+);
+
+const MobileRetirementObjectivesCard = ({
+  calculator,
+  effectiveMonthlyContribution,
+  fireNumber,
+  onAdjust,
+}) => (
+  <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+    <div className="mb-3 flex items-center gap-2">
+      <span className="h-2 w-2 rounded-full bg-[#2cbf6d]" />
+      <h3 className="text-[0.9rem] font-extrabold text-slate-900">
+        My retirement objectives
+      </h3>
+    </div>
+    <div className="space-y-2">
+      <MobileObjectiveRow label="Target retirement age" value={`Age ${calculator.targetAge}`} />
+      <MobileObjectiveRow label="Target retirement amount" value={formatKES(fireNumber)} />
+      <MobileObjectiveRow label="Target monthly savings" value={formatKES(effectiveMonthlyContribution)} />
+      <MobileObjectiveRow label="Target monthly retirement income" value={formatKES(calculator.monthlyExpensesAtRetirement)} />
+    </div>
+    <button
+      type="button"
+      onClick={onAdjust}
+      className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.72rem] font-extrabold text-white"
+    >
+      Adjust Simulator +
+    </button>
+  </article>
+);
+
+const MobileObjectiveRow = ({ label, value }) => (
+  <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-50 bg-[#f8fbfa] px-3 py-3">
+    <span className="text-[0.68rem] font-semibold text-slate-500">{label}</span>
+    <strong className="text-right text-[0.68rem] font-extrabold text-[#075e57]">
+      {value}
+    </strong>
+  </div>
+);
+
+const MobileRetirementFundDashboardTab = ({
+  dashboardTotal,
+  insightCards,
+  onAddFund,
+  retirementAssets,
+}) => (
+  <div className="mt-4 space-y-4">
+    <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-[0.95rem] font-extrabold text-[#075e57]">
+            My Retirement Fund
+          </h3>
+          <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">
+            Funds linked to your retirement plan.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onAddFund}
+          className="text-[0.66rem] font-extrabold text-[#d39a08]"
+        >
+          + Add Fund
+        </button>
+      </div>
+      <div className="mt-4 space-y-3">
+        {retirementAssets.map((asset) => (
+          <MobileRetirementFundCard key={asset.uuid || asset.name} asset={asset} />
+        ))}
+      </div>
+      <div className="mt-4 rounded-[1rem] border border-emerald-100 bg-[#e9f8ef] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[0.72rem] font-semibold text-[#246f58]">
+            Total retirement savings
+          </span>
+          <strong className="dashboard-metric-value text-[0.9rem] text-[#075e57]">
+            {formatKES(dashboardTotal)}
+          </strong>
+        </div>
+      </div>
+    </article>
+
+    <MobileAdvisorCards
+      title="Shilingi Buddy insights"
+      items={(insightCards.length ? insightCards : [
+        {
+          title: "Protect the Plan",
+          text: "Before increasing long-term investments, protect your dependants and income first.",
+          tone: "bg-blue-50 text-blue-800 border-blue-100",
+        },
+        {
+          title: "FIRE pace check",
+          text: "Your current pace can work if contributions stay consistent and fees stay low.",
+          tone: "bg-emerald-50 text-emerald-800 border-emerald-100",
+        },
+      ]).slice(0, 2)}
+    />
+
+    <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <h3 className="text-[0.9rem] font-extrabold text-slate-900">
+        Tax relief tracker
+      </h3>
+      <div className="mt-3 space-y-2">
+        <MobileObjectiveRow label="Current pension deduction" value="KES 216,000/yr" />
+        <MobileObjectiveRow label="Unclaimed tax relief" value="KES 24,000/yr" />
+      </div>
+    </article>
+  </div>
+);
+
+const MobileAdvisorCards = ({ items, title }) => (
+  <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+    <div className="mb-3 flex items-center gap-2">
+      <span className="h-2 w-2 rounded-full bg-[#2cbf6d]" />
+      <h3 className="text-[0.9rem] font-extrabold text-slate-900">{title}</h3>
+    </div>
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div
+          key={item.title}
+          className={`rounded-xl border px-3 py-3 ${item.tone || "border-blue-100 bg-blue-50 text-blue-800"}`}
+        >
+          <p className="text-[0.72rem] font-extrabold">{item.title}</p>
+          <p className="mt-1 text-[0.66rem] leading-4">{item.text}</p>
+        </div>
+      ))}
+    </div>
+  </article>
+);
+
+const MobileRetirementSolutionsTab = ({ onOpenCompare }) => (
+  <div className="mt-4 space-y-4">
+    <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <h3 className="text-[0.95rem] font-extrabold text-[#075e57]">
+        Retirement Solutions
+      </h3>
+      <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">
+        Get to know plan types and compare what helps you secure retirement.
+      </p>
+      <div className="mt-4 space-y-3">
+        {compareFundPlans.slice(0, 2).map((plan) => (
+          <div key={plan.name} className="rounded-xl border border-emerald-100 bg-[#fbfefd] p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[0.78rem] font-extrabold text-slate-900">
+                  {plan.name.includes("Jenga") ? "NSSF - National Social Security Fund" : "Private Retirement Savings Plan"}
+                </p>
+                <p className="mt-1 text-[0.66rem] leading-4 text-slate-500">
+                  Contributions, preservation, and monthly income planning.
+                </p>
+              </div>
+              <span className="rounded-full bg-rose-50 px-2 py-1 text-[0.55rem] font-extrabold text-rose-600">
+                In brief
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onOpenCompare}
+                className="h-9 rounded-full bg-[#0b6f66] text-[0.68rem] font-extrabold text-white"
+              >
+                Simulate Growth
+              </button>
+              <button
+                type="button"
+                onClick={onOpenCompare}
+                className="h-9 rounded-full border border-emerald-100 bg-white text-[0.68rem] font-extrabold text-[#0b6f66]"
+              >
+                Compare Options
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </article>
+    <div className="flex items-center gap-3">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+        <CheckCircle2 size={15} />
+      </span>
+      <h3 className="text-[0.95rem] font-extrabold text-slate-900">
+        What to compare
+      </h3>
+    </div>
+    <div className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <div className="space-y-3">
+        {compareChecklist.slice(0, 5).map((item, index) => (
+          <div key={item} className="flex gap-3">
+            <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#fff2c8] text-[0.62rem] font-extrabold text-[#8b6a10]">
+              {index + 1}
+            </span>
+            <p className="text-[0.72rem] leading-5 text-slate-600">{item}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+    <button
+      type="button"
+      onClick={onOpenCompare}
+      className="h-12 w-full rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white"
+    >
+      Compare Providers
+    </button>
+  </div>
+);
+
+const MobileRetirementCalculatorTab = ({
+  calculator,
+  fireNumber,
+  projectedPot,
+  targetYear,
+  yearsRemaining,
+}) => (
+  <div className="mt-4 space-y-4">
+    <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <h3 className="text-[0.95rem] font-extrabold text-[#075e57]">
+        Retirement Calculator
+      </h3>
+      <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">
+        Test how contributions, target return, and expenses shape your retirement timeline.
+      </p>
+      <div className="mt-4 rounded-[1rem] bg-[linear-gradient(135deg,_#006d67_0%,_#879346_100%)] p-4 text-white">
+        <p className="text-[0.65rem] font-semibold text-white/70">
+          Projected retirement pot
+        </p>
+        <p className="mt-1 dashboard-metric-value text-[1.35rem] font-extrabold">
+          {formatKES(projectedPot)}
+        </p>
+        <p className="mt-1 text-[0.65rem] text-white/75">
+          FIRE progress towards {formatKES(fireNumber)}
+        </p>
+      </div>
+      <div className="mt-4 space-y-2">
+        <MobileCalculatorReadout label="Current Age" value={`${calculator.currentAge} Years`} />
+        <MobileCalculatorReadout label="Target Retirement Age" value={`${calculator.targetAge} Years`} />
+        <MobileCalculatorReadout label="Current Savings" value={formatKES(calculator.currentSavings)} />
+        <MobileCalculatorReadout label="Monthly Contribution" value={formatKES(calculator.monthlyContribution)} />
+        <MobileCalculatorReadout label="Expected Return" value={`${calculator.expectedReturn}%`} />
+        <MobileCalculatorReadout label="Monthly Expenses at Retirement" value={formatKES(calculator.monthlyExpensesAtRetirement)} />
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          className="h-10 rounded-full bg-[#0b6f66] text-[0.72rem] font-extrabold text-white"
+        >
+          Calculate
+        </button>
+        <button
+          type="button"
+          className="h-10 rounded-full border border-emerald-100 bg-white text-[0.72rem] font-extrabold text-[#0b6f66]"
+        >
+          Reset
+        </button>
+      </div>
+    </article>
+    <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <h3 className="text-[0.9rem] font-extrabold text-slate-900">
+        Scenario Summary
+      </h3>
+      <div className="mt-3 space-y-2">
+        <MobileObjectiveRow label="Target year" value={String(targetYear)} />
+        <MobileObjectiveRow label="Years remaining" value={`${yearsRemaining} yrs`} />
+        <MobileObjectiveRow label="Projected pot" value={formatKES(projectedPot)} />
+      </div>
+    </article>
+  </div>
+);
+
+const MobileCalculatorReadout = ({ label, value }) => (
+  <div className="rounded-xl border border-slate-100 bg-[#f7f8f8] px-3 py-2">
+    <p className="text-[0.62rem] font-bold text-slate-400">{label}</p>
+    <p className="mt-1 text-[0.76rem] font-extrabold text-slate-900">{value}</p>
+  </div>
+);
+
+const compareFundCategories = [
+  {
+    title: "Personal Pension",
+    subtitle: "Small -> Monthly top-ups",
+    active: true,
+  },
+  {
+    title: "Annuity",
+    subtitle: "Small -> Guaranteed income",
+  },
+  {
+    title: "Income Drawdown",
+    subtitle: "Small -> Flexible",
+  },
+];
+
+const compareFundPlans = [
+  {
+    name: "Jenga Pension Plus",
+    type: "Personal pension plan",
+    bestFit: true,
+    rows: [
+      ["Expected net return p.a.", "11.5%"],
+      ["Management fee", "1.5%"],
+      ["Min monthly contribution", "KES 2,500"],
+      ["Access from age", "55"],
+      ["Flexibility", "Top-ups & pauses"],
+    ],
+    action: "Choose this plan",
+  },
+  {
+    name: "Mustakabali Pension",
+    type: "Personal pension plan",
+    rows: [
+      ["Expected net return p.a.", "10.2%"],
+      ["Management fee", "2.0%"],
+      ["Min monthly contribution", "KES 2,000"],
+      ["Access from age", "50"],
+      ["Flexibility", "Partial"],
+    ],
+    action: "Compare",
+  },
+  {
+    name: "Hazina Retirement Fund",
+    type: "Personal pension plan",
+    rows: [
+      ["Expected net return p.a.", "9.4%"],
+      ["Management fee", "1.2%"],
+      ["Min monthly contribution", "KES 1,000"],
+      ["Access from age", "55"],
+      ["Flexibility", "Top-ups & transfers"],
+    ],
+    action: "Compare",
+  },
+];
+
+const compareChecklist = [
+  "Net returns after fees - not headline returns",
+  "Management & admin fees - they compound over decades",
+  "Flexibility: top-ups, contribution pauses, transfers",
+  "Access age and KRA tax relief on contributions",
+  "Provider track record and RBA registration",
+];
+
+const MobileCompareRetirementFunds = ({ onGoToDashboard }) => (
+  <div>
+    <div className="flex items-center gap-3">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+        <Landmark size={15} />
+      </span>
+      <h3 className="text-[0.95rem] font-extrabold text-slate-900">
+        Compare providers
+      </h3>
+    </div>
+
+    <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {compareFundCategories.map((category) => (
+        <button
+          key={category.title}
+          type="button"
+          className={`min-w-[7.7rem] rounded-xl border px-3 py-2 text-left ${category.active ? "border-[#e6b72d] bg-[#f5c242] text-[#664a00]" : "border-slate-200 bg-white text-slate-700"}`}
+        >
+          <p className="text-[0.7rem] font-extrabold">{category.title}</p>
+          <p className="mt-0.5 text-[0.58rem] font-semibold opacity-75">
+            {category.subtitle}
+          </p>
+        </button>
+      ))}
+    </div>
+
+    <p className="mt-3 text-[0.68rem] leading-4 text-slate-500">
+      Sample plans for illustration - returns are not guaranteed and vary by
+      provider.
+    </p>
+
+    <div className="mt-4 space-y-3">
+      {compareFundPlans.map((plan) => (
+        <MobileComparePlanCard key={plan.name} plan={plan} />
+      ))}
+    </div>
+
+    <div className="mt-5 flex items-center gap-3">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+        <CheckCircle2 size={15} />
+      </span>
+      <h3 className="text-[0.95rem] font-extrabold text-slate-900">
+        What to compare
+      </h3>
+    </div>
+    <div className="mt-3 rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+      <div className="space-y-3">
+        {compareChecklist.map((item, index) => (
+          <div key={item} className="flex gap-3">
+            <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#e2f4eb] text-[0.62rem] font-extrabold text-[#0b6f66]">
+              {index + 1}
+            </span>
+            <p className="text-[0.72rem] leading-5 text-slate-600">{item}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="mt-4 rounded-[1rem] border border-[#f4dfab] bg-[#fff8e8] px-4 py-3">
+      <p className="text-[0.72rem] leading-5 text-[#755a10]">
+        Fees compound. A 1% higher annual fee can shrink your final pot by
+        roughly 20% over 30 years - always compare net returns, not headline
+        figures.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={onGoToDashboard}
+      className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white shadow-sm"
+    >
+      Go to Dashboard
+    </button>
+  </div>
+);
+
+const MobileComparePlanCard = ({ plan }) => (
+  <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h4 className="text-[0.9rem] font-extrabold text-slate-900">
+          {plan.name}
+        </h4>
+        <p className="mt-0.5 text-[0.65rem] font-semibold text-slate-400">
+          Small {"->"} {plan.type}
+        </p>
+      </div>
+      {plan.bestFit ? (
+        <span className="rounded-full bg-[#e2f4eb] px-2.5 py-1 text-[0.58rem] font-extrabold text-[#0b6f66]">
+          Best fit
+        </span>
+      ) : null}
+    </div>
+
+    <div className="mt-3 divide-y divide-slate-100">
+      {plan.rows.map(([label, value]) => (
+        <div key={label} className="flex items-center justify-between gap-3 py-2">
+          <span className="text-[0.72rem] font-semibold text-slate-500">
+            {label}
+          </span>
+          <strong className="text-right text-[0.72rem] font-extrabold text-slate-900">
+            {value}
+          </strong>
+        </div>
+      ))}
+    </div>
+
+    <button
+      type="button"
+      className={`mt-3 inline-flex h-10 w-full items-center justify-center rounded-full text-[0.72rem] font-extrabold ${plan.bestFit ? "bg-[#0b6f66] text-white" : "border border-emerald-100 bg-white text-[#0b6f66]"}`}
+    >
+      {plan.action}
+    </button>
+  </article>
+);
+
+const MobileRetirementFundCard = ({ asset }) => {
+  const Icon = asset.accountMeta?.icon || PiggyBank;
+
+  return (
+    <div className="rounded-[1rem] border border-emerald-100 bg-[#fbfefd] px-3 py-3">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+          <Icon size={16} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[0.78rem] font-extrabold text-slate-900">
+            {asset.accountMeta?.label || asset.name}
+          </p>
+          <p className="mt-0.5 truncate text-[0.66rem] text-slate-500">
+            {asset.institution || asset.accountMeta?.badge || "Retirement fund"}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="dashboard-metric-value text-[0.78rem] font-extrabold text-slate-900">
+            {formatKES(asset.currentValue)}
+          </p>
+          <p className="mt-0.5 text-[0.6rem] font-semibold text-[#0b6f66]">
+            {formatKES(asset.purchaseValue)}/mo
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MobileAddRetirementFundSheet = ({
+  form,
+  onChange,
+  onClose,
+  onSubmit,
+  saving,
+}) => (
+  <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/42 px-3 pb-3 pt-10 md:hidden">
+    <div className="w-full max-w-[390px] rounded-[1.35rem] bg-white p-4 shadow-2xl">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-[0.98rem] font-extrabold text-[#075e57]">
+            Add Retirement Fund
+          </h3>
+          <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">
+            Kindly provide the following to add your fund account.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+          aria-label="Close"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      <form onSubmit={onSubmit} className="space-y-3">
+        <label className="block text-[0.68rem] font-bold text-slate-600">
+          Account Type
+          <select
+            value={form.accountName}
+            onChange={(event) => onChange("accountName", event.target.value)}
+            className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-[#f7f8f8] px-3 text-[0.72rem] font-semibold text-slate-700 outline-none"
+          >
+            {ACCOUNT_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <MobileFundField
+          label="Provider"
+          placeholder="Eg, Kenindia"
+          value={form.provider}
+          onChange={(value) => onChange("provider", value)}
+        />
+        <MobileFundField
+          label="Current Value"
+          placeholder="Eg, KES 1,000,000"
+          type="number"
+          value={form.currentBalance}
+          onChange={(value) => onChange("currentBalance", value)}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <MobileFundField
+            label="Expected Return"
+            placeholder="Eg, 12%"
+            type="number"
+            value={form.expectedReturn}
+            onChange={(value) => onChange("expectedReturn", value)}
+          />
+          <MobileFundField
+            label="Monthly Contribution"
+            placeholder="Eg, KES 10,000"
+            type="number"
+            value={form.monthlyContribution}
+            onChange={(value) => onChange("monthlyContribution", value)}
+          />
+        </div>
+        <label className="block text-[0.68rem] font-bold text-slate-600">
+          Notes
+          <textarea
+            value={form.notes}
+            onChange={(event) => onChange("notes", event.target.value)}
+            rows={2}
+            placeholder="Type Something"
+            className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-[#f7f8f8] px-3 py-2 text-[0.72rem] font-semibold text-slate-700 outline-none"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={saving || !form.currentBalance || !form.monthlyContribution}
+          className="mt-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white disabled:opacity-60"
+        >
+          {saving ? <Loader2 size={15} className="animate-spin" /> : null}
+          + Add Fund
+        </button>
+      </form>
+    </div>
+  </div>
+);
+
+const MobileFundField = ({
+  label,
+  onChange,
+  placeholder,
+  type = "text",
+  value,
+}) => (
+  <label className="block text-[0.68rem] font-bold text-slate-600">
+    {label}
+    {type === "number" ? (
+      <NumericInput
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-[#f7f8f8] px-3 text-[0.72rem] font-semibold text-slate-700 outline-none"
+      />
+    ) : (
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-[#f7f8f8] px-3 text-[0.72rem] font-semibold text-slate-700 outline-none"
+      />
+    )}
+  </label>
+);
+
+const MobileRetirementListItem = ({ text }) => (
+  <div className="flex gap-3">
+    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff3eb] text-[#0b6f66]">
+      <CheckCircle2 size={12} />
+    </span>
+    <p className="text-[0.72rem] leading-5 text-slate-600">{text}</p>
+  </div>
+);
+
+const MobileRetirementMiniStat = ({ label, value }) => (
+  <div className="rounded-[1rem] border border-emerald-100 bg-white p-3 shadow-sm">
+    <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-slate-400">
+      {label}
+    </p>
+    <p className="mt-2 text-[0.92rem] font-extrabold text-[#075e57]">
+      {value}
+    </p>
+  </div>
+);
 
 const HeroStat = ({ icon: Icon, label, sublabel }) => (
   <div className="flex items-center gap-2 border-r border-white/18 pr-4 last:border-r-0">
