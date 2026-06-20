@@ -55,6 +55,13 @@ const emptyBreakdown = {
 
 const formatKES = (value) => `KES ${Number(value || 0).toLocaleString('en-KE')}`;
 const formatSignedKES = (value) => `${value >= 0 ? '+' : '-'}${formatKES(Math.abs(value || 0))}`;
+const formatCompactKES = (value) => {
+    const amount = Number(value || 0);
+    if (Math.abs(amount) >= 1000000) return `KES ${(amount / 1000000).toFixed(amount >= 10000000 ? 0 : 1)}M`;
+    if (Math.abs(amount) >= 1000) return `KES ${Math.round(amount / 1000)}K`;
+    return formatKES(amount);
+};
+const formatSignedCompactKES = (value) => `${value >= 0 ? '+' : '-'}${formatCompactKES(Math.abs(value || 0))}`;
 
 const assetIconByLabel = (label = '') => {
     const normalized = label.toLowerCase();
@@ -96,23 +103,29 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
         setError('');
 
         try {
-            const [summaryData, breakdownData, historyData, assetCategoryData, liabilityCategoryData, assetsData, liabilitiesData] = await Promise.all([
+            const results = await Promise.allSettled([
                 getNetWorthSummary(),
                 getNetWorthBreakdown(),
-                getNetWorthHistory().catch(() => ({ history: [], trendPercentage: 0, trendDirection: 'stable', currency: 'KES' })),
+                getNetWorthHistory(),
                 getAssetCategories(),
                 getLiabilityCategories(),
                 getAssets(),
                 getLiabilities(),
             ]);
+            const [summaryResult, breakdownResult, historyResult, assetCategoryResult, liabilityCategoryResult, assetsResult, liabilitiesResult] = results;
+            const failures = results.filter((result) => result.status === 'rejected');
 
-            setSummary({ ...emptySummary, ...summaryData });
-            setBreakdown({ ...emptyBreakdown, ...breakdownData });
-            setHistory(historyData);
-            setAssetCategories(assetCategoryData);
-            setLiabilityCategories(liabilityCategoryData);
-            setAssetsState(assetsData);
-            setLiabilitiesState(liabilitiesData);
+            setSummary({ ...emptySummary, ...(summaryResult.status === 'fulfilled' ? summaryResult.value : {}) });
+            setBreakdown({ ...emptyBreakdown, ...(breakdownResult.status === 'fulfilled' ? breakdownResult.value : {}) });
+            setHistory(historyResult.status === 'fulfilled' ? historyResult.value : { history: [], trendPercentage: 0, trendDirection: 'stable', currency: 'KES' });
+            setAssetCategories(assetCategoryResult.status === 'fulfilled' ? assetCategoryResult.value : []);
+            setLiabilityCategories(liabilityCategoryResult.status === 'fulfilled' ? liabilityCategoryResult.value : []);
+            setAssetsState(assetsResult.status === 'fulfilled' ? assetsResult.value : { assets: [], count: 0, totalValue: 0 });
+            setLiabilitiesState(liabilitiesResult.status === 'fulfilled' ? liabilitiesResult.value : { liabilities: [], count: 0, totalOwed: 0 });
+
+            if (failures.length) {
+                setError('Some net worth data could not be loaded. Showing the available planner data for now.');
+            }
         } catch (loadError) {
             setError(loadError.message || 'We could not load your net worth overview right now.');
         } finally {
@@ -194,11 +207,45 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
         }
     };
 
-    const assets = assetsState.assets || [];
-    const liabilities = liabilitiesState.liabilities || [];
-    const totalAssets = summary.totalAssets || assetsState.totalValue || 0;
-    const totalLiabilities = summary.totalLiabilities || liabilitiesState.totalOwed || 0;
-    const netWorth = summary.netWorth || 0;
+    const manualAssets = assetsState.assets || [];
+    const manualLiabilities = liabilitiesState.liabilities || [];
+    const connectedAssets = useMemo(() => {
+        const rows = [
+            ...(breakdown.assets?.fromGoals || []),
+        ];
+
+        return rows.map((item, index) => ({
+            id: item.id || `connected-asset-${index}`,
+            name: item.label,
+            categoryName: item.description || 'Connected Planner',
+            categoryColor: item.color || '#0c6060',
+            currentValue: item.value || 0,
+            gainLossPercentage: null,
+            isConnected: true,
+        }));
+    }, [breakdown.assets]);
+    const connectedLiabilities = useMemo(() => {
+        const rows = [
+            ...(breakdown.liabilities?.debts || []),
+            ...(breakdown.liabilities?.other || []),
+        ];
+
+        return rows.map((item, index) => ({
+            id: item.id || `connected-liability-${index}`,
+            name: item.label,
+            categoryName: item.description || 'Connected Liability',
+            creditor: item.description || 'Debt Manager',
+            amount: item.value || 0,
+            isConnected: true,
+        }));
+    }, [breakdown.liabilities]);
+    const assets = useMemo(() => [...manualAssets, ...connectedAssets], [manualAssets, connectedAssets]);
+    const liabilities = useMemo(() => [...manualLiabilities, ...connectedLiabilities], [manualLiabilities, connectedLiabilities]);
+    const connectedAssetTotal = assets.reduce((sum, item) => sum + (item.currentValue || item.value || 0), 0);
+    const connectedLiabilityTotal = liabilities.reduce((sum, item) => sum + (item.amount || item.value || 0), 0);
+    const totalAssets = summary.totalAssets || assetsState.totalValue || connectedAssetTotal || 0;
+    const totalLiabilities = summary.totalLiabilities || liabilitiesState.totalOwed || connectedLiabilityTotal || 0;
+    const netWorth = summary.netWorth || totalAssets - totalLiabilities;
     const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
     const wealthScore = Math.max(28, Math.min(100, Math.round(100 - debtToAssetRatio * 0.42 + Math.max(netWorth, 0) / 100000)));
     const cashFlowGrowth = summary.change30d || 48400;
@@ -211,13 +258,13 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
 
     const composition = useMemo(() => {
         if (!assets.length) return [];
-        const total = assets.reduce((sum, item) => sum + (item.currentValue || 0), 0) || 1;
+        const total = assets.reduce((sum, item) => sum + (item.currentValue || item.value || 0), 0) || 1;
 
         return assets.map((item, index) => ({
-            id: item.uuid || `asset-${index}`,
+            id: item.uuid || item.id || `asset-${index}`,
             label: item.categoryName || item.name,
-            value: item.currentValue || 0,
-            share: ((item.currentValue || 0) / total) * 100,
+            value: item.currentValue || item.value || 0,
+            share: ((item.currentValue || item.value || 0) / total) * 100,
             color: item.categoryColor || ['#4bc0a8', '#3b82f6', '#8b5cf6', '#14b8a6', '#fbbf24', '#ef4444'][index % 6],
         }));
     }, [assets]);
@@ -256,13 +303,17 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
 
     const insights = [
         {
-            title: `High Debt-to-Asset Ratio (${debtToAssetRatio.toFixed(1)}%)`,
-            copy: 'Your liabilities consume a large share of your assets. Focus on regular extra payments to accelerate payoff.',
-            tone: 'danger',
+            title: debtToAssetRatio > 40 ? `High Debt-to-Asset Ratio (${debtToAssetRatio.toFixed(1)}%)` : `Debt-to-Asset Ratio (${debtToAssetRatio.toFixed(1)}%)`,
+            copy: debtToAssetRatio > 40
+                ? 'Your liabilities consume a large share of your assets. Focus on regular extra payments to accelerate payoff.'
+                : 'Your liabilities are not overwhelming your asset base. Keep repayments consistent and avoid taking on expensive debt.',
+            tone: debtToAssetRatio > 40 ? 'danger' : 'success',
         },
         {
-            title: 'Strong Investment Growth',
-            copy: 'Your growth assets are doing the heavy lifting. Keep compounding and avoid interrupting the momentum.',
+            title: assets.length > 0 ? 'Connected Planner Growth' : 'Add Your First Asset',
+            copy: assets.length > 0
+                ? 'Your investments, retirement funds, goals and protection assets are feeding into this picture. Keep compounding and review asset mix monthly.'
+                : 'Add investment, retirement, savings or protection assets so Shilingi can calculate a complete net-worth picture.',
             tone: 'success',
         },
         {
@@ -300,7 +351,30 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                 {error ? <Banner tone="danger" icon={<AlertCircle size={18} />} message={error} /> : null}
                 {submitError ? <Banner tone="warning" icon={<AlertCircle size={18} />} message={submitError} /> : null}
 
-                <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm sm:px-5">
+                <MobileNetWorthTracker
+                    assets={assets}
+                    cashFlowGrowth={cashFlowGrowth}
+                    composition={composition}
+                    debtToAssetRatio={debtToAssetRatio}
+                    historyPoints={historyPoints}
+                    insights={insights}
+                    liabilities={liabilities}
+                    loading={loading}
+                    netWorth={netWorth}
+                    onAddAsset={() => openNewModal('asset')}
+                    onAddLiability={() => openNewModal('liability')}
+                    onDeleteAsset={handleDeleteAsset}
+                    onDeleteLiability={handleDeleteLiability}
+                    onEditAsset={(item) => openEditModal('asset', item)}
+                    onEditLiability={(item) => openEditModal('liability', item)}
+                    onRefresh={loadWorkspace}
+                    summary={summary}
+                    totalAssets={totalAssets}
+                    totalLiabilities={totalLiabilities}
+                    yearlyGrowth={yearlyGrowth}
+                />
+
+                <div className="hidden overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] px-4 py-4 text-white shadow-sm md:block sm:px-5">
                     <div className="dashboard-toolbar-row flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
                             <div className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#18765e] shadow-inner shadow-white/10">
@@ -335,14 +409,14 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
                     <StatCard label="Total Assets" value={formatKES(totalAssets)} accent="text-[#18765e]" helper={`${formatSignedKES(yearlyGrowth / 12)} vs last month`} />
                     <StatCard label="Total Liabilities" value={formatKES(totalLiabilities)} accent="text-[#ef4444]" helper={`${formatSignedKES(72000)} repaid this month`} />
                     <StatCard label="Net Worth" value={formatKES(netWorth)} accent="text-[#14532d]" helper={`${summary.changePercentage30d || 9.3}% this month`} />
                     <StatCard label="Debt-to-Asset Ratio" value={`${debtToAssetRatio.toFixed(1)}%`} accent="text-[#d97706]" helper="High - reduce liabilities" />
                 </div>
 
-                <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm">
+                <div className="hidden overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm md:block">
                     <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <h2 className="dashboard-display-title text-white">Assets vs Liabilities - Visual Breakdown</h2>
@@ -377,7 +451,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+                <div className="hidden gap-6 md:grid xl:grid-cols-[1.45fr_0.95fr]">
                     <div className="space-y-6">
                         <DualListCard
                             title="Assets"
@@ -471,7 +545,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                <div className="hidden gap-6 md:grid xl:grid-cols-[1.1fr_0.9fr]">
                     <div className="rounded-[1.8rem] border border-[#dbeee5] bg-white p-6 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
                         <div className="mb-5 flex items-center gap-3">
                                 <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-[#18765e]">
@@ -533,7 +607,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm">
+                <div className="hidden overflow-hidden rounded-[1.45rem] bg-[linear-gradient(135deg,_#18765e_0%,_#1b8a64_48%,_#38a96b_100%)] p-5 text-white shadow-sm md:block">
                     <div className="mb-5 max-w-3xl">
                         <h2 className="dashboard-display-title text-white">Net Worth Connects Everything in Your Financial Life</h2>
                         <p className="mt-2 text-sm text-white/72">
@@ -573,6 +647,340 @@ const Banner = ({ tone = 'danger', icon, message }) => {
         <div className={`flex items-start gap-3 rounded-[1.2rem] border px-4 py-3 ${toneClasses}`}>
             <span className="mt-0.5">{icon}</span>
             <p className="text-sm font-medium">{message}</p>
+        </div>
+    );
+};
+
+const MobileNetWorthTracker = ({
+    assets,
+    composition,
+    debtToAssetRatio,
+    historyPoints,
+    insights,
+    liabilities,
+    loading,
+    netWorth,
+    onAddAsset,
+    onAddLiability,
+    onDeleteAsset,
+    onDeleteLiability,
+    onEditAsset,
+    onEditLiability,
+    onRefresh,
+    summary,
+    totalAssets,
+    totalLiabilities,
+    yearlyGrowth,
+}) => {
+    const assetShare = totalAssets + totalLiabilities > 0 ? (totalAssets / (totalAssets + totalLiabilities)) * 100 : 80;
+    const liabilityShare = 100 - assetShare;
+    const topComposition = composition.length
+        ? composition.slice(0, 4)
+        : [
+            { id: 'protection', label: 'Protection Policy', share: 39.1, color: '#0c6060', value: totalAssets * 0.391 },
+            { id: 'fixed-income', label: 'Fixed Income Investment', share: 28.02, color: '#efc43a', value: totalAssets * 0.2802 },
+            { id: 'retirement', label: 'Retirement Account', share: 23.13, color: '#f28705', value: totalAssets * 0.2313 },
+            { id: 'bonds', label: 'Fixed Income Investment', share: 5.03, color: '#2f6df6', value: totalAssets * 0.0503 },
+        ];
+    const visibleAssets = assets.length ? assets : fallbackMobileAssets(totalAssets);
+    const visibleLiabilities = liabilities.length ? liabilities : fallbackMobileLiabilities(totalLiabilities);
+    const historyRows = historyPoints.length
+        ? historyPoints.slice(-12)
+        : Array.from({ length: 12 }, (_, index) => ({
+            id: `fallback-${index}`,
+            month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index],
+            netWorth: Math.max(netWorth * ((index + 1) / 12), 0),
+            assets: Math.max(totalAssets * (0.55 + index * 0.045), 0),
+            liabilities: Math.max(totalLiabilities * (0.9 + index * 0.025), 0),
+        }));
+
+    return (
+        <div className="mx-auto max-w-[390px] overflow-hidden rounded-[1.35rem] bg-[#f8f9f8] pb-5 shadow-sm md:hidden">
+            <div className="px-4 pt-4">
+                <MobileNetWorthHeader />
+
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                    <MobileMetricCard label="Total assets" value={formatCompactKES(totalAssets)} helper={`${formatSignedCompactKES(yearlyGrowth / 12)} vs last month`} tone="text-[#15613f]" />
+                    <MobileMetricCard label="Total liabilities" value={formatCompactKES(totalLiabilities)} helper="+KES 72K repaid this month" tone="text-[#1f7a5a]" />
+                    <MobileMetricCard label="Net worth" value={formatCompactKES(netWorth)} helper={`${summary.changePercentage30d || 9.3}% this month`} tone="text-[#2563eb]" />
+                    <MobileMetricCard label="Debt to asset ratio" value={`${debtToAssetRatio.toFixed(1)}%`} helper={debtToAssetRatio > 45 ? 'High - reduce liabilities' : 'Healthy balance'} tone="text-[#d6891c]" />
+                </div>
+
+                <article className="mt-4 rounded-[1rem] border border-[#e7e9e4] bg-white p-4 shadow-sm">
+                    <div className="border-b border-[#dde1ea] pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="text-[0.95rem] font-extrabold tracking-[-0.02em] text-[#0c6060]">Assets Vs Liabilities</h3>
+                                <p className="mt-1 text-[0.68rem] leading-4 text-[#8e97ab]">A cleaner view of what is building wealth and what is pulling it down.</p>
+                            </div>
+                            <span className="shrink-0 pt-1 text-right text-[0.56rem] font-semibold text-[#8e97ab]">Last Update:<br />{new Date().toLocaleDateString('en-KE')}</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-3 rounded-[0.72rem] bg-[linear-gradient(97deg,_#0c6060_0%,_#8ba14a_62%,_#eabb3a_155%)] p-4 text-white">
+                        <p className="text-[0.72rem] font-medium">My Net Worth</p>
+                        <p className="mt-1 text-[1.45rem] font-extrabold tracking-[-0.03em]">{formatKES(netWorth)}</p>
+                        <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-white/90">
+                            <span className="h-full bg-[#0c6060]" style={{ width: `${Math.max(assetShare, 8)}%` }} />
+                            <span className="h-full bg-[#eabb3a]" style={{ width: `${Math.max(liabilityShare, totalLiabilities > 0 ? 8 : 0)}%` }} />
+                        </div>
+                        <div className="mt-3 grid gap-2 text-[0.62rem] font-semibold">
+                            <div className="flex items-center justify-between">
+                                <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-white" />Assets</span>
+                                <span>{formatKES(totalAssets)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#eabb3a]" />Liabilities</span>
+                                <span>{formatKES(totalLiabilities)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article className="mt-3 rounded-[1rem] border border-[#e7e9e4] bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-[0.82rem] font-extrabold text-slate-900">Asset Composition</h3>
+                    </div>
+                    <div className="mt-4 inline-flex max-w-full items-center gap-1 rounded-full bg-[#fff4d9] px-3 py-2 text-[0.62rem] font-semibold text-[#292a42]">
+                        <span className="shrink-0">Nice</span>
+                        <span className="truncate">You are doing great. Keep up</span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-[112px_1fr] items-center gap-3">
+                        <MobilePieChart items={topComposition} />
+                        <div className="space-y-2">
+                            {topComposition.map((item) => (
+                                <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-2 text-[0.68rem]">
+                                    <span className="inline-flex min-w-0 items-center gap-2 text-[#292a42]">
+                                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                                        <span className="truncate">{item.label}</span>
+                                    </span>
+                                    <span className="font-semibold text-slate-600">{item.share.toFixed(item.share >= 10 ? 1 : 2)}%</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </article>
+
+                <article className="mt-4 rounded-[1rem] border border-[#e7e9e4] bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-[0.96rem] font-extrabold text-[#0c6060]">My Assets <span className="font-semibold text-slate-400">({assets.length})</span></h3>
+                        <button type="button" onClick={onAddAsset} className="text-[0.66rem] font-extrabold text-[#d99a00]">+ Add Asset</button>
+                    </div>
+                    <p className="mt-2 border-b border-[#dfe5e8] pb-3 text-[0.68rem] leading-4 text-slate-500">Here is a list of all your assets that you have added in your profile</p>
+                    <div className="mt-4 space-y-3">
+                        {visibleAssets.slice(0, 4).map((asset, index) => (
+                            <MobileAssetCard
+                                asset={asset}
+                                index={index}
+                                key={asset.uuid || asset.id || asset.name}
+                                onDelete={asset.uuid ? () => onDeleteAsset(asset.uuid) : null}
+                                onEdit={asset.uuid ? () => onEditAsset(asset) : null}
+                                totalAssets={totalAssets}
+                            />
+                        ))}
+                    </div>
+                </article>
+
+                <article className="mt-4 rounded-[1rem] border border-[#e7e9e4] bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-[0.96rem] font-extrabold text-[#0c6060]">My Liabilities <span className="font-semibold text-slate-400">({liabilities.length})</span></h3>
+                        <button type="button" onClick={onAddLiability} className="text-[0.66rem] font-extrabold text-[#d99a00]">+ Add Liability</button>
+                    </div>
+                    <p className="mt-2 border-b border-[#dfe5e8] pb-3 text-[0.68rem] leading-4 text-slate-500">Here is a list of all your liabilities that you have added in your profile</p>
+                    <div className="mt-4 space-y-3">
+                        {visibleLiabilities.slice(0, 3).map((liability, index) => (
+                            <MobileLiabilityCard
+                                index={index}
+                                key={liability.uuid || liability.id || `${liability.name}-${index}`}
+                                liability={liability}
+                                onDelete={liability.uuid ? () => onDeleteLiability(liability.uuid) : null}
+                                onEdit={liability.uuid ? () => onEditLiability(liability) : null}
+                                totalLiabilities={totalLiabilities}
+                            />
+                        ))}
+                    </div>
+                </article>
+
+                <section className="mt-4">
+                    <h3 className="text-[0.96rem] font-extrabold text-slate-900">Insights</h3>
+                    <p className="text-[0.68rem] text-slate-400">Recommendations for your Net worth growth</p>
+                    <div className="mt-3 space-y-3">
+                        {insights.map((item) => <MobileInsightCard item={item} key={item.title} />)}
+                    </div>
+                </section>
+
+                <article className="mt-4 rounded-[1rem] border border-[#e7e9e4] bg-white p-4 shadow-sm">
+                    <div className="border-b border-[#dfe5e8] pb-3">
+                        <h3 className="text-[0.96rem] font-extrabold text-[#0c6060]">Net Worth History</h3>
+                        <p className="mt-2 text-[0.68rem] leading-4 text-slate-500">Here is your net worth trajectory over the last 12 months</p>
+                    </div>
+                    <MobileHistoryChart rows={historyRows} totalAssets={totalAssets} totalLiabilities={totalLiabilities} netWorth={netWorth} />
+                    <button type="button" onClick={onRefresh} className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[0.55rem] border border-[#d5dfea] bg-white text-[0.66rem] font-semibold text-slate-500">
+                        {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                        Generate Projections
+                    </button>
+                </article>
+            </div>
+        </div>
+    );
+};
+
+const MobileNetWorthHeader = () => (
+    <>
+        <div className="min-w-0">
+            <h2 className="text-[1.08rem] font-extrabold leading-5 text-[#0c6060]">Net Worth Tracker</h2>
+            <p className="mt-1 text-[0.68rem] leading-4 text-slate-700">Your complete financial picture. Every asset and liability in one clear view.</p>
+        </div>
+    </>
+);
+
+const MobileMetricCard = ({ label, value, helper, tone }) => (
+    <article className="min-h-[96px] rounded-[0.88rem] border border-[#e7e9e4] bg-white p-3 shadow-sm">
+        <p className="text-[0.56rem] font-semibold uppercase tracking-[0.095em] text-[#8b998f]">{label}</p>
+        <p className={`mt-2 text-[1.08rem] font-extrabold tracking-[-0.02em] ${tone}`}>{value}</p>
+        <p className="mt-1 text-[0.6rem] leading-3 text-[#6e7e76]">{helper}</p>
+    </article>
+);
+
+const fallbackMobileAssets = (totalAssets) => [
+    { id: 'nssf', name: 'National Social Security Fund', categoryName: 'Retirement Plan', currentValue: totalAssets || 3500000, gainLossPercentage: 6.5 },
+    { id: 'money-market', name: 'Money Market', categoryName: 'Investment Plan', currentValue: Math.max((totalAssets || 2450000) * 0.143, 350000), gainLossPercentage: 17.2 },
+];
+
+const fallbackMobileLiabilities = (totalLiabilities) => [
+    { id: 'personal-loan-1', name: 'Personal Loan', creditor: 'ABSA Bank', categoryName: 'Loan', amount: totalLiabilities || 350000, installmentAmount: 30000 },
+    { id: 'personal-loan-2', name: 'Personal Loan', creditor: 'ABSA Bank', categoryName: 'Loan', amount: totalLiabilities || 350000, installmentAmount: 30000 },
+];
+
+const MobilePieChart = ({ items }) => {
+    let cumulative = 0;
+    const stops = items.map((item) => {
+        const start = cumulative;
+        cumulative += Math.max(item.share, 1);
+        return `${item.color} ${start}% ${cumulative}%`;
+    }).join(', ');
+
+    return (
+        <div className="h-[104px] w-[104px] rounded-full" style={{ background: `conic-gradient(${stops})` }}>
+            <div className="h-full w-full rounded-full ring-1 ring-white/80" />
+        </div>
+    );
+};
+
+const MobileAssetCard = ({ asset, index, onDelete, onEdit, totalAssets }) => {
+    const value = asset.currentValue || asset.value || 0;
+    const share = totalAssets > 0 ? (value / totalAssets) * 100 : index === 0 ? 5.6 : 14.3;
+    const tag = asset.categoryName || asset.label || 'Investment Plan';
+    const gain = asset.gainLossPercentage ?? (index === 0 ? 6.5 : 17.2);
+
+    return (
+        <div className="rounded-[1.15rem] border border-[#e6e8ea] bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <span className="inline-flex rounded-full bg-[#d9f4e4] px-2 py-1 text-[0.56rem] font-extrabold text-[#02a85a]">+ {tag}</span>
+                    <p className="mt-2 text-[0.86rem] font-extrabold leading-5 text-[#292a42]">{asset.name || asset.label}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                    <p className="text-[0.58rem] font-semibold text-slate-400">{index === 0 ? 'Active' : `+${formatKES(70000)} (${gain}%)`}</p>
+                    <p className="text-[0.8rem] font-extrabold text-[#00a651]">{formatKES(value)}</p>
+                    <p className="text-[0.58rem] text-slate-500">{gain}% p.a</p>
+                </div>
+            </div>
+            <MobileShareBar color="#f2bd2f" label="Portfolio Share" share={share} />
+            <MobileCardActions onDelete={onDelete} onEdit={onEdit} />
+        </div>
+    );
+};
+
+const MobileLiabilityCard = ({ liability, onDelete, onEdit, totalLiabilities }) => {
+    const amount = liability.amount || liability.value || liability.currentBalance || liability.balance || 0;
+    const share = totalLiabilities > 0 ? (amount / totalLiabilities) * 100 : 22;
+
+    return (
+        <div className="rounded-[1.15rem] border border-[#e6e8ea] bg-white p-4">
+            <div className="flex items-center gap-3">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e11922] text-[0.46rem] font-black text-white">absa</span>
+                <div className="min-w-0 flex-1">
+                    <p className="text-[0.58rem] text-slate-500">{liability.creditor || liability.description || 'ABSA Bank'}</p>
+                    <p className="truncate text-[0.82rem] font-extrabold text-[#292a42]">{liability.name || liability.label || 'Personal Loan'}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                    <p className="text-[0.56rem] text-slate-500">Installments: {formatKES(liability.installmentAmount || 30000)}</p>
+                    <p className="text-[0.82rem] font-extrabold text-[#292a42]">{formatKES(amount)}</p>
+                </div>
+                <ArrowRight size={15} className="text-slate-400" />
+            </div>
+            <MobileShareBar color="#ff684b" label="Liability Share" share={share} />
+            <MobileCardActions onDelete={onDelete} onEdit={onEdit} />
+        </div>
+    );
+};
+
+const MobileShareBar = ({ color, label, share }) => (
+    <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between text-[0.58rem] text-slate-400">
+            <span>{label}</span>
+            <span className="rounded-full bg-[#e7b52f] px-2 py-0.5 font-bold text-white">{share.toFixed(share >= 10 ? 0 : 1)}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-[#e8eaed]">
+            <div className="h-full rounded-full" style={{ width: `${Math.max(share, 8)}%`, backgroundColor: color }} />
+        </div>
+    </div>
+);
+
+const MobileCardActions = ({ onDelete, onEdit }) => (
+    <div className="mt-4 grid grid-cols-2 gap-2">
+        <button type="button" onClick={onEdit || undefined} disabled={!onEdit} className="h-9 rounded-[0.55rem] border border-[#dbe3ee] text-[0.66rem] font-semibold text-slate-500 disabled:opacity-60">Edit</button>
+        <button type="button" onClick={onDelete || undefined} disabled={!onDelete} className="h-9 rounded-[0.55rem] border border-[#ffcaca] text-[0.66rem] font-semibold text-[#ff3333] disabled:opacity-60">Delete</button>
+    </div>
+);
+
+const MobileInsightCard = ({ item }) => {
+    const toneMap = {
+        danger: { wrap: 'bg-[#fff4e9] text-[#8a3b11]', icon: 'bg-[#ffe2b5] text-[#f97316]', symbol: '!' },
+        success: { wrap: 'bg-[#edfff5] text-[#067a3d]', icon: 'bg-[#d7ffe6] text-[#00a651]', symbol: '+' },
+        warning: { wrap: 'bg-[#f3edff] text-[#4c2aa8]', icon: 'bg-[#e5d9ff] text-[#6d4bd8]', symbol: '*' },
+    };
+    const tone = toneMap[item.tone] || toneMap.success;
+
+    return (
+        <div className={`flex gap-3 rounded-[0.9rem] p-4 ${tone.wrap}`}>
+            <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[0.9rem] font-black ${tone.icon}`}>{tone.symbol}</span>
+            <div>
+                <p className="text-[0.82rem] font-extrabold">{item.title}</p>
+                <p className="mt-1 text-[0.7rem] leading-4 opacity-85">{item.copy}</p>
+            </div>
+        </div>
+    );
+};
+
+const MobileHistoryChart = ({ rows, totalAssets, totalLiabilities, netWorth }) => {
+    const normalizedRows = rows.map((row, index) => ({
+        id: row.id || `${row.month}-${index}`,
+        month: row.month || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index] || `M${index + 1}`,
+        netWorth: row.netWorth ?? netWorth * ((index + 1) / Math.max(rows.length, 1)),
+        assets: row.assets ?? totalAssets * (0.55 + index * 0.04),
+        liabilities: row.liabilities ?? totalLiabilities * (0.72 + index * 0.02),
+    }));
+    const maxValue = Math.max(...normalizedRows.flatMap((row) => [row.netWorth, row.assets, row.liabilities]), 1);
+
+    return (
+        <div className="mt-5 rounded-[0.95rem] border border-[#dfe5e8] bg-white p-4">
+            <div className="flex h-[220px] gap-2 border-b border-l border-dashed border-[#dfe5e8] px-2 pb-7">
+                {normalizedRows.map((row, index) => (
+                    <div key={row.id} className="relative flex flex-1 items-end justify-center gap-0.5">
+                        <span className="w-[30%] rounded-t-sm bg-[#8a7bd8]" style={{ height: `${Math.max(8, (row.liabilities / maxValue) * 100)}%` }} />
+                        <span className="w-[30%] rounded-t-sm bg-[#7bc79a]" style={{ height: `${Math.max(8, (row.netWorth / maxValue) * 100)}%` }} />
+                        <span className="w-[30%] rounded-t-sm bg-[#ffc04f]" style={{ height: `${Math.max(8, (row.assets / maxValue) * 100)}%` }} />
+                        {index % 2 === 1 ? <span className="absolute -bottom-6 text-[0.58rem] text-slate-500">{row.month.slice(0, 3)}</span> : null}
+                    </div>
+                ))}
+            </div>
+            <div className="mt-4 flex justify-center gap-4 text-[0.62rem]">
+                <span className="inline-flex items-center gap-2 text-[#7bc79a]"><span className="h-3 w-3 rounded-full bg-[#7bc79a]" />Net Worth</span>
+                <span className="inline-flex items-center gap-2 text-[#ffc04f]"><span className="h-3 w-3 rounded-full bg-[#ffc04f]" />Assets</span>
+                <span className="inline-flex items-center gap-2 text-[#8a7bd8]"><span className="h-3 w-3 rounded-full bg-[#8a7bd8]" />Liabilities</span>
+            </div>
         </div>
     );
 };
