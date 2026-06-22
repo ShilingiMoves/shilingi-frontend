@@ -254,25 +254,13 @@ const PartnershipsPage = () => {
                             Shilingi Moves is Kenya’s financial wellness hub, connecting people to trusted knowledge, smart tools, licensed advisors, and transparent financial comparisons. By partnering with us, you’re not just supporting a platform; you’re helping shape financially confident lives and empowering communities to thrive across generations.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-6">
+                        <div className="flex justify-center px-6">
                             <a
                                 href="#ways"
                                 className="w-full sm:w-auto px-10 py-5 bg-primary-600 text-white font-bold rounded-2xl shadow-2xl hover:bg-primary-500 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 text-lg group"
                             >
                                 Become a Partner
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </a>
-                            <a
-                                href="#impact"
-                                className="w-full sm:w-auto px-8 py-5 bg-white/10 backdrop-blur-md text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 flex items-center justify-center gap-2 text-lg"
-                            >
-                                View Our Impact
-                            </a>
-                            <a
-                                href="#community"
-                                className="w-full sm:w-auto px-8 py-5 bg-transparent text-white/80 font-bold hover:text-white transition-all duration-300 flex items-center justify-center gap-2 text-lg"
-                            >
-                                Explore the Community
                             </a>
                         </div>
                     </div>

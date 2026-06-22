@@ -119,7 +119,7 @@ const ReferPage = () => {
         <div className="min-h-screen bg-white text-gray-900">
 
             {/* ═══════════ HERO — Dark background with overlapping avatars ═══════════ */}
-            <section className="relative bg-gray-900 text-white overflow-hidden min-h-[75vh] flex flex-col justify-center">
+            <section className="relative flex min-h-[560px] flex-col justify-center overflow-hidden bg-gray-900 text-white md:min-h-[calc(100vh-88px)]">
                 {/* Background Video */}
                 <video
                     autoPlay
@@ -134,7 +134,7 @@ const ReferPage = () => {
                 {/* Subtle dark overlay for text legibility */}
                 <div className="absolute inset-0 bg-gray-900/30 z-10" />
 
-                <div className="container-custom relative z-10 pt-20 pb-16 md:pt-28 md:pb-24 text-center">
+                <div className="container-custom relative z-10 pt-16 pb-14 text-center md:pt-16 md:pb-16 lg:pt-20 lg:pb-16">
                     {/* Overlapping avatars with Shilingi logo */}
                     <div className="hidden">
                         <div className="relative flex items-center">
@@ -161,7 +161,7 @@ const ReferPage = () => {
 
                     {/* Heading */}
                     <h1
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-4xl mx-auto px-4"
+                        className="mx-auto mb-5 max-w-4xl px-4 text-4xl leading-[1.06] tracking-tight sm:text-5xl md:text-6xl lg:text-[4rem]"
                         style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                     >
                         You got better with money.{' '}
@@ -170,23 +170,17 @@ const ReferPage = () => {
                         </span>
                     </h1>
 
-                    <p className="text-lg sm:text-xl text-gray-200 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed px-4 drop-shadow-md">
+                    <p className="mx-auto mb-7 max-w-2xl px-4 text-base leading-relaxed text-gray-200 drop-shadow-md sm:text-lg md:mb-8">
                         Shilingi Moves changed the way you see your finances. Share that with the people you care about — and earn lifetime access along the way.
                     </p>
 
                     {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center px-6">
+                    <div className="flex justify-center px-6">
                         <a
                             href="#share"
-                            className="px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 text-base md:text-lg"
+                            className="flex items-center justify-center gap-2 rounded-full bg-primary-600 px-8 py-3.5 text-base font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-2xl md:text-lg"
                         >
                             <Gift size={20} /> Start Referring
-                        </a>
-                        <a
-                            href="#how-it-works"
-                            className="px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 hover:bg-white/15 text-white font-bold rounded-full transition-all duration-300 flex items-center justify-center gap-2 text-base md:text-lg"
-                        >
-                            How It Works <ArrowRight size={18} />
                         </a>
                     </div>
                 </div>

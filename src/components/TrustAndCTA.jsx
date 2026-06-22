@@ -98,19 +98,13 @@ const TrustAndCTA = () => {
                         <p className="mx-auto mb-8 max-w-xl text-lg leading-relaxed text-primary-100 sm:text-xl md:mb-10">
                             Join thousands of Kenyans who are learning, planning, and growing their wealth, one shilling at a time.
                         </p>
-                        <div className="flex flex-col justify-center gap-4 sm:flex-row">
+                        <div className="flex justify-center">
                             <Link
                                 to="/signup"
                                 className="group inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-extrabold text-primary-700 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-2xl"
                             >
                                 Get Started Today
                                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                            </Link>
-                            <Link
-                                to="/learn"
-                                className="inline-flex items-center justify-center rounded-full border-2 border-white/30 bg-white/10 px-8 py-4 font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
-                            >
-                                Explore the Platform
                             </Link>
                         </div>
                     </div>

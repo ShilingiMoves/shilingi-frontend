@@ -180,12 +180,9 @@ const ToolsPage = () => {
                         <p className="text-base sm:text-lg text-white/90 mb-10 max-w-2xl leading-relaxed font-light">
                             Practical digital tools designed for Kenyan realities. Plan your money, compare products, and grow your wealth.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center w-full">
+                        <div className="flex justify-center w-full">
                             <Link to="/signup" className="px-8 py-3.5 bg-white text-primary-700 font-semibold rounded-full shadow-xl hover:bg-gray-50 hover:scale-105 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto text-sm sm:text-base min-w-[200px]">
                                 <Calculator size={18} className="text-primary-600" /> Launch My Dashboard
-                            </Link>
-                            <Link to="/compare" className="px-8 py-3.5 bg-primary-600 text-white font-semibold rounded-full shadow-xl hover:bg-primary-500 hover:scale-105 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto text-sm sm:text-base min-w-[200px]">
-                                <BookOpen size={18} /> Compare Products
                             </Link>
                         </div>
                     </div>
@@ -969,12 +966,9 @@ const ToolsPage = () => {
                     <p className="text-xl text-primary-100 mb-10 leading-relaxed">
                         Join thousands of Kenyans using Shilingi Moves to track their goals, compare the best accounts, and master their money.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div className="flex justify-center">
                         <Link to="/signup" className="inline-flex px-10 py-5 bg-white text-primary-800 font-bold rounded-full shadow-2xl hover:bg-gray-50 hover:-translate-y-1 transition-all text-lg items-center justify-center gap-2">
                             Create Free Dashboard <ArrowRight />
-                        </Link>
-                        <Link to="/compare" className="inline-flex px-10 py-5 bg-primary-700 text-white font-bold rounded-full border border-primary-500 hover:bg-primary-800 transition-all text-lg items-center justify-center gap-2">
-                            Compare Products First
                         </Link>
                     </div>
                 </div>

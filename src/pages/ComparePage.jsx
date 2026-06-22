@@ -209,13 +209,10 @@ const ComparePage = () => {
                     <p className="text-xl text-primary-100 mb-10 max-w-2xl mx-auto">
                         Join Shilingi Moves today to access advanced comparison tools detailed specifically for your financial goals.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div className="flex justify-center">
                         <Link to="/signup" className="px-10 py-4 bg-white text-primary-700 font-bold rounded-full shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2">
                             Create Free Account <ArrowRight size={20} />
                         </Link>
-                        <button className="px-10 py-4 bg-primary-700 text-white font-bold rounded-full border border-primary-500 hover:bg-primary-800 transition-colors">
-                            Explore All Products
-                        </button>
                     </div>
                     <p className="mt-6 text-sm text-primary-200 opacity-80">
                         Linked directly to your dashboard goals ⚡

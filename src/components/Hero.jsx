@@ -316,7 +316,7 @@ const Hero = () => {
 
     return (
         <section
-            className="relative h-screen min-h-[650px] flex items-center overflow-hidden cursor-pointer"
+            className="relative flex min-h-[560px] items-center overflow-hidden cursor-pointer md:h-[calc(100vh-88px)] md:min-h-[560px]"
             onClick={handleHeroClick}
         >
             {/* Full Width Background Image Carousel */}
@@ -350,10 +350,10 @@ const Hero = () => {
             </div>
 
             {/* Left-Aligned Text Content */}
-            <div className="container-custom relative z-20 w-full pt-20 pb-28 pl-6 sm:pl-12 lg:pl-20">
+            <div className="container-custom relative z-20 w-full pt-16 pb-16 pl-6 sm:pl-12 md:pt-12 md:pb-12 lg:pl-20">
                 <div className="max-w-xl">
                     <h1
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-5"
+                        className="mb-4 text-4xl leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[4rem]"
                         style={{ textShadow: '0 2px 16px rgba(0,0,0,0.5)' }}
                     >
                         Take control of <br className="hidden md:block"/> your money.{' '}
@@ -362,31 +362,22 @@ const Hero = () => {
                     </h1>
 
                     <p
-                        className="font-sans text-base sm:text-lg text-gray-200 leading-relaxed mb-8 max-w-md font-medium"
+                        className="mb-6 max-w-md font-sans text-base font-medium leading-relaxed text-gray-200 sm:text-lg md:mb-7"
                         style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}
                     >
                         Shilingi Moves is your complete financial wellness platform. Learn, plan, compare, and grow your money built for Kenyan realities. One Shilingi at a time.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <div className="flex flex-col sm:flex-row">
                         <Link
                             to="/signup"
-                            className="inline-flex items-center justify-center gap-3 px-7 py-4 bg-[#10b981] hover:bg-[#059669] text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group text-base w-full sm:w-auto"
+                            className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#10b981] px-7 py-4 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#059669] hover:shadow-lg sm:w-auto"
                         >
                             Unlock better money habits
-                            <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors shrink-0">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 transition-colors">
                                 <ArrowRight size={15} />
                             </span>
                         </Link>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); scrollToContent(); }}
-                            className="inline-flex items-center justify-between gap-4 px-6 py-4 border border-white/60 text-white font-semibold rounded-lg hover:bg-white/10 hover:border-white transition-all duration-300 hover:-translate-y-0.5 group text-base w-full sm:w-auto"
-                        >
-                            <span>Launch your Shilingi Dashboard</span>
-                            <span className="w-8 h-8 rounded-full border border-white/60 flex items-center justify-center group-hover:border-white group-hover:bg-white/10 transition-all shrink-0">
-                                <ArrowRight size={15} />
-                            </span>
-                        </button>
                     </div>
                 </div>
             </div>

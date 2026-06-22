@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     BookOpen, PlayCircle, Brain, Gamepad2, Route, ArrowRight,
-    ChevronDown, Clock, Star, Users, FileText, Trophy, Sparkles,
+    Clock, Star, Users, FileText, Trophy, Sparkles,
     GraduationCap, Target, TrendingUp, CheckCircle2, Award, Zap
 } from 'lucide-react';
 import HeroImg from '../assets/Learn-pg-hero-image.png';
@@ -365,20 +365,13 @@ const LearnPage = () => {
                         <p className="text-lg md:text-xl text-gray-100 leading-relaxed max-w-lg drop-shadow-sm font-medium mb-8">
                             Access high-quality, practical, Kenya-focused financial education created for Kenyan realities, anytime you need it. From beginner basics to advanced strategies, we've got you covered.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-12">
+                        <div className="mb-12 flex flex-col sm:flex-row">
                             <a
                                 href="#content"
                                 className="inline-flex items-center justify-center px-8 py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all bg-primary-600 border-transparent hover:bg-primary-500 text-white font-bold rounded-full group w-full sm:w-auto"
                             >
                                 Visit the Education Hub
                                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </a>
-                            <a
-                                href="#paths"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-white shadow-lg font-bold rounded-full transition-all duration-300 w-full sm:w-auto"
-                            >
-                                View Learning Paths
-                                <ChevronDown className="ml-2 w-5 h-5" />
                             </a>
                         </div>
 
@@ -609,7 +602,7 @@ const LearnPage = () => {
                             <p className="text-lg text-primary-100 mb-8 max-w-xl mx-auto leading-relaxed">
                                 Join thousands of Kenyans who are building their financial future — one lesson at a time. Free to start, always practical.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <div className="flex justify-center">
                                 <Link
                                     to="/signup"
                                     className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-700 font-bold rounded-full shadow-lg hover:scale-105 transition-all duration-300 group"
@@ -617,12 +610,6 @@ const LearnPage = () => {
                                     Create Free Account
                                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
-                                <a
-                                    href="#content"
-                                    className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-bold rounded-full transition-all duration-300"
-                                >
-                                    Browse Content
-                                </a>
                             </div>
                         </div>
                     </div>

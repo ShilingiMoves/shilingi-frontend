@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
     Users, MessageCircle, Video, Trophy,
     ArrowRight, Star, Heart, Target,
@@ -94,13 +93,10 @@ const CommunityPage = () => {
                     <p className="text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed">
                         Join a growing community committed to financial wellness. Learn together, stay accountable, and celebrate every win, big or small.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div className="flex justify-center">
                         <Button to="/signup" variant="primary" size="lg" className="shadow-xl shadow-primary-900/20">
                             Join the Community
                         </Button>
-                        <button className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-bold rounded-full hover:bg-white/20 transition-all flex items-center justify-center gap-2">
-                            <Video size={20} /> Watch Intro
-                        </button>
                     </div>
                 </div>
             </section>
@@ -219,13 +215,10 @@ const CommunityPage = () => {
                     <p className="text-xl text-primary-100 mb-10">
                         Join thousands of Kenyans taking control of their financial future. Access exclusive tools, expert advice, and a supportive network today.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div className="flex justify-center">
                         <Button to="/signup" variant="white" size="lg" className="text-primary-900">
                             Join for Free
                         </Button>
-                        <Link to="/learn" className="px-8 py-4 bg-transparent border border-white/30 text-white font-bold rounded-full hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-                            Explore Courses
-                        </Link>
                     </div>
                     <p className="mt-6 text-sm text-primary-300 opacity-80">No credit card required • Cancel anytime</p>
                 </div>

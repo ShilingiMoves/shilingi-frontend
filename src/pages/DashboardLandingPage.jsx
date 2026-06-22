@@ -398,13 +398,6 @@ const DashboardLandingPage = () => {
                             >
                                 Start for free - see my dashboard
                             </Link>
-                            <Link
-                                to="/signup"
-                                className="inline-flex min-h-[52px] items-center justify-center rounded-lg border px-8 py-3.5 text-[15px] font-bold text-[#0D1B2A] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white"
-                                style={{ borderColor: navy }}
-                            >
-                                Watch 2-minute demo
-                            </Link>
                         </motion.div>
 
                         <motion.p variants={heroFadeUp} className="mt-5 text-xs opacity-50" style={{ color: navy }}>
@@ -667,7 +660,7 @@ const DashboardLandingPage = () => {
                         Stop guessing. Start seeing. Build your personalized Shilingi Dashboard and guide users from this page straight into the live product.
                     </p>
 
-                    <div className="mt-8 flex flex-wrap justify-center gap-4">
+                    <div className="mt-8 flex justify-center">
                         <Link
                             to="/signin"
                             state={{ from: dashboardDestination }}
@@ -675,12 +668,6 @@ const DashboardLandingPage = () => {
                         >
                             Create My Dashboard
                             <ArrowRight size={18} />
-                        </Link>
-                        <Link
-                            to="/signin"
-                            className="inline-flex min-h-[52px] items-center justify-center rounded-full border-2 border-slate-300 px-7 py-4 text-base font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-white/70"
-                        >
-                            Log In
                         </Link>
                     </div>
 

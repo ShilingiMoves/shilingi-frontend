@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     Shield, Star, Users, Search, ArrowRight,
     TrendingUp, Award, Briefcase, Target,
@@ -113,18 +113,12 @@ const AdvisoryPage = () => {
                         Connect with trusted financial advisors or showcase your expertise to clients who need you.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-6">
+                    <div className="flex justify-center px-6">
                         <button
                             onClick={() => navigate('/signup')}
                             className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-primary-900 font-bold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 text-base sm:text-lg"
                         >
                             👤 Find an Advisor
-                        </button>
-                        <button
-                            onClick={() => navigate('/signup')}
-                            className="px-6 sm:px-8 py-3.5 sm:py-4 bg-emerald-500 text-white font-bold rounded-full border border-emerald-400 hover:bg-emerald-400 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 text-base sm:text-lg shadow-lg"
-                        >
-                            🔑 Join Our Network
                         </button>
                     </div>
 
@@ -366,18 +360,12 @@ const AdvisoryPage = () => {
                     <p className="text-base sm:text-lg md:text-xl text-primary-100 mb-8 md:mb-10 max-w-xl mx-auto">
                         Join the Shilingi Advisor Network today — whether you're seeking guidance or sharing expertise.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                    <div className="flex justify-center">
                         <button
                             onClick={() => navigate('/signup')}
                             className="px-8 md:px-10 py-3.5 md:py-4 bg-white text-primary-900 font-bold rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all text-base md:text-lg"
                         >
                             👤 Find an Advisor
-                        </button>
-                        <button
-                            onClick={() => navigate('/signup')}
-                            className="px-8 md:px-10 py-3.5 md:py-4 bg-emerald-500 text-white font-bold rounded-full border border-emerald-400 hover:bg-emerald-400 transition-all text-base md:text-lg shadow-lg"
-                        >
-                            🔑 Join as Advisor
                         </button>
                     </div>
                     <p className="mt-5 md:mt-6 text-xs md:text-sm text-primary-300">Free to join • No hidden fees • Cancel anytime</p>
@@ -390,3 +378,4 @@ const AdvisoryPage = () => {
 };
 
 export default AdvisoryPage;
+

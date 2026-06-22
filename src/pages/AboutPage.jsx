@@ -138,7 +138,7 @@ const AboutPage = () => {
                         <p className="text-lg md:text-xl text-gray-200 leading-relaxed mb-10 max-w-xl">
                             Shilingi Moves is your one-stop place to learn about money, compare financial products, and use free tools — all built for Kenya.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-col sm:flex-row">
                             <Link
                                 to="/signup"
                                 className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group"
@@ -146,12 +146,6 @@ const AboutPage = () => {
                                 Get Started Free
                                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
-                            <a
-                                href="mailto:hello@shilingimoves.com"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 text-white font-bold rounded-full transition-all duration-300"
-                            >
-                                <Mail className="mr-2 w-5 h-5" /> Say Hello
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -196,19 +190,13 @@ const AboutPage = () => {
                             <p className="text-lg text-gray-600 leading-relaxed mb-8">
                                 We bring together free education, smart tools, and a supportive community — all in one place, all built for Kenyan realities.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex flex-col sm:flex-row">
                                 <Link
                                     to="/learn"
                                     className="inline-flex items-center justify-center px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full transition-all duration-300 group"
                                 >
                                     Explore What We Offer
                                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </Link>
-                                <Link
-                                    to="/partnerships"
-                                    className="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-200 hover:border-primary-400 text-gray-700 hover:text-primary-600 font-bold rounded-full transition-all duration-300"
-                                >
-                                    Partner With Us
                                 </Link>
                             </div>
                         </div>
@@ -577,7 +565,7 @@ const AboutPage = () => {
                             <p className="text-lg text-primary-100 mb-8 max-w-xl mx-auto leading-relaxed">
                                 Join thousands of Kenyans already using Shilingi Moves to save more, spend smarter, and build real wealth.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <div className="flex justify-center">
                                 <Link
                                     to="/signup"
                                     className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-700 font-bold rounded-full shadow-lg hover:scale-105 transition-all duration-300 group"
@@ -585,12 +573,6 @@ const AboutPage = () => {
                                     Create Free Account
                                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
-                                <a
-                                    href="mailto:hello@shilingimoves.com"
-                                    className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-bold rounded-full border border-white/20 transition-all duration-300"
-                                >
-                                    <Mail className="mr-2 w-5 h-5" /> Contact Us
-                                </a>
                             </div>
                             {/* Trust signals */}
                             <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-primary-200">
