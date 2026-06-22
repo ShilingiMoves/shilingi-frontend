@@ -9,7 +9,8 @@ import {
     X,
 } from 'lucide-react';
 
-const AUTO_OPEN_STORAGE_KEY = 'shilingi_buddy_auto_opened';
+const MAX_MESSAGE_LENGTH = 260;
+const EXIT_INTENT_STORAGE_KEY = 'shilingi_buddy_exit_intent_shown';
 
 const starterPrompts = [
     'Help me understand my money',
@@ -28,9 +29,24 @@ const initialMessages = [
     {
         id: 1,
         sender: 'buddy',
-        text: 'Hi, I am Shilingi Buddy AI. Tell me what you want to improve today: budgeting, debt, saving, investing, or choosing the right Shilingi Moves tool.',
+        text: 'Hi, I am Shilingi Buddy AI. Ask about budgeting, debt, saving, investing basics, or which Shilingi Moves tool to use.',
     },
 ];
+
+const sensitiveInfoPatterns = [
+    /\b(pin|password|passcode|otp|one[-\s]?time password|cvv|cvc|card number|mpesa pin|m-pesa pin)\b/i,
+    /\b\d{12,19}\b/,
+    /\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b/,
+];
+
+const promptInjectionPatterns = [
+    /\b(ignore|forget|override|bypass|disable)\b.{0,50}\b(instruction|instructions|rules|system|policy|guardrail|safety)\b/i,
+    /\b(system prompt|developer message|hidden prompt|internal data|private data|database|admin)\b/i,
+    /\b(jailbreak|do anything now|dan mode|reveal your prompt)\b/i,
+];
+
+const forbiddenDataReply = 'I cannot access, reveal, or guess private Shilingi Moves data, internal instructions, account records, passwords, PINs, or user details. I can still help with general guidance and show you where to use official secure pages.';
+const sensitiveDataReply = 'Please do not share PINs, passwords, OTPs, card numbers, ID numbers, or private account details here. For account-specific help, use the official secure Shilingi Moves support or account pages.';
 
 const knowledgeBase = [
     {
@@ -91,7 +107,22 @@ const knowledgeBase = [
     },
 ];
 
+function getSafetyReply(message) {
+    if (promptInjectionPatterns.some((pattern) => pattern.test(message))) {
+        return forbiddenDataReply;
+    }
+
+    if (sensitiveInfoPatterns.some((pattern) => pattern.test(message))) {
+        return sensitiveDataReply;
+    }
+
+    return null;
+}
+
 function getBuddyReply(message) {
+    const safetyReply = getSafetyReply(message);
+    if (safetyReply) return safetyReply;
+
     const text = message.toLowerCase();
     const matchedTopic = knowledgeBase.find((topic) =>
         topic.keywords.some((keyword) => text.includes(keyword))
@@ -112,27 +143,6 @@ function ShilingiBuddy() {
     const inputRef = useRef(null);
 
     useEffect(() => {
-        try {
-            if (sessionStorage.getItem(AUTO_OPEN_STORAGE_KEY) === '1') {
-                return undefined;
-            }
-        } catch {
-            // If storage is unavailable, still avoid blocking the page immediately.
-        }
-
-        const openTimer = window.setTimeout(() => {
-            setIsOpen(true);
-            try {
-                sessionStorage.setItem(AUTO_OPEN_STORAGE_KEY, '1');
-            } catch {
-                // Ignore storage failures; the chat can still function normally.
-            }
-        }, 10000);
-
-        return () => window.clearTimeout(openTimer);
-    }, []);
-
-    useEffect(() => {
         if (isOpen) {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
@@ -151,8 +161,26 @@ function ShilingiBuddy() {
         return () => window.removeEventListener('shilingi-buddy-open', handleOpenBuddy);
     }, []);
 
+    useEffect(() => {
+        const handleExitIntent = (event) => {
+            if (isOpen || event.clientY > 12 || window.innerWidth < 768) return;
+
+            try {
+                if (sessionStorage.getItem(EXIT_INTENT_STORAGE_KEY) === '1') return;
+                sessionStorage.setItem(EXIT_INTENT_STORAGE_KEY, '1');
+            } catch {
+                // Keep this non-blocking if browser storage is restricted.
+            }
+
+            setIsOpen(true);
+        };
+
+        document.addEventListener('mouseout', handleExitIntent);
+        return () => document.removeEventListener('mouseout', handleExitIntent);
+    }, [isOpen]);
+
     const sendMessage = (messageText = inputValue) => {
-        const cleanMessage = messageText.trim();
+        const cleanMessage = messageText.trim().slice(0, MAX_MESSAGE_LENGTH);
         if (!cleanMessage || isTyping) return;
 
         const userMessageId = nextMessageIdRef.current;
@@ -189,57 +217,57 @@ function ShilingiBuddy() {
     };
 
     return (
-        <div className="fixed bottom-4 right-3 z-[80] sm:right-5">
+        <div className="fixed bottom-2 right-2 z-[80] sm:bottom-3 sm:right-3">
             {isOpen && (
                 <section
                     id="shilingi-buddy-panel"
-                    className="flex h-[min(470px,calc(100vh-2rem))] w-[calc(100vw-1.5rem)] max-w-[340px] flex-col overflow-hidden rounded-xl border border-primary-100 bg-white shadow-2xl shadow-slate-900/20"
+                    className="flex h-[min(280px,calc(100vh-0.75rem))] w-[min(218px,calc(100vw-0.5rem))] flex-col overflow-hidden rounded-md border border-primary-100 bg-white shadow-lg shadow-slate-900/15 sm:h-[300px] sm:w-[232px]"
                     aria-label="Shilingi Buddy AI chat"
                 >
-                    <header className="flex items-center justify-between bg-primary-700 px-3.5 py-2.5 text-white">
-                        <div className="flex min-w-0 items-center gap-2.5">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
-                                <Bot size={20} aria-hidden="true" />
+                    <header className="flex items-center justify-between bg-primary-700 px-2 py-1.5 text-white">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
+                                <Bot size={12} aria-hidden="true" />
                             </span>
                             <div className="min-w-0">
-                                <h2 className="truncate text-sm font-bold">Shilingi Buddy AI</h2>
-                                <p className="truncate text-[11px] font-medium text-primary-50">Website guide and money helper</p>
+                                <h2 className="truncate text-[11px] font-bold">Shilingi Buddy</h2>
+                                <p className="truncate text-[8px] font-medium text-primary-50">Money guide</p>
                             </div>
                         </div>
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/80"
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/80"
                             aria-label="Close Shilingi Buddy AI"
                         >
-                            <X size={18} aria-hidden="true" />
+                            <X size={12} aria-hidden="true" />
                         </button>
                     </header>
 
-                    <div className="border-b border-primary-100 bg-primary-50 px-3.5 py-2.5">
-                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                    <div className="border-b border-primary-100 bg-primary-50 px-1.5 py-1">
+                        <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-hide">
                             {quickTopics.map((topic) => (
                                 <button
                                     key={topic.label}
                                     type="button"
                                     onClick={() => sendMessage(topic.prompt)}
-                                    className="flex min-h-[32px] shrink-0 items-center gap-1.5 rounded-full border border-primary-200 bg-white px-2.5 text-xs font-semibold text-primary-800 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    className="flex min-h-[21px] shrink-0 items-center gap-0.5 rounded-full border border-primary-200 bg-white px-1.5 text-[9px] font-semibold text-primary-800 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 >
-                                    <topic.icon size={13} aria-hidden="true" />
+                                    <topic.icon size={10} aria-hidden="true" />
                                     {topic.label}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="flex-1 space-y-2.5 overflow-y-auto bg-slate-50 px-3 py-3">
+                    <div className="flex-1 space-y-1.5 overflow-y-auto bg-slate-50 px-1.5 py-1.5">
                         {messages.map((message) => (
                             <div
                                 key={message.id}
                                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div
-                                    className={`max-w-[86%] rounded-2xl px-3 py-2.5 text-[13px] leading-relaxed shadow-sm ${
+                                    className={`max-w-[90%] rounded-lg px-2 py-1.5 text-[10px] leading-snug shadow-sm ${
                                         message.sender === 'user'
                                             ? 'rounded-br-md bg-primary-600 text-white'
                                             : 'rounded-bl-md border border-slate-200 bg-white text-slate-700'
@@ -252,20 +280,20 @@ function ShilingiBuddy() {
 
                         {isTyping && (
                             <div className="flex justify-start">
-                                <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-3 py-2.5 text-[13px] font-medium text-slate-500 shadow-sm">
-                                    Shilingi Buddy AI is typing...
+                                <div className="rounded-lg rounded-bl-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-medium text-slate-500 shadow-sm">
+                                    Shilingi Buddy is typing...
                                 </div>
                             </div>
                         )}
 
                         {messages.length === 1 && (
-                            <div className="space-y-2 pt-1">
+                            <div className="space-y-1.5 pt-0.5">
                                 {starterPrompts.map((prompt) => (
                                     <button
                                         key={prompt}
                                         type="button"
                                         onClick={() => sendMessage(prompt)}
-                                        className="block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-700 transition-colors hover:border-primary-200 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="block w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-left text-[10px] font-semibold text-slate-700 transition-colors hover:border-primary-200 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     >
                                         {prompt}
                                     </button>
@@ -275,8 +303,8 @@ function ShilingiBuddy() {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-2.5">
-                        <div className="flex items-end gap-2">
+                    <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-1.5">
+                        <div className="flex items-end gap-1.5">
                             <label htmlFor="shilingi-buddy-message" className="sr-only">
                                 Message Shilingi Buddy AI
                             </label>
@@ -284,7 +312,7 @@ function ShilingiBuddy() {
                                 id="shilingi-buddy-message"
                                 ref={inputRef}
                                 value={inputValue}
-                                onChange={(event) => setInputValue(event.target.value)}
+                                onChange={(event) => setInputValue(event.target.value.slice(0, MAX_MESSAGE_LENGTH))}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter' && !event.shiftKey) {
                                         event.preventDefault();
@@ -293,19 +321,20 @@ function ShilingiBuddy() {
                                 }}
                                 rows={1}
                                 placeholder="Ask Shilingi Buddy AI..."
-                                className="max-h-20 min-h-[40px] flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                                maxLength={MAX_MESSAGE_LENGTH}
+                                className="max-h-10 min-h-[28px] flex-1 resize-none rounded-md border border-slate-200 px-1.5 py-1.5 text-[10px] text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                             />
                             <button
                                 type="submit"
                                 disabled={!inputValue.trim() || isTyping}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
                                 aria-label="Send message"
                             >
-                                <Send size={16} aria-hidden="true" />
+                                <Send size={12} aria-hidden="true" />
                             </button>
                         </div>
-                        <p className="mt-1.5 text-[10px] leading-snug text-slate-500">
-                            General guidance only. Do not share PINs, passwords, or private details.
+                        <p className="mt-0.5 text-[7px] leading-tight text-slate-500">
+                            General guidance only. Do not share private details.
                         </p>
                     </form>
                 </section>
@@ -315,16 +344,13 @@ function ShilingiBuddy() {
                 <button
                     type="button"
                     onClick={() => setIsOpen(true)}
-                    className="ml-auto flex min-h-[50px] items-center gap-2.5 rounded-full bg-primary-700 px-3.5 py-2.5 text-white shadow-xl shadow-primary-900/25 transition-all hover:-translate-y-0.5 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-primary-700 text-white shadow-md shadow-primary-900/20 transition-all hover:-translate-y-0.5 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:h-9 sm:w-9"
                     aria-expanded={isOpen}
                     aria-controls="shilingi-buddy-panel"
+                    aria-label="Open Shilingi Buddy AI"
                 >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
-                        <MessageCircle size={18} aria-hidden="true" />
-                    </span>
-                    <span className="text-left">
-                        <span className="block text-xs font-bold leading-tight">Shilingi Buddy AI</span>
-                        <span className="block text-[11px] font-medium leading-tight text-primary-50">Need help?</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
+                        <MessageCircle size={13} aria-hidden="true" />
                     </span>
                 </button>
             )}
