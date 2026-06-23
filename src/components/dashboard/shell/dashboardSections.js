@@ -203,7 +203,7 @@ export const dashboardSections = [
         description: 'Update notification, security, and display preferences.',
     },
     {
-        id: 'advisory',
+        id: 'guidance',
         label: 'Shilingi Guidance',
         helper: 'Kenyan money tools built around you',
         icon: Briefcase,

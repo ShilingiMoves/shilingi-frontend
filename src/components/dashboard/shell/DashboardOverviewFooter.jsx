@@ -28,7 +28,7 @@ const dashboardFooterColumns = [
         title: 'Company',
         items: [
             { label: 'About Us', target: '/about', type: 'href' },
-            { label: 'Careers', target: '/about', type: 'href' },
+            { label: 'Careers', target: '/careers', type: 'href' },
             { label: 'Contact Us', target: '/#site-footer', type: 'href' },
             { label: 'Partner With Us', target: '/partnerships', type: 'href' },
         ],
@@ -105,7 +105,7 @@ const DashboardOverviewFooter = ({ onSelectSection }) => {
             <div className="px-5 py-5 sm:px-6 lg:px-8">
                 <p className="text-sm text-white/65">&copy;Kaizen Publishers Limited All rights reserved.</p>
                 <p className="mt-4 max-w-4xl text-sm leading-6 text-white/50">
-                    Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions.
+                    Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult regulated providers or licensed financial professionals before making investment decisions.
                 </p>
             </div>
         </footer>

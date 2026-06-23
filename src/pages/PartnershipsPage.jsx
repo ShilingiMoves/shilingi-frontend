@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     HeartHandshake, TrendingUp, Users, BarChart3, Shield, Star,
@@ -10,7 +10,71 @@ import Footer from '../components/Footer';
 import partnershipsVideo from '../assets/Partnerships-herovideo.mp4';
 import story1 from '../assets/stories/story1.png';
 import story2 from '../assets/stories/story2.png';
-import story3 from '../assets/stories/story3.png';
+
+const AnimatedImpactValue = ({ target, suffix = '', decimals = 0 }) => {
+    const ref = useRef(null);
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return undefined;
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
+            setDisplayValue(target);
+            return undefined;
+        }
+
+        let animationFrame;
+        let hasAnimated = false;
+
+        const animate = () => {
+            const duration = 1400;
+            const startedAt = performance.now();
+
+            const tick = (now) => {
+                const progress = Math.min((now - startedAt) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                setDisplayValue(target * eased);
+
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(tick);
+                } else {
+                    setDisplayValue(target);
+                }
+            };
+
+            animationFrame = requestAnimationFrame(tick);
+        };
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !hasAnimated) {
+                    hasAnimated = true;
+                    animate();
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.45 }
+        );
+
+        observer.observe(node);
+
+        return () => {
+            observer.disconnect();
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+        };
+    }, [target]);
+
+    const formattedValue = decimals > 0 ? displayValue.toFixed(decimals) : Math.round(displayValue).toLocaleString('en-US');
+
+    return (
+        <span ref={ref}>
+            {formattedValue}
+            {suffix}
+        </span>
+    );
+};
 
 const PartnershipsPage = () => {
     const navigate = useNavigate();
@@ -24,10 +88,10 @@ const PartnershipsPage = () => {
     }, []);
 
     const audienceStats = [
-        { value: '500K+', label: 'Kenyans Reached', icon: Users },
-        { value: '1.2M', label: 'Financial Decisions supported', icon: BarChart3 },
-        { value: '150+', label: 'Partners onboarded', icon: Globe },
-        { value: '4.9/5', label: 'User Satisfaction', icon: Star },
+        { target: 500, suffix: 'K+', label: 'Kenyans Reached', icon: Users },
+        { target: 1.2, suffix: 'M', decimals: 1, label: 'Financial Decisions supported', icon: BarChart3 },
+        { target: 150, suffix: '+', label: 'Partners onboarded', icon: Globe },
+        { target: 4.9, suffix: '/5', decimals: 1, label: 'User Satisfaction', icon: Star },
     ];
 
     const valuePillars = [
@@ -54,7 +118,7 @@ const PartnershipsPage = () => {
         },
         {
             title: 'Ecosystem Collaboration',
-            desc: 'Integrate into dashboards, tools, advisor networks, and comparison hubs that convert learning into action.',
+            desc: 'Integrate into dashboards, tools, learning hubs, and comparison flows that convert education into action.',
             icon: Zap,
             color: 'from-purple-500 to-violet-600',
             cta: 'Join Now'
@@ -65,13 +129,6 @@ const PartnershipsPage = () => {
         {
             category: 'Individual Partners',
             items: [
-                {
-                    role: 'Certified Professional Advisors',
-                    benefit: 'Access to qualified, education-led client leads.',
-                    cta: 'Join Our Advisor Network',
-                    icon: GraduationCap,
-                    color: 'bg-blue-50 text-blue-600'
-                },
                 {
                     role: 'Content & Media Partners',
                     benefit: 'Expanded reach and authority.',
@@ -126,12 +183,6 @@ const PartnershipsPage = () => {
             icon: Zap,
             color: 'from-primary-600 to-primary-800'
         },
-        {
-            title: 'Advisor Network Partner',
-            desc: 'Verified advisor profile, lead matching, trust badges.',
-            icon: Shield,
-            color: 'from-purple-600 to-violet-800'
-        }
     ];
 
     const tiers = [
@@ -204,18 +255,13 @@ const PartnershipsPage = () => {
             case: 'Using education-first positioning to build user confidence in new credit products.',
             image: story2
         },
-        {
-            title: 'Advisor Pipeline Growth',
-            case: 'Growing a compliant, high-quality client base through education-led leads.',
-            image: story3
-        }
     ];
 
     return (
         <div className="min-h-screen bg-white text-gray-900">
 
             {/* ═══════════ HERO — Video background with strong value prop ═══════════ */}
-            <section className="relative text-white min-h-[80vh] md:min-h-[85vh] flex items-center overflow-hidden">
+            <section className="relative flex min-h-[clamp(520px,calc(100vh-5.5rem),680px)] items-center overflow-hidden text-white md:min-h-[clamp(560px,calc(100vh-6rem),720px)]">
                 {/* Video Background */}
                 <video
                     autoPlay
@@ -229,15 +275,15 @@ const PartnershipsPage = () => {
                 {/* Dark overlay for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-800/70 to-emerald-900/80"></div>
 
-                <div className="container-custom relative z-10 py-16 md:py-24">
+                <div className="container-custom relative z-10 py-8 sm:py-10 md:py-12">
                     <div className="max-w-4xl mx-auto text-center">
-                        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 md:mb-8 border border-white/15">
+                        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm md:mb-4">
                             <HeartHandshake size={16} className="text-emerald-400" />
                             <span className="text-sm font-medium text-emerald-200">Shilingi Moves Partnership Ecosystem</span>
                         </div>
 
                         <h1
-                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-6 md:mb-8"
+                            className="mb-3 text-4xl font-normal leading-[1.05] tracking-tight text-white sm:text-5xl md:text-[3.45rem] lg:text-[3.8rem]"
                             style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                         >
                             Together, into a new era of <br className="hidden md:block" />
@@ -246,18 +292,18 @@ const PartnershipsPage = () => {
                             </span>
                         </h1>
 
-                        <p className="text-lg md:text-2xl text-white font-medium mb-6 max-w-3xl mx-auto leading-tight">
+                        <p className="mx-auto mb-5 max-w-3xl text-base font-medium leading-tight text-white sm:text-lg md:text-xl">
                             Become part of Kenya’s leading financial literacy platform and support a community choosing financial fitness, every day, everywhere.
                         </p>
 
-                        <p className="text-base md:text-lg text-white/80 mb-10 leading-relaxed max-w-3xl mx-auto">
-                            Shilingi Moves is Kenya’s financial wellness hub, connecting people to trusted knowledge, smart tools, licensed advisors, and transparent financial comparisons. By partnering with us, you’re not just supporting a platform; you’re helping shape financially confident lives and empowering communities to thrive across generations.
+                        <p className="mx-auto mb-5 hidden max-w-3xl text-sm leading-6 text-white/80 xl:block">
+                            Shilingi Moves is Kenya’s financial wellness hub, connecting people to trusted knowledge, smart tools, transparent comparisons, and practical learning journeys. By partnering with us, you’re not just supporting a platform; you’re helping shape financially confident lives and empowering communities to thrive across generations.
                         </p>
 
-                        <div className="flex justify-center px-6">
+                        <div className="flex justify-center px-4">
                             <a
                                 href="#ways"
-                                className="w-full sm:w-auto px-10 py-5 bg-primary-600 text-white font-bold rounded-2xl shadow-2xl hover:bg-primary-500 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 text-lg group"
+                                className="group flex min-h-[48px] w-full items-center justify-center gap-3 rounded-2xl bg-primary-600 px-8 py-3 text-base font-bold text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:bg-primary-500 sm:w-auto"
                             >
                                 Become a Partner
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -266,12 +312,6 @@ const PartnershipsPage = () => {
                     </div>
                 </div>
 
-                {/* Scroll hint */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-                    <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-                        <div className="w-1.5 h-3 bg-white/60 rounded-full"></div>
-                    </div>
-                </div>
             </section>
 
             {/* ═══════════ SECTION 2: WHY PARTNER (Value Pillars) ═══════════ */}
@@ -323,7 +363,9 @@ const PartnershipsPage = () => {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
                         {audienceStats.map((stat, idx) => (
                             <div key={idx} className="text-center">
-                                <p className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-primary-400 mb-2">{stat.value}</p>
+                                <p className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-primary-400 mb-2">
+                                    <AnimatedImpactValue {...stat} />
+                                </p>
                                 <p className="text-sm md:text-base font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
                             </div>
                         ))}
@@ -341,18 +383,18 @@ const PartnershipsPage = () => {
                         </p>
                     </div>
 
-                    <div className="space-y-20">
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                         {partnerCommunity.map((group, idx) => (
                             <div key={idx}>
-                                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-8 border-l-4 border-primary-500 pl-4 uppercase tracking-widest">{group.category}</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <h3 className="mb-6 border-l-4 border-primary-500 pl-4 text-lg font-bold uppercase tracking-widest text-gray-900 md:text-xl">{group.category}</h3>
+                                <div className="grid grid-cols-1 gap-8">
                                     {group.items.map((item, i) => (
-                                        <div key={i} className="group bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500">
+                                        <div key={i} className="group flex h-full flex-col rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm transition-all duration-500 hover:shadow-2xl">
                                             <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center mb-6`}>
                                                 <item.icon size={28} />
                                             </div>
                                             <h4 className="text-xl font-bold text-gray-900 mb-3">{item.role}</h4>
-                                            <p className="text-gray-500 mb-8 text-sm leading-relaxed">{item.benefit}</p>
+                                            <p className="mb-8 flex-1 text-sm leading-relaxed text-gray-500">{item.benefit}</p>
                                             <button className="w-full py-4 bg-gray-50 text-gray-900 font-bold rounded-2xl group-hover:bg-primary-600 group-hover:text-white transition-all duration-300">
                                                 {item.cta}
                                             </button>
@@ -375,7 +417,7 @@ const PartnershipsPage = () => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                         {waysToPartner.map((way, idx) => (
                             <div key={idx} className="group relative overflow-hidden rounded-[40px] p-10 bg-gray-900 text-white">
                                 <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${way.color} opacity-20 blur-3xl group-hover:opacity-40 transition-opacity`}></div>
@@ -415,16 +457,15 @@ const PartnershipsPage = () => {
                             <div className="absolute w-[60%] h-[60%] border border-primary-400 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
                         </div>
 
-                        <div className="relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8">
+                        <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-2 justify-center gap-6 md:grid-cols-3 md:gap-8 lg:flex lg:flex-wrap lg:items-start lg:justify-center">
                             {[
                                 { name: 'Dashboard', icon: Users, color: 'from-blue-400 to-blue-600' },
                                 { name: 'Learn', icon: GraduationCap, color: 'from-amber-400 to-amber-600' },
                                 { name: 'Compare', icon: BarChart3, color: 'from-emerald-400 to-emerald-600' },
-                                { name: 'Advisors', icon: Shield, color: 'from-purple-400 to-purple-600' },
                                 { name: 'Tools', icon: Zap, color: 'from-rose-400 to-rose-600' },
                                 { name: 'Community', icon: Globe, color: 'from-indigo-400 to-indigo-600' }
                             ].map((node, i) => (
-                                <div key={i} className="flex flex-col items-center gap-4 group cursor-pointer">
+                                <div key={i} className="group flex cursor-pointer flex-col items-center gap-4 lg:w-36">
                                     <div className={`w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br ${node.color} rounded-full flex items-center justify-center text-white shadow-xl group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300 relative`}>
                                         <node.icon size={32} />
                                         <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity animate-ping"></div>
@@ -445,7 +486,7 @@ const PartnershipsPage = () => {
                         <p className="text-gray-500 text-lg">Real success stories from our ecosystem.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
                         {partnerStories.map((story, idx) => (
                             <div key={idx} className="group relative rounded-[32px] overflow-hidden bg-primary-600 hover:shadow-2xl transition-all duration-500 flex flex-col h-full border border-primary-500">
                                 <div className="aspect-[4/3] overflow-hidden relative">
@@ -500,10 +541,9 @@ const PartnershipsPage = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {[
                             { label: 'Become a Partner', variant: 'primary', href: 'mailto:partnerships@shilingimoves.com', icon: Mail },
-                            { label: 'Call Us Now', variant: 'secondary', href: 'tel:+254700000000', icon: Phone },
+                            { label: 'Call Us Now', variant: 'secondary', href: 'tel:+254727005993', icon: Phone },
                             { label: 'Explore Dashboard', variant: 'outline', href: '/dashboard' },
                             { label: 'Compare Options', variant: 'outline', href: '/compare' },
-                            { label: 'Meet Advisors', variant: 'outline', href: '/advisors' },
                             { label: 'Try Smart Tools', variant: 'outline', href: '/tools' },
                             { label: 'Join Community', variant: 'outline', href: '/community' },
                             { label: 'View Impact', variant: 'outline', href: '#impact' }
@@ -530,8 +570,8 @@ const PartnershipsPage = () => {
                              <Mail size={16} /> partnerships@shilingimoves.com
                         </a>
                         <div className="w-1.5 h-1.5 rounded-full bg-gray-800"></div>
-                        <a href="tel:+254700000000" className="hover:text-primary-400 transition-colors flex items-center gap-2">
-                            <Phone size={16} /> +254 700 000 000
+                        <a href="tel:+254727005993" className="hover:text-primary-400 transition-colors flex items-center gap-2">
+                            <Phone size={16} /> +254 727 005 993
                         </a>
                     </div>
                 </div>

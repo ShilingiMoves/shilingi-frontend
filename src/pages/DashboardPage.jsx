@@ -359,7 +359,7 @@ const DashboardPage = () => {
                             {
                                 icon: HeartHandshake,
                                 title: 'Decision support',
-                                text: 'Help members prepare for compare flows, planner updates, and advisor conversations with clearer context.',
+                                text: 'Help members prepare for compare flows, planner updates, and next-step decisions with clearer context.',
                             },
                         ]}
                         primaryAction={{ label: 'Open profile inputs', onClick: () => handleSelectSection('user') }}

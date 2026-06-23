@@ -105,7 +105,7 @@ const plans = [
         key: 'elite',
         tier: 'Elite',
         name: 'Shilingi Elite',
-        tagline: 'Advanced intelligence. Your personal advisor ecosystem.',
+        tagline: 'Advanced intelligence. Your personalized money guidance workspace.',
         price: { monthly: '499', annual: '399' },
         currency: 'KES',
         period: '/mo',
@@ -116,7 +116,7 @@ const plans = [
         includedTitle: 'Everything in Pro, plus',
         features: [
             { text: 'Shilingi Buddy AI companion', included: true, tone: 'amber' },
-            { text: 'Personalized Advisor Matching', included: true, tone: 'amber' },
+            { text: 'Personalized planning prompts', included: true, tone: 'amber' },
             { text: 'Advanced Tax and Estate Planning', included: true, tone: 'amber' },
             { text: 'Diaspora Financial Tools', included: true, tone: 'amber' },
             { text: 'Legacy and Wealth Transfer Planning', included: true, tone: 'amber' },
@@ -170,10 +170,10 @@ const comparisonGroups = [
         ],
     },
     {
-        category: 'AI and Advisor Access',
+        category: 'AI Guidance',
         rows: [
             { feature: 'Shilingi Buddy AI', values: ['-', '-', '-', true] },
-            { feature: 'Advisor matching', values: ['-', '-', '-', true] },
+            { feature: 'Personalized planning prompts', values: ['-', '-', '-', true] },
         ],
     },
     {
@@ -228,7 +228,7 @@ const ecosystemCards = [
 const faqs = [
     {
         question: 'Which tier should I start with?',
-        answer: 'Start with Basic to explore the dashboard and see your financial health indicator. If you are actively paying off debt or growing savings, Plus is the natural next step. Choose Pro for investing and planning depth, and Elite for AI guidance or advisor access.',
+        answer: 'Start with Basic to explore the dashboard and see your financial health indicator. If you are actively paying off debt or growing savings, Plus is the natural next step. Choose Pro for investing and planning depth, and Elite for deeper AI guidance.',
     },
     {
         question: 'Can I switch tiers later?',
@@ -272,7 +272,7 @@ const heroSlideIn = {
 
 const DashboardGuideVideo = () => (
     <video
-        className="relative z-10 h-[560px] max-h-[68vh] w-[448px] max-w-[88vw] object-contain drop-shadow-[0_30px_70px_rgba(13,27,42,0.18)]"
+        className="relative z-10 h-[420px] max-h-[52vh] w-[340px] max-w-[82vw] object-contain drop-shadow-[0_30px_70px_rgba(13,27,42,0.18)] sm:h-[460px] lg:h-[500px]"
         src={dashboardGuideVideo}
         autoPlay
         muted
@@ -356,8 +356,8 @@ const DashboardLandingPage = () => {
 
     return (
         <div className={pageShell}>
-            <section className="overflow-hidden border-b border-primary-100 px-4 py-20 sm:px-6 lg:px-8" style={{ backgroundColor: cream }}>
-                <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-6xl flex-col items-center justify-center gap-12 lg:flex-row lg:gap-24">
+            <section className="overflow-hidden border-b border-primary-100 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14" style={{ backgroundColor: cream }}>
+                <div className="mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-6xl flex-col items-center justify-center gap-8 lg:min-h-[calc(100vh-7rem)] lg:flex-row lg:gap-16">
                     <motion.div
                         variants={heroStagger}
                         initial="hidden"
@@ -373,7 +373,7 @@ const DashboardLandingPage = () => {
 
                         <motion.h1
                             variants={heroFadeUp}
-                            className="m-0 text-[2.45rem] font-black leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]"
+                            className="m-0 text-4xl font-normal leading-[1.08] tracking-tight sm:text-5xl md:text-6xl lg:text-[3.65rem]"
                             style={{ color: navy }}
                         >
                             See where every shilingi goes,
@@ -381,7 +381,7 @@ const DashboardLandingPage = () => {
                             in <span style={{ color: greenDark }}>one dashboard.</span>
                         </motion.h1>
 
-                        <motion.p variants={heroFadeUp} className="mt-5 text-base font-semibold sm:text-lg" style={{ color: navy }}>
+                        <motion.p variants={heroFadeUp} className="mt-4 text-base font-semibold sm:text-lg" style={{ color: navy }}>
                             Built for Kenyan salaries, side hustles, chama, debt, and more.
                         </motion.p>
 
@@ -389,7 +389,7 @@ const DashboardLandingPage = () => {
                             In 5 minutes, you&apos;ll see your real money picture - no spreadsheets.
                         </motion.p>
 
-                        <motion.div variants={heroFadeUp} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+                        <motion.div variants={heroFadeUp} className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                             <Link
                                 to="/signin"
                                 state={{ from: dashboardDestination }}

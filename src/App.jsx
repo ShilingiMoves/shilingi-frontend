@@ -13,8 +13,8 @@ const LearnPage = lazy(() => import('./pages/LearnPage'));
 const ComparePage = lazy(() => import('./pages/ComparePage'));
 const ToolsPage = lazy(() => import('./pages/ToolsPage'));
 const CommunityPage = lazy(() => import('./pages/CommunityPage'));
-const AdvisoryPage = lazy(() => import('./pages/AdvisoryPage'));
 const PartnershipsPage = lazy(() => import('./pages/PartnershipsPage'));
+const CareersPage = lazy(() => import('./pages/CareersPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
@@ -90,8 +90,10 @@ function AppLayout() {
                         <Route path="/compare" element={<ComparePage />} />
                         <Route path="/tools" element={<ToolsPage />} />
                         <Route path="/community" element={<CommunityPage />} />
-                        <Route path="/advisors" element={<AdvisoryPage />} />
                         <Route path="/partnerships" element={<PartnershipsPage />} />
+                        <Route path="/careers" element={<CareersPage />} />
+                        <Route path="/career" element={<CareersPage />} />
+                        <Route path="/jobs" element={<CareersPage />} />
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/faqs" element={<FAQPage />} />
                         <Route path="/trust" element={<TrustPage />} />

@@ -55,7 +55,7 @@ const knowledgeBase = [
     },
     {
         keywords: ['dashboard', 'tier', 'basic', 'plus', 'pro', 'elite'],
-        reply: 'Think of the Shilingi Dashboard as your financial control centre. Basic helps you start, Plus is useful if you are serious about budgeting and debt, Pro supports deeper planning, and Elite adds AI guidance and advisor matching.',
+        reply: 'Think of the Shilingi Dashboard as your financial control centre. Basic helps you start, Plus is useful if you are serious about budgeting and debt, Pro supports deeper planning, and Elite adds AI guidance.',
     },
     {
         keywords: ['budget', 'spend', 'expense', '50/30/20', 'planner'],
@@ -86,8 +86,8 @@ const knowledgeBase = [
         reply: 'Money goals are easier when you are not doing them alone. The Community page helps users learn together, stay accountable, and join challenges around savings, debt, and financial wellness.',
     },
     {
-        keywords: ['advisor', 'adviser', 'advisory', 'advice'],
-        reply: 'For personal investment, tax, retirement, insurance, or complex decisions, speak with a qualified advisor. I can help you understand the basics and prepare better questions before you meet one.',
+        keywords: ['advice', 'guidance', 'help me decide'],
+        reply: 'I can help you understand the basics, compare options, and prepare better questions for regulated providers. For personal investment, tax, retirement, insurance, or complex decisions, use trusted licensed professionals outside this chat.',
     },
     {
         keywords: ['safe', 'privacy', 'data', 'security', 'pin', 'password', 'card'],
@@ -99,11 +99,11 @@ const knowledgeBase = [
     },
     {
         keywords: ['invest', 'investment', 'returns', 'stock', 'fund'],
-        reply: 'Investing starts with your goal, time frame, risk comfort, and emergency savings. I can explain concepts in simple language, but I cannot promise returns or tell you exactly what to buy. For personal choices, speak with a qualified advisor.',
+        reply: 'Investing starts with your goal, time frame, risk comfort, and emergency savings. I can explain concepts in simple language, but I cannot promise returns or tell you exactly what to buy. For personal choices, use trusted licensed professionals.',
     },
     {
         keywords: ['shilingi', 'moves', 'what are you', 'about'],
-        reply: 'Shilingi Moves helps people make clearer money decisions. It brings together learning, planning tools, product comparison, dashboard tracking, community, and advisor access built around Kenyan realities.',
+        reply: 'Shilingi Moves helps people make clearer money decisions. It brings together learning, planning tools, product comparison, dashboard tracking, and community support built around Kenyan realities.',
     },
 ];
 

@@ -763,7 +763,7 @@ const ToolsPage = () => {
                             { phase: '1. Getting Started', desc: 'Building the foundation', tools: ['Budget Planner', 'Savings Calculator', 'Beginner Books'] },
                             { phase: '2. Building Stability', desc: 'Protecting your baseline', tools: ['Emergency Fund', 'Insurance Compare', 'Money Mistakes Pod'] },
                             { phase: '3. Growing Wealth', desc: 'Making money work harder', tools: ['Investment Growth', 'Investment Compare', 'Advanced Books'] },
-                            { phase: '4. Retirement', desc: 'Securing the future', tools: ['Retirement Planner', 'Annuities Info', 'Advisors Hub'] }
+                            { phase: '4. Retirement', desc: 'Securing the future', tools: ['Retirement Planner', 'Annuities Info', 'Retirement Guide'] }
                         ].map((stage, i) => (
                             <div key={i} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col relative overflow-hidden cursor-pointer" onClick={() => scrollToSection('calculators')}>
                                 <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br transition-opacity opacity-0 group-hover:opacity-10 rounded-bl-full ${i === 0 ? 'from-rose-500' : i === 1 ? 'from-amber-500' : i === 2 ? 'from-green-500' : 'from-purple-500'}`}></div>

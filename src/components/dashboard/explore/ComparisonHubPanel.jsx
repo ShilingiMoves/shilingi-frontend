@@ -397,14 +397,14 @@ const getActionClasses = (action) => {
 };
 
 const compareActionContent = {
-    loans: { primary: 'Apply Now', secondary: 'Save to Dashboard', advisor: 'Talk to Loan Advisor' },
-    savings: { primary: 'Open MMF Account', secondary: 'Save to Dashboard', advisor: 'Talk to Savings Advisor' },
-    investments: { primary: 'Open Investment Account', secondary: 'Save to Dashboard', advisor: 'Talk to Investment Advisor' },
-    banking: { primary: 'Open Account', secondary: 'Save to Dashboard', advisor: 'Talk to Banking Advisor' },
-    transfers: { primary: 'Start Transfer', secondary: 'Save to Dashboard', advisor: 'Talk to Transfer Advisor' },
-    retirement: { primary: 'Enroll Now', secondary: 'Save to Dashboard', advisor: 'Talk to Retirement Advisor' },
-    mortgage: { primary: 'Compare Mortgage', secondary: 'Save to Dashboard', advisor: 'Talk to Mortgage Advisor' },
-    insurance: { primary: 'Get Custom Quote', secondary: 'Save to Dashboard', advisor: 'Talk to Insurance Advisor' },
+    loans: { primary: 'Apply Now', secondary: 'Save to Dashboard', guidance: 'Review Loan Guide' },
+    savings: { primary: 'Open MMF Account', secondary: 'Save to Dashboard', guidance: 'Review Savings Guide' },
+    investments: { primary: 'Open Investment Account', secondary: 'Save to Dashboard', guidance: 'Review Investment Guide' },
+    banking: { primary: 'Open Account', secondary: 'Save to Dashboard', guidance: 'Review Banking Guide' },
+    transfers: { primary: 'Start Transfer', secondary: 'Save to Dashboard', guidance: 'Review Transfer Guide' },
+    retirement: { primary: 'Enroll Now', secondary: 'Save to Dashboard', guidance: 'Review Retirement Guide' },
+    mortgage: { primary: 'Compare Mortgage', secondary: 'Save to Dashboard', guidance: 'Review Mortgage Guide' },
+    insurance: { primary: 'Get Custom Quote', secondary: 'Save to Dashboard', guidance: 'Review Insurance Guide' },
 };
 
 const providerShells = ['bg-[#df6a3a]', 'bg-[#5c47c5]', 'bg-[#1967b3]', 'bg-[#4a7d15]', 'bg-[#177e72]', 'bg-[#9d5f10]', 'bg-[#8d3b4e]'];
@@ -705,7 +705,7 @@ const ComparisonHubPanel = () => {
                         {activeTab !== 'insurance' ? (
                             <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-[#d0ddd9] bg-white px-4 py-2 text-xs font-semibold text-slate-600">
                                 <MessageCircle size={13} />
-                                {actionContent.advisor}
+                                {actionContent.guidance}
                             </button>
                         ) : null}
                     </div>

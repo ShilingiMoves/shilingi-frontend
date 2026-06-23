@@ -44,7 +44,7 @@ const faqs = [
     {
         category: 'general',
         q: 'Is the advice on Shilingi Moves regulated?',
-        a: 'The content on Shilingi Moves is educational and informational — it is not personalised financial advice. For advice tailored to your specific situation, we recommend speaking with a licensed financial advisor. You can find vetted advisors through our Advisors section.',
+        a: 'The content on Shilingi Moves is educational and informational - it is not personalised financial advice. For decisions tailored to your specific situation, use regulated providers and trusted financial professionals outside the platform.',
     },
 
     // ── Learning Hub ─────────────────────────────────────────────────────────
@@ -407,3 +407,4 @@ const FAQPage = () => {
 };
 
 export default FAQPage;
+

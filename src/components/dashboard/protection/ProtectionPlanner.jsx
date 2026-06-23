@@ -621,7 +621,7 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
                         <button type="button" onClick={() => onSelectSection?.('user')} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] border border-emerald-200 bg-[#eef8f3] px-4 py-3 text-sm font-semibold text-[#175f54]">Update Protection Objectives<ArrowRight size={14} /></button>
                     </article>
                     <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-                        <PanelHeading icon={ShieldAlert} title="Advisor Guidance" />
+                        <PanelHeading icon={ShieldAlert} title="Protection Guidance" />
                         <div className="mt-4 space-y-3">
                             <InsightCard title="Income replacement" text={`Aim for cover that can replace income for ${calculator.yearsToCover || 10} years, plus outstanding debt and education support.`} tone="border-primary-200 bg-primary-50 text-primary-700" />
                             <InsightCard title="Medical first" text="Medical cover should come before optional policies because one hospital event can disrupt every other financial goal." tone="border-[#b8d0ff] bg-[#eef4ff] text-[#1f55c7]" />

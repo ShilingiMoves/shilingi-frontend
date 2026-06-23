@@ -1271,7 +1271,7 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
             </button>
           </article>
           <article className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
-            <PanelHeading icon={Sparkles} title="Advisor Notes" />
+            <PanelHeading icon={Sparkles} title="Planning Notes" />
             <div className="mt-4 space-y-3">
               <InsightCard
                 title="Contribution target"
@@ -2210,7 +2210,7 @@ const MobileRetirementFundDashboardTab = ({
       </div>
     </article>
 
-    <MobileAdvisorCards
+    <MobileInsightCards
       title="Shilingi Buddy insights"
       items={(insightCards.length ? insightCards : [
         {
@@ -2238,7 +2238,7 @@ const MobileRetirementFundDashboardTab = ({
   </div>
 );
 
-const MobileAdvisorCards = ({ items, title }) => (
+const MobileInsightCards = ({ items, title }) => (
   <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
     <div className="mb-3 flex items-center gap-2">
       <span className="h-2 w-2 rounded-full bg-[#2cbf6d]" />
