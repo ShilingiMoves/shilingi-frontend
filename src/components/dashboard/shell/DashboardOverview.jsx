@@ -595,6 +595,26 @@ const relDate = (v) => {
     if (diff <= 0) return 'Today'; if (diff === 1) return 'Yesterday'; if (diff < 7) return `${diff}d ago`;
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
+const settleWithConcurrency = async (tasks, concurrency = 4) => {
+    const results = new Array(tasks.length);
+    let nextIndex = 0;
+
+    async function worker() {
+        while (nextIndex < tasks.length) {
+            const currentIndex = nextIndex;
+            nextIndex += 1;
+
+            try {
+                results[currentIndex] = { status: 'fulfilled', value: await tasks[currentIndex]() };
+            } catch (reason) {
+                results[currentIndex] = { status: 'rejected', reason };
+            }
+        }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+    return results;
+};
 const readCustomCalendarEvents = () => {
     if (typeof window === 'undefined') return [];
     try {
@@ -650,7 +670,19 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
         let mounted = true;
         (async () => {
             const monthParams = { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 };
-            const settled = await Promise.allSettled([incomeService.getSummary(), incomeService.getIncomes({ limit: 100 }), getBudgetSummary(), getBudgets({ current: 'true', ...monthParams }), getExpenses({ limit: 100, ...monthParams }), getGoals({ status: 'ACTIVE' }), getInvestmentAssets(), getDebts(), getNetWorthSummary(), getHealthScore(), getHealthScoreBreakdown()]);
+            const settled = await settleWithConcurrency([
+                () => incomeService.getSummary(),
+                () => incomeService.getIncomes({ limit: 100 }),
+                () => getBudgetSummary(),
+                () => getBudgets({ current: 'true', ...monthParams }),
+                () => getExpenses({ limit: 100, ...monthParams }),
+                () => getGoals({ status: 'ACTIVE' }),
+                () => getInvestmentAssets(),
+                () => getDebts(),
+                () => getNetWorthSummary(),
+                () => getHealthScore(),
+                () => getHealthScoreBreakdown(),
+            ]);
             const pick = (i, f) => (settled[i]?.status === 'fulfilled' ? settled[i].value : f);
             const incomeSummary = pick(0, {}), incomesPayload = pick(1, {}), budgetSummary = pick(2, {}), budgets = pick(3, []), expensesPayload = pick(4, {}), goals = pick(5, []), inv = pick(6, []), debts = pick(7, []), nw = pick(8, {}), healthScore = pick(9, {}), healthBreakdown = pick(10, {});
             const incomes = incomesPayload?.incomes || incomesPayload?.results || incomesPayload?.data || [];

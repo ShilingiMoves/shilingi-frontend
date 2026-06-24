@@ -5,10 +5,10 @@ import {
     BarChart2, Wrench, Target, Eye,
     Sparkles, Mail, Phone, ChevronRight, Linkedin
 } from 'lucide-react';
-import heroImg from '../assets/home-page-1.png';
-import communityImg from '../assets/shilingi-community.png';
-import trustImg from '../assets/trust_people_kenya.png';
-import bernardSanyaImg from '../assets/bernard-sanya.png';
+import heroImg from '../assets/home-page-1.webp';
+import communityImg from '../assets/shilingi-community.webp';
+import trustImg from '../assets/trust_people_kenya.webp';
+import bernardSanyaImg from '../assets/bernard-sanya.webp';
 import Footer from '../components/Footer';
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -108,6 +108,9 @@ const AboutPage = () => {
                         src={heroImg}
                         alt="Kenyans taking control of their finances"
                         className="w-full h-full object-cover opacity-50"
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="high"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-gray-900/30" />
                 </div>
@@ -152,6 +155,8 @@ const AboutPage = () => {
                                 src={communityImg}
                                 alt="Shilingi Moves community members"
                                 className="w-full h-80 lg:h-[480px] object-cover"
+                                loading="lazy"
+                                decoding="async"
                             />
                             {/* Floating stat badge */}
                             <div className="absolute bottom-6 left-6 bg-white rounded-2xl shadow-xl px-6 py-4 flex items-center gap-4">
@@ -282,6 +287,8 @@ const AboutPage = () => {
                                 src={trustImg}
                                 alt="Kenyans using Shilingi Moves"
                                 className="w-full h-80 lg:h-[500px] object-cover"
+                                loading="lazy"
+                                decoding="async"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
                             <div className="absolute bottom-6 right-6 bg-white rounded-2xl shadow-xl px-5 py-4">
@@ -405,6 +412,8 @@ const AboutPage = () => {
                                         src={member.image}
                                         alt={member.name}
                                         className="h-full w-full object-contain object-center"
+                                        loading="lazy"
+                                        decoding="async"
                                     />
                                 </div>
                                 <div className="p-6">

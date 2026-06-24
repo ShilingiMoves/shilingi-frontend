@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, CheckCircle2, Target, ThumbsUp, TrendingUp, ArrowRight } from 'lucide-react';
-import TrustImg from '../assets/trust_people_kenya.png';
+import TrustImg from '../assets/trust_people_kenya.webp';
 
 const TrustAndCTA = () => {
     const badges = [
@@ -25,6 +25,8 @@ const TrustAndCTA = () => {
                             src={TrustImg}
                             alt="Happy Kenyan couple using financial app on tablet"
                             className="relative mx-auto aspect-square max-h-[400px] w-full rounded-3xl object-cover shadow-xl sm:aspect-[4/3] lg:aspect-[4/3] lg:max-h-none"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <div className="absolute -bottom-6 -right-6 hidden max-w-xs rounded-xl border border-gray-100 bg-white p-4 shadow-lg md:block">

@@ -8,7 +8,7 @@ import {
     Map, Search, Lock, ChevronRight, Play
 } from 'lucide-react';
 import Footer from '../components/Footer';
-import toolsHeroVideo from '../video/tools-page-video-1.mp4';
+import toolsHeroVideo from '../video/tools-page-video-1-optimized.mp4';
 import smartMoneyWoman from '../assets/smart-money-woman.PNG';
 import richDadPoorDad from '../assets/Rich-Dad-Poor-Dad.PNG';
 import psychologyOfMoney from '../assets/The-psychology-of-money.PNG';
@@ -163,6 +163,7 @@ const ToolsPage = () => {
                     loop
                     muted
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 w-full h-full object-cover z-0"
                 >
                     <source src={toolsHeroVideo} type="video/mp4" />
@@ -803,7 +804,7 @@ const ToolsPage = () => {
                                     <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer flex flex-col">
                                         <div className={`h-40 ${book.color} bg-opacity-20 flex items-center justify-center p-4 relative`}>
                                             <div className="absolute top-3 right-3 bg-white/90 backdrop-blur text-[10px] font-bold px-2 py-1 rounded-md text-gray-800 shadow-sm">{book.badge}</div>
-                                            <img src={book.cover} alt={book.title} className="h-full w-auto object-contain rounded drop-shadow-lg group-hover:scale-110 transition-transform duration-500" />
+                                            <img src={book.cover} alt={book.title} className="h-full w-auto object-contain rounded drop-shadow-lg group-hover:scale-110 transition-transform duration-500" loading="lazy" decoding="async" />
                                         </div>
                                         <div className="p-5 flex-grow flex flex-col">
                                             <div className="text-xs font-bold text-gray-400 mb-2 tracking-wide uppercase">{book.level}</div>

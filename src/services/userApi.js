@@ -4,6 +4,8 @@ import {
     setStoredUserProfile,
 } from './sessionManager';
 import { resolveApiBaseUrl } from './apiConfig';
+import { fetchWithTimeout } from './secureFetch';
+import { refreshSession } from './authApi';
 
 const API_URL = resolveApiBaseUrl({
     envUrl: import.meta.env.VITE_API_URL,
@@ -61,8 +63,21 @@ async function parseResponse(response) {
     return payload;
 }
 
+async function fetchWithAuthRefresh(url, options) {
+    let response = await fetchWithTimeout(url, options);
+
+    if (response.status === 401 && await refreshSession()) {
+        response = await fetchWithTimeout(url, {
+            ...options,
+            headers: buildHeaders(),
+        });
+    }
+
+    return response;
+}
+
 export async function getUserAccount() {
-    const response = await fetch(USER_ENDPOINT, {
+    const response = await fetchWithAuthRefresh(USER_ENDPOINT, {
         method: 'GET',
         headers: buildHeaders(),
     });
@@ -74,7 +89,7 @@ export async function getUserAccount() {
 }
 
 export async function updateUserAccount(formValues) {
-    const response = await fetch(USER_ENDPOINT, {
+    const response = await fetchWithAuthRefresh(USER_ENDPOINT, {
         method: 'PATCH',
         headers: buildHeaders(),
         body: JSON.stringify({
@@ -92,7 +107,7 @@ export async function updateUserAccount(formValues) {
 }
 
 export async function updateUserPreferences(formValues) {
-    const response = await fetch(USER_PROFILE_ENDPOINT, {
+    const response = await fetchWithAuthRefresh(USER_PROFILE_ENDPOINT, {
         method: 'PATCH',
         headers: buildHeaders(),
         body: JSON.stringify({
@@ -112,7 +127,7 @@ export async function updateUserPreferences(formValues) {
 }
 
 export async function changeUserPassword(formValues) {
-    const response = await fetch(USER_PASSWORD_ENDPOINT, {
+    const response = await fetchWithAuthRefresh(USER_PASSWORD_ENDPOINT, {
         method: 'POST',
         headers: buildHeaders(),
         body: JSON.stringify({
@@ -126,7 +141,7 @@ export async function changeUserPassword(formValues) {
 }
 
 export async function getUserTier() {
-    const response = await fetch(USER_TIER_ENDPOINT, {
+    const response = await fetchWithAuthRefresh(USER_TIER_ENDPOINT, {
         method: 'GET',
         headers: buildHeaders(),
     });

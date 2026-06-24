@@ -1,5 +1,7 @@
 import { getAccessToken, handleUnauthorizedSession } from './sessionManager';
 import { resolveApiBaseUrl } from './apiConfig';
+import { fetchWithTimeout } from './secureFetch';
+import { refreshSession } from './authApi';
 
 const API_URL = resolveApiBaseUrl({
     envUrl: import.meta.env.VITE_API_URL,
@@ -17,7 +19,7 @@ const NETWORTH_LIABILITIES_ENDPOINT = `${API_URL}/api/v1/networth/liabilities/`;
 const NETWORTH_LIABILITY_CATEGORIES_ENDPOINT = `${API_URL}/api/v1/networth/liabilities/categories/`;
 
 function getAuthToken() {
-    return import.meta.env.VITE_AUTH_TOKEN || getAccessToken();
+    return getAccessToken();
 }
 
 function buildHeaders() {
@@ -66,6 +68,16 @@ function requestOptions(method, body) {
         headers: buildHeaders(),
         body: body ? JSON.stringify(body) : undefined,
     };
+}
+
+async function requestWithRefresh(url, method, body) {
+    let response = await fetchWithTimeout(url, requestOptions(method, body));
+
+    if (response.status === 401 && await refreshSession()) {
+        response = await fetchWithTimeout(url, requestOptions(method, body));
+    }
+
+    return response;
 }
 
 function toNumber(value) {
@@ -269,19 +281,19 @@ function prepareLiabilityPayload(formValues) {
 }
 
 export async function getNetWorthSummary() {
-    const response = await fetch(NETWORTH_SUMMARY_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_SUMMARY_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     return normaliseSummary(payload?.data || payload);
 }
 
 export async function getNetWorthBreakdown() {
-    const response = await fetch(NETWORTH_BREAKDOWN_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_BREAKDOWN_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     return normaliseBreakdown(payload?.data || payload);
 }
 
 export async function getNetWorthHistory() {
-    const response = await fetch(NETWORTH_HISTORY_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_HISTORY_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     const data = payload?.data || payload || {};
 
@@ -294,7 +306,7 @@ export async function getNetWorthHistory() {
 }
 
 export async function getAssets() {
-    const response = await fetch(NETWORTH_ASSETS_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_ASSETS_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     const data = payload?.data || payload || {};
     const assets = Array.isArray(data?.assets) ? data.assets : Array.isArray(data?.results) ? data.results : [];
@@ -307,25 +319,25 @@ export async function getAssets() {
 }
 
 export async function createAsset(formValues) {
-    const response = await fetch(NETWORTH_ASSETS_ENDPOINT, requestOptions('POST', prepareAssetPayload(formValues)));
+    const response = await requestWithRefresh(NETWORTH_ASSETS_ENDPOINT, 'POST', prepareAssetPayload(formValues));
     const payload = await parseResponse(response);
     return normaliseAsset(payload?.data || payload);
 }
 
 export async function updateAsset(assetId, formValues) {
-    const response = await fetch(`${NETWORTH_ASSETS_ENDPOINT}${assetId}/`, requestOptions('PATCH', prepareAssetPayload(formValues)));
+    const response = await requestWithRefresh(`${NETWORTH_ASSETS_ENDPOINT}${assetId}/`, 'PATCH', prepareAssetPayload(formValues));
     const payload = await parseResponse(response);
     return normaliseAsset(payload?.data || payload);
 }
 
 export async function deleteAsset(assetId) {
-    const response = await fetch(`${NETWORTH_ASSETS_ENDPOINT}${assetId}/`, requestOptions('DELETE'));
+    const response = await requestWithRefresh(`${NETWORTH_ASSETS_ENDPOINT}${assetId}/`, 'DELETE');
     await parseResponse(response);
     return assetId;
 }
 
 export async function getAssetCategories() {
-    const response = await fetch(NETWORTH_ASSET_CATEGORIES_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_ASSET_CATEGORIES_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     const data = payload?.data || payload || {};
     const categories = Array.isArray(data?.categories) ? data.categories : Array.isArray(data?.results) ? data.results : [];
@@ -334,7 +346,7 @@ export async function getAssetCategories() {
 }
 
 export async function getLiabilities() {
-    const response = await fetch(NETWORTH_LIABILITIES_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_LIABILITIES_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     const data = payload?.data || payload || {};
     const liabilities = Array.isArray(data?.liabilities) ? data.liabilities : Array.isArray(data?.results) ? data.results : [];
@@ -347,25 +359,25 @@ export async function getLiabilities() {
 }
 
 export async function createLiability(formValues) {
-    const response = await fetch(NETWORTH_LIABILITIES_ENDPOINT, requestOptions('POST', prepareLiabilityPayload(formValues)));
+    const response = await requestWithRefresh(NETWORTH_LIABILITIES_ENDPOINT, 'POST', prepareLiabilityPayload(formValues));
     const payload = await parseResponse(response);
     return normaliseLiability(payload?.data || payload);
 }
 
 export async function updateLiability(liabilityId, formValues) {
-    const response = await fetch(`${NETWORTH_LIABILITIES_ENDPOINT}${liabilityId}/`, requestOptions('PATCH', prepareLiabilityPayload(formValues)));
+    const response = await requestWithRefresh(`${NETWORTH_LIABILITIES_ENDPOINT}${liabilityId}/`, 'PATCH', prepareLiabilityPayload(formValues));
     const payload = await parseResponse(response);
     return normaliseLiability(payload?.data || payload);
 }
 
 export async function deleteLiability(liabilityId) {
-    const response = await fetch(`${NETWORTH_LIABILITIES_ENDPOINT}${liabilityId}/`, requestOptions('DELETE'));
+    const response = await requestWithRefresh(`${NETWORTH_LIABILITIES_ENDPOINT}${liabilityId}/`, 'DELETE');
     await parseResponse(response);
     return liabilityId;
 }
 
 export async function getLiabilityCategories() {
-    const response = await fetch(NETWORTH_LIABILITY_CATEGORIES_ENDPOINT, requestOptions('GET'));
+    const response = await requestWithRefresh(NETWORTH_LIABILITY_CATEGORIES_ENDPOINT, 'GET');
     const payload = await parseResponse(response);
     const data = payload?.data || payload || {};
     const categories = Array.isArray(data?.categories) ? data.categories : Array.isArray(data?.results) ? data.results : [];

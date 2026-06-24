@@ -1,13 +1,13 @@
 import { getAccessToken, handleUnauthorizedSession } from './sessionManager';
 import { resolveApiBaseUrl } from './apiConfig';
+import { fetchWithTimeout, isAbortError } from './secureFetch';
+import { refreshSession } from './authApi';
 
 class ApiClient {
     constructor() {
         this.baseURL = this.detectBaseURL();
         this.authHeaderName = import.meta.env.VITE_AUTH_HEADER_NAME || 'Authorization';
         this.authHeaderPrefix = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
-        
-        console.log('API Client initialized:', this.baseURL);
     }
 
     detectBaseURL() {
@@ -92,12 +92,17 @@ class ApiClient {
             const url = this.buildURL(endpoint, params);
             const options = this.buildRequestOptions(method, body, customHeaders);
 
-            console.log(`${method} ${url}`);
-            
-            const response = await fetch(url, options);
+            let response = await fetchWithTimeout(url, options);
+
+            if (response.status === 401 && await refreshSession()) {
+                response = await fetchWithTimeout(url, this.buildRequestOptions(method, body, customHeaders));
+            }
+
             return await this.parseResponse(response);
         } catch (error) {
-            console.error(`API Error [${method} ${endpoint}]:`, error.message);
+            if (isAbortError(error)) {
+                throw new Error('The request timed out. Please try again in a moment.');
+            }
             throw error;
         }
     }

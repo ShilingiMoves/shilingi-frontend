@@ -8,7 +8,7 @@ import {
     Users,
 } from 'lucide-react';
 
-import dashboardImage from '../assets/Shilingi-dashboad image.png';
+import dashboardImage from '../assets/Shilingi-dashboad image.webp';
 
 const features = [
     {
@@ -75,6 +75,8 @@ const FeatureGrid = () => {
                                 src={dashboardImage}
                                 alt="Shilingi Moves Dashboard"
                                 className="w-full h-auto object-cover block"
+                                loading="lazy"
+                                decoding="async"
                             />
                             <div
                                 className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { hasStoredAccessToken } from '../services/authApi';
-import dashboardGuideVideo from '../video/shilingi-dashboard-guide.mp4';
+import dashboardGuideVideo from '../video/shilingi-dashboard-guide-optimized.mp4';
 
 const dashboardDestination = { pathname: '/dashboard/app' };
 const pageShell = 'min-h-screen bg-[linear-gradient(180deg,_#f7fdfb_0%,_#ffffff_24%,_#f0f7f9_100%)] text-slate-900';

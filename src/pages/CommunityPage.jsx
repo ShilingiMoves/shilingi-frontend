@@ -5,7 +5,7 @@ import {
     Calendar, CheckCircle
 } from 'lucide-react';
 import Footer from '../components/Footer';
-import communityHeroVideo from '../assets/../video/Community video.mp4';
+import communityHeroVideo from '../video/Community video-optimized.mp4';
 
 const CommunityPage = () => {
     useEffect(() => {
@@ -73,6 +73,7 @@ const CommunityPage = () => {
                         muted
                         loop
                         playsInline
+                        preload="metadata"
                         className="w-full h-full object-cover"
                     />
                     {/* Light scrim so video is visible, bottom gradient anchors the text */}
@@ -160,6 +161,8 @@ const CommunityPage = () => {
                                 src="https://placehold.co/600x500/f1f5f9/334155?text=Community+Event"
                                 alt="Community Event"
                                 className="relative rounded-3xl shadow-2xl w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
                             />
                             {/* Floating Card */}
                             <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-xl max-w-xs animate-bounce-slow">

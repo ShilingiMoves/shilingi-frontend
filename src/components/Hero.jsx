@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, TrendingUp, Landmark, Wallet, PiggyBank, BarChart2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import HomePage1 from '../assets/home-page-1.png';
-import HomePage2 from '../assets/home-page-2.png';
-import HomePage3 from '../assets/home-page-3.png';
+import HomePage1 from '../assets/home-page-1.webp';
+import HomePage2 from '../assets/home-page-2.webp';
+import HomePage3 from '../assets/home-page-3.webp';
 
 /* ─── Animated Number Component ────────────────────────────────────────────── */
 const AnimatedNumber = ({ value, prefix = '', suffix = '', decimals = 0, isActive = true }) => {
@@ -330,6 +330,9 @@ const Hero = () => {
                             src={img}
                             alt={`Shilingi Moves Feature ${index + 1}`}
                             className="w-full h-full object-cover object-center lg:object-right"
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            decoding="async"
+                            fetchPriority={index === 0 ? 'high' : 'auto'}
                         />
                         {/* Gradient overlay to ensure text on the left is readable */}
                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent text-white" />

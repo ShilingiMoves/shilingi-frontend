@@ -1,13 +1,17 @@
 import {
     clearSessionStorage,
     getAccessToken,
+    getRefreshToken,
     setAccessToken,
     getStoredUserProfile as getPersistedUserProfile,
     handleUnauthorizedSession,
+    isSessionIdle,
+    markSessionActivity,
     setRefreshToken,
     setStoredUserProfile,
 } from './sessionManager';
 import { resolveApiBaseUrl } from './apiConfig';
+import { fetchWithTimeout } from './secureFetch';
 
 const API_URL = resolveApiBaseUrl({
     envUrl: import.meta.env.VITE_API_URL,
@@ -21,7 +25,9 @@ const PASSWORD_RESET_CONFIRM_ENDPOINT = `${API_URL}/api/v1/auth/reset-password/`
 const VERIFY_EMAIL_ENDPOINT = `${API_URL}/api/v1/auth/verify-email/`;
 const RESEND_VERIFICATION_ENDPOINT = `${API_URL}/api/v1/auth/resend-verification/`;
 const PROFILE_ENDPOINT = `${API_URL}/api/v1/users/me/`;
+const REFRESH_ENDPOINT = `${API_URL}${import.meta.env.VITE_AUTH_REFRESH_ENDPOINT || '/api/v1/auth/token/refresh/'}`;
 const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
+let refreshSessionPromise = null;
 
 export class AuthApiError extends Error {
     constructor(message, { payload = null, status = null } = {}) {
@@ -32,7 +38,7 @@ export class AuthApiError extends Error {
     }
 }
 
-async function parseResponse(response) {
+async function parseResponse(response, { handleUnauthorized = true } = {}) {
     const rawText = await response.text();
     let payload = null;
 
@@ -45,7 +51,7 @@ async function parseResponse(response) {
     }
 
     if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 && handleUnauthorized) {
             handleUnauthorizedSession();
         }
 
@@ -61,20 +67,6 @@ async function parseResponse(response) {
 
 function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function fetchWithTimeout(url, options, timeoutMs = AUTH_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-        return await fetch(url, {
-            ...options,
-            signal: controller.signal,
-        });
-    } finally {
-        clearTimeout(timeout);
-    }
 }
 
 async function authRequestWithRetry(url, options, { timeoutMs = AUTH_TIMEOUT_MS, retries = 1 } = {}) {
@@ -114,6 +106,7 @@ function storeTokens(payload) {
     }
 
     setAccessToken(accessToken);
+    markSessionActivity();
 
     if (refreshToken) {
         setRefreshToken(refreshToken);
@@ -163,7 +156,7 @@ export async function loginUser(credentials) {
 }
 
 export async function registerUser(payload) {
-    const response = await fetch(REGISTER_ENDPOINT, {
+    const response = await fetchWithTimeout(REGISTER_ENDPOINT, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -214,6 +207,41 @@ export async function confirmPasswordReset(payload) {
 
     const result = await parseResponse(response);
     return result?.data || result;
+}
+
+export async function refreshSession() {
+    if (isSessionIdle()) {
+        handleUnauthorizedSession();
+        return false;
+    }
+
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+        return false;
+    }
+
+    if (!refreshSessionPromise) {
+        refreshSessionPromise = (async () => {
+            const response = await fetchWithTimeout(REFRESH_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh: refreshToken, refresh_token: refreshToken }),
+            });
+
+            const payload = await parseResponse(response, { handleUnauthorized: false });
+            return storeTokens(payload);
+        })().finally(() => {
+            refreshSessionPromise = null;
+        });
+    }
+
+    try {
+        return await refreshSessionPromise;
+    } catch {
+        return false;
+    }
 }
 
 export async function completePasswordSetup(payload) {
@@ -271,19 +299,29 @@ export async function resendVerificationEmail(payload) {
 }
 
 export async function getUserProfile() {
-    const token = import.meta.env.VITE_AUTH_TOKEN || getAccessToken();
+    const token = getAccessToken();
 
     if (!token) {
         throw new Error('No access token found');
     }
 
-    const response = await fetch(PROFILE_ENDPOINT, {
+    let response = await fetchWithTimeout(PROFILE_ENDPOINT, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
         },
     });
+
+    if (response.status === 401 && await refreshSession()) {
+        response = await fetchWithTimeout(PROFILE_ENDPOINT, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${getAccessToken()}`,
+            },
+        });
+    }
 
     const result = await parseResponse(response);
     const user = extractUser(result);
@@ -296,7 +334,7 @@ export function logoutUser() {
 }
 
 export function hasStoredAccessToken() {
-    return Boolean(import.meta.env.VITE_AUTH_TOKEN || getAccessToken());
+    return Boolean(getAccessToken());
 }
 
 export function getStoredUserProfile() {

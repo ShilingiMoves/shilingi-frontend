@@ -5,8 +5,8 @@ import {
     Clock, Star, Users, FileText, Trophy, Sparkles,
     GraduationCap, Target, TrendingUp, CheckCircle2, Award, Zap
 } from 'lucide-react';
-import HeroImg from '../assets/Learn-pg-hero-image.png';
-import HeroImg2 from '../assets/Learn-pg-hero-image-2.png';
+import HeroImg from '../assets/Learn-pg-hero-image.webp';
+import HeroImg2 from '../assets/Learn-pg-hero-image-2.webp';
 import Footer from '../components/Footer';
 
 /* ─── Animated Number Component ────────────────────────────────────────────── */
@@ -343,6 +343,9 @@ const LearnPage = () => {
                                 src={img}
                                 alt={`Financial Education Background ${index + 1}`}
                                 className="w-full h-full object-cover object-center"
+                                loading={index === 0 ? 'eager' : 'lazy'}
+                                decoding="async"
+                                fetchPriority={index === 0 ? 'high' : 'auto'}
                             />
                             {/* Overlay is now part of the fading container to ensure smooth image+overlay transition */}
                             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/15"></div>

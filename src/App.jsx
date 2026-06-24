@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'r
 import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import SessionActivityMonitor from './components/auth/SessionActivityMonitor';
 import AppErrorBoundary from './components/AppErrorBoundary';
 import ShilingiBuddy from './components/ShilingiBuddy';
 import CookieConsentBanner from './components/CookieConsentBanner';
@@ -66,6 +67,7 @@ function AppLayout() {
         <div className="min-h-screen flex flex-col">
             {!hidePublicNavbar && <Navbar />}
             <main className="flex-grow">
+                <SessionActivityMonitor />
                 <Suspense fallback={<RouteLoader />}>
                     <Routes>
                         <Route path="/" element={<Home />} />

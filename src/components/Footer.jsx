@@ -7,7 +7,7 @@ import {
     Send, CheckCircle
 } from 'lucide-react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
-import contactHeroImg from '../assets/contact-form-hero.png';
+import contactHeroImg from '../assets/contact-form-hero.webp';
 import { hasStoredAccessToken } from '../services/authApi';
 
 
@@ -87,6 +87,8 @@ const Footer = () => {
                                 src={contactHeroImg}
                                 alt="Shilingi Moves customer support representative"
                                 className="absolute inset-0 w-full h-full object-cover object-center"
+                                loading="lazy"
+                                decoding="async"
                             />
                             {/* Gradient overlay for smooth edge blending */}
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary-800/60" />

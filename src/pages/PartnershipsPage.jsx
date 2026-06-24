@@ -7,9 +7,9 @@ import {
     Phone, Mail, PlayCircle, BookOpen
 } from 'lucide-react';
 import Footer from '../components/Footer';
-import partnershipsVideo from '../assets/Partnerships-herovideo.mp4';
-import story1 from '../assets/stories/story1.png';
-import story2 from '../assets/stories/story2.png';
+import partnershipsVideo from '../assets/Partnerships-herovideo-optimized.mp4';
+import story1 from '../assets/stories/story1.webp';
+import story2 from '../assets/stories/story2.webp';
 
 const AnimatedImpactValue = ({ target, suffix = '', decimals = 0 }) => {
     const ref = useRef(null);
@@ -268,6 +268,7 @@ const PartnershipsPage = () => {
                     muted
                     loop
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 w-full h-full object-cover"
                 >
                     <source src={partnershipsVideo} type="video/mp4" />
@@ -490,7 +491,7 @@ const PartnershipsPage = () => {
                         {partnerStories.map((story, idx) => (
                             <div key={idx} className="group relative rounded-[32px] overflow-hidden bg-primary-600 hover:shadow-2xl transition-all duration-500 flex flex-col h-full border border-primary-500">
                                 <div className="aspect-[4/3] overflow-hidden relative">
-                                    <img src={story.image} alt={story.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <img src={story.image} alt={story.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-primary-900/60 via-transparent to-transparent"></div>
                                 </div>
                                 <div className="p-8 flex flex-col flex-grow relative text-white">

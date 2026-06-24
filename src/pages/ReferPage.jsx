@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
-import referHeroVideo from '../video/Refer-friend.mp4';
+import referHeroVideo from '../video/Refer-friend-optimized.mp4';
 
 const ReferPage = () => {
     const [copied, setCopied] = useState(false);
@@ -126,6 +126,7 @@ const ReferPage = () => {
                     loop
                     muted
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 w-full h-full object-cover z-0"
                 >
                     <source src={referHeroVideo} type="video/mp4" />

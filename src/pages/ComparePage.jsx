@@ -7,7 +7,7 @@ import {
     Search, Briefcase, PauseCircle, PlayCircle
 } from 'lucide-react';
 import Footer from '../components/Footer';
-import HeroVideo from '../video/AI_Video-compare.mp4';
+import HeroVideo from '../video/AI_Video-compare-optimized.mp4';
 
 const ComparePage = () => {
     // SEO
@@ -83,6 +83,7 @@ const ComparePage = () => {
                         loop
                         muted
                         playsInline
+                        preload="metadata"
                     >
                         Your browser does not support the video tag.
                     </video>
