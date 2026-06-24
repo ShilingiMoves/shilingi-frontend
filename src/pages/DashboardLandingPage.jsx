@@ -386,7 +386,7 @@ const DashboardLandingPage = () => {
                         </motion.p>
 
                         <motion.p variants={heroFadeUp} className="mx-auto mt-3 max-w-[420px] text-[0.95rem] leading-7 opacity-70 lg:mx-0" style={{ color: navy }}>
-                            In 5 minutes, you&apos;ll see your real money picture - no spreadsheets.
+                            In 5 minutes, you&apos;ll see your real money picture without spreadsheets.
                         </motion.p>
 
                         <motion.div variants={heroFadeUp} className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
@@ -396,13 +396,10 @@ const DashboardLandingPage = () => {
                                 className="inline-flex min-h-[52px] items-center justify-center rounded-lg px-8 py-3.5 text-[15px] font-extrabold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                                 style={{ backgroundColor: brandYellow }}
                             >
-                                Start for free - see my dashboard
+                                Launch My Dashboard
                             </Link>
                         </motion.div>
 
-                        <motion.p variants={heroFadeUp} className="mt-5 text-xs opacity-50" style={{ color: navy }}>
-                            No card needed. Cancel anytime. KES pricing.
-                        </motion.p>
                     </motion.div>
 
                     <motion.div

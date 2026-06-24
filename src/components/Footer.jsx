@@ -232,7 +232,7 @@ const Footer = () => {
                         <div className="flex items-center gap-3 flex-wrap">
                             {[
                                 {
-                                    href: '#', label: 'LinkedIn', color: 'text-[#0077b5]',
+                                    href: 'https://www.linkedin.com/company/shilingi-moves/?viewAsMember=true', label: 'LinkedIn', color: 'text-[#0077b5]',
                                     icon: <Linkedin size={17} />,
                                 },
 
@@ -257,6 +257,8 @@ const Footer = () => {
                                     key={i}
                                     href={s.href}
                                     aria-label={s.label}
+                                    target={s.href.startsWith('http') ? '_blank' : undefined}
+                                    rel={s.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                                     className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.1] ${s.color}`}
                                 >
                                     {s.icon}

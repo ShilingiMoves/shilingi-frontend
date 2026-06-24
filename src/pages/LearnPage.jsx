@@ -111,14 +111,14 @@ const ConnectorLine = ({ x1, y1, x2, y2, isActive = true }) => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   LEARN SLIDE 0 — Learning Path + Next Lesson
+   LEARN SLIDE 0: Learning Path + Next Lesson
    Card A: top-right | Card B: bottom-right
 ══════════════════════════════════════════════════════════════════════════════ */
 const SlideCards0 = ({ isActive }) => (
     <>
         <ConnectorLine x1="75%" y1="72%" x2="52%" y2="58%" isActive={isActive} />
 
-        {/* Card A — Learning Path (top-right) */}
+        {/* Card A: Learning Path (top-right) */}
         <Card className="absolute top-28 right-6 lg:right-14 w-48" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45 flex items-center gap-1">
                 <Route size={10} /> Active Path
@@ -135,7 +135,7 @@ const SlideCards0 = ({ isActive }) => (
             </div>
         </Card>
 
-        {/* Card B — Next Lesson (bottom-right) */}
+        {/* Card B: Next Lesson (bottom-right) */}
         <Card className="absolute bottom-28 right-6 lg:right-14 w-48" animDelay="1s" delayMs={1200} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Up Next</p>
             <div className="flex items-start gap-2 mt-1">
@@ -152,14 +152,14 @@ const SlideCards0 = ({ isActive }) => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   LEARN SLIDE 1 — Weekly Goal + Skill Unlocked
+   LEARN SLIDE 1: Weekly Goal + Skill Unlocked
    Card A: centre gap | Card B: bottom-right
 ══════════════════════════════════════════════════════════════════════════════ */
 const SlideCards1 = ({ isActive }) => (
     <>
         <ConnectorLine x1="72%" y1="58%" x2="52%" y2="35%" isActive={isActive} />
 
-        {/* Card A — Weekly Goal (centre) */}
+        {/* Card A: Weekly Goal (centre) */}
         <Card className="absolute top-20 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-[52%] w-48" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45 flex items-center gap-1">
                 <Zap size={10} /> Weekly Goal
@@ -181,7 +181,7 @@ const SlideCards1 = ({ isActive }) => (
             <p className="text-[9px] text-white/60 mt-2 text-center">You're on a 3-week streak! 🔥</p>
         </Card>
 
-        {/* Card B — Specific Skill Unlocked (bottom-right) */}
+        {/* Card B: Specific Skill Unlocked (bottom-right) */}
         <Card className="absolute bottom-28 right-6 lg:right-14 w-44" animDelay="1s" delayMs={1400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Recent Achievement</p>
             <div className="flex items-center gap-3 mt-1.5 px-1">
@@ -223,7 +223,7 @@ const LearnPage = () => {
 
     // SEO
     useEffect(() => {
-        document.title = 'Learn — Financial Education for Kenya | Shilingi Moves';
+        document.title = 'Learn | Financial Education for Kenya | Shilingi Moves';
         const meta = document.querySelector('meta[name="description"]');
         if (meta) {
             meta.setAttribute('content', 'Access Kenya-focused financial education: expert articles, videos, quizzes, and interactive games. Build money skills from beginner to advanced.');
@@ -418,7 +418,7 @@ const LearnPage = () => {
                             Build Your Money Skills, Step by Step
                         </h2>
                         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                            Choose how you learn best — read, watch, play, or follow a guided path.
+                            Choose how you learn best. Read, watch, play, or follow a guided path.
                         </p>
                     </div>
 
@@ -447,7 +447,7 @@ const LearnPage = () => {
                             Explore Our Content Library
                         </h2>
                         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                            Articles, videos, quizzes, and games — all created for Kenyan financial realities.
+                            Articles, videos, quizzes, and games, all created for Kenyan financial realities.
                         </p>
                     </div>
 
@@ -600,7 +600,7 @@ const LearnPage = () => {
                                 Start Your Learning Journey Today
                             </h2>
                             <p className="text-lg text-primary-100 mb-8 max-w-xl mx-auto leading-relaxed">
-                                Join thousands of Kenyans who are building their financial future — one lesson at a time. Free to start, always practical.
+                                Join thousands of Kenyans who are building their financial future one lesson at a time. Free to start, always practical.
                             </p>
                             <div className="flex justify-center">
                                 <Link

@@ -456,7 +456,7 @@ const ToolsPage = () => {
                                         </div>
                                     </div>
                                     <div className="mt-5 p-3 bg-green-100 rounded-xl text-xs text-green-900 border border-green-200">
-                                        🚀 <strong>Power of compounding:</strong> The longer you invest, the more interest earns interest — your money works for you 24/7.
+                                        🚀 <strong>Power of compounding:</strong> The longer you invest, the more interest earns interest, so your money works for you 24/7.
                                     </div>
                                     <button className="mt-5 w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors">
                                         Start Investing Now
@@ -511,7 +511,7 @@ const ToolsPage = () => {
                                     ))}
                                 </div>
                                 <div className="mt-4 p-3 bg-purple-50 rounded-xl text-xs text-purple-900 border border-purple-100">
-                                    💡 <strong>Did you know?</strong> If you invest your 20% savings (KES {budget.savings.toLocaleString()}/mo) at 12% p.a., you'd have <strong>KES {Math.round(budget.savings * 12 * 1.12).toLocaleString()}</strong> after just one year — including interest!
+                                    💡 <strong>Did you know?</strong> If you invest your 20% savings (KES {budget.savings.toLocaleString()}/mo) at 12% p.a., you'd have <strong>KES {Math.round(budget.savings * 12 * 1.12).toLocaleString()}</strong> after just one year, including interest!
                                 </div>
                             </div>
                         )}
@@ -581,7 +581,7 @@ const ToolsPage = () => {
                                         </div>
                                     </div>
                                     <div className="mt-5 p-3 bg-amber-100 rounded-xl text-xs text-amber-900 border border-amber-200">
-                                        💡 <strong>Tip:</strong> Even a small interest rate (e.g. 8% MMF) means your money grows while you sleep — start today!
+                                        💡 <strong>Tip:</strong> Even a small interest rate (e.g. 8% MMF) means your money grows while you sleep. Start today!
                                     </div>
                                 </div>
                             </div>
@@ -617,7 +617,7 @@ const ToolsPage = () => {
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow" />
                                         </div>
                                         <div className="bg-teal-50 p-4 rounded-xl border border-teal-100 text-sm text-teal-800">
-                                            <p>Experts recommend <strong>3–6 months</strong> of expenses. Kenyans with dependants should aim for <strong>6–12 months</strong>.</p>
+                                            <p>Experts recommend <strong>3 to 6 months</strong> of expenses. Kenyans with dependants should aim for <strong>6 to 12 months</strong>.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -641,7 +641,7 @@ const ToolsPage = () => {
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-600">Save KES 5,000/mo to reach in:</span>
-                                            <span className="font-bold">{emSaved < emMonthlyExpenses * emMonths ? `${Math.ceil((emMonthlyExpenses * emMonths - emSaved) / 5000)} months` : '—'}</span>
+                                            <span className="font-bold">{emSaved < emMonthlyExpenses * emMonths ? `${Math.ceil((emMonthlyExpenses * emMonths - emSaved) / 5000)} months` : 'Complete'}</span>
                                         </div>
                                         <div className="w-full bg-teal-100 rounded-full h-3 mt-2">
                                             <div className="bg-teal-600 h-3 rounded-full transition-all duration-500"
@@ -650,7 +650,7 @@ const ToolsPage = () => {
                                         <p className="text-xs text-teal-700 font-semibold text-center">{Math.min(100, ((emSaved / (emMonthlyExpenses * emMonths)) * 100)).toFixed(0)}% funded</p>
                                     </div>
                                     <div className="mt-5 p-3 bg-teal-100 rounded-xl text-xs text-teal-900 border border-teal-200">
-                                        🛡️ <strong>Why it matters:</strong> Job loss, medical bills, car repairs — an emergency fund means you never have to take a loan in a crisis.
+                                        🛡️ <strong>Why it matters:</strong> Job loss, medical bills, and car repairs can happen anytime. An emergency fund means you never have to take a loan in a crisis.
                                     </div>
                                 </div>
                             </div>
@@ -689,7 +689,7 @@ const ToolsPage = () => {
                                         {debtResult.months >= 999 ? '∞' : debtResult.months}
                                     </p>
                                     <p className="text-rose-700 font-semibold mb-5 text-center">
-                                        {debtResult.months >= 999 ? 'Payment too low — increase it!' : `months (~${(debtResult.months / 12).toFixed(1)} years)`}
+                                        {debtResult.months >= 999 ? 'Payment too low. Increase it!' : `months (~${(debtResult.months / 12).toFixed(1)} years)`}
                                     </p>
                                     <div className="w-full border-t border-rose-200 pt-5 space-y-3">
                                         <div className="flex justify-between text-sm">

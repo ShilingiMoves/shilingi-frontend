@@ -90,8 +90,8 @@ const PartnershipsPage = () => {
     const audienceStats = [
         { target: 500, suffix: 'K+', label: 'Kenyans Reached', icon: Users },
         { target: 1.2, suffix: 'M', decimals: 1, label: 'Financial Decisions supported', icon: BarChart3 },
-        { target: 150, suffix: '+', label: 'Partners onboarded', icon: Globe },
-        { target: 4.9, suffix: '/5', decimals: 1, label: 'User Satisfaction', icon: Star },
+        { target: 10, suffix: '+', label: 'Partners onboarded', icon: Globe },
+        { target: 4, suffix: '/5', label: 'User Satisfaction', icon: Star },
     ];
 
     const valuePillars = [
@@ -260,7 +260,7 @@ const PartnershipsPage = () => {
     return (
         <div className="min-h-screen bg-white text-gray-900">
 
-            {/* ═══════════ HERO — Video background with strong value prop ═══════════ */}
+            {/* HERO: Video background with strong value prop */}
             <section className="relative flex min-h-[clamp(520px,calc(100vh-5.5rem),680px)] items-center overflow-hidden text-white md:min-h-[clamp(560px,calc(100vh-6rem),720px)]">
                 {/* Video Background */}
                 <video
@@ -511,19 +511,6 @@ const PartnershipsPage = () => {
             </section>
 
             {/* ═══════════ TRUST BAR (Restored) ═══════════ */}
-            <section className="py-12 bg-gray-50 border-y border-gray-100">
-                <div className="container-custom text-center">
-                    <p className="text-gray-400 text-sm mb-8 font-bold uppercase tracking-widest">Trusted by leading organizations across Kenya</p>
-                    <div className="flex flex-wrap justify-center gap-8 md:gap-16 items-center opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                        {['Equity Bank', 'Safaricom', 'Britam', 'KCB', 'CIC Group', 'Cytonn'].map((name, idx) => (
-                            <div key={idx} className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                                {name}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* ═══════════ SECTION 8: PRIMARY CONVERSION BLOCK (Bottom Fold) ═══════════ */}
             <section id="contact" className="py-24 md:py-32 bg-gray-900 text-white relative overflow-hidden">
                 <div className="absolute inset-0 opacity-20">
@@ -538,34 +525,17 @@ const PartnershipsPage = () => {
                         Whether you are an individual, institution, or brand, partnering with Shilingi Moves means shaping a financially stronger Kenya, one informed decision at a time.
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                        {[
-                            { label: 'Become a Partner', variant: 'primary', href: 'mailto:partnerships@shilingimoves.com', icon: Mail },
-                            { label: 'Call Us Now', variant: 'secondary', href: 'tel:+254727005993', icon: Phone },
-                            { label: 'Explore Dashboard', variant: 'outline', href: '/dashboard' },
-                            { label: 'Compare Options', variant: 'outline', href: '/compare' },
-                            { label: 'Try Smart Tools', variant: 'outline', href: '/tools' },
-                            { label: 'Join Community', variant: 'outline', href: '/community' },
-                            { label: 'View Impact', variant: 'outline', href: '#impact' }
-                        ].map((btn, i) => (
-                            <a
-                                key={i}
-                                href={btn.href}
-                                className={`px-6 py-5 rounded-2xl font-bold transition-all text-center flex items-center justify-center gap-2 ${
-                                    btn.variant === 'primary' 
-                                    ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/20 hover:bg-primary-500 hover:-translate-y-1' 
-                                    : btn.variant === 'secondary'
-                                    ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500 hover:-translate-y-1'
-                                    : 'bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20'
-                                }`}
-                            >
-                                {btn.icon && <btn.icon size={18} />}
-                                {btn.label}
-                            </a>
-                        ))}
+                    <div className="flex justify-center">
+                        <a
+                            href="mailto:partnerships@shilingimoves.com"
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-8 py-5 text-center font-bold text-white shadow-xl shadow-primary-600/20 transition-all hover:-translate-y-1 hover:bg-primary-500"
+                        >
+                            <Mail size={18} />
+                            Become a Partner
+                        </a>
                     </div>
                     
-                    <div className="mt-20 pt-10 border-t border-white/5 flex flex-wrap justify-center gap-8 text-gray-500 text-sm font-medium uppercase tracking-widest">
+                    <div className="mt-20 pt-10 border-t border-white/5 flex flex-wrap justify-center gap-8 text-gray-500 text-sm font-medium tracking-widest">
                         <a href="mailto:partnerships@shilingimoves.com" className="hover:text-primary-400 transition-colors flex items-center gap-2">
                              <Mail size={16} /> partnerships@shilingimoves.com
                         </a>

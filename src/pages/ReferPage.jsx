@@ -40,7 +40,7 @@ const ReferPage = () => {
             step: '02',
             icon: Users,
             title: 'They Join & Explore',
-            desc: 'Your friend signs up for Shilingi Moves and starts their financial wellness journey — completely free.',
+            desc: 'Your friend signs up for Shilingi Moves and starts their financial wellness journey for free.',
         },
         {
             step: '03',
@@ -99,7 +99,7 @@ const ReferPage = () => {
         },
         {
             q: 'When do I receive my reward?',
-            a: 'Your reward is credited as soon as your friend signs up and completes their financial profile — usually within minutes.',
+            a: 'Your reward is credited as soon as your friend signs up and completes their financial profile, usually within minutes.',
         },
         {
             q: 'Is there a limit to how many friends I can refer?',
@@ -107,7 +107,7 @@ const ReferPage = () => {
         },
         {
             q: 'What does my friend get?',
-            a: 'Your friend gets a free month of Premium access when they join through your referral link — so you both win.',
+            a: 'Your friend gets a free month of Premium access when they join through your referral link, so you both win.',
         },
         {
             q: 'How do I track my referrals?',
@@ -118,7 +118,7 @@ const ReferPage = () => {
     return (
         <div className="min-h-screen bg-white text-gray-900">
 
-            {/* ═══════════ HERO — Dark background with overlapping avatars ═══════════ */}
+            {/* HERO: Dark background with overlapping avatars */}
             <section className="relative flex min-h-[560px] flex-col justify-center overflow-hidden bg-gray-900 text-white md:min-h-[calc(100vh-88px)]">
                 {/* Background Video */}
                 <video
@@ -143,7 +143,7 @@ const ReferPage = () => {
                                 <span role="img" aria-label="woman">👩🏾</span>
                             </div>
 
-                            {/* Center — Shilingi logo */}
+                            {/* Center: Shilingi logo */}
                             <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-primary-900 bg-primary-900 flex items-center justify-center shadow-2xl z-20 -mx-4 relative">
                                 <img
                                     src={animatedLogo}
@@ -171,7 +171,7 @@ const ReferPage = () => {
                     </h1>
 
                     <p className="mx-auto mb-7 max-w-2xl px-4 text-base leading-relaxed text-gray-200 drop-shadow-md sm:text-lg md:mb-8">
-                        Shilingi Moves changed the way you see your finances. Share that with the people you care about — and earn lifetime access along the way.
+                        Shilingi Moves changed the way you see your finances. Share that with the people you care about and earn lifetime access along the way.
                     </p>
 
                     {/* CTA Buttons */}
@@ -204,7 +204,7 @@ const ReferPage = () => {
                             How It <span className="text-primary-600">Works</span>
                         </h2>
                         <p className="text-lg text-gray-600 max-w-xl mx-auto">
-                            Three easy steps to share the wealth — literally.
+                            Three easy steps to share the wealth.
                         </p>
                     </div>
 

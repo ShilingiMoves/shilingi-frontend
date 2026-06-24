@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import animatedLogo from '../assets/shilingi-logo-animated.gif';
 
 /**
- * SplashScreen — shows the animated Shilingi logo on first load,
+ * SplashScreen: shows the animated Shilingi logo on first load,
  * then fades out and unmounts so the site beneath is revealed.
  *
  * Only plays ONCE per browser session (sessionStorage flag).

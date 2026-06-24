@@ -24,17 +24,17 @@ const faqs = [
     {
         category: 'general',
         q: 'What is Shilingi Moves?',
-        a: 'Shilingi Moves is Kenya\'s all-in-one financial wellness platform. We help everyday Kenyans learn about money, compare financial products like bank accounts and SACCOs, use free budgeting tools, and connect with a community of people on the same journey — all in one place, completely free.',
+        a: 'Shilingi Moves is Kenya\'s all-in-one financial wellness platform. We help everyday Kenyans learn about money, compare financial products like bank accounts and SACCOs, use free budgeting tools, and connect with a community of people on the same journey. It is all in one place and completely free.',
     },
     {
         category: 'general',
         q: 'Is Shilingi Moves free to use?',
-        a: 'Yes! Shilingi Moves is 100% free to join and use. Our learning content, comparison tools, and calculators are all free. We make money through partnerships with financial institutions — never by charging you.',
+        a: 'Yes! Shilingi Moves is 100% free to join and use. Our learning content, comparison tools, and calculators are all free. We make money through partnerships with financial institutions, never by charging you.',
     },
     {
         category: 'general',
         q: 'Who is Shilingi Moves built for?',
-        a: 'Shilingi Moves is built for any Kenyan who earns money and wants to make the most of it — whether you\'re a student, a young professional, a side hustler, a small business owner, a family planning for the future, or a Kenyan in the diaspora sending money home.',
+        a: 'Shilingi Moves is built for any Kenyan who earns money and wants to make the most of it. That includes students, young professionals, side hustlers, small business owners, families planning for the future, and Kenyans in the diaspora sending money home.',
     },
     {
         category: 'general',
@@ -51,17 +51,17 @@ const faqs = [
     {
         category: 'learn',
         q: 'What topics can I learn about on Shilingi Moves?',
-        a: 'Our Learning Hub covers budgeting, saving, investing, debt management, insurance, SACCOs, M-Pesa and mobile money, retirement planning, and more — all explained in simple, everyday language built for the Kenyan context.',
+        a: 'Our Learning Hub covers budgeting, saving, investing, debt management, insurance, SACCOs, M-Pesa and mobile money, retirement planning, and more. Everything is explained in simple, everyday language built for the Kenyan context.',
     },
     {
         category: 'learn',
         q: 'Do I need any financial background to use the Learning Hub?',
-        a: 'Not at all. Our content is written at a simple reading level so anyone can understand it — whether you\'re hearing about compound interest for the first time or looking to level up your investment knowledge.',
+        a: 'Not at all. Our content is written at a simple reading level so anyone can understand it, whether you\'re hearing about compound interest for the first time or looking to level up your investment knowledge.',
     },
     {
         category: 'learn',
         q: 'Are the learning materials available in Swahili?',
-        a: 'We currently publish content in English, but we are actively working on Swahili content to make financial education even more accessible. Stay tuned — or join our community to let us know which topics you\'d like in Swahili first.',
+        a: 'We currently publish content in English, but we are actively working on Swahili content to make financial education even more accessible. Stay tuned, or join our community to let us know which topics you\'d like in Swahili first.',
     },
     {
         category: 'learn',
@@ -88,14 +88,14 @@ const faqs = [
     {
         category: 'compare',
         q: 'Can I apply for a financial product directly through Shilingi Moves?',
-        a: 'In most cases, we direct you to the financial institution\'s own website or branch to apply. In some cases, we have integrated application flows with partner institutions — these will be clearly marked.',
+        a: 'In most cases, we direct you to the financial institution\'s own website or branch to apply. In some cases, we have integrated application flows with partner institutions, and these will be clearly marked.',
     },
 
     // ── Tools ─────────────────────────────────────────────────────────────────
     {
         category: 'tools',
         q: 'What financial tools does Shilingi Moves offer?',
-        a: 'We offer a growing suite of free tools including: a Budget Planner, Savings Goal Calculator, Loan Repayment Calculator, Investment Growth Calculator, Emergency Fund Calculator, and a Debt Payoff Planner — all calibrated for Kenyan shillings and local financial realities.',
+        a: 'We offer a growing suite of free tools including: a Budget Planner, Savings Goal Calculator, Loan Repayment Calculator, Investment Growth Calculator, Emergency Fund Calculator, and a Debt Payoff Planner. They are all calibrated for Kenyan shillings and local financial realities.',
     },
     {
         category: 'tools',
@@ -105,7 +105,7 @@ const faqs = [
     {
         category: 'tools',
         q: 'How accurate are the calculators?',
-        a: 'Our calculators use standard financial formulas and are designed to give you a realistic estimate. They are for planning purposes — actual results may vary based on the specific terms of your financial product. Always confirm with your bank or SACCO.',
+        a: 'Our calculators use standard financial formulas and are designed to give you a realistic estimate. They are for planning purposes, and actual results may vary based on the specific terms of your financial product. Always confirm with your bank or SACCO.',
     },
 
     // ── Community ─────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ const FAQPage = () => {
     };
 
     useEffect(() => {
-        document.title = 'FAQs — Shilingi Moves | Kenya\'s Financial Companion';
+        document.title = 'FAQs | Shilingi Moves | Kenya\'s Financial Companion';
         const meta = document.querySelector('meta[name="description"]');
         if (meta) meta.setAttribute('content', 'Got questions about Shilingi Moves? Find answers about our learning hub, comparison tools, financial calculators, community, and account settings.');
     }, []);
@@ -235,7 +235,7 @@ const FAQPage = () => {
                         How can we help you?
                     </h1>
                     <p className="text-primary-100 text-lg mb-10 max-w-xl mx-auto">
-                        Find answers to the most common questions about Shilingi Moves — from getting started to managing your account.
+                        Find answers to the most common questions about Shilingi Moves, from getting started to managing your account.
                     </p>
 
                     {/* Search bar */}
@@ -326,7 +326,7 @@ const FAQPage = () => {
                             We're here for you.
                         </h2>
                         <p className="text-lg text-gray-600 max-w-xl mx-auto">
-                            Can't find what you're looking for? Our team is happy to help — reach out through any of the channels below.
+                            Can't find what you're looking for? Our team is happy to help. Reach out through any of the channels below.
                         </p>
                     </div>
 
@@ -387,7 +387,7 @@ const FAQPage = () => {
                             <Sparkles size={36} className="mx-auto mb-4 text-primary-200" />
                             <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to take control of your money?</h2>
                             <p className="text-primary-100 mb-7 max-w-md mx-auto">
-                                Join thousands of Kenyans already using Shilingi Moves — for free.
+                                Join thousands of Kenyans already using Shilingi Moves for free.
                             </p>
                             <Link
                                 to="/signup"

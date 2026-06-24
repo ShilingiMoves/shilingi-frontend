@@ -3,21 +3,30 @@ import { Link } from 'react-router-dom';
 import {
     ArrowRight, Heart, Shield, Zap, Users, BookOpen,
     BarChart2, Wrench, Target, Eye,
-    Sparkles, Mail, Phone, CheckCircle2, ChevronRight, Linkedin
+    Sparkles, Mail, Phone, ChevronRight, Linkedin
 } from 'lucide-react';
 import heroImg from '../assets/home-page-1.png';
 import communityImg from '../assets/shilingi-community.png';
 import trustImg from '../assets/trust_people_kenya.png';
+import bernardSanyaImg from '../assets/bernard-sanya.png';
 import Footer from '../components/Footer';
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
 const whatWeDo = [
     {
+        icon: Target,
+        color: 'from-emerald-500 to-primary-700',
+        title: 'Track',
+        desc: 'See your budget, goals, debts, and progress in one simple dashboard.',
+        cta: 'Launch My Dashboard',
+        link: '/dashboard',
+    },
+    {
         icon: BookOpen,
         color: 'from-blue-500 to-blue-600',
         title: 'Learn',
-        desc: 'Easy lessons on saving, budgeting, and investing — built for Kenya.',
+        desc: 'Easy lessons on saving, budgeting, and investing, built for Kenya.',
         cta: 'Start Learning',
         link: '/learn',
     },
@@ -26,7 +35,7 @@ const whatWeDo = [
         color: 'from-purple-500 to-purple-600',
         title: 'Compare',
         desc: 'See which bank, SACCO, or fund gives you the best deal.',
-        cta: 'Compare Now',
+        cta: 'Compare Products',
         link: '/compare',
     },
     {
@@ -34,7 +43,7 @@ const whatWeDo = [
         color: 'from-amber-500 to-orange-500',
         title: 'Tools',
         desc: 'Free calculators to plan your budget, savings, and loans.',
-        cta: 'Use Tools',
+        cta: 'Use Free Tools',
         link: '/tools',
     },
     {
@@ -58,7 +67,7 @@ const whoWeHelp = [
 
 const values = [
     { icon: Zap, color: 'bg-amber-100 text-amber-600', title: 'Simple', desc: 'No jargon. No confusion. Just clear, easy money advice.' },
-    { icon: Shield, color: 'bg-blue-100 text-blue-600', title: 'Transparent', desc: 'We show you the full picture — no hidden fees or fine print.' },
+    { icon: Shield, color: 'bg-blue-100 text-blue-600', title: 'Transparent', desc: 'We show you the full picture, with no hidden fees or fine print.' },
     { icon: Heart, color: 'bg-red-100 text-red-600', title: 'Empowering', desc: 'We give you the tools to make your own smart decisions.' },
     { icon: Users, color: 'bg-primary-100 text-primary-600', title: 'Community', desc: 'We grow together. Your win is our win.' },
 ];
@@ -66,31 +75,11 @@ const values = [
 const team = [
     {
         initials: 'BS',
-        name: 'Bernar Sanya',
+        name: 'Bernard Sanya',
         role: 'Founder & CEO',
         bio: 'Passionate about making financial freedom accessible to every Kenyan.',
         color: 'from-primary-500 to-primary-700',
-    },
-    {
-        initials: 'AO',
-        name: 'Amara Odhiambo',
-        role: 'Head of Financial Education',
-        bio: 'Certified financial planner with 10+ years helping Kenyans build wealth.',
-        color: 'from-blue-500 to-blue-700',
-    },
-    {
-        initials: 'KM',
-        name: 'Kelvin Mwangi',
-        role: 'Head of Product',
-        bio: 'Builds tools that are simple enough for anyone to use on day one.',
-        color: 'from-purple-500 to-purple-700',
-    },
-    {
-        initials: 'FW',
-        name: 'Faith Wanjiku',
-        role: 'Community Lead',
-        bio: 'Connects our growing community of Kenyans on their money journey.',
-        color: 'from-amber-500 to-orange-600',
+        image: bernardSanyaImg,
     },
 ];
 
@@ -99,10 +88,10 @@ const team = [
 const AboutPage = () => {
 
     useEffect(() => {
-        document.title = 'About Us — Shilingi Moves | Kenya\'s Financial Companion';
+        document.title = 'About Us | Shilingi Moves | Kenya\'s Financial Companion';
         const meta = document.querySelector('meta[name="description"]');
         if (meta) {
-            meta.setAttribute('content', 'Learn about Shilingi Moves — Kenya\'s platform for financial education, tools, and community. Discover our mission, values, and the team behind the platform.');
+            meta.setAttribute('content', 'Learn about Shilingi Moves, Kenya\'s platform for financial education, tools, and community. Discover our mission, values, and the team behind the platform.');
         }
     }, []);
 
@@ -110,9 +99,9 @@ const AboutPage = () => {
         <div className="min-h-screen bg-white">
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 1 — HERO
+                SECTION 1: HERO
             ═══════════════════════════════════════════════════════════════ */}
-            <section className="relative bg-gray-900 text-white overflow-hidden min-h-[85vh] flex items-center">
+            <section className="relative flex min-h-[clamp(520px,calc(100vh-5.5rem),680px)] items-center overflow-hidden bg-gray-900 text-white">
                 {/* Background image */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -123,20 +112,20 @@ const AboutPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-gray-900/30" />
                 </div>
 
-                <div className="relative z-10 container-custom py-24 md:py-32">
+                <div className="relative z-10 container-custom py-10 sm:py-12 md:py-14">
                     <div className="max-w-2xl">
-                        <p className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-primary-300 mb-6">
+                        <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-primary-300 backdrop-blur-sm">
                             <Sparkles size={16} /> Kenya's Financial Companion
                         </p>
                         <h1
-                            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight mb-6"
+                            className="mb-4 text-4xl leading-[1.05] tracking-tight text-white sm:text-5xl md:text-[3.5rem] lg:text-[4rem]"
                             style={{ textShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
                         >
                             We help Kenyans<br />
                             <span className="text-primary-400">take control of their money.</span>
                         </h1>
-                        <p className="text-lg md:text-xl text-gray-200 leading-relaxed mb-10 max-w-xl">
-                            Shilingi Moves is your one-stop place to learn about money, compare financial products, and use free tools — all built for Kenya.
+                        <p className="mb-6 max-w-xl text-base leading-7 text-gray-200 md:text-lg">
+                            Shilingi Moves is your one-stop place to learn about money, compare financial products, and use free tools, all built for Kenya.
                         </p>
                         <div className="flex flex-col sm:flex-row">
                             <Link
@@ -152,7 +141,7 @@ const AboutPage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 2 — WHO WE ARE
+                SECTION 2: WHO WE ARE
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-24 bg-white">
                 <div className="container-custom">
@@ -182,20 +171,20 @@ const AboutPage = () => {
                                 Who We Are
                             </span>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                                We are your money guide — built right here in Kenya.
+                                We are your money guide, built right here in Kenya.
                             </h2>
                             <p className="text-lg text-gray-600 leading-relaxed mb-6">
                                 Shilingi Moves was born from one simple idea: <strong>every Kenyan deserves to understand their money.</strong> Whether you earn 20,000 or 200,000 shillings a month, you deserve the same great financial advice.
                             </p>
                             <p className="text-lg text-gray-600 leading-relaxed mb-8">
-                                We bring together free education, smart tools, and a supportive community — all in one place, all built for Kenyan realities.
+                                We bring together free education, smart tools, and a supportive community in one place, all built for Kenyan realities.
                             </p>
                             <div className="flex flex-col sm:flex-row">
                                 <Link
-                                    to="/learn"
+                                    to="/dashboard"
                                     className="inline-flex items-center justify-center px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full transition-all duration-300 group"
                                 >
-                                    Explore What We Offer
+                                    Create my account
                                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
@@ -205,7 +194,7 @@ const AboutPage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 3 — WHAT WE DO
+                SECTION 3: WHAT WE DO
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-24 bg-gray-50">
                 <div className="container-custom">
@@ -214,14 +203,14 @@ const AboutPage = () => {
                             What We Do
                         </span>
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                            Four ways we help you grow your money
+                            Five ways we help you grow your money
                         </h2>
                         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                             Pick what you need today. Come back for more tomorrow.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
                         {whatWeDo.map((item, i) => (
                             <div
                                 key={i}
@@ -249,7 +238,7 @@ const AboutPage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 4 — WHO WE HELP
+                SECTION 4: WHO WE HELP
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-24 bg-white">
                 <div className="container-custom">
@@ -263,7 +252,7 @@ const AboutPage = () => {
                                 If you earn money in Kenya, this is for you.
                             </h2>
                             <p className="text-lg text-gray-600 leading-relaxed mb-8">
-                                We built Shilingi Moves for real Kenyans — not just the wealthy. Whether you're just starting out or already building wealth, there's something here for you.
+                                We built Shilingi Moves for real Kenyans, not just the wealthy. Whether you're just starting out or already building wealth, there's something here for you.
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {whoWeHelp.map((person, i) => (
@@ -281,7 +270,7 @@ const AboutPage = () => {
                                     to="/signup"
                                     className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full shadow-lg hover:-translate-y-0.5 transition-all duration-300 group"
                                 >
-                                    Join Shilingi Moves — It's Free
+                                    Join Shilingi Moves for Free
                                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
@@ -312,7 +301,7 @@ const AboutPage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 5 — MISSION, VISION & VALUES
+                SECTION 5: MISSION, VISION & VALUES
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
                 <div className="container-custom">
@@ -353,7 +342,7 @@ const AboutPage = () => {
                                 <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Our Vision</p>
                                 <h3 className="text-xl font-bold mb-3">A Kenya where everyone can grow their wealth.</h3>
                                 <p className="text-gray-400 text-sm leading-relaxed">
-                                    We see a future where financial freedom is not a privilege — it's a right for every Kenyan.
+                                    We see a future where financial freedom is not a privilege. It is a right for every Kenyan.
                                 </p>
                             </div>
                         </div>
@@ -376,11 +365,11 @@ const AboutPage = () => {
                     <div className="text-center mt-12">
                         <p className="text-gray-600 mb-4">Want to know more about how we work?</p>
                         <a
-                            href="mailto:hello@shilingimoves.com"
+                            href="#site-footer"
                             className="inline-flex items-center justify-center px-8 py-4 border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white font-bold rounded-full transition-all duration-300 group"
                         >
                             <Mail className="mr-2 w-5 h-5" />
-                            Email Us Anytime
+                            Contact Us
                             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </a>
                     </div>
@@ -388,33 +377,35 @@ const AboutPage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 6 — OUR TEAM
+                SECTION 6: OUR TEAM
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-24 bg-white">
                 <div className="container-custom">
                     <div className="text-center mb-14">
                         <span className="inline-block px-4 py-1.5 bg-primary-50 text-primary-700 text-sm font-bold rounded-full mb-4 uppercase tracking-wide">
-                            Our Team
+                            Meet Our Founder
                         </span>
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                            Real people. Real passion for your money.
+                            Meet our founder.
                         </h2>
                         <p className="text-lg text-gray-600 max-w-xl mx-auto">
-                            We're a small, dedicated team of Kenyans who believe everyone deserves financial clarity.
+                            The vision behind Shilingi Moves starts with making financial clarity practical, local, and accessible.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                    <div className="mx-auto grid max-w-sm grid-cols-1 gap-6">
                         {team.map((member, i) => (
                             <div
                                 key={i}
                                 className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center"
                             >
-                                {/* Avatar */}
-                                <div className={`bg-gradient-to-br ${member.color} h-36 flex items-center justify-center`}>
-                                    <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                        <span className="text-3xl font-bold text-white">{member.initials}</span>
-                                    </div>
+                                {/* Founder photo */}
+                                <div className="h-80 overflow-hidden bg-gray-50">
+                                    <img
+                                        src={member.image}
+                                        alt={member.name}
+                                        className="h-full w-full object-contain object-center"
+                                    />
                                 </div>
                                 <div className="p-6">
                                     <h3 className="font-bold text-gray-900 text-lg mb-0.5">{member.name}</h3>
@@ -432,7 +423,7 @@ const AboutPage = () => {
                                         </a>
                                         {/* Phone */}
                                         <a
-                                            href="tel:+254700000000"
+                                            href="tel:+254727005993"
                                             className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-green-600 hover:border-green-400 transition-all duration-200"
                                             title="Call"
                                         >
@@ -450,7 +441,7 @@ const AboutPage = () => {
                                         </a>
                                         {/* WhatsApp */}
                                         <a
-                                            href="https://wa.me/254700000000"
+                                            href="https://wa.me/254727005993"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#25D366] hover:border-[#25D366] transition-all duration-200"
@@ -466,27 +457,11 @@ const AboutPage = () => {
                         ))}
                     </div>
 
-                    {/* Team CTA */}
-                    <div className="mt-12 text-center">
-                        <div className="inline-flex flex-col sm:flex-row items-center gap-4 bg-gray-50 rounded-2xl px-8 py-6 border border-gray-100">
-                            <div className="text-left">
-                                <p className="font-bold text-gray-900">Want to join our team?</p>
-                                <p className="text-sm text-gray-500">We're always looking for people who love Kenya and love money.</p>
-                            </div>
-                            <Link
-                                to="/careers"
-                                className="shrink-0 inline-flex items-center justify-center px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-full transition-all duration-300 group"
-                            >
-                                Apply Now
-                                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
-                    </div>
                 </div>
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 7 — CONTACT / GET IN TOUCH
+                SECTION 7: CONTACT / GET IN TOUCH
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-24 bg-gray-50">
                 <div className="container-custom">
@@ -519,15 +494,15 @@ const AboutPage = () => {
 
                             {/* Phone */}
                             <a
-                                href="tel:+254700000000"
+                                href="tel:+254727005993"
                                 className="group bg-white rounded-2xl border border-gray-100 p-7 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                             >
                                 <div className="w-14 h-14 mx-auto mb-4 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-600 transition-colors">
                                     <Phone size={24} className="text-green-600 group-hover:text-white transition-colors" />
                                 </div>
                                 <h3 className="font-bold text-gray-900 mb-1">Call Us</h3>
-                                <p className="text-sm text-gray-500 mb-3">Mon – Fri, 8am – 6pm</p>
-                                <p className="text-sm font-semibold text-green-600">+254 700 000 000</p>
+                                <p className="text-sm text-gray-500 mb-3">Mon to Fri, 8am to 6pm</p>
+                                <p className="text-sm font-semibold text-green-600">+254 727 005 993</p>
                             </a>
 
                             {/* Partner */}
@@ -548,7 +523,7 @@ const AboutPage = () => {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════
-                SECTION 8 — FINAL CTA BANNER
+                SECTION 8: FINAL CTA BANNER
             ═══════════════════════════════════════════════════════════════ */}
             <section className="py-16 md:py-20 bg-white">
                 <div className="container-custom">
@@ -567,21 +542,12 @@ const AboutPage = () => {
                             </p>
                             <div className="flex justify-center">
                                 <Link
-                                    to="/signup"
+                                    to="/dashboard"
                                     className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-700 font-bold rounded-full shadow-lg hover:scale-105 transition-all duration-300 group"
                                 >
-                                    Create Free Account
+                                    Create my account
                                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
-                            </div>
-                            {/* Trust signals */}
-                            <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-primary-200">
-                                {['Free to join', 'No credit card needed', 'Built for Kenya'].map((item, i) => (
-                                    <span key={i} className="flex items-center gap-2">
-                                        <CheckCircle2 size={16} className="text-primary-300" />
-                                        {item}
-                                    </span>
-                                ))}
                             </div>
                         </div>
                     </div>

@@ -109,14 +109,14 @@ const ConnectorLine = ({ x1, y1, x2, y2, isActive = true }) => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   SLIDE 0 — Cash Flow + Spending breakdown
+   SLIDE 0: Cash Flow + Spending breakdown
    Card A: top-right | Card B: bottom-right
 ══════════════════════════════════════════════════════════════════════════════ */
 const SlideCards0 = ({ isActive }) => (
     <>
         <ConnectorLine x1="75%" y1="72%" x2="52%" y2="58%" isActive={isActive} />
 
-        {/* Card A — Cash Flow (top-right) */}
+        {/* Card A: Cash Flow (top-right) */}
         <Card className="absolute top-28 right-6 lg:right-14 w-44" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Cash Flow · March</p>
             <div className="flex items-end justify-between">
@@ -143,7 +143,7 @@ const SlideCards0 = ({ isActive }) => (
             </div>
         </Card>
 
-        {/* Card B — Spending breakdown (bottom-right) */}
+        {/* Card B: Spending breakdown (bottom-right) */}
         <Card className="absolute bottom-28 right-6 lg:right-14 w-48" animDelay="1s" delayMs={1200} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Where It Went</p>
             <div className="flex flex-col gap-1.5 mt-0.5">
@@ -157,7 +157,7 @@ const SlideCards0 = ({ isActive }) => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   SLIDE 1 — Net Worth + Linked Accounts
+   SLIDE 1: Net Worth + Linked Accounts
    Card A: CENTRE GAP (between hero text and person) | Card B: bottom-right
    Line:  FROM laptop (right) → TO card in centre gap
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -166,7 +166,7 @@ const SlideCards1 = ({ isActive }) => (
         {/* Line: FROM phone on right side → TO Card A in centre */}
         <ConnectorLine x1="72%" y1="58%" x2="52%" y2="35%" isActive={isActive} />
 
-        {/* Card A — Net Worth (Moved to centre to avoid left-side text) */}
+        {/* Card A: Net Worth (Moved to centre to avoid left-side text) */}
         <Card className="absolute top-20 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-[52%] w-48" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Net Worth</p>
             <p className="text-xl font-bold text-white tracking-tight leading-tight">
@@ -185,7 +185,7 @@ const SlideCards1 = ({ isActive }) => (
             </div>
         </Card>
 
-        {/* Card B — Linked Accounts (bottom-right) */}
+        {/* Card B: Linked Accounts (bottom-right) */}
         <Card className="absolute bottom-28 right-6 lg:right-14 w-44" animDelay="1s" delayMs={1400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Accounts</p>
             <div className="flex flex-col gap-1.5 mt-0.5">
@@ -209,7 +209,7 @@ const SlideCards1 = ({ isActive }) => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   SLIDE 2 — Budget Ring + Savings Goals
+   SLIDE 2: Budget Ring + Savings Goals
    Card A: top-right | Card B: mid-left
    Line:  FROM phone (centre) → TO top-right card
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -218,7 +218,7 @@ const SlideCards2 = ({ isActive }) => (
         {/* Line: FROM device in image → TO top-right card */}
         <ConnectorLine x1="42%" y1="62%" x2="72%" y2="30%" isActive={isActive} />
 
-        {/* Card A — Budget ring (top-right) */}
+        {/* Card A: Budget ring (top-right) */}
         <Card className="absolute top-20 right-6 lg:right-14 w-48" animDelay="0s" delayMs={400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Monthly Budget</p>
             <div className="flex items-center gap-3">
@@ -249,7 +249,7 @@ const SlideCards2 = ({ isActive }) => (
             </div>
         </Card>
 
-        {/* Card B — Savings Goals (Moved from left to bottom centre-right to avoid text) */}
+        {/* Card B: Savings Goals (Moved from left to bottom centre-right to avoid text) */}
         <Card className="absolute bottom-16 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-[55%] w-48" animDelay="1s" delayMs={1400} isActive={isActive}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">Your Goals</p>
             <div className="flex flex-col gap-2 mt-0.5">

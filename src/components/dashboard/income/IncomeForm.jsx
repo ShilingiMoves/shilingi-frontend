@@ -106,7 +106,7 @@ const IncomeForm = ({ income, onClose, onSuccess }) => {
                 delete submitData.category;
                 await updateIncome(income.uuid, submitData);
             } else {
-                // Use the quick endpoint for creation — it properly handles
+                // Use the quick endpoint for creation because it properly handles
                 // UUID-based category lookups, unlike the regular /income/ endpoint
                 // which expects an integer PK that the categories API doesn't provide.
                 await addQuickIncome(submitData);
