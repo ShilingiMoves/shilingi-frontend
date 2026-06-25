@@ -5,9 +5,7 @@ import TrustImg from '../assets/trust_people_kenya.webp';
 
 const TrustAndCTA = () => {
     const badges = [
-        { name: 'CBK', description: 'Compliant' },
-        { name: 'CMA', description: 'Registered' },
-        { name: 'KDIC', description: 'Protected' },
+        { name: 'ODPA', description: 'Office of the Data Protection Act' },
     ];
 
     const metrics = [
@@ -55,7 +53,7 @@ const TrustAndCTA = () => {
                                 Join thousands of Kenyans securing their future.
                             </h2>
                             <p className="text-lg leading-relaxed text-gray-600">
-                                We work with regulated partners to ensure your data and money are always safe. Your security is our top priority.
+                                We protect your personal information with privacy-first practices aligned with Kenya&apos;s data protection standards.
                             </p>
                         </div>
 
@@ -72,7 +70,8 @@ const TrustAndCTA = () => {
                             {badges.map((badge, index) => (
                                 <div key={index} className="flex items-center space-x-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
                                     <CheckCircle2 size={16} className="text-green-600" />
-                                    <span className="text-sm font-medium text-gray-700">{badge.name}</span>
+                                    <span className="text-sm font-bold text-gray-800">{badge.name}</span>
+                                    <span className="text-sm font-medium text-gray-600">{badge.description}</span>
                                 </div>
                             ))}
                         </div>
