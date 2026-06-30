@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     AlertTriangle,
     ArrowRight,
@@ -41,6 +41,7 @@ import {
     PREFERRED_NAME_UPDATED_EVENT,
 } from '../../../utils/memberIdentity';
 import DashboardOverviewFooter from './DashboardOverviewFooter';
+import { useAdaptivePolling } from '../../../hooks/useAdaptivePolling';
 
 const toneMap = {
     morning: { label: 'Good morning', shell: 'from-[#14986b] via-[#117f5a] to-[#0a4d37]' },
@@ -89,6 +90,8 @@ const calendarTypeStyles = {
 const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
 const DASHBOARD_STREAK_KEY_PREFIX = 'shilingi_dashboard_streak';
 const COMPARED_PRODUCTS_COUNT = 70;
+const OVERVIEW_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const OVERVIEW_MAX_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
 const overviewCompareModules = [
     {
         id: 'loans',
@@ -595,6 +598,30 @@ const relDate = (v) => {
     if (diff <= 0) return 'Today'; if (diff === 1) return 'Yesterday'; if (diff < 7) return `${diff}d ago`;
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
+const formatSyncDelay = (ms) => {
+    if (!ms) return 'soon';
+    const minutes = Math.max(1, Math.round(ms / 60000));
+    return `${minutes} min`;
+};
+const getOverviewSyncCopy = (sync = {}) => {
+    if (sync.pausedReason === 'hidden') {
+        return { label: 'Paused', detail: 'Resumes when active', dot: 'bg-amber-400' };
+    }
+    if (sync.pausedReason === 'offline') {
+        return { label: 'Offline', detail: 'Refresh waits for connection', dot: 'bg-amber-400' };
+    }
+    if (sync.isPolling) {
+        return { label: 'Syncing', detail: 'Updating your numbers', dot: 'bg-blue-500' };
+    }
+    if (sync.lastError) {
+        return { label: 'Retrying', detail: sync.lastError, dot: 'bg-rose-500' };
+    }
+    return {
+        label: 'Live',
+        detail: `Next check in ${formatSyncDelay(sync.nextRunInMs || sync.currentIntervalMs)}`,
+        dot: 'bg-emerald-500',
+    };
+};
 const settleWithConcurrency = async (tasks, concurrency = 4) => {
     const results = new Array(tasks.length);
     let nextIndex = 0;
@@ -666,116 +693,120 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
     const [calendarForm, setCalendarForm] = useState({ name: '', date: '', type: 'goal' });
     const currentMonth = useMemo(() => new Date(), []);
 
-    useEffect(() => {
-        let mounted = true;
-        (async () => {
-            const monthParams = { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 };
-            const settled = await settleWithConcurrency([
-                () => incomeService.getSummary(),
-                () => incomeService.getIncomes({ limit: 100 }),
-                () => getBudgetSummary(),
-                () => getBudgets({ current: 'true', ...monthParams }),
-                () => getExpenses({ limit: 100, ...monthParams }),
-                () => getGoals({ status: 'ACTIVE' }),
-                () => getInvestmentAssets(),
-                () => getDebts(),
-                () => getNetWorthSummary(),
-                () => getHealthScore(),
-                () => getHealthScoreBreakdown(),
-            ]);
-            const pick = (i, f) => (settled[i]?.status === 'fulfilled' ? settled[i].value : f);
-            const incomeSummary = pick(0, {}), incomesPayload = pick(1, {}), budgetSummary = pick(2, {}), budgets = pick(3, []), expensesPayload = pick(4, {}), goals = pick(5, []), inv = pick(6, []), debts = pick(7, []), nw = pick(8, {}), healthScore = pick(9, {}), healthBreakdown = pick(10, {});
-            const incomes = incomesPayload?.incomes || incomesPayload?.results || incomesPayload?.data || [];
-            const expenses = expensesPayload?.expenses || expensesPayload?.results || expensesPayload?.data || [];
-            const currentMonthExpenses = expenses.filter((expense) => isSameMonth(expense?.date || expense?.expense_date || expense?.created_at, currentMonth));
-            const derivedIncome = (incomes || []).reduce((sum, item) => sum + toNum(item.amount || item.monthly_amount || item.net_amount), 0);
-            const income = toNum(
-                incomeSummary?.total_income ||
-                incomeSummary?.monthly_income ||
-                incomeSummary?.current_month?.total_income ||
-                incomeSummary?.currentMonth?.total_income ||
-                incomeSummary?.summary?.total_income ||
-                incomeSummary?.summary?.monthly_income ||
-                derivedIncome ||
-                user?.profile?.monthly_income
-            );
-            const currentMonthExpenseTotal = currentMonthExpenses.reduce((sum, expense) => sum + Math.abs(toNum(expense.amount)), 0);
-            const spent = toNum(
-                budgetSummary?.current_month?.total_spent ||
-                budgetSummary?.currentMonth?.total_spent ||
-                budgetSummary?.monthly_spent ||
-                currentMonthExpenseTotal
-            );
-            const debtTotal = (debts || []).reduce((s, d) => s + toNum(d.balance), 0);
-            const invTotal = (inv || []).reduce((s, a) => s + toNum(a.currentValue), 0);
-            const netWorth = toNum(nw?.netWorth || invTotal - debtTotal);
-            const savings = toNum(
-                nw?.savingsFromGoals ||
-                nw?.savings ||
-                budgetSummary?.goal_saved_total ||
-                budgetSummary?.total_goal_saved ||
-                goals.reduce((sum, goal) => sum + toNum(goal.current_amount || goal.saved_amount || goal.total_saved || goal.amount_saved), 0)
-            );
-            const breakdown = (inv || []).reduce((acc, asset) => {
-                const category = String(asset.categoryName || '').toLowerCase();
-                const value = toNum(asset.currentValue);
-                if (category.includes('cash') || category.includes('bank') || category.includes('mobile money') || category.includes('savings')) acc.cash += value;
-                else if (category.includes('real estate') || category.includes('property') || category.includes('land') || category.includes('vehicle')) acc.property += value;
-                else acc.investments += value;
-                return acc;
-            }, { cash: 0, investments: 0, property: 0, liabilities: debtTotal });
-            const budget = (budgets || []).slice(0, 5).map((b, i) => {
-                const target = toNum(b.budgeted_amount || b.allocated_amount || b.amount || b.target_amount);
-                const used = toNum(b.spent_amount || b.actual_spent || b.total_spent || b.spent);
-                const pct = target > 0 ? Math.round((used / target) * 100) : 0;
-                const colors = ['bg-emerald-600', 'bg-blue-600', 'bg-amber-500', 'bg-violet-600', 'bg-rose-500'];
-                return {
-                    label: b.category_name || b.name || `Category ${i + 1}`,
-                    percent: pct,
-                    amount: fmtKES(used || 0),
-                    rawAmount: used,
-                    color: colors[i % colors.length],
-                };
-            });
-            const groupedSpending = Object.values(currentMonthExpenses.reduce((acc, expense) => {
-                const label = expense.category_name || expense.category || expense.description || 'Other';
-                const amount = Math.abs(toNum(expense.amount));
-                if (!acc[label]) acc[label] = { label, amount: 0 };
-                acc[label].amount += amount;
-                return acc;
-            }, {})).sort((a, b) => b.amount - a.amount);
-            const spendingTotal = groupedSpending.reduce((sum, item) => sum + item.amount, 0);
-            const spending = groupedSpending.slice(0, 5).map((item, index) => {
-                const colors = ['bg-emerald-600', 'bg-blue-600', 'bg-amber-500', 'bg-violet-600', 'bg-rose-500'];
-                return {
-                    label: item.label,
-                    amount: fmtKES(item.amount),
-                    rawAmount: item.amount,
-                    percent: spendingTotal > 0 ? Math.round((item.amount / spendingTotal) * 100) : 0,
-                    color: colors[index % colors.length],
-                };
-            });
-            const tx = [
-                ...currentMonthExpenses.map((e) => ({ date: getDate(e), name: e.description || e.name || e.category_name || 'Expense', category: e.category_name || 'Expense', amount: -Math.abs(toNum(e.amount)) })),
-                ...incomes.map((x) => ({ date: getDate(x), name: x.source_name || x.name || 'Income', category: x.category_name || 'Income', amount: Math.abs(toNum(x.amount || x.monthly_amount)) })),
-            ].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 5).map((r) => ({ name: r.name, category: r.category, amount: fmtSigned(r.amount), when: relDate(r.date), tone: r.amount >= 0 ? 'text-emerald-700' : 'text-rose-600' }));
-            const invRows = (inv || []).slice(0, 4).map((a) => ({ name: a.name || 'Investment', type: a.categoryName || 'Investment', value: fmtKES(a.currentValue), change: `${toNum(a.gainLossPercentage) >= 0 ? '+' : ''}${Math.round(toNum(a.gainLossPercentage) * 10) / 10}%`, tone: toNum(a.gainLossPercentage) >= 0 ? 'text-emerald-700' : 'text-rose-600' }));
-            const goalRows = (goals || []).slice(0, 3).map((g) => {
-                const targetAmount = toNum(g.target_amount || g.target || g.goal_amount);
-                const currentAmount = toNum(g.current_amount || g.saved_amount || g.total_saved || g.amount_saved);
-                const progress = targetAmount > 0
-                    ? Math.round((currentAmount / targetAmount) * 100)
-                    : Math.round(toNum(g.progress_percentage || g.progress || g.completion));
-                return {
-                    label: g.name || g.title || 'Goal',
-                    horizon: g.time_horizon || g.goal_type || 'Goal',
-                    progress: Math.max(0, Math.min(100, progress)),
-                };
-            });
-            const stepFlags = [income > 0, budget.length > 0, spending.length > 0, tx.length > 0, invRows.length > 0, goalRows.length > 0, Math.abs(netWorth) > 0];
-            const hasLiveData = stepFlags.some(Boolean);
-            const completion = Math.round((stepFlags.filter(Boolean).length / stepFlags.length) * 100);
-            if (!mounted) return;
+    const loadOverviewData = useCallback(async ({ isActive = () => true } = {}) => {
+        const monthParams = { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 };
+        const settled = await settleWithConcurrency([
+            () => incomeService.getSummary(),
+            () => incomeService.getIncomes({ limit: 100 }),
+            () => getBudgetSummary(),
+            () => getBudgets({ current: 'true', ...monthParams }),
+            () => getExpenses({ limit: 100, ...monthParams }),
+            () => getGoals({ status: 'ACTIVE' }),
+            () => getInvestmentAssets(),
+            () => getDebts(),
+            () => getNetWorthSummary(),
+            () => getHealthScore(),
+            () => getHealthScoreBreakdown(),
+        ]);
+        const pick = (i, f) => (settled[i]?.status === 'fulfilled' ? settled[i].value : f);
+        const incomeSummary = pick(0, {}), incomesPayload = pick(1, {}), budgetSummary = pick(2, {}), budgets = pick(3, []), expensesPayload = pick(4, {}), goals = pick(5, []), inv = pick(6, []), debts = pick(7, []), nw = pick(8, {}), healthScore = pick(9, {}), healthBreakdown = pick(10, {});
+        const incomes = incomesPayload?.incomes || incomesPayload?.results || incomesPayload?.data || [];
+        const expenses = expensesPayload?.expenses || expensesPayload?.results || expensesPayload?.data || [];
+        const currentMonthExpenses = expenses.filter((expense) => isSameMonth(expense?.date || expense?.expense_date || expense?.created_at, currentMonth));
+        const derivedIncome = (incomes || []).reduce((sum, item) => sum + toNum(item.amount || item.monthly_amount || item.net_amount), 0);
+        const income = toNum(
+            incomeSummary?.total_income ||
+            incomeSummary?.monthly_income ||
+            incomeSummary?.current_month?.total_income ||
+            incomeSummary?.currentMonth?.total_income ||
+            incomeSummary?.summary?.total_income ||
+            incomeSummary?.summary?.monthly_income ||
+            derivedIncome ||
+            user?.profile?.monthly_income
+        );
+        const currentMonthExpenseTotal = currentMonthExpenses.reduce((sum, expense) => sum + Math.abs(toNum(expense.amount)), 0);
+        const spent = toNum(
+            budgetSummary?.current_month?.total_spent ||
+            budgetSummary?.currentMonth?.total_spent ||
+            budgetSummary?.monthly_spent ||
+            currentMonthExpenseTotal
+        );
+        const debtTotal = (debts || []).reduce((s, d) => s + toNum(d.balance), 0);
+        const invTotal = (inv || []).reduce((s, a) => s + toNum(a.currentValue), 0);
+        const netWorth = toNum(nw?.netWorth || invTotal - debtTotal);
+        const savings = toNum(
+            nw?.savingsFromGoals ||
+            nw?.savings ||
+            budgetSummary?.goal_saved_total ||
+            budgetSummary?.total_goal_saved ||
+            goals.reduce((sum, goal) => sum + toNum(goal.current_amount || goal.saved_amount || goal.total_saved || goal.amount_saved), 0)
+        );
+        const breakdown = (inv || []).reduce((acc, asset) => {
+            const category = String(asset.categoryName || '').toLowerCase();
+            const value = toNum(asset.currentValue);
+            if (category.includes('cash') || category.includes('bank') || category.includes('mobile money') || category.includes('savings')) acc.cash += value;
+            else if (category.includes('real estate') || category.includes('property') || category.includes('land') || category.includes('vehicle')) acc.property += value;
+            else acc.investments += value;
+            return acc;
+        }, { cash: 0, investments: 0, property: 0, liabilities: debtTotal });
+        const budget = (budgets || []).slice(0, 5).map((b, i) => {
+            const target = toNum(b.budgeted_amount || b.allocated_amount || b.amount || b.target_amount);
+            const used = toNum(b.spent_amount || b.actual_spent || b.total_spent || b.spent);
+            const pct = target > 0 ? Math.round((used / target) * 100) : 0;
+            const colors = ['bg-emerald-600', 'bg-blue-600', 'bg-amber-500', 'bg-violet-600', 'bg-rose-500'];
+            return {
+                label: b.category_name || b.name || `Category ${i + 1}`,
+                percent: pct,
+                amount: fmtKES(used || 0),
+                rawAmount: used,
+                color: colors[i % colors.length],
+            };
+        });
+        const groupedSpending = Object.values(currentMonthExpenses.reduce((acc, expense) => {
+            const label = expense.category_name || expense.category || expense.description || 'Other';
+            const amount = Math.abs(toNum(expense.amount));
+            if (!acc[label]) acc[label] = { label, amount: 0 };
+            acc[label].amount += amount;
+            return acc;
+        }, {})).sort((a, b) => b.amount - a.amount);
+        const spendingTotal = groupedSpending.reduce((sum, item) => sum + item.amount, 0);
+        const spending = groupedSpending.slice(0, 5).map((item, index) => {
+            const colors = ['bg-emerald-600', 'bg-blue-600', 'bg-amber-500', 'bg-violet-600', 'bg-rose-500'];
+            return {
+                label: item.label,
+                amount: fmtKES(item.amount),
+                rawAmount: item.amount,
+                percent: spendingTotal > 0 ? Math.round((item.amount / spendingTotal) * 100) : 0,
+                color: colors[index % colors.length],
+            };
+        });
+        const tx = [
+            ...currentMonthExpenses.map((e) => ({ date: getDate(e), name: e.description || e.name || e.category_name || 'Expense', category: e.category_name || 'Expense', amount: -Math.abs(toNum(e.amount)) })),
+            ...incomes.map((x) => ({ date: getDate(x), name: x.source_name || x.name || 'Income', category: x.category_name || 'Income', amount: Math.abs(toNum(x.amount || x.monthly_amount)) })),
+        ].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 5).map((r) => ({ name: r.name, category: r.category, amount: fmtSigned(r.amount), when: relDate(r.date), tone: r.amount >= 0 ? 'text-emerald-700' : 'text-rose-600' }));
+        const invRows = (inv || []).slice(0, 4).map((a) => ({ name: a.name || 'Investment', type: a.categoryName || 'Investment', value: fmtKES(a.currentValue), change: `${toNum(a.gainLossPercentage) >= 0 ? '+' : ''}${Math.round(toNum(a.gainLossPercentage) * 10) / 10}%`, tone: toNum(a.gainLossPercentage) >= 0 ? 'text-emerald-700' : 'text-rose-600' }));
+        const goalRows = (goals || []).slice(0, 3).map((g) => {
+            const targetAmount = toNum(g.target_amount || g.target || g.goal_amount);
+            const currentAmount = toNum(g.current_amount || g.saved_amount || g.total_saved || g.amount_saved);
+            const progress = targetAmount > 0
+                ? Math.round((currentAmount / targetAmount) * 100)
+                : Math.round(toNum(g.progress_percentage || g.progress || g.completion));
+            return {
+                label: g.name || g.title || 'Goal',
+                horizon: g.time_horizon || g.goal_type || 'Goal',
+                progress: Math.max(0, Math.min(100, progress)),
+            };
+        });
+        const stepFlags = [income > 0, budget.length > 0, spending.length > 0, tx.length > 0, invRows.length > 0, goalRows.length > 0, Math.abs(netWorth) > 0];
+        const hasLiveData = stepFlags.some(Boolean);
+        const completion = Math.round((stepFlags.filter(Boolean).length / stepFlags.length) * 100);
+        const nextHealthSnapshot = {
+            score: hasLiveData ? Number(healthScore?.overall_score ?? 0) : 0,
+            statusDisplay: hasLiveData ? (healthScore?.status_display || 'Score ready') : 'No data yet',
+            components: hasLiveData && Array.isArray(healthBreakdown?.components) ? healthBreakdown.components : [],
+        };
+
+        if (isActive()) {
             if (hasLiveData) {
                 markDashboardDataExists();
                 setDashboardStreak(updateDashboardStreak(user, new Date()));
@@ -803,14 +834,37 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                     debts,
                 },
             });
-            setHealthSnapshot({
-                score: hasLiveData ? Number(healthScore?.overall_score ?? 0) : 0,
-                statusDisplay: hasLiveData ? (healthScore?.status_display || 'Score ready') : 'No data yet',
-                components: hasLiveData && Array.isArray(healthBreakdown?.components) ? healthBreakdown.components : [],
-            });
-        })();
-        return () => { mounted = false; };
+            setHealthSnapshot(nextHealthSnapshot);
+        }
+
+        return {
+            netWorth,
+            income,
+            spent,
+            savings,
+            completion,
+            healthScore: nextHealthSnapshot.score,
+            budgetCount: budget.length,
+            spendingCount: spending.length,
+            transactionCount: tx.length,
+            investmentCount: invRows.length,
+            goalCount: goalRows.length,
+            debtCount: debts.length,
+        };
     }, [currentMonth, user]);
+
+    useEffect(() => {
+        let mounted = true;
+        loadOverviewData({ isActive: () => mounted });
+        return () => { mounted = false; };
+    }, [loadOverviewData]);
+
+    const overviewSync = useAdaptivePolling({
+        enabled: true,
+        poll: loadOverviewData,
+        minIntervalMs: OVERVIEW_REFRESH_INTERVAL_MS,
+        maxIntervalMs: OVERVIEW_MAX_REFRESH_INTERVAL_MS,
+    });
 
     const hasData = live.hasAnyData;
     const shouldShowNewUserHero = newUser && !hasData && !hasIncomeData;
@@ -1012,6 +1066,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                 onSignOut={onSignOut}
                 palette={palette}
                 savingsRateScore={savingsRateScore}
+                sync={overviewSync}
                 debtRatioScore={debtRatioScore}
                 budgetScore={budgetScore}
                 investmentScore={investmentScore}
@@ -1034,6 +1089,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                 onSignOut={onSignOut}
                 palette={palette}
                 savingsRateScore={savingsRateScore}
+                sync={overviewSync}
                 spendingRows={spendingRows}
                 stats={stats}
                 user={user}
@@ -1548,6 +1604,7 @@ const DesktopDashboardOverview = ({
     onSignOut,
     palette,
     savingsRateScore,
+    sync,
     spendingRows,
     stats,
     user,
@@ -1582,6 +1639,7 @@ const DesktopDashboardOverview = ({
         ? `${palette.label}, ${displayName}. Keep up the progress.`
         : 'Complete setup to unlock your personalized health score.';
     const tierLabel = user?.tier || user?.subscription_tier || user?.plan || 'Basic';
+    const syncCopy = getOverviewSyncCopy(sync);
 
     return (
         <div className="hidden min-h-screen bg-[#f8f8f8] lg:block">
@@ -1642,9 +1700,20 @@ const DesktopDashboardOverview = ({
 
                 <main className="px-8 py-8">
                     <section>
-                        <p className="text-base text-[#111827]">{palette.label},</p>
-                        <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName}</h1>
-                        <p className="mt-2 text-base text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-base text-[#111827]">{palette.label},</p>
+                                <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName}</h1>
+                                <p className="mt-2 text-base text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                            </div>
+                            <div className="max-w-[190px] rounded-full border border-emerald-100 bg-white px-3 py-2 text-right shadow-[0_0_1px_rgba(0,0,0,0.07)]">
+                                <p className="inline-flex items-center justify-end gap-2 text-xs font-bold text-[#0c6060]">
+                                    <span className={`h-2 w-2 rounded-full ${syncCopy.dot}`} />
+                                    {syncCopy.label}
+                                </p>
+                                <p className="mt-0.5 truncate text-[10px] text-[#6b7280]">{syncCopy.detail}</p>
+                            </div>
+                        </div>
                     </section>
 
                     <section className="mt-4 overflow-hidden rounded-[10px] bg-[linear-gradient(107deg,_#0c6060_0%,_#eabb3a_163%)] p-6 text-white">
@@ -1843,6 +1912,7 @@ const MobileDashboardOverview = ({
     debtRatioScore,
     budgetScore,
     investmentScore,
+    sync,
     spendingRows,
     stats,
 }) => {
@@ -1855,14 +1925,26 @@ const MobileDashboardOverview = ({
         ? `${palette.label}, ${displayName}. Keep building your money picture.`
         : 'Complete setup to unlock your personalized health score.';
     const transaction = live.tx[0] || null;
+    const syncCopy = getOverviewSyncCopy(sync);
 
     return (
         <div className="sm:hidden">
             <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f8f8f8] px-4 pb-28 pt-4">
                 <section className="mt-2">
-                    <p className="text-xs text-[#111827]">{palette.label},</p>
-                    <h1 className="mt-0.5 truncate text-lg font-extrabold leading-tight text-[#0c6060]">{displayName}</h1>
-                    <p className="mt-0.5 text-xs text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs text-[#111827]">{palette.label},</p>
+                            <h1 className="mt-0.5 truncate text-lg font-extrabold leading-tight text-[#0c6060]">{displayName}</h1>
+                            <p className="mt-0.5 text-xs text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                        </div>
+                        <div className="max-w-[132px] rounded-full border border-emerald-100 bg-white px-2.5 py-1.5 text-right shadow-[0_0_1px_rgba(0,0,0,0.07)]">
+                            <p className="inline-flex items-center justify-end gap-1.5 text-[10px] font-bold text-[#0c6060]">
+                                <span className={`h-1.5 w-1.5 rounded-full ${syncCopy.dot}`} />
+                                {syncCopy.label}
+                            </p>
+                            <p className="mt-0.5 truncate text-[8px] text-[#6b7280]">{syncCopy.detail}</p>
+                        </div>
+                    </div>
                 </section>
 
                 <section className="mt-4 overflow-hidden rounded-[10px] bg-[linear-gradient(104deg,_#0c6060_0%,_#eabb3a_163%)] p-4 text-white">

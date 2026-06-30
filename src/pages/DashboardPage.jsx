@@ -217,6 +217,7 @@ const DashboardPage = () => {
         </div>
     );
     const overviewActive = activeSection === 'overview';
+    const customDesktopShellActive = overviewActive || activeSection === 'budget';
 
     const standardShell = (children) => (
         <div className="px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
@@ -246,10 +247,12 @@ const DashboardPage = () => {
                 );
 
             case 'budget':
-                return standardShell(
+                return (
+                    <div className="px-4 py-4 sm:px-6 sm:py-5 lg:p-0">
                     <Suspense fallback={sectionLoader}>
-                        <BudgetDashboard onSelectSection={handleSelectSection} />
+                        <BudgetDashboard onSelectSection={handleSelectSection} user={profile} />
                     </Suspense>
+                    </div>
                 );
 
             case 'networth':
@@ -380,7 +383,7 @@ const DashboardPage = () => {
 
     return (
         <div className="dashboard-brand-theme min-h-screen bg-[linear-gradient(180deg,_#f7fbf9_0%,_#eef5f3_55%,_#edf4f7_100%)] lg:h-screen lg:overflow-hidden">
-            {overviewActive ? (
+            {customDesktopShellActive ? (
                 <div className="lg:hidden">
                     <DashboardTopbar
                         activeSection={activeSection}
@@ -400,8 +403,8 @@ const DashboardPage = () => {
                 />
             )}
 
-            <div className={overviewActive ? 'lg:h-screen' : 'lg:flex lg:h-[calc(100vh-92px)]'}>
-                {overviewActive ? (
+            <div className={customDesktopShellActive ? 'lg:h-screen' : 'lg:flex lg:h-[calc(100vh-92px)]'}>
+                {customDesktopShellActive ? (
                     <div className="lg:hidden">
                         <DashboardSidebar
                             collapsed={sidebarCollapsed}

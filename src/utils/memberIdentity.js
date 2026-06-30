@@ -1,4 +1,5 @@
 export const PREFERRED_NAME_KEY = 'shilingi_preferred_profile_name';
+export const PREFERRED_NAME_COMPLETED_KEY = 'shilingi_preferred_profile_name_completed';
 export const PREFERRED_NAME_UPDATED_EVENT = 'shilingi-preferred-name-updated';
 export const PROFILE_NAME_PROMPT_KEY = 'shilingi_show_preferred_name_prompt';
 export const PROFILE_NAME_PROMPT_REASON_KEY = 'shilingi_preferred_name_prompt_reason';
@@ -92,6 +93,16 @@ export const getStoredPreferredName = () => {
     }
 };
 
+export const hasCompletedPreferredNamePrompt = () => {
+    if (typeof window === 'undefined') return false;
+
+    try {
+        return window.localStorage.getItem(PREFERRED_NAME_COMPLETED_KEY) === '1';
+    } catch {
+        return false;
+    }
+};
+
 export const getDashboardDisplayName = (user = {}) => {
     const storedPreferredName = getStoredPreferredName().trim();
     if (storedPreferredName) return storedPreferredName;
@@ -107,6 +118,8 @@ export const setStoredPreferredName = (name) => {
         const nextName = String(name || '').trim();
         if (nextName) {
             window.localStorage.setItem(PREFERRED_NAME_KEY, nextName);
+            window.localStorage.setItem(PREFERRED_NAME_COMPLETED_KEY, '1');
+            clearQueuedPreferredNamePrompt();
             window.dispatchEvent(new CustomEvent(PREFERRED_NAME_UPDATED_EVENT, { detail: { preferredName: nextName } }));
             return;
         }
@@ -122,7 +135,7 @@ export const queuePreferredNamePrompt = (reason = 'returning') => {
     if (typeof window === 'undefined') return;
 
     try {
-        if (getStoredPreferredName().trim()) {
+        if (getStoredPreferredName().trim() || hasCompletedPreferredNamePrompt()) {
             return;
         }
 
@@ -139,6 +152,11 @@ export const readQueuedPreferredNamePrompt = () => {
     }
 
     try {
+        if (getStoredPreferredName().trim() || hasCompletedPreferredNamePrompt()) {
+            clearQueuedPreferredNamePrompt();
+            return { shouldShow: false, reason: 'returning' };
+        }
+
         return {
             shouldShow: window.sessionStorage.getItem(PROFILE_NAME_PROMPT_KEY) === '1',
             reason: window.sessionStorage.getItem(PROFILE_NAME_PROMPT_REASON_KEY) || 'returning',

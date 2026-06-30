@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, ArrowLeft, BadgeDollarSign, Check, Headphones, Home, Loader2, PiggyBank, Plus, Receipt, Wallet, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, BadgeDollarSign, Bell, BookOpen, Check, Headphones, Home, Loader2, Mail, MoreHorizontal, PiggyBank, Plus, Receipt, Search, Wallet, X } from 'lucide-react';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
-import BudgetOverview from './BudgetOverview';
 import ExpenseForm from './ExpenseForm';
 import ExpenseList from './ExpenseList';
 import GoalTracker from './GoalTracker';
@@ -27,6 +26,8 @@ import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 import NumericInput from '../../common/NumericInput';
 import budgetPlannerHero from '../../../assets/budget-planner-hero.png';
+import animatedLogo from '../../../assets/shilingi-logo-animated.gif';
+import { getDashboardDisplayName, getMemberInitials } from '../../../utils/memberIdentity';
 
 const resolvePayload = (result, fallback) =>
     result?.status === 'fulfilled' ? result.value : fallback;
@@ -166,7 +167,7 @@ const getNextMobileBudgetLane = (budgetRows = []) => (
     )) || null
 );
 
-const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelectSection }) => {
+const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelectSection, user }) => {
     const { triggerHealthRefresh } = useHealthRefresh();
     // State management
     const [budgets, setBudgets] = useState([]);
@@ -187,9 +188,11 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
     const [mobileBudgetSetup, setMobileBudgetSetup] = useState(() => readBudgetSetup());
     const [mobileBudgetLane, setMobileBudgetLane] = useState('Needs');
     const [mobileBudgetStage, setMobileBudgetStage] = useState(() => (readBudgetSetup()?.split ? 'expenses' : 'income'));
+    const [desktopIncomeModalOpen, setDesktopIncomeModalOpen] = useState(false);
+    const [desktopTransactionModalOpen, setDesktopTransactionModalOpen] = useState(false);
     
     const [internalActiveTab, setInternalActiveTab] = useState('overview');
-    const [overviewReturnView, setOverviewReturnView] = useState('compare');
+    const [, setOverviewReturnView] = useState('compare');
 
     const activeTab = controlledActiveTab ?? internalActiveTab;
     const setActiveTab = onTabChange ?? setInternalActiveTab;
@@ -338,6 +341,11 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
         }
     };
 
+    const handleDesktopIncomeSaved = async () => {
+        await handleMobileIncomeSaved();
+        setDesktopIncomeModalOpen(false);
+    };
+
     const handleSelectMobilePlan = async (plan) => {
         try {
             setIsSubmitting(true);
@@ -351,6 +359,26 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
         } catch (err) {
             const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
             setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleChangeBudgetPlan = async (plan) => {
+        try {
+            setIsSubmitting(true);
+            setSubmitError('');
+            const setup = { id: plan.id, label: plan.label, split: plan.split };
+            saveBudgetSetup(setup);
+            setMobileBudgetSetup(setup);
+            setMobileBudgetLane(getNextMobileBudgetLane(budgets) || 'Needs');
+            setMobileBudgetStage(budgets.length > 0 ? 'expenses' : 'items');
+            markDashboardDataExists();
+            return setup;
+        } catch (err) {
+            const errorMessage = err.response?.data?.errors || err.response?.data || err.message;
+            setSubmitError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
+            return null;
         } finally {
             setIsSubmitting(false);
         }
@@ -471,7 +499,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             )}
 
             {activeTab !== 'overview' && (
-                <div className="flex flex-col items-start justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center">
+                <div className="flex flex-col items-start justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm lg:hidden sm:flex-row sm:items-center">
                     <button
                         type="button"
                         onClick={() => setActiveTab('overview')}
@@ -487,9 +515,50 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             )}
 
             {/* Tab Content */}
+            {summary && (
+                <div className="hidden lg:block">
+                    <DesktopBudgetPlannerFlow
+                        activeTab={activeTab}
+                        budgetHealth={budgetHealth}
+                        budgets={budgets}
+                        deletingId={deletingId}
+                        desktopIncomeModalOpen={desktopIncomeModalOpen}
+                        desktopTransactionModalOpen={desktopTransactionModalOpen}
+                        editingBudget={editingBudget}
+                        expenseCount={expenseCount}
+                        expenseTotal={expenseTotal}
+                        expenses={expenses}
+                        goalSummary={goalSummary}
+                        goals={goals}
+                        handleDeleteBudget={handleDeleteBudget}
+                        handleDesktopIncomeSaved={handleDesktopIncomeSaved}
+                        handleChangeBudgetPlan={handleChangeBudgetPlan}
+                        handleSelectMobilePlan={handleSelectMobilePlan}
+                        handleSubmitBudget={handleSubmitBudget}
+                        isSubmitting={isSubmitting}
+                        loadData={loadData}
+                        mobileBudgetSetup={mobileBudgetSetup}
+                        navigateBudgetTab={navigateBudgetTab}
+                        onSelectSection={onSelectSection}
+                        refreshExpenses={refreshExpenses}
+                        setActiveTab={setActiveTab}
+                        setDesktopIncomeModalOpen={setDesktopIncomeModalOpen}
+                        setDesktopTransactionModalOpen={setDesktopTransactionModalOpen}
+                        setEditingBudget={setEditingBudget}
+                        setIsSubmitting={setIsSubmitting}
+                        setMobileBudgetStage={setMobileBudgetStage}
+                        setSubmitError={setSubmitError}
+                        submitError={submitError}
+                        summary={summary}
+                        totalIncome={totalIncome}
+                        user={user}
+                    />
+                </div>
+            )}
+
             {activeTab === 'overview' && summary && (
                 <>
-                    <div className="sm:hidden">
+                    <div className="lg:hidden">
                         {mobileBudgetStage === 'income' ? (
                             <MobileIncomeStep
                                 onSaved={handleMobileIncomeSaved}
@@ -551,27 +620,11 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                             </>
                         )}
                     </div>
-                    <div className="hidden sm:block">
-                        <BudgetOverview
-                            summary={summary}
-                            budgets={budgets}
-                            expenses={expenses}
-                            goals={goals}
-                            goalSummary={goalSummary}
-                            expenseTotal={expenseTotal}
-                            totalIncome={totalIncome}
-                            budgetHealth={budgetHealth}
-                            initialView={overviewReturnView}
-                            onNavigate={navigateBudgetTab}
-                            onSelectSection={onSelectSection}
-                            onQuickExpenseAdded={refreshExpenses}
-                        />
-                    </div>
                 </>
             )}
 
             {activeTab === 'budgets' && (
-                <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
+                <div className="grid gap-6 lg:hidden xl:grid-cols-[0.95fr_1.35fr]">
                     <div className="space-y-4">
                         <BudgetForm
                             initialValues={editingBudget}
@@ -605,21 +658,698 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             )}
 
             {activeTab === 'expenses' && (
-                <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
+                <div className="grid gap-6 lg:hidden xl:grid-cols-[0.95fr_1.35fr]">
                     <ExpenseForm onSuccess={refreshExpenses} budgets={budgets} />
                     <ExpenseList expenses={expenses} onUpdate={refreshExpenses} budgets={budgets} />
                 </div>
             )}
 
             {activeTab === 'goals' && (
-                <GoalTracker
-                    goals={goals}
-                    goalSummary={goalSummary}
-                    onUpdate={loadData}
-                />
+                <div className="lg:hidden">
+                    <GoalTracker
+                        goals={goals}
+                        goalSummary={goalSummary}
+                        onUpdate={loadData}
+                    />
+                </div>
             )}
         </div>
     );
+};
+
+const desktopNavItems = [
+    { id: 'overview', label: 'Budget Planner', icon: Search, section: 'budget' },
+    { id: 'debt', label: 'Debt Manager', icon: Bell, section: 'debt' },
+    { id: 'investments', label: 'Investment Planner', icon: Mail, section: 'investments' },
+    { id: 'protection', label: 'Protection Planner', icon: Mail, section: 'protection' },
+    { id: 'retirement', label: 'Retirement Planner', icon: BookOpen, section: 'retirement' },
+    { id: 'networth', label: 'Net Worth Tracker', icon: Wallet, section: 'networth' },
+];
+
+const DesktopBudgetPlannerFlow = ({
+    activeTab,
+    budgetHealth,
+    budgets,
+    deletingId,
+    desktopIncomeModalOpen,
+    desktopTransactionModalOpen,
+    editingBudget,
+    expenseCount,
+    expenseTotal,
+    expenses,
+    goalSummary,
+    goals,
+    handleDeleteBudget,
+    handleChangeBudgetPlan,
+    handleDesktopIncomeSaved,
+    handleSelectMobilePlan,
+    handleSubmitBudget,
+    isSubmitting,
+    loadData,
+    mobileBudgetSetup,
+    navigateBudgetTab,
+    onSelectSection,
+    refreshExpenses,
+    setActiveTab,
+    setDesktopIncomeModalOpen,
+    setDesktopTransactionModalOpen,
+    setEditingBudget,
+    setIsSubmitting,
+    setMobileBudgetStage,
+    setSubmitError,
+    submitError,
+    summary,
+    totalIncome,
+    user,
+}) => {
+    const [desktopPlanChangeOpen, setDesktopPlanChangeOpen] = useState(false);
+    const displayName = getDashboardDisplayName(user);
+    const initials = getMemberInitials(user);
+    const hasIncome = totalIncome > 0;
+    const hasPlan = Boolean(mobileBudgetSetup?.split);
+    const hasBudgets = budgets.length > 0;
+    const hasTransactions = expenses.length > 0;
+    const totalBudget = toNumber(summary?.total_budget);
+    const totalSpent = toNumber(summary?.total_spent || expenseTotal);
+    const remaining = Math.max(toNumber(summary?.total_remaining || totalBudget - totalSpent), 0);
+    const spendingPercent = totalBudget > 0 ? Math.min(Math.round((totalSpent / totalBudget) * 100), 100) : 0;
+    const healthScore = Math.max(0, Math.min(100, Math.round(budgetHealth?.score || (hasIncome ? 72 : 0))));
+    const budgetRows = buildDesktopBudgetRows(budgets, totalIncome);
+    const canContinue = hasIncome && hasPlan && hasBudgets;
+
+    const showBudgetItems = activeTab === 'budgets' || (hasIncome && hasPlan && !hasBudgets);
+    const showExpenses = activeTab === 'expenses' || (hasIncome && hasPlan && hasBudgets);
+
+    const handlePlanSelect = async (plan) => {
+        await handleSelectMobilePlan(plan);
+        setDesktopPlanChangeOpen(false);
+        setMobileBudgetStage('expenses');
+    };
+
+    const handlePlanChange = async (plan) => {
+        const updated = await handleChangeBudgetPlan(plan);
+        if (updated) {
+            setDesktopPlanChangeOpen(false);
+            setActiveTab('overview');
+        }
+    };
+
+    const handleTransactionSaved = async () => {
+        await refreshExpenses();
+        setDesktopTransactionModalOpen(false);
+    };
+
+    const renderCenterContent = () => {
+        if (activeTab === 'goals') {
+            return <GoalTracker goals={goals} goalSummary={goalSummary} onUpdate={loadData} />;
+        }
+
+        if (!hasIncome) {
+            return (
+                <DesktopEmptyCard
+                    title="Add Source of Income"
+                    text="Add your income for your budget to see the magic and turn your allocated savings into action with simple next moves."
+                    action="Add Income"
+                    disabledLabel="Continue"
+                    onAction={() => setDesktopIncomeModalOpen(true)}
+                />
+            );
+        }
+
+        if (showBudgetItems && hasIncome && hasPlan && !hasBudgets) {
+            return (
+                <div className="mx-auto max-w-[28rem]">
+                    <DesktopStepNote title="Build your budget items" text="Your income and plan are ready. Add the first budget item so transactions can be tracked against real limits." />
+                    <BudgetForm
+                        key={`desktop-budget-${editingBudget?.uuid || 'new'}`}
+                        initialValues={editingBudget}
+                        onSubmit={handleSubmitBudget}
+                        onCancel={() => {
+                            setEditingBudget(null);
+                            setSubmitError('');
+                        }}
+                        isSubmitting={isSubmitting}
+                        existingBudgets={budgets}
+                        totalIncome={totalIncome}
+                        initialLane={getNextMobileBudgetLane(budgets) || 'Needs'}
+                    />
+                    {submitError && <DesktopError text={submitError} />}
+                </div>
+            );
+        }
+
+        if (activeTab === 'budgets') {
+            return (
+                <div className="grid gap-5 xl:grid-cols-[0.95fr_1.1fr]">
+                    <div>
+                        <BudgetForm
+                            initialValues={editingBudget}
+                            onSubmit={handleSubmitBudget}
+                            onCancel={() => {
+                                setEditingBudget(null);
+                                setSubmitError('');
+                            }}
+                            isSubmitting={isSubmitting}
+                            existingBudgets={budgets}
+                            totalIncome={totalIncome}
+                        />
+                        {submitError && <DesktopError text={submitError} />}
+                    </div>
+                    <BudgetList
+                        budgets={budgets}
+                        onEdit={(budget) => {
+                            setEditingBudget(budget);
+                            setSubmitError('');
+                        }}
+                        onDelete={handleDeleteBudget}
+                        deletingId={deletingId}
+                    />
+                </div>
+            );
+        }
+
+        if (activeTab === 'expenses' && hasTransactions) {
+            return (
+                <div className="grid gap-5 xl:grid-cols-[0.95fr_1.1fr]">
+                    <ExpenseForm onSuccess={refreshExpenses} budgets={budgets} />
+                    <ExpenseList expenses={expenses} onUpdate={refreshExpenses} budgets={budgets} />
+                </div>
+            );
+        }
+
+        if (!hasPlan) {
+            return (
+                <div>
+                    <div className="mb-5 text-center">
+                        <p className="text-[14px] font-semibold text-[#232e3d]">Pick a budget plan</p>
+                        <p className="mt-1 text-[13px] text-[#8e97ab]">Choose how your income should be split before transactions start.</p>
+                    </div>
+                    <DesktopPlanGrid onSelect={handlePlanSelect} disabled={isSubmitting} />
+                    {submitError && <DesktopError text={submitError} />}
+                </div>
+            );
+        }
+
+        if (desktopPlanChangeOpen) {
+            return (
+                <div>
+                    <DesktopCurrentPlanNotice
+                        setup={mobileBudgetSetup}
+                        onCancel={() => setDesktopPlanChangeOpen(false)}
+                    />
+                    <DesktopPlanGrid
+                        activePlanId={mobileBudgetSetup?.id}
+                        disabled={isSubmitting}
+                        onSelect={handlePlanChange}
+                    />
+                    {submitError && <DesktopError text={submitError} />}
+                </div>
+            );
+        }
+
+        if (showExpenses && !hasTransactions) {
+            return (
+                <DesktopEmptyCard
+                    title="No recurring transactions"
+                    text="Add your transactions for your budget to see the magic and turn your allocated savings into action with simple next moves."
+                    action={hasBudgets ? 'Add Transactions' : 'Add Budget Items'}
+                    secondaryAction={hasBudgets ? 'Manage Items' : null}
+                    onAction={() => (hasBudgets ? setDesktopTransactionModalOpen(true) : navigateBudgetTab('budgets'))}
+                    onSecondary={() => navigateBudgetTab('budgets')}
+                />
+            );
+        }
+
+        return (
+            <DesktopBudgetSummary
+                budgetRows={budgetRows}
+                budgets={budgets}
+                expenseCount={expenseCount}
+                expenses={expenses}
+                remaining={remaining}
+                spendingPercent={spendingPercent}
+                totalBudget={totalBudget}
+                totalIncome={totalIncome}
+                totalSpent={totalSpent}
+                onAddTransaction={() => setDesktopTransactionModalOpen(true)}
+                onChangePlan={() => setDesktopPlanChangeOpen(true)}
+                onManageBudget={() => navigateBudgetTab('budgets')}
+                setup={mobileBudgetSetup}
+            />
+        );
+    };
+
+    return (
+        <section className="grid min-h-[calc(100vh-2rem)] grid-cols-[16rem_minmax(27rem,1fr)_19rem] overflow-hidden rounded-[2.5rem] bg-[#f8f8f8] text-[#232e3d] shadow-[0_24px_80px_rgba(15,23,42,0.08)] xl:grid-cols-[18.5rem_minmax(34rem,1fr)_21.5rem]">
+            <aside className="flex min-h-[49rem] flex-col bg-white px-8 py-8">
+                <button type="button" onClick={() => onSelectSection?.('overview')} className="h-[61px] w-[102px] overflow-hidden text-left" aria-label="Shilingi Moves home">
+                    <img src={animatedLogo} alt="Shilingi Moves" className="h-full w-full object-contain object-left" />
+                </button>
+
+                <nav className="mt-12 space-y-1">
+                    <DesktopNavButton icon={Home} label="Home" onClick={() => onSelectSection?.('overview')} />
+                    <p className="px-1 pb-3 pt-5 text-[14px] text-[#acacac]">Planning Tools</p>
+                    {desktopNavItems.map((item) => (
+                        <DesktopNavButton
+                            key={item.id}
+                            active={item.id === 'overview'}
+                            icon={item.icon}
+                            label={item.label}
+                            onClick={() => (item.section === 'budget' ? setActiveTab('overview') : onSelectSection?.(item.section))}
+                        />
+                    ))}
+                    <p className="px-1 pb-3 pt-5 text-[14px] text-[#acacac]">Support</p>
+                    <DesktopNavButton icon={BookOpen} label="Help Center" onClick={() => onSelectSection?.('resourceshub')} />
+                    <DesktopNavButton icon={BookOpen} label="Go to website" onClick={() => { if (typeof window !== 'undefined') window.location.href = '/'; }} />
+                </nav>
+
+                <p className="mt-auto max-w-[14rem] text-[10px] leading-[15px] text-[#8e97ab]">
+                    <span className="block font-bold text-[#232e3d]">©Kaizen Publishers Limited All rights reserved.</span>
+                    Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only.
+                </p>
+            </aside>
+
+            <main className="min-w-0 px-8 py-8">
+                <header className="border-b border-[#e3e3e5] pb-5">
+                    <p className="text-[16px] text-[#111827]">Good morning,</p>
+                    <h1 className="mt-1 text-[32px] font-extrabold leading-tight text-[#0c6060]">{displayName} <span aria-hidden>👋</span></h1>
+                    <p className="text-[16px] text-[#111827]">Your Financial Health score is {healthScore}/100</p>
+                </header>
+
+                <section className="border-b border-[#e3e3e5] py-6">
+                    <div className="flex items-center justify-between gap-8">
+                        <div className="min-w-0">
+                            <p className="text-[14px] text-[#111827]">Welcome to your</p>
+                            <h2 className="mt-1 text-[24px] font-extrabold leading-tight text-[#0c6060]">Budget Planner 🧮</h2>
+                            <p className="mt-1 text-[14px] text-[#111827]">Let's take your budgeting to the next level</p>
+                        </div>
+                        <img src={budgetPlannerHero} alt="" className="h-[8.6rem] w-[8.6rem] shrink-0 object-contain" />
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <p className="text-[14px] font-semibold text-[#232e3d]">{activeTab === 'expenses' ? 'My Transactions' : 'Sources of Income'}</p>
+                            <p className="mt-1 text-[14px] text-[#111827]">
+                                {activeTab === 'expenses' ? 'Here is your transactions breakdown summary' : 'Here is your income breakdown summary'}
+                            </p>
+                        </div>
+                        <DesktopFlowTabs
+                            activeTab={activeTab}
+                            onSelect={(id) => navigateBudgetTab(id)}
+                            canContinue={canContinue}
+                            onChangePlan={() => setDesktopPlanChangeOpen(true)}
+                            setup={mobileBudgetSetup}
+                        />
+                    </div>
+                </section>
+
+                <section className="py-7">{renderCenterContent()}</section>
+            </main>
+
+            <aside className="bg-white px-4 py-8">
+                <div className="flex items-center justify-between gap-3">
+                    <Bell size={22} className="text-[#232e3d]" />
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f2d0b7] text-[13px] font-bold text-[#7e421f]">{initials}</div>
+                        <div className="min-w-0">
+                            <p className="truncate text-[15px] font-bold text-[#232e3d]">{displayName}</p>
+                            <p className="text-[15px] text-[#8b98a5]">Basic</p>
+                        </div>
+                    </div>
+                    <MoreHorizontal size={20} className="text-[#232e3d]" />
+                </div>
+
+                <div className="mt-8 flex h-11 items-center gap-4 rounded-full bg-[#e6e6e6] px-3 text-[15px] text-[#8b98a5]">
+                    <Search size={20} />
+                    <span>Search</span>
+                </div>
+
+                <DesktopRailCard title="Financial Health Score" action="View More" onAction={() => onSelectSection?.('health')}>
+                    <DesktopNotice>🥳 You are doing great, {displayName.split(' ')[0]}! Keep Up 👍🏻</DesktopNotice>
+                    <div className="mt-4 flex items-center gap-4">
+                        <DesktopGauge score={healthScore} amount={formatCurrency(remaining || totalIncome || 187000)} />
+                        <div className="min-w-0 flex-1 space-y-2">
+                            <DesktopLegend label="Savings Rate" value="28%" color="bg-[#0c6060]" />
+                            <DesktopLegend label="Debt Ratio" value="14%" color="bg-[#eabb3a]" valueClassName="text-[#eabb3a]" />
+                            <DesktopLegend label="Budget" value={`${spendingPercent || 50}%`} color="bg-[#eb7e00]" valueClassName="text-[#eb7e00]" />
+                            <DesktopLegend label="Investments" value="8%" color="bg-[#246bfd]" valueClassName="text-[#246bfd]" />
+                        </div>
+                    </div>
+                </DesktopRailCard>
+
+                <DesktopRailCard title={activeTab === 'expenses' ? 'Spending Breakdown' : 'Investment Portfolio'} action="View More" onAction={() => navigateBudgetTab('expenses')}>
+                    <DesktopNotice>{hasTransactions ? 'Your month is moving well.' : 'Add transactions to unlock spending insights.'}</DesktopNotice>
+                    <div className="mt-4 flex items-center gap-4">
+                        <DesktopPie rows={budgetRows} />
+                        <div className="min-w-0 flex-1 space-y-2">
+                            {budgetRows.map((row) => (
+                                <DesktopLegend key={row.label} label={row.label} value={`${row.percent.toFixed(0)}%`} color={row.color} />
+                            ))}
+                        </div>
+                    </div>
+                </DesktopRailCard>
+
+                <section className="mt-6 px-4">
+                    <h3 className="text-[16px] font-bold text-[#232e3d]">Insights</h3>
+                    <p className="mt-1 text-[12px] text-[#8e97ab]">Analytic breakdown of where your money goes</p>
+                    <div className="mt-3 space-y-3">
+                        <DesktopInsight tone="amber" title={spendingPercent > 80 ? 'Shopping alert' : 'Budget setup'} text={spendingPercent > 80 ? `You've spent ${spendingPercent}% of your budget this month` : 'Add income, pick a plan, then track transactions.'} />
+                        <DesktopInsight tone="green" title="Great job!" text={expenseCount > 0 ? `${expenseCount} transaction${expenseCount === 1 ? '' : 's'} tracked this month` : 'Your planner is ready for the next move.'} />
+                    </div>
+                </section>
+            </aside>
+
+            {desktopIncomeModalOpen && (
+                <DesktopModal title="Add Income" onClose={() => setDesktopIncomeModalOpen(false)}>
+                    <MobileIncomeStep onSaved={handleDesktopIncomeSaved} isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting} />
+                </DesktopModal>
+            )}
+
+            {desktopTransactionModalOpen && (
+                <DesktopModal title="Add Transaction" onClose={() => setDesktopTransactionModalOpen(false)}>
+                    <MobileTransactionSheet
+                        budgets={budgets}
+                        defaultLane="Needs"
+                        setup={mobileBudgetSetup}
+                        onClose={() => setDesktopTransactionModalOpen(false)}
+                        onSaved={handleTransactionSaved}
+                    />
+                </DesktopModal>
+            )}
+        </section>
+    );
+};
+
+const DesktopFlowTabs = ({ activeTab, canContinue, onChangePlan, onSelect, setup }) => (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+        {setup?.label && (
+            <button
+                type="button"
+                onClick={onChangePlan}
+                className="rounded-full border border-[#eabb3a] bg-white px-3 py-2 text-[12px] font-semibold text-[#9b6c00] transition hover:bg-[#fff8e6]"
+            >
+                Change Plan
+            </button>
+        )}
+        <div className="flex rounded-full bg-white p-1 shadow-[0_0_1px_rgba(0,0,0,0.12)]">
+            {[
+                ['overview', 'Overview'],
+                ['budgets', 'Budgets'],
+                ['expenses', 'Transactions'],
+                ['goals', 'Savings'],
+            ].map(([id, label]) => (
+                <button
+                    key={id}
+                    type="button"
+                    onClick={() => onSelect(id)}
+                    className={`rounded-full px-3 py-2 text-[12px] font-semibold transition-colors ${
+                        activeTab === id ? 'bg-[#0c6060] text-white' : 'text-[#5e5f60] hover:bg-[#eef8f3]'
+                    }`}
+                >
+                    {label}
+                </button>
+            ))}
+            <span className={`ml-1 rounded-full px-3 py-2 text-[12px] font-semibold ${canContinue ? 'bg-[#e7f6f1] text-[#0c6060]' : 'bg-[#f1f1f1] text-[#a0a0a0]'}`}>Continue</span>
+        </div>
+    </div>
+);
+
+const DesktopEmptyCard = ({ action, disabledLabel = null, onAction, onSecondary, secondaryAction, text, title }) => (
+    <div className="mx-auto flex w-full max-w-[21.5rem] flex-col items-center rounded-2xl bg-white p-6 text-center shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5] text-[36px]">📭</div>
+        <h3 className="mt-6 text-[18px] font-bold text-[#141c2b]">{title}</h3>
+        <p className="mt-2 text-[13px] leading-5 text-[#8e97ab]">{text}</p>
+        <button type="button" onClick={onAction} className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#eabb3a] px-7 py-3 text-[14px] font-semibold text-[#eabb3a]">
+            <Plus size={18} />
+            {action}
+        </button>
+        {secondaryAction && (
+            <button type="button" onClick={onSecondary} className="mt-3 text-[12px] font-semibold text-[#0c6060]">{secondaryAction}</button>
+        )}
+        {disabledLabel && <button type="button" disabled className="mt-12 w-full rounded-full bg-[#d7d7d7] px-6 py-4 text-[16px] font-bold text-white">{disabledLabel}</button>}
+    </div>
+);
+
+const DesktopPlanGrid = ({ activePlanId, disabled, onSelect }) => (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {mobileBudgetPlans.map((plan) => (
+            <button
+                key={plan.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(plan)}
+                className={`min-h-[12rem] rounded-[18px] border bg-white p-4 text-left shadow-[0_12px_28px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-[#eabb3a] disabled:cursor-not-allowed disabled:opacity-60 ${
+                    activePlanId === plan.id ? 'border-[#0c6060] ring-2 ring-[#0c6060]/10' : 'border-[#eef0f3]'
+                }`}
+            >
+                <div className="flex items-center justify-between gap-2">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold ${plan.group === 'Recommended' ? 'bg-[#fff7e0] text-[#9b6c00]' : 'bg-[#eaf5ff] text-[#1265a8]'}`}>{plan.group}</span>
+                    {activePlanId === plan.id && <span className="rounded-full bg-[#e7f6f1] px-2 py-1 text-[10px] font-bold text-[#0c6060]">Current</span>}
+                </div>
+                <h3 className="mt-4 text-[15px] font-extrabold text-[#232e3d]">{plan.label}</h3>
+                <p className="mt-2 text-[12px] leading-5 text-[#707974]">{plan.description}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px]">
+                    <span className="rounded-full bg-[#fff2e4] py-1 text-[#eb7e00]">{plan.split.needs}%</span>
+                    <span className="rounded-full bg-[#e9f7ff] py-1 text-[#007eb6]">{plan.split.wants}%</span>
+                    <span className="rounded-full bg-[#eaf8ef] py-1 text-[#0c6060]">{plan.split.savings}%</span>
+                </div>
+            </button>
+        ))}
+    </div>
+);
+
+const DesktopCurrentPlanNotice = ({ onCancel, setup }) => (
+    <article className="mb-5 rounded-[18px] border border-[#eabb3a]/40 bg-[#fffaf0] px-5 py-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p className="text-[13px] font-bold text-[#232e3d]">Current plan: {setup?.label || 'Budget plan'}</p>
+                <p className="mt-1 text-[12px] leading-5 text-[#8e6f1d]">
+                    Changing your plan updates future guidance only. Existing budget items and transactions will stay unchanged.
+                </p>
+            </div>
+            <button type="button" onClick={onCancel} className="rounded-full border border-[#e3d7b4] bg-white px-4 py-2 text-[12px] font-bold text-[#6b5a23]">
+                Keep Current
+            </button>
+        </div>
+    </article>
+);
+
+const DesktopBudgetSummary = ({ budgetRows, budgets, expenseCount, expenses, onAddTransaction, onChangePlan, onManageBudget, remaining, setup, spendingPercent, totalBudget, totalIncome, totalSpent }) => {
+    const recent = expenses.slice(0, 4);
+    return (
+        <div className="space-y-5">
+            {setup?.label && (
+                <article className="rounded-[18px] border border-[#e3e3e5] bg-white px-5 py-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8e97ab]">Selected budget model</p>
+                            <p className="mt-1 text-[16px] font-extrabold text-[#0c6060]">{setup.label}</p>
+                            <p className="mt-1 text-[12px] text-[#707974]">
+                                Needs {setup.split?.needs || 0}% · Wants {setup.split?.wants || 0}% · Savings {setup.split?.savings || 0}%
+                            </p>
+                        </div>
+                        <button type="button" onClick={onChangePlan} className="rounded-full border border-[#eabb3a] bg-white px-5 py-2.5 text-[13px] font-bold text-[#9b6c00] hover:bg-[#fff8e6]">
+                            Change Plan
+                        </button>
+                    </div>
+                </article>
+            )}
+
+            <div className="text-center">
+                <p className="text-[13px] text-[#67677a]">Your remaining budget balance</p>
+                <p className="mt-1 text-[36px] font-bold text-[#303048]">{formatCurrency(remaining)}</p>
+                <div className="mx-auto mt-3 flex min-h-[34px] max-w-[311px] items-center justify-center rounded-full px-4 text-[12px] text-[#232e3d]" style={{ backgroundImage: 'linear-gradient(124deg, rgba(234,187,58,0.44) 0%, rgba(234,187,58,0) 92%)' }}>
+                    😎 Congrats! your month is moving well
+                </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <DesktopMetric label="Net Income" value={formatCurrency(totalIncome)} />
+                <DesktopMetric label="Spent so far" value={formatCurrency(totalSpent)} />
+                <DesktopMetric label="Budget allocated" value={formatCurrency(totalBudget)} />
+            </div>
+
+            <article className="rounded-[23px] border border-[#e3e3e5] bg-white px-5 py-5 shadow-[0_32px_51px_-13px_rgba(34,24,63,0.06)]">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-[14px] font-bold text-[#232e3d]">Spending Progress</p>
+                        <p className="mt-1 text-[12px] text-[#8e97ab]">{expenseCount} transaction{expenseCount === 1 ? '' : 's'} tracked</p>
+                    </div>
+                    <span className="rounded-full bg-[#eabb3a] px-3 py-1 text-[12px] font-bold text-white">{spendingPercent}%</span>
+                </div>
+                <div className="mt-4 grid h-2 w-full grid-cols-[50fr_30fr_20fr] overflow-hidden rounded-full bg-[#e3e3e5]">
+                    <span className="bg-[#f46040]" />
+                    <span className="bg-[#56bada]" />
+                    <span className="bg-[#6347eb]" />
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    {budgetRows.slice(0, 3).map((row) => (
+                        <div key={row.label} className="rounded-2xl bg-[#f8f8f8] px-4 py-3">
+                            <p className="text-[12px] text-[#707974]">{row.label}</p>
+                            <p className="mt-1 text-[16px] font-bold text-[#303048]">{row.percent.toFixed(0)}%</p>
+                        </div>
+                    ))}
+                </div>
+            </article>
+
+            <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+                <article className="rounded-[18px] bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-[15px] font-bold text-[#232e3d]">Recent Transactions</h3>
+                        <button type="button" onClick={onAddTransaction} className="rounded-full bg-[#0c6060] px-4 py-2 text-[12px] font-bold text-white">Add Transaction</button>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                        {recent.map((expense) => (
+                            <div key={expense.uuid || expense.id || `${expense.amount}-${expense.created_at}`} className="flex items-center justify-between rounded-2xl bg-[#f8f8f8] px-4 py-3">
+                                <div>
+                                    <p className="text-[13px] font-bold text-[#232e3d]">{expense.category_name || expense.description || 'Transaction'}</p>
+                                    <p className="text-[11px] text-[#8e97ab]">{expense.expense_date || expense.created_at || 'This month'}</p>
+                                </div>
+                                <p className="text-[13px] font-bold text-[#0c6060]">{formatCurrency(toNumber(expense.amount))}</p>
+                            </div>
+                        ))}
+                    </div>
+                </article>
+
+                <article className="rounded-[18px] bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                    <h3 className="text-[15px] font-bold text-[#232e3d]">Next Best Actions</h3>
+                    <div className="mt-4 space-y-3">
+                        <DesktopAction title="Update budget items" text={`${budgets.length} budget item${budgets.length === 1 ? '' : 's'} active`} onClick={onManageBudget} />
+                        <DesktopAction title="Keep expenses current" text="Log recent spending for sharper alerts" onClick={onAddTransaction} />
+                    </div>
+                </article>
+            </div>
+        </div>
+    );
+};
+
+const DesktopModal = ({ children, onClose, title }) => (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 px-4 py-8 backdrop-blur-[2px]">
+        <section className="max-h-[88vh] w-full max-w-[24rem] overflow-y-auto rounded-[18px] bg-white p-5 shadow-[0_28px_90px_rgba(15,23,42,0.32)]">
+            <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-[16px] font-bold text-[#141c2b]">{title}</h3>
+                <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dde1ea] text-[#707974]" aria-label={`Close ${title}`}>
+                    <X size={15} />
+                </button>
+            </div>
+            {children}
+        </section>
+    </div>
+);
+
+const DesktopNavButton = ({ active = false, icon: Icon, label, onClick }) => (
+    <button type="button" onClick={onClick} className={`flex w-full items-center gap-5 rounded-full px-1 py-3 text-left text-[14px] ${active ? 'font-bold text-[#0c6060]' : 'text-[#5e5f60] hover:text-[#0c6060]'}`}>
+        <Icon size={22} />
+        <span>{label}</span>
+    </button>
+);
+
+const DesktopStepNote = ({ text, title }) => (
+    <div className="mb-4 rounded-2xl border border-[#e3e3e5] bg-white px-5 py-4">
+        <p className="text-[15px] font-bold text-[#232e3d]">{title}</p>
+        <p className="mt-1 text-[12px] leading-5 text-[#8e97ab]">{text}</p>
+    </div>
+);
+
+const DesktopError = ({ text }) => (
+    <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] leading-5 text-rose-700">{text}</div>
+);
+
+const DesktopMetric = ({ label, value }) => (
+    <article className="rounded-2xl bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.08)]">
+        <p className="text-[11px] font-semibold uppercase text-[#8e97ab]">{label}</p>
+        <p className="mt-2 break-words text-[20px] font-extrabold text-[#0c6060]">{value}</p>
+    </article>
+);
+
+const DesktopAction = ({ onClick, text, title }) => (
+    <button type="button" onClick={onClick} className="w-full rounded-2xl bg-[#f8f8f8] px-4 py-3 text-left hover:bg-[#eef8f4]">
+        <span className="block text-[13px] font-bold text-[#232e3d]">{title}</span>
+        <span className="mt-1 block text-[11px] text-[#8e97ab]">{text}</span>
+    </button>
+);
+
+const DesktopRailCard = ({ action, children, onAction, title }) => (
+    <article className="mt-6 rounded-[10px] bg-white p-4 shadow-[0_0_1px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between">
+            <h3 className="text-[12px] font-semibold text-[#232e3d]">{title}</h3>
+            <button type="button" onClick={onAction} className="text-[12px] font-semibold text-[#0c6060]">{action}</button>
+        </div>
+        {children}
+    </article>
+);
+
+const DesktopNotice = ({ children }) => (
+    <div className="mt-4 rounded-full bg-[linear-gradient(122deg,_rgba(234,187,58,0.44)_0%,_rgba(234,187,58,0)_93%)] px-4 py-2 text-[12px] text-[#232e3d]">{children}</div>
+);
+
+const DesktopLegend = ({ color, label, value, valueClassName = 'text-[#0c6060]' }) => (
+    <div className="flex items-center gap-2 text-[12px]">
+        <span className={`h-[5px] w-[5px] shrink-0 rounded-full ${color}`} />
+        <span className="min-w-0 flex-1 truncate text-[#232e3d]">{label}</span>
+        <span className={`shrink-0 ${valueClassName}`}>{value}</span>
+    </div>
+);
+
+const DesktopGauge = ({ amount, score }) => {
+    const safeScore = Math.max(0, Math.min(100, Number(score || 0)));
+    return (
+        <div className="relative h-[6.6rem] w-[8.8rem] shrink-0">
+            <svg viewBox="0 0 150 112" className="h-full w-full">
+                <path d="M16 86 A58 58 0 0 1 134 86" fill="none" stroke="#edf1ff" strokeWidth="12" strokeLinecap="round" />
+                <path d="M16 86 A58 58 0 0 1 134 86" fill="none" stroke="#eabb3a" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${safeScore * 1.82} 220`} />
+            </svg>
+            <div className="absolute inset-x-0 top-[3.1rem] text-center">
+                <p className="text-[24px] font-bold leading-none text-[#232e3d]">{safeScore}%</p>
+                <p className="mt-1 text-[12px] text-[#232e3d]">{amount}</p>
+            </div>
+        </div>
+    );
+};
+
+const DesktopPie = ({ rows }) => {
+    const colors = ['#0c6060', '#eabb3a', '#eb7e00', '#246bfd'];
+    const normalized = rows.length ? rows.slice(0, 4) : [{ percent: 39 }, { percent: 28 }, { percent: 23 }, { percent: 10 }];
+    const segments = normalized.reduce((accumulator, row, index) => {
+        const start = accumulator.cursor;
+        const end = start + Math.max(Number(row.percent || 0), 5);
+        return { cursor: end, stops: [...accumulator.stops, `${colors[index % colors.length]} ${start}% ${end}%`] };
+    }, { cursor: 0, stops: [] });
+
+    return <div className="h-28 w-28 shrink-0 rounded-full p-5" style={{ background: `conic-gradient(${segments.stops.join(', ')}, #eef1f5 ${segments.cursor}% 100%)` }}><div className="h-full w-full rounded-full bg-white" /></div>;
+};
+
+const DesktopInsight = ({ text, title, tone }) => {
+    const isGreen = tone === 'green';
+    return (
+        <div className={`flex items-center gap-3 rounded-2xl px-4 py-4 ${isGreen ? 'bg-[#f0fdf4]' : 'bg-[#fff7ed]'}`}>
+            <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isGreen ? 'bg-[#dcfce7] text-[#0d542b]' : 'bg-[#ffedd4] text-[#7e2a0c]'}`}>
+                {isGreen ? <Check size={18} /> : <Receipt size={18} />}
+            </span>
+            <span className="min-w-0">
+                <span className={`block text-[14px] font-semibold ${isGreen ? 'text-[#0d542b]' : 'text-[#7e2a0c]'}`}>{title}</span>
+                <span className="mt-1 block text-[12px] leading-4 text-[#4a5565]">{text}</span>
+            </span>
+        </div>
+    );
+};
+
+const buildDesktopBudgetRows = (budgets = [], totalIncome = 0) => {
+    const colors = ['bg-[#0c6060]', 'bg-[#eabb3a]', 'bg-[#eb7e00]', 'bg-[#246bfd]'];
+    const totalBudget = budgets.reduce((sum, item) => sum + toNumber(item?.amount), 0);
+    if (budgets.length > 0 && totalBudget > 0) {
+        return budgets.slice(0, 4).map((budget, index) => ({
+            label: budget?.category_name || `Budget ${index + 1}`,
+            percent: (toNumber(budget?.amount) / totalBudget) * 100,
+            color: colors[index % colors.length],
+        }));
+    }
+
+    const base = totalIncome > 0
+        ? [{ label: 'Needs', percent: 50 }, { label: 'Wants', percent: 30 }, { label: 'Savings', percent: 20 }]
+        : [{ label: 'Money Market', percent: 39 }, { label: 'Special Fund', percent: 28 }, { label: 'Treasury Bond', percent: 23 }, { label: 'Whole Life Policy', percent: 5 }];
+
+    return base.map((row, index) => ({ ...row, color: colors[index % colors.length] }));
 };
 
 const MobileIncomeStep = ({ onSaved, isSubmitting, setIsSubmitting }) => {
@@ -1534,7 +2264,7 @@ const MobileBudgetStepHeader = ({ activeLane, budgets = [], setup }) => {
                 </span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
-                {mobileBudgetLaneOrder.map((lane, index) => {
+                {mobileBudgetLaneOrder.map((lane) => {
                     const complete = budgets.some((item) => deriveBudgetCategoryType(item?.category_name) === lane);
                     const active = lane === activeLane;
 

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     AlertCircle,
     ArrowRight,
@@ -11,6 +11,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import NetWorthEntryModal from './NetWorthEntryModal';
+import { useAdaptivePolling } from '../../../hooks/useAdaptivePolling';
 import {
     createAsset,
     createLiability,
@@ -53,6 +54,9 @@ const emptyBreakdown = {
     currency: 'KES',
 };
 
+const NET_WORTH_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const NET_WORTH_MAX_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+
 const formatKES = (value) => `KES ${Number(value || 0).toLocaleString('en-KE')}`;
 const formatSignedKES = (value) => `${value >= 0 ? '+' : '-'}${formatKES(Math.abs(value || 0))}`;
 const formatCompactKES = (value) => {
@@ -62,6 +66,31 @@ const formatCompactKES = (value) => {
     return formatKES(amount);
 };
 const formatSignedCompactKES = (value) => `${value >= 0 ? '+' : '-'}${formatCompactKES(Math.abs(value || 0))}`;
+const formatSyncDelay = (ms) => {
+    if (!ms) return 'soon';
+    const minutes = Math.max(1, Math.round(ms / 60000));
+    return `${minutes} min`;
+};
+const getNetWorthSyncCopy = (sync = {}) => {
+    if (sync.pausedReason === 'hidden') {
+        return { label: 'Paused', detail: 'Resumes when active', dot: 'bg-amber-300' };
+    }
+    if (sync.pausedReason === 'offline') {
+        return { label: 'Offline', detail: 'Refresh waits for connection', dot: 'bg-amber-300' };
+    }
+    if (sync.isPolling) {
+        return { label: 'Syncing', detail: 'Updating your net worth', dot: 'bg-blue-300' };
+    }
+    if (sync.lastError) {
+        return { label: 'Retrying', detail: sync.lastError, dot: 'bg-rose-300' };
+    }
+
+    return {
+        label: 'Live',
+        detail: `Next check in ${formatSyncDelay(sync.nextRunInMs || sync.currentIntervalMs)}`,
+        dot: 'bg-emerald-200',
+    };
+};
 
 const assetIconByLabel = (label = '') => {
     const normalized = label.toLowerCase();
@@ -98,8 +127,10 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const loadWorkspace = async () => {
-        setLoading(true);
+    const loadWorkspace = useCallback(async ({ quiet = false } = {}) => {
+        if (!quiet) {
+            setLoading(true);
+        }
         setError('');
 
         try {
@@ -115,27 +146,58 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
             const [summaryResult, breakdownResult, historyResult, assetCategoryResult, liabilityCategoryResult, assetsResult, liabilitiesResult] = results;
             const failures = results.filter((result) => result.status === 'rejected');
 
-            setSummary({ ...emptySummary, ...(summaryResult.status === 'fulfilled' ? summaryResult.value : {}) });
-            setBreakdown({ ...emptyBreakdown, ...(breakdownResult.status === 'fulfilled' ? breakdownResult.value : {}) });
-            setHistory(historyResult.status === 'fulfilled' ? historyResult.value : { history: [], trendPercentage: 0, trendDirection: 'stable', currency: 'KES' });
-            setAssetCategories(assetCategoryResult.status === 'fulfilled' ? assetCategoryResult.value : []);
-            setLiabilityCategories(liabilityCategoryResult.status === 'fulfilled' ? liabilityCategoryResult.value : []);
-            setAssetsState(assetsResult.status === 'fulfilled' ? assetsResult.value : { assets: [], count: 0, totalValue: 0 });
-            setLiabilitiesState(liabilitiesResult.status === 'fulfilled' ? liabilitiesResult.value : { liabilities: [], count: 0, totalOwed: 0 });
+            const nextSummary = { ...emptySummary, ...(summaryResult.status === 'fulfilled' ? summaryResult.value : {}) };
+            const nextBreakdown = { ...emptyBreakdown, ...(breakdownResult.status === 'fulfilled' ? breakdownResult.value : {}) };
+            const nextHistory = historyResult.status === 'fulfilled' ? historyResult.value : { history: [], trendPercentage: 0, trendDirection: 'stable', currency: 'KES' };
+            const nextAssetCategories = assetCategoryResult.status === 'fulfilled' ? assetCategoryResult.value : [];
+            const nextLiabilityCategories = liabilityCategoryResult.status === 'fulfilled' ? liabilityCategoryResult.value : [];
+            const nextAssetsState = assetsResult.status === 'fulfilled' ? assetsResult.value : { assets: [], count: 0, totalValue: 0 };
+            const nextLiabilitiesState = liabilitiesResult.status === 'fulfilled' ? liabilitiesResult.value : { liabilities: [], count: 0, totalOwed: 0 };
+
+            setSummary(nextSummary);
+            setBreakdown(nextBreakdown);
+            setHistory(nextHistory);
+            setAssetCategories(nextAssetCategories);
+            setLiabilityCategories(nextLiabilityCategories);
+            setAssetsState(nextAssetsState);
+            setLiabilitiesState(nextLiabilitiesState);
 
             if (failures.length) {
                 setError('Some net worth data could not be loaded. Showing the available planner data for now.');
             }
+
+            return {
+                netWorth: nextSummary.netWorth,
+                totalAssets: nextSummary.totalAssets,
+                totalLiabilities: nextSummary.totalLiabilities,
+                change30d: nextSummary.change30d,
+                assetCount: nextAssetsState.count || nextAssetsState.assets?.length || 0,
+                liabilityCount: nextLiabilitiesState.count || nextLiabilitiesState.liabilities?.length || 0,
+                historyCount: nextHistory.history?.length || 0,
+                manualAssets: nextBreakdown.assets?.manual?.length || 0,
+                connectedGoalAssets: nextBreakdown.assets?.fromGoals?.length || 0,
+                connectedDebts: nextBreakdown.liabilities?.debts?.length || 0,
+            };
         } catch (loadError) {
             setError(loadError.message || 'We could not load your net worth overview right now.');
+            throw loadError;
         } finally {
-            setLoading(false);
+            if (!quiet) {
+                setLoading(false);
+            }
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadWorkspace();
-    }, []);
+    }, [loadWorkspace]);
+
+    const sync = useAdaptivePolling({
+        enabled: true,
+        poll: () => loadWorkspace({ quiet: true }),
+        minIntervalMs: NET_WORTH_REFRESH_INTERVAL_MS,
+        maxIntervalMs: NET_WORTH_MAX_REFRESH_INTERVAL_MS,
+    });
 
     const closeModal = () => {
         if (isSubmitting) return;
@@ -333,6 +395,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
         { title: 'Protection', subtitle: 'Insurance assets included', cta: 'View', key: 'protection', icon: '🛡️' },
         { title: 'Market Watch', subtitle: 'Track signals that affect wealth growth', cta: 'Open', key: 'marketwatch', icon: '📊' },
     ];
+    const syncCopy = getNetWorthSyncCopy(sync);
 
     return (
         <>
@@ -368,6 +431,7 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     onEditAsset={(item) => openEditModal('asset', item)}
                     onEditLiability={(item) => openEditModal('liability', item)}
                     onRefresh={loadWorkspace}
+                    sync={sync}
                     summary={summary}
                     totalAssets={totalAssets}
                     totalLiabilities={totalLiabilities}
@@ -395,6 +459,11 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                                 <p className="text-sm text-emerald-100">
                                     {cashFlowGrowth >= 0 ? '▲' : '▼'} {formatSignedKES(cashFlowGrowth)} this month ({summary.changePercentage30d || 9.3}%)
                                 </p>
+                                <div className="mt-2 inline-flex max-w-[280px] items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-left text-xs text-white/85 backdrop-blur-sm">
+                                    <span className={`h-2 w-2 rounded-full ${syncCopy.dot}`} />
+                                    <span className="font-semibold">{syncCopy.label}</span>
+                                    <span className="truncate text-white/65">{syncCopy.detail}</span>
+                                </div>
                             </div>
 
                             <div className="flex flex-wrap gap-3 lg:justify-end">
@@ -668,6 +737,7 @@ const MobileNetWorthTracker = ({
     onEditLiability,
     onRefresh,
     summary,
+    sync,
     totalAssets,
     totalLiabilities,
     yearlyGrowth,
@@ -693,11 +763,18 @@ const MobileNetWorthTracker = ({
             assets: Math.max(totalAssets * (0.55 + index * 0.045), 0),
             liabilities: Math.max(totalLiabilities * (0.9 + index * 0.025), 0),
         }));
+    const syncCopy = getNetWorthSyncCopy(sync);
 
     return (
         <div className="mx-auto max-w-[390px] overflow-hidden rounded-[1.35rem] bg-[#f8f9f8] pb-5 shadow-sm md:hidden">
             <div className="px-4 pt-4">
                 <MobileNetWorthHeader />
+
+                <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-[#dfe8e4] bg-white px-3 py-1.5 text-[0.64rem] text-slate-500 shadow-sm">
+                    <span className={`h-1.5 w-1.5 rounded-full ${syncCopy.dot}`} />
+                    <span className="font-extrabold text-[#0c6060]">{syncCopy.label}</span>
+                    <span className="truncate">{syncCopy.detail}</span>
+                </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-2">
                     <MobileMetricCard label="Total assets" value={formatCompactKES(totalAssets)} helper={`${formatSignedCompactKES(yearlyGrowth / 12)} vs last month`} tone="text-[#15613f]" />

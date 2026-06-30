@@ -392,7 +392,6 @@ const Footer = () => {
                             <Link to="/privacy" className="!text-white/80 transition-colors hover:!text-white">Data Privacy Policy</Link>
                             <Link to="/terms" className="!text-white/80 transition-colors hover:!text-white">Terms of Service</Link>
                             <Link to="/privacy#cookies" className="!text-white/80 transition-colors hover:!text-white">Cookie Policy</Link>
-                            <Link to="/data-protection" className="!text-white/80 transition-colors hover:!text-white">Data Protection</Link>
                         </div>
                         <p className="text-center text-xs font-medium !text-white">
                             &copy; {new Date().getFullYear()} Kaizen Publishers Limited. All Rights Reserved.

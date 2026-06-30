@@ -5,6 +5,19 @@ import ComponentBreakdown from './ComponentBreakdown';
 import ScoreHistoryChart from './ScoreHistoryChart';
 import InsightsPanel from './InsightsPanel';
 import ComponentDetailModal from './ComponentDetailModal';
+import { useAdaptivePolling } from '../../../hooks/useAdaptivePolling';
+
+const FINANCIAL_HEALTH_POLL_INTERVAL_MS = 5 * 60 * 1000;
+const FINANCIAL_HEALTH_MAX_POLL_INTERVAL_MS = 20 * 60 * 1000;
+
+function formatSyncDelay(ms) {
+    if (!ms) {
+        return 'soon';
+    }
+
+    const minutes = Math.max(1, Math.round(ms / 60000));
+    return `${minutes} min`;
+}
 
 const FinancialHealthDashboard = () => {
     const {
@@ -25,6 +38,13 @@ const FinancialHealthDashboard = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [selectedComponent, setSelectedComponent] = useState(null);
     const [lastTriggerTimestamp, setLastTriggerTimestamp] = useState(null);
+    const pollFinancialHealth = useCallback(() => refreshAll(true), [refreshAll]);
+    const syncStatus = useAdaptivePolling({
+        enabled: true,
+        poll: pollFinancialHealth,
+        minIntervalMs: FINANCIAL_HEALTH_POLL_INTERVAL_MS,
+        maxIntervalMs: FINANCIAL_HEALTH_MAX_POLL_INTERVAL_MS,
+    });
 
     const healthScoreValue = Number(healthScore?.overall_score ?? 0);
     const healthStatus = healthScore?.status || 'unknown';
@@ -95,18 +115,6 @@ const FinancialHealthDashboard = () => {
         };
     }, [lastTriggerTimestamp, refreshAll]);
 
-    // Auto-refresh every 5 minutes if on the page
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                console.log('Auto-refreshing health score (5 min interval)');
-                refreshAll(true);
-            }
-        }, 5 * 60 * 1000); // 5 minutes
-
-        return () => clearInterval(intervalId);
-    }, [refreshAll]);
-
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
@@ -160,6 +168,26 @@ const FinancialHealthDashboard = () => {
         );
     }
 
+    const syncLabel = syncStatus.pausedReason === 'hidden'
+        ? 'Live sync paused'
+        : syncStatus.pausedReason === 'offline'
+            ? 'Waiting for connection'
+            : syncStatus.isPolling
+                ? 'Syncing now'
+                : 'Live sync active';
+    const syncDetail = syncStatus.pausedReason === 'hidden'
+        ? 'Refresh resumes when this tab is active.'
+        : syncStatus.pausedReason === 'offline'
+            ? 'Dashboard will refresh when you are back online.'
+            : syncStatus.lastError
+                ? syncStatus.lastError
+                : `Next check in ${formatSyncDelay(syncStatus.nextRunInMs || syncStatus.currentIntervalMs)}.`;
+    const syncDotClass = syncStatus.pausedReason
+        ? 'bg-amber-400'
+        : syncStatus.isPolling
+            ? 'bg-blue-500'
+            : 'bg-emerald-500';
+
     return (
         <div className="min-h-screen bg-[linear-gradient(180deg,_#f8fafc_0%,_#eef4f8_100%)]">
             <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -177,11 +205,19 @@ const FinancialHealthDashboard = () => {
                                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
                                     Track your financial health score across key metrics including savings rate, debt burden, emergency fund, budget adherence, and net worth trend.
                                 </p>
-                                {lastRefresh && (
-                                    <p className="mt-2 text-xs text-slate-500">
-                                        Last updated: {new Date(lastRefresh).toLocaleTimeString()}
-                                    </p>
-                                )}
+                                <div className="mt-4 flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:items-center">
+                                    {lastRefresh && (
+                                        <span>
+                                            Last updated: {new Date(lastRefresh).toLocaleTimeString()}
+                                        </span>
+                                    )}
+                                    <span className="hidden text-slate-300 sm:inline">|</span>
+                                    <span className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-700">
+                                        <span className={`h-2 w-2 rounded-full ${syncDotClass}`} />
+                                        {syncLabel}
+                                    </span>
+                                    <span className="text-slate-500">{syncDetail}</span>
+                                </div>
                             </div>
                             <button
                                 onClick={handleRefresh}

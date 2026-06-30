@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import {
     getHealthScore,
     getHealthScoreHistory,
@@ -90,35 +90,27 @@ export const FinancialHealthProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            await Promise.all([
+            const [nextHealthScore, nextScoreHistory, nextScoreBreakdown, nextInsights] = await Promise.all([
                 fetchHealthScore(forceRefresh),
                 fetchScoreHistory(),
                 fetchScoreBreakdown(),
                 fetchInsights()
             ]);
             setLastRefresh(Date.now());
+
+            return {
+                healthScore: nextHealthScore,
+                scoreHistory: nextScoreHistory,
+                scoreBreakdown: nextScoreBreakdown,
+                insights: nextInsights,
+            };
         } catch (err) {
             setError(err.message);
+            throw err;
         } finally {
             setLoading(false);
         }
     }, [fetchHealthScore, fetchScoreHistory, fetchScoreBreakdown, fetchInsights]);
-
-    // Auto-refresh when coming back to the tab (visibility change)
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (!document.hidden && lastRefresh) {
-                const timeSinceLastRefresh = Date.now() - lastRefresh;
-                // Refresh if more than 2 minutes since last refresh
-                if (timeSinceLastRefresh > 120000) {
-                    refreshAll(true);
-                }
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [lastRefresh, refreshAll]);
 
     const value = {
         healthScore,
