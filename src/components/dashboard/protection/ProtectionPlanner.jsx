@@ -22,7 +22,7 @@ import {
     WalletCards,
     X,
 } from 'lucide-react';
-import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
+import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets, updateAsset } from '../../../services/investmentTrackerApi';
 import { getDebts } from '../../../services/debtApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { usePlannerFinancialContext } from '../../../hooks/usePlannerFinancialContext';
@@ -34,6 +34,7 @@ import protectionPlannerHero from '../../../assets/protection-planner-hero.png';
 
 const PROTECTION_CATEGORY_NAME = 'Protection Policy';
 const FINANCIAL_CALENDAR_EVENTS_KEY = 'shilingi_financial_calendar_events';
+const PROTECTION_ANSWERS_SAVED_MESSAGE = 'Your answers are confidential and have been saved. The recommended cover is great, however you can compare cover before you choose.';
 
 const POLICY_LIBRARY = {
     'Life Insurance': { icon: Heart, color: '#ef4444', label: 'Life Insurance', subtitle: 'Whole life policy', matrixTitle: 'Death / Life', recommendedMultiplier: 4.2, urgency: 'healthy' },
@@ -55,6 +56,50 @@ const defaultCompareRates = [
     { provider: 'Britam Family Cover', premium: 3600, cover: 6000000, fit: 'Balanced', delta: '+KES 150/mo' },
     { provider: 'APA Shield Plus', premium: 4100, cover: 5500000, fit: 'Highest cover', delta: '+KES 650/mo' },
 ];
+const compareInsuranceCategories = {
+    medical: {
+        label: 'Medical',
+        helper: 'Hospital, outpatient, waiting periods, and claim speed.',
+        plans: [
+            { provider: 'Afya Premier', premium: 1950, cover: 850000, fit: 'Best fit', delta: '-KES 300/mo', waitingPeriod: '30 days', claimTurnaround: '3 - 5 days', renewal: 'Portable', subtitle: 'Inpatient + outpatient' },
+            { provider: 'Jubilee Health', premium: 2450, cover: 1200000, fit: 'Higher cover', delta: '+KES 200/mo', waitingPeriod: '45 days', claimTurnaround: '5 - 7 days', renewal: 'Portable', subtitle: 'Family medical cover' },
+            { provider: 'AAR Essential', premium: 1750, cover: 650000, fit: 'Lower premium', delta: '-KES 500/mo', waitingPeriod: '60 days', claimTurnaround: '7 days', renewal: 'Limited', subtitle: 'Core inpatient cover' },
+        ],
+    },
+    life: {
+        label: 'Life',
+        helper: 'Income replacement, beneficiary support, exclusions, and long-term value.',
+        plans: [
+            { provider: 'Britam Family Life', premium: 2500, cover: 5000000, fit: 'Best fit', delta: '-KES 150/mo', waitingPeriod: 'Immediate', claimTurnaround: '7 - 10 days', renewal: 'Guaranteed', subtitle: 'Term life cover' },
+            { provider: 'ICEA Lion Life', premium: 3200, cover: 7500000, fit: 'Highest cover', delta: '+KES 550/mo', waitingPeriod: 'Immediate', claimTurnaround: '10 days', renewal: 'Guaranteed', subtitle: 'Family protection' },
+            { provider: 'Madison Life Plan', premium: 2100, cover: 4000000, fit: 'Affordable', delta: '-KES 550/mo', waitingPeriod: '14 days', claimTurnaround: '10 - 14 days', renewal: 'Annual review', subtitle: 'Starter life cover' },
+        ],
+    },
+    disability: {
+        label: 'Disability',
+        helper: 'Income continuity if illness or injury affects your ability to work.',
+        plans: [
+            { provider: 'APA Income Shield', premium: 3000, cover: 3000000, fit: 'Best fit', delta: '-KES 250/mo', waitingPeriod: '60 days', claimTurnaround: '10 days', renewal: 'Portable', subtitle: 'Income protection' },
+            { provider: 'Old Mutual Protect', premium: 3600, cover: 4200000, fit: 'Higher payout', delta: '+KES 350/mo', waitingPeriod: '45 days', claimTurnaround: '7 - 10 days', renewal: 'Guaranteed', subtitle: 'Disability income' },
+            { provider: 'Sanlam Disability', premium: 2850, cover: 2600000, fit: 'Balanced', delta: '-KES 400/mo', waitingPeriod: '90 days', claimTurnaround: '14 days', renewal: 'Annual review', subtitle: 'Core disability cover' },
+        ],
+    },
+    car: {
+        label: 'Car',
+        helper: 'Comprehensive value, excess terms, claim handling, and roadside support.',
+        plans: [
+            { provider: 'APA Motor Plus', premium: 4500, cover: 1800000, fit: 'Best fit', delta: '-KES 300/mo', waitingPeriod: 'Immediate', claimTurnaround: '3 - 5 days', renewal: 'Annual', subtitle: 'Comprehensive motor' },
+            { provider: 'Jubilee Auto', premium: 5200, cover: 2200000, fit: 'Higher vehicle value', delta: '+KES 400/mo', waitingPeriod: 'Immediate', claimTurnaround: '5 days', renewal: 'Annual', subtitle: 'Comprehensive + extras' },
+            { provider: 'CIC Motor Secure', premium: 3900, cover: 1500000, fit: 'Lower premium', delta: '-KES 900/mo', waitingPeriod: 'Immediate', claimTurnaround: '7 days', renewal: 'Annual', subtitle: 'Core motor cover' },
+        ],
+    },
+};
+const compareCategoryForPolicyType = (policyType = '') => {
+    if (policyType === 'Life Insurance') return 'life';
+    if (policyType === 'Car Insurance') return 'car';
+    if (policyType === 'Disability Cover' || policyType === 'Income Protection' || policyType === 'Critical Illness Cover') return 'disability';
+    return 'medical';
+};
 
 const protectionQuestions = [
     {
@@ -102,6 +147,17 @@ const protectionQuestions = [
             { label: 'Young family with children', value: 'young-family' },
             { label: 'Established family', value: 'established-family' },
             { label: 'Approaching retirement', value: 'retirement' },
+        ],
+    },
+    {
+        id: 'priority',
+        question: 'What matters most to protect first?',
+        helper: 'Your priority helps shape the first cover recommendation before comparing providers.',
+        options: [
+            { label: 'My health & medical bills', value: 'medical' },
+            { label: "My family's future", value: 'family' },
+            { label: 'My income', value: 'income' },
+            { label: 'My assets (home, car)', value: 'assets' },
         ],
     },
 ];
@@ -182,6 +238,10 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
     const [showCompareModal, setShowCompareModal] = useState(false);
     const [deletingPolicyId, setDeletingPolicyId] = useState('');
     const [policyForm, setPolicyForm] = useState(defaultPolicyForm);
+    const [selectedPolicy, setSelectedPolicy] = useState(null);
+    const [managePolicyForm, setManagePolicyForm] = useState({ provider: '', coverageAmount: '', monthlyPremium: '', status: 'ACTIVE', notes: '' });
+    const [claimForm, setClaimForm] = useState({ claimType: 'Medical claim', incidentDate: '', amount: '', notes: '' });
+    const [compareCategory, setCompareCategory] = useState('medical');
     const [calculator, setCalculator] = useState(defaultCalculator);
     const [assets, setAssets] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -291,23 +351,6 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
         totalDebt,
         hasCarPolicy: carPolicies.length > 0,
     }), [carPolicies.length, coverageTotal, dependantCount, missingPolicies, protectionSnapshot, recommendedCover, totalDebt]);
-    const claimsHistory = useMemo(() => activePolicies.slice(0, 4).map((policy, index) => ({
-        id: policy.uuid || `${policy.name}-${index}`,
-        title: policy.protectionMeta.policyType === 'Medical Cover' ? 'Medical - Outpatient' : policy.protectionMeta.policyType,
-        month: index === 0 ? 'February 2026' : index === 1 ? 'November 2025' : index === 2 ? 'August 2025' : 'May 2025',
-        amount: formatKES(Math.max(asNumber(policy.purchaseValue) * (index + 3), 8500)),
-        status: index === 3 ? 'Processing' : 'Settled',
-    })), [activePolicies]);
-
-    const paymentCalendar = useMemo(() => activePolicies.slice(0, 3).map((policy, index) => ({
-        id: policy.uuid || `${policy.name}-${index}`,
-        name: policy.protectionMeta.policyType,
-        provider: policy.institution || 'Provider',
-        amount: formatKES(policy.purchaseValue),
-        note: `Due ${formatDate(buildPremiumCalendarDate(index))}`,
-        tone: 'border-primary-200 bg-primary-50 text-primary-700',
-    })), [activePolicies]);
-
     useEffect(() => {
         if (typeof window === 'undefined') return;
         const premiumEvents = activePolicies.map((policy, index) => ({
@@ -348,44 +391,115 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
 
     const handleCalcChange = (key, value) => setCalculator((current) => ({ ...current, [key]: value }));
     const handleFormChange = (key, value) => setPolicyForm((current) => ({ ...current, [key]: value }));
+    const handleManageFormChange = (key, value) => setManagePolicyForm((current) => ({ ...current, [key]: value }));
+    const handleClaimFormChange = (key, value) => setClaimForm((current) => ({ ...current, [key]: value }));
+    const openPolicyManagement = (policy) => {
+        setSelectedPolicy(policy);
+        setManagePolicyForm({
+            provider: policy.institution || '',
+            coverageAmount: String(policy.currentValue || ''),
+            monthlyPremium: String(policy.purchaseValue || ''),
+            status: policy.protectionMeta?.status || 'ACTIVE',
+            notes: policy.notes || '',
+        });
+        setMobileProtectionView('manage-policy');
+    };
+    const openPolicyClaim = (policy) => {
+        setSelectedPolicy(policy);
+        setClaimForm({ claimType: policy.protectionMeta?.policyType === 'Car Insurance' ? 'Motor claim' : 'Medical claim', incidentDate: new Date().toISOString().split('T')[0], amount: '', notes: '' });
+        setMobileProtectionView('file-claim');
+    };
+    const openPolicyCompare = (policy) => {
+        setCompareCategory(compareCategoryForPolicyType(policy.protectionMeta?.policyType));
+        setMobileProtectionView('compare');
+    };
+    const buildPolicyUpdatePayload = (policy, form, notesOverride) => ({
+        name: `${policy.protectionMeta?.policyType || parsePolicyType(policy)} - ${form.provider || 'Provider'}`,
+        current_value: String(asNumber(form.coverageAmount)),
+        purchase_value: String(asNumber(form.monthlyPremium)),
+        currency: policy.currency || 'KES',
+        purchase_date: policy.purchaseDate || new Date().toISOString().split('T')[0],
+        last_valued_date: policy.lastValuedDate || new Date().toISOString().split('T')[0],
+        institution: form.provider || '',
+        notes: notesOverride ?? `status:${normalize(form.status) || 'active'}${form.notes ? ` | ${form.notes}` : ''}`,
+        is_liquid: false,
+        include_in_net_worth: false,
+        ...(policy.category ? { category: policy.category } : {}),
+    });
+    const hasCompletedProtectionProfile = Boolean(profileWorkspace.protectionProfileCompletedAt);
     const startProtectionFlow = () => {
         setShowProtectionOnboarding(false);
         setProtectionFlowComplete(false);
+        setSuccess('');
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
         }
     };
+    const exitProtectionJourney = () => {
+        setShowProtectionOnboarding(false);
+        if (hasCompletedProtectionProfile) {
+            setProtectionFlowComplete(true);
+            setMobileProtectionView('overview');
+            return;
+        }
+        setProtectionStep(0);
+    };
     const updateProtectionAnswer = (question, option) => {
+        setSuccess('');
         setProtectionAnswers((current) => ({ ...current, [question.id]: option.value }));
         if (option.patch) {
             setCalculator((current) => ({ ...current, ...option.patch }));
         }
     };
-    const completeProtectionFlow = () => {
+    const resetProtectionFlow = () => {
+        const nextWorkspace = { ...profileWorkspace };
+        delete nextWorkspace.protectionIncomeBand;
+        delete nextWorkspace.protectionDebtBand;
+        delete nextWorkspace.protectionLifeStage;
+        delete nextWorkspace.protectionPriority;
+        delete nextWorkspace.protectionProfileCompletedAt;
+        setProfileWorkspace(nextWorkspace);
+        setProtectionAnswers({});
+        setCalculator(defaultCalculator);
+        setProtectionStep(0);
+        setProtectionFlowComplete(false);
+        setMobileProtectionView('overview');
+        setShowProtectionOnboarding(false);
+        setSuccess('');
+        setError('');
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(USER_PROFILE_WORKSPACE_KEY, JSON.stringify(nextWorkspace));
+            window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
+        }
+    };
+    const completeProtectionFlow = (nextView = 'overview') => {
         const nextWorkspace = {
             ...profileWorkspace,
             dependentsCount: protectionAnswers.dependents ?? calculator.dependents,
             protectionIncomeBand: protectionAnswers.income || '',
             protectionDebtBand: protectionAnswers.debt || '',
             protectionLifeStage: protectionAnswers.lifeStage || '',
+            protectionPriority: protectionAnswers.priority || '',
             protectionProfileCompletedAt: new Date().toISOString(),
         };
         setProfileWorkspace(nextWorkspace);
         setProtectionFlowComplete(true);
-        setMobileProtectionView('overview');
+        setMobileProtectionView(nextView);
         setShowProtectionOnboarding(false);
         setActiveTab('dependents');
-        setSuccess('Protection objectives saved.');
+        setSuccess(nextView === 'compare' ? PROTECTION_ANSWERS_SAVED_MESSAGE : '');
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(USER_PROFILE_WORKSPACE_KEY, JSON.stringify(nextWorkspace));
             window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
         }
     };
+    const clearProtectionNotice = () => setSuccess('');
     const goToNextProtectionStep = () => {
         const question = protectionQuestions[protectionStep];
-        if (!protectionAnswers[question.id]) return;
+        if (!question || !protectionAnswers[question.id]) return;
         if (protectionStep >= protectionQuestions.length - 1) {
-            completeProtectionFlow();
+            setProtectionStep(protectionQuestions.length);
+            setSuccess(PROTECTION_ANSWERS_SAVED_MESSAGE);
             return;
         }
         setProtectionStep((current) => Math.min(current + 1, protectionQuestions.length - 1));
@@ -395,8 +509,7 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
             setProtectionStep((current) => Math.max(current - 1, 0));
             return;
         }
-        setShowProtectionOnboarding(true);
-        setProtectionFlowComplete(false);
+        exitProtectionJourney();
     };
 
     const ensureCategory = async () => {
@@ -452,6 +565,54 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
         }
     };
 
+    const updatePolicyDetails = async (event) => {
+        event.preventDefault();
+        if (!selectedPolicy?.uuid) return;
+        setSaving(true);
+        setError('');
+        setSuccess('');
+        try {
+            await updateAsset(selectedPolicy.uuid, buildPolicyUpdatePayload(selectedPolicy, managePolicyForm));
+            setSelectedPolicy(null);
+            setMobileProtectionView('overview');
+            markDashboardDataExists();
+            setSuccess('Policy details updated.');
+            await loadData();
+        } catch (err) {
+            setError(err.message || 'Failed to update protection policy.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const submitPolicyClaim = async (event) => {
+        event.preventDefault();
+        if (!selectedPolicy?.uuid) return;
+        setSaving(true);
+        setError('');
+        setSuccess('');
+        try {
+            const baseNotes = selectedPolicy.notes || `status:${normalize(selectedPolicy.protectionMeta?.status) || 'active'}`;
+            const claimNote = `claim:${claimForm.claimType} | date:${claimForm.incidentDate} | amount:${asNumber(claimForm.amount)}${claimForm.notes ? ` | ${claimForm.notes}` : ''}`;
+            await updateAsset(selectedPolicy.uuid, buildPolicyUpdatePayload(selectedPolicy, {
+                provider: selectedPolicy.institution || '',
+                coverageAmount: String(selectedPolicy.currentValue || ''),
+                monthlyPremium: String(selectedPolicy.purchaseValue || ''),
+                status: selectedPolicy.protectionMeta?.status || 'ACTIVE',
+                notes: selectedPolicy.notes || '',
+            }, `${baseNotes} | ${claimNote}`));
+            setSelectedPolicy(null);
+            setMobileProtectionView('overview');
+            markDashboardDataExists();
+            setSuccess('Claim details saved.');
+            await loadData();
+        } catch (err) {
+            setError(err.message || 'Failed to save claim details.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const removePolicy = async (asset) => {
         if (!asset?.uuid) return;
         const confirmed = window.confirm(`Delete policy "${asset.name}"?`);
@@ -470,8 +631,6 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
         }
     };
 
-    const gapHeadline = missingPolicies.slice(0, 2).map((item) => POLICY_LIBRARY[item]?.label || item).join(' â€¢ ');
-
     return (
         <div className="space-y-4">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
@@ -483,6 +642,7 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
                 calculator={calculator}
                 complete={protectionFlowComplete}
                 compareRows={defaultCompareRates}
+                compareCategory={compareCategory}
                 coverageAdequacy={coverageAdequacy}
                 coverageGap={coverageGap}
                 coverageTotal={coverageTotal}
@@ -494,20 +654,28 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
                 onAnswer={updateProtectionAnswer}
                 onBack={goToPreviousProtectionStep}
                 onCalcChange={handleCalcChange}
+                onComplete={completeProtectionFlow}
+                onCompareOptions={() => completeProtectionFlow('compare')}
                 onCompare={() => setMobileProtectionView('compare')}
                 onFormChange={handleFormChange}
+                onClaimChange={handleClaimFormChange}
+                onClaimSubmit={submitPolicyClaim}
                 onNext={goToNextProtectionStep}
+                onPlanChoose={clearProtectionNotice}
                 onPolicySubmit={addPolicy}
-                onRestart={() => {
-                    setProtectionFlowComplete(false);
-                    setProtectionStep(0);
-                    setShowProtectionOnboarding(false);
-                    setMobileProtectionView('overview');
-                }}
+                onManagePolicy={openPolicyManagement}
+                onManagePolicyChange={handleManageFormChange}
+                onManagePolicySubmit={updatePolicyDetails}
+                onPolicyClaim={openPolicyClaim}
+                onPolicyCompare={openPolicyCompare}
+                onPolicyDelete={removePolicy}
+                onRestart={resetProtectionFlow}
                 onSetMobileView={setMobileProtectionView}
                 onStart={startProtectionFlow}
                 policies={protectionAssets}
                 policyForm={policyForm}
+                claimForm={claimForm}
+                managePolicyForm={managePolicyForm}
                 recommendedByType={recommendedByType}
                 recommendedCover={recommendedCover}
                 saving={saving}
@@ -700,7 +868,9 @@ const MobileProtectionFlow = ({
     activePolicies,
     answers,
     calculator,
+    claimForm,
     complete,
+    compareCategory,
     compareRows,
     coverageAdequacy,
     coverageGap,
@@ -713,25 +883,59 @@ const MobileProtectionFlow = ({
     onAnswer,
     onBack,
     onCalcChange,
+    onClaimChange,
+    onClaimSubmit,
+    onComplete,
+    onCompareOptions,
     onCompare,
     onFormChange,
+    onManagePolicy,
+    onManagePolicyChange,
+    onManagePolicySubmit,
     onNext,
+    onPlanChoose,
+    onPolicyClaim,
+    onPolicyCompare,
+    onPolicyDelete,
     onPolicySubmit,
     onRestart,
     onSetMobileView,
     onStart,
     policies,
     policyForm,
+    managePolicyForm,
     recommendedByType,
     recommendedCover,
     saving,
     showOnboarding,
     view,
 }) => {
-    if (showOnboarding) {
+    if (showOnboarding && !complete) {
         return <MobileProtectionWelcome displayName={displayName} onStart={onStart} />;
     }
     if (complete) {
+        if (view === 'manage-policy') {
+            return (
+                <MobileManagePolicyScreen
+                    form={managePolicyForm}
+                    onBack={() => onSetMobileView('overview')}
+                    onChange={onManagePolicyChange}
+                    onSubmit={onManagePolicySubmit}
+                    saving={saving}
+                />
+            );
+        }
+        if (view === 'file-claim') {
+            return (
+                <MobileFileClaimScreen
+                    form={claimForm}
+                    onBack={() => onSetMobileView('overview')}
+                    onChange={onClaimChange}
+                    onSubmit={onClaimSubmit}
+                    saving={saving}
+                />
+            );
+        }
         if (view === 'add-policy') {
             return (
                 <MobileAddPolicyScreen
@@ -746,7 +950,10 @@ const MobileProtectionFlow = ({
         if (view === 'compare') {
             return (
                 <MobileCompareInsuranceScreen
-                    onBack={() => onSetMobileView('policies')}
+                    onDashboard={() => onSetMobileView('overview')}
+                    onBack={() => onSetMobileView('overview')}
+                    initialCategory={compareCategory}
+                    onPlanChoose={onPlanChoose}
                     rows={compareRows}
                 />
             );
@@ -764,6 +971,10 @@ const MobileProtectionFlow = ({
                 onAddPolicy={() => onSetMobileView('add-policy')}
                 onCalcChange={onCalcChange}
                 onCompare={onCompare}
+                onManagePolicy={onManagePolicy}
+                onPolicyClaim={onPolicyClaim}
+                onPolicyCompare={onPolicyCompare}
+                onPolicyDelete={onPolicyDelete}
                 onRestart={onRestart}
                 onSetMobileView={onSetMobileView}
                 policies={policies}
@@ -774,8 +985,37 @@ const MobileProtectionFlow = ({
         );
     }
 
+    const isRecommendationStep = currentStep >= protectionQuestions.length;
+    if (isRecommendationStep) {
+        return (
+            <MobileProtectionShell>
+                <div className="px-4 pb-5">
+                    <MobileProtectionTitle onBack={onBack} />
+                    <div className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white px-3 py-3 shadow-sm">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                            <span className="inline-flex items-center gap-2 text-[0.7rem] font-bold text-[#2e7d6f]"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#e6f4ed] text-[#006d67]"><Check size={11} /></span>Recommendation ready</span>
+                            <span className="text-[0.68rem] font-bold text-slate-400">5 / 5</span>
+                        </div>
+                        <MobileProtectionProgress step={protectionQuestions.length - 1} />
+                        <h3 className="mt-4 text-[0.98rem] font-extrabold leading-5 text-slate-950">Here is the cover target built from your answers.</h3>
+                        <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">Review the estimate, then choose whether to use it as your protection starting point or adjust your answers.</p>
+                    </div>
+                    <MobileRecommendedCoverCard calculator={calculator} coverageGap={coverageGap} recommendedCover={recommendedCover} />
+                    <div className="mt-4 space-y-3">
+                        <button type="button" onClick={onCompareOptions} className="h-11 w-full rounded-full border border-[#f0dca4] bg-[#fff8e6] text-[0.72rem] font-extrabold text-[#8a6400]">Compare other covers</button>
+                        <div className="grid grid-cols-[0.82fr_1.28fr] gap-3">
+                            <button type="button" onClick={onRestart} className="h-11 rounded-full border border-[#dce9e3] bg-white text-[0.72rem] font-extrabold text-[#006d67]">Reset</button>
+                            <button type="button" onClick={onComplete} className="h-11 rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm">Use this cover</button>
+                        </div>
+                    </div>
+                </div>
+            </MobileProtectionShell>
+        );
+    }
+
     const question = protectionQuestions[currentStep] || protectionQuestions[0];
     const selected = answers[question.id];
+    const isLastQuestion = currentStep >= protectionQuestions.length - 1;
 
     return (
         <MobileProtectionShell>
@@ -784,7 +1024,7 @@ const MobileProtectionFlow = ({
                 <div className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white px-3 py-3 shadow-sm">
                     <div className="mb-3 flex items-center justify-between gap-3">
                         <span className="inline-flex items-center gap-2 text-[0.7rem] font-bold text-[#2e7d6f]"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#e6f4ed] text-[#006d67]"><Check size={11} /></span>Set your objectives</span>
-                        <span className="text-[0.68rem] font-bold text-slate-400">{currentStep + 2} / 5</span>
+                        <span className="text-[0.68rem] font-bold text-slate-400">{currentStep + 1} / {protectionQuestions.length}</span>
                     </div>
                     <MobileProtectionProgress step={currentStep} />
                     <h3 className="mt-4 text-[0.98rem] font-extrabold leading-5 text-slate-950">{question.question}</h3>
@@ -801,11 +1041,9 @@ const MobileProtectionFlow = ({
                         ))}
                     </div>
                 </div>
-                <MobileProtectionGuide />
-                <MobileRecommendedCoverCard calculator={calculator} coverageGap={coverageGap} recommendedCover={recommendedCover} />
                 <div className="mt-4 grid grid-cols-[0.82fr_1.28fr] gap-3">
-                    <button type="button" onClick={onBack} className="h-11 rounded-full border border-[#dce9e3] bg-white text-[0.72rem] font-extrabold text-[#006d67]">Back</button>
-                    <button type="button" onClick={onNext} disabled={!selected} className="h-11 rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm disabled:bg-slate-300">Next</button>
+                    <button type="button" onClick={onRestart} className="h-11 rounded-full border border-[#dce9e3] bg-white text-[0.72rem] font-extrabold text-[#006d67]">Reset</button>
+                    <button type="button" onClick={onNext} disabled={!selected} className="h-11 rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm disabled:bg-slate-300">{isLastQuestion ? 'See recommendation' : 'Next'}</button>
                 </div>
             </div>
         </MobileProtectionShell>
@@ -824,6 +1062,10 @@ const MobileExistingProtectionDashboard = ({
     onAddPolicy,
     onCalcChange,
     onCompare,
+    onManagePolicy,
+    onPolicyClaim,
+    onPolicyCompare,
+    onPolicyDelete,
     onRestart,
     onSetMobileView,
     policies,
@@ -835,7 +1077,7 @@ const MobileExistingProtectionDashboard = ({
     return (
         <MobileProtectionShell>
             <div className="px-4 pb-5">
-                <MobileProtectionTitle onBack={onRestart} />
+                <MobileProtectionTitle onBack={selectedView === 'overview' ? undefined : () => onSetMobileView('overview')} />
                 <MobileProtectionTabs active={selectedView} onChange={onSetMobileView} />
                 {selectedView === 'overview' && (
                     <MobileProtectionOverview
@@ -846,6 +1088,11 @@ const MobileExistingProtectionDashboard = ({
                         insightCards={insightCards}
                         monthlyPremiums={monthlyPremiums}
                         onAddPolicy={onAddPolicy}
+                        onManagePolicy={onManagePolicy}
+                        onPolicyClaim={onPolicyClaim}
+                        onPolicyCompare={onPolicyCompare}
+                        onPolicyDelete={onPolicyDelete}
+                        onRestart={onRestart}
                         onSetMobileView={onSetMobileView}
                         policies={policies}
                         recommendedCover={recommendedCover}
@@ -902,7 +1149,7 @@ const MobileProtectionTabs = ({ active, onChange }) => (
     </div>
 );
 
-const MobileProtectionOverview = ({ activePolicies, coverageAdequacy, coverageGap, coverageTotal, insightCards, monthlyPremiums, onAddPolicy, onSetMobileView, policies, recommendedCover }) => {
+const MobileProtectionOverview = ({ activePolicies, coverageAdequacy, coverageGap, coverageTotal, insightCards, monthlyPremiums, onAddPolicy, onManagePolicy, onPolicyClaim, onPolicyCompare, onPolicyDelete, onRestart, onSetMobileView, policies, recommendedCover }) => {
     const incomePercent = Math.min(Math.round((asNumber(monthlyPremiums) * 12 / Math.max(asNumber(recommendedCover), 1)) * 100), 100);
     return (
         <div className="mt-3 space-y-3">
@@ -938,7 +1185,17 @@ const MobileProtectionOverview = ({ activePolicies, coverageAdequacy, coverageGa
                     <button type="button" onClick={onAddPolicy} className="text-[0.62rem] font-extrabold text-[#d99a00]">Add Policies</button>
                 </div>
                 <div className="mt-3 space-y-2">
-                    {(policies.length ? policies.slice(0, 2) : []).map((policy) => <MobileDetailedPolicyCard key={policy.uuid || policy.name} policy={policy} recommended={recommendedCover} />)}
+                    {(policies.length ? policies.slice(0, 2) : []).map((policy) => (
+                        <MobileDetailedPolicyCard
+                            key={policy.uuid || policy.name}
+                            onClaim={onPolicyClaim}
+                            onCompare={onPolicyCompare}
+                            onDelete={onPolicyDelete}
+                            onManage={onManagePolicy}
+                            policy={policy}
+                            recommended={recommendedCover}
+                        />
+                    ))}
                     {policies.length === 0 && <p className="rounded-[0.85rem] bg-[#f8faf9] px-3 py-4 text-center text-[0.66rem] font-semibold text-slate-500">No policies yet. Add one to unlock cover analytics.</p>}
                 </div>
                 <button type="button" onClick={() => onSetMobileView('policies')} className="mt-3 w-full text-[0.64rem] font-extrabold text-[#d99a00]">View More</button>
@@ -977,6 +1234,8 @@ const MobileProtectionOverview = ({ activePolicies, coverageAdequacy, coverageGa
                     <p className="mt-1 text-[0.62rem] leading-4 text-[#9a5a18]">Your next best action is to compare cover options for the largest remaining gaps.</p>
                 </div>
             </article>
+
+            <button type="button" onClick={onRestart} className="h-10 w-full rounded-full border border-[#dce9e3] bg-white text-[0.68rem] font-extrabold text-[#006d67]">Reset</button>
         </div>
     );
 };
@@ -989,7 +1248,7 @@ const MobileMiniMetric = ({ helper, label, value }) => (
     </article>
 );
 
-const MobileDetailedPolicyCard = ({ policy, recommended }) => {
+const MobileDetailedPolicyCard = ({ onClaim, onCompare, onDelete, onManage, policy, recommended }) => {
     const coverValue = asNumber(policy.currentValue);
     const adequacy = Math.min(Math.round((coverValue / Math.max(asNumber(recommended), 1)) * 100), 100);
     const meta = policy.protectionMeta?.policyMeta || POLICY_LIBRARY['Life Insurance'];
@@ -1019,8 +1278,10 @@ const MobileDetailedPolicyCard = ({ policy, recommended }) => {
                 <div className="h-1.5 rounded-full bg-[linear-gradient(135deg,_#006d67_0%,_#3f7c5a_52%,_#879346_100%)]" style={{ width: `${Math.max(adequacy, 8)}%` }} />
             </div>
             <div className="mt-3 grid grid-cols-[1fr_1fr_1fr_30px] gap-1.5">
-                {['Manage', 'Compare', 'File Claim'].map((item) => <button key={item} type="button" className="h-8 rounded-full bg-[#006d67] text-[0.56rem] font-extrabold text-white">{item}</button>)}
-                <button type="button" className="h-8 rounded-full border border-rose-100 bg-rose-50 text-[0.6rem] font-extrabold text-rose-500">X</button>
+                <button type="button" onClick={() => onManage?.(policy)} className="h-8 rounded-full bg-[#006d67] text-[0.56rem] font-extrabold text-white">Manage</button>
+                <button type="button" onClick={() => onCompare?.(policy)} className="h-8 rounded-full bg-[#006d67] text-[0.56rem] font-extrabold text-white">Compare</button>
+                <button type="button" onClick={() => onClaim?.(policy)} className="h-8 rounded-full bg-[#006d67] text-[0.56rem] font-extrabold text-white">File Claim</button>
+                <button type="button" onClick={() => onDelete?.(policy)} className="h-8 rounded-full border border-rose-100 bg-rose-50 text-[0.6rem] font-extrabold text-rose-500">X</button>
             </div>
         </article>
     );
@@ -1043,15 +1304,6 @@ const MobileInsightRow = ({ item }) => (
             </div>
         </div>
     </article>
-);
-
-const MobilePoliciesScreen = ({ onAddPolicy, onCompare, onRestart, policies }) => (
-    <MobileProtectionShell>
-        <div className="px-4 pb-5">
-            <MobileProtectionTitle onBack={onRestart} />
-            <MobilePoliciesScreenContent onAddPolicy={onAddPolicy} onCompare={onCompare} policies={policies} />
-        </div>
-    </MobileProtectionShell>
 );
 
 const MobilePoliciesScreenContent = ({ onAddPolicy, onCompare, policies }) => (
@@ -1138,25 +1390,134 @@ const MobileAddPolicyScreen = ({ form, onBack, onChange, onSubmit, saving }) => 
     </MobileProtectionShell>
 );
 
-const MobileCompareInsuranceScreen = ({ onBack, rows }) => (
+const MobileManagePolicyScreen = ({ form, onBack, onChange, onSubmit, saving }) => (
     <MobileProtectionShell>
-        <div className="px-4 pb-5">
+        <form onSubmit={onSubmit} className="px-4 pb-5">
             <MobileProtectionTitle onBack={onBack} />
-            <div className="mt-4">
-                <span className="inline-flex items-center gap-2 text-[0.72rem] font-extrabold text-[#006d67]"><ShieldCheck size={13} />Compare Insurance</span>
-                <div className="mt-3 grid grid-cols-4 gap-2">
-                    {['Medical', 'Life', 'Disability', 'Car'].map((item, index) => (
-                        <button key={item} type="button" className={`h-[46px] rounded-[0.75rem] border px-1 text-[0.58rem] font-extrabold ${index === 0 ? 'border-[#f2c230] bg-[#f2c230] text-white' : 'border-[#e1ece7] bg-white text-slate-500'}`}>{item}<br /><span className="font-semibold">KES {index === 0 ? '1,950' : index === 1 ? '2,500' : index === 2 ? '3,000' : '4,500'}</span></button>
-                    ))}
+            <article className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-[0.84rem] font-extrabold text-[#006d67]">Manage policy</h3>
+                        <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Update the details you use to track this cover.</p>
+                    </div>
+                    <button type="button" onClick={onBack} className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-400"><X size={12} /></button>
                 </div>
-                <p className="mt-2 text-[0.62rem] text-slate-500">These options fit your information. Let us narrow this to the best match.</p>
-            </div>
-            <div className="mt-3 space-y-3">
-                {rows.map((row, index) => <MobileInsurancePlan key={row.provider} row={row} featured={index === 0} />)}
-            </div>
-        </div>
+                <div className="mt-3 space-y-2.5">
+                    <MobileFormInput label="Insurer" value={form.provider} onChange={(value) => onChange('provider', value)} placeholder="Eg. Jubilee, AAR, Britam" />
+                    <div className="grid grid-cols-2 gap-2">
+                        <MobileFormInput label="Cover Value" type="number" value={form.coverageAmount} onChange={(value) => onChange('coverageAmount', value)} placeholder="KES 250,000" />
+                        <MobileFormInput label="Premium Per Month" type="number" value={form.monthlyPremium} onChange={(value) => onChange('monthlyPremium', value)} placeholder="KES 10,000" />
+                    </div>
+                    <MobileFormSelect label="Status" value={form.status} onChange={(value) => onChange('status', value)} options={['ACTIVE', 'INACTIVE']} />
+                    <MobileFormInput label="Notes" value={form.notes} onChange={(value) => onChange('notes', value)} placeholder="Policy notes or policy number" />
+                </div>
+            </article>
+            <button type="submit" disabled={saving || !form.coverageAmount || !form.monthlyPremium} className="mt-4 h-11 w-full rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm disabled:bg-slate-300">{saving ? 'Saving...' : 'Save changes'}</button>
+        </form>
     </MobileProtectionShell>
 );
+
+const MobileFileClaimScreen = ({ form, onBack, onChange, onSubmit, saving }) => (
+    <MobileProtectionShell>
+        <form onSubmit={onSubmit} className="px-4 pb-5">
+            <MobileProtectionTitle onBack={onBack} />
+            <article className="mt-4 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 className="text-[0.84rem] font-extrabold text-[#006d67]">File claim</h3>
+                        <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">Capture the claim details so you can track the next action.</p>
+                    </div>
+                    <button type="button" onClick={onBack} className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-400"><X size={12} /></button>
+                </div>
+                <div className="mt-3 space-y-2.5">
+                    <MobileFormSelect label="Claim Type" value={form.claimType} onChange={(value) => onChange('claimType', value)} options={['Medical claim', 'Motor claim', 'Life claim', 'Disability claim', 'Other claim']} />
+                    <div className="grid grid-cols-2 gap-2">
+                        <MobileFormInput label="Incident Date" value={form.incidentDate} onChange={(value) => onChange('incidentDate', value)} placeholder="2026-06-30" />
+                        <MobileFormInput label="Claim Amount" type="number" value={form.amount} onChange={(value) => onChange('amount', value)} placeholder="KES 20,000" />
+                    </div>
+                    <MobileFormInput label="Notes" value={form.notes} onChange={(value) => onChange('notes', value)} placeholder="What happened?" />
+                </div>
+            </article>
+            <button type="submit" disabled={saving || !form.amount || !form.incidentDate} className="mt-4 h-11 w-full rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm disabled:bg-slate-300">{saving ? 'Saving claim...' : 'Save claim'}</button>
+        </form>
+    </MobileProtectionShell>
+);
+
+const MobileCompareInsuranceScreen = ({ initialCategory = 'medical', onBack, onDashboard, onPlanChoose, rows }) => {
+    const categoryKeys = Object.keys(compareInsuranceCategories);
+    const [activeCategory, setActiveCategory] = useState(initialCategory);
+    const [selectedPlanKey, setSelectedPlanKey] = useState('');
+    const category = compareInsuranceCategories[activeCategory] || compareInsuranceCategories.medical;
+    const plans = category.plans?.length ? category.plans : rows;
+    const bestPlan = plans[0];
+    const selectedPlan = plans.find((plan) => plan.provider === selectedPlanKey);
+    const premiumRange = plans.reduce((range, plan) => ({
+        min: Math.min(range.min, asNumber(plan.premium)),
+        max: Math.max(range.max, asNumber(plan.premium)),
+    }), { min: Number.POSITIVE_INFINITY, max: 0 });
+
+    const choosePlan = (plan) => {
+        setSelectedPlanKey(plan.provider);
+        onPlanChoose?.();
+    };
+
+    return (
+        <MobileProtectionShell>
+            <div className="px-4 pb-5">
+                <MobileProtectionTitle onBack={onBack} />
+                <div className="mt-4">
+                    <span className="inline-flex items-center gap-2 text-[0.72rem] font-extrabold text-[#006d67]"><ShieldCheck size={13} />Compare Insurance</span>
+                    <div className="mt-3 grid grid-cols-4 gap-2">
+                        {categoryKeys.map((key) => {
+                            const item = compareInsuranceCategories[key];
+                            const cheapest = item.plans.reduce((min, plan) => Math.min(min, asNumber(plan.premium)), Number.POSITIVE_INFINITY);
+                            const active = activeCategory === key;
+                            return (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveCategory(key);
+                                        setSelectedPlanKey('');
+                                    }}
+                                    className={`h-[50px] rounded-[0.75rem] border px-1 text-[0.56rem] font-extrabold ${active ? 'border-[#f2c230] bg-[#f2c230] text-white' : 'border-[#e1ece7] bg-white text-slate-500'}`}
+                                >
+                                    {item.label}<br /><span className="font-semibold">{formatKES(cheapest)}/mo</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <p className="mt-2 text-[0.62rem] leading-4 text-slate-500">{category.helper}</p>
+                </div>
+                <article className="mt-3 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        <MobileCompareStat label="Best fit" value={bestPlan.provider} />
+                        <MobileCompareStat label="Premium range" value={`${formatKES(premiumRange.min)} - ${formatKES(premiumRange.max)}`} />
+                        <MobileCompareStat label="Highest cover" value={formatKES(Math.max(...plans.map((plan) => asNumber(plan.cover))))} />
+                    </div>
+                </article>
+                <div className="mt-3 space-y-3">
+                    {plans.map((row, index) => (
+                        <MobileInsurancePlan
+                            key={row.provider}
+                            row={row}
+                            featured={index === 0}
+                            selected={selectedPlanKey === row.provider}
+                            onChoose={() => choosePlan(row)}
+                        />
+                    ))}
+                </div>
+                {selectedPlan && (
+                    <article className="mt-3 rounded-[1rem] border border-[#cfe7dd] bg-[#eef8f3] p-3 text-[#006d67]">
+                        <p className="text-[0.72rem] font-extrabold">{selectedPlan.provider} selected</p>
+                        <p className="mt-1 text-[0.62rem] leading-4">You can continue comparing, or go back to your Protection Planner dashboard to see how your plan is doing.</p>
+                    </article>
+                )}
+                <button type="button" onClick={onDashboard} className="mt-4 h-11 w-full rounded-full bg-[#006d67] text-[0.72rem] font-extrabold text-white shadow-sm">Go to dashboard</button>
+            </div>
+        </MobileProtectionShell>
+    );
+};
 
 const MobileProtectionSolutions = ({ missingPolicies, onCalc, onCompare, policies, recommendedByType }) => {
     const suggested = (missingPolicies.length ? missingPolicies : POLICY_OPTIONS.slice(0, 3)).slice(0, 3);
@@ -1246,23 +1607,30 @@ const MobileGuidanceLine = ({ label, value }) => (
     </div>
 );
 
-const MobileInsurancePlan = ({ featured, row }) => (
+const MobileCompareStat = ({ label, value }) => (
+    <div className="min-w-0 rounded-[0.8rem] bg-[#f8faf9] px-2 py-2">
+        <p className="truncate text-[0.52rem] font-bold text-slate-500">{label}</p>
+        <p className="mt-1 truncate text-[0.62rem] font-extrabold text-[#006d67]">{value}</p>
+    </div>
+);
+
+const MobileInsurancePlan = ({ featured, onChoose, row, selected }) => (
     <article className="rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
         <div className="flex items-start justify-between gap-3">
             <div>
-                <p className="text-[0.76rem] font-extrabold text-slate-950">{featured ? 'Afya Premier' : row.provider}</p>
-                <p className="mt-0.5 text-[0.58rem] text-slate-500">{featured ? 'Inpatient + outpatient' : 'Insurance plan'}</p>
+                <p className="text-[0.76rem] font-extrabold text-slate-950">{row.provider}</p>
+                <p className="mt-0.5 text-[0.58rem] text-slate-500">{row.subtitle || 'Insurance plan'}</p>
             </div>
-            {featured && <span className="rounded-full bg-[#e7f6ef] px-2 py-1 text-[0.54rem] font-extrabold text-[#006d67]">Best fit</span>}
+            <span className={`rounded-full px-2 py-1 text-[0.54rem] font-extrabold ${selected ? 'bg-[#006d67] text-white' : featured ? 'bg-[#e7f6ef] text-[#006d67]' : 'bg-slate-100 text-slate-500'}`}>{selected ? 'Selected' : row.fit}</span>
         </div>
         <div className="mt-3 space-y-1.5 text-[0.62rem]">
             <MobileCompareLine label="Cover value" value={formatKES(row.cover)} />
             <MobileCompareLine label="Monthly premium" value={formatKES(row.premium)} />
-            <MobileCompareLine label="Waiting period" value={featured ? '30 days' : '60 days'} />
-            <MobileCompareLine label="Claim turnaround" value={featured ? '3 - 5 days' : '5 - 7 days'} />
-            <MobileCompareLine label="Renewal / portability" value={featured ? 'Portable' : 'Limited'} />
+            <MobileCompareLine label="Waiting period" value={row.waitingPeriod} />
+            <MobileCompareLine label="Claim turnaround" value={row.claimTurnaround} />
+            <MobileCompareLine label="Renewal / portability" value={row.renewal} />
         </div>
-        <button type="button" className={`mt-3 h-9 w-full rounded-full text-[0.64rem] font-extrabold ${featured ? 'bg-[#006d67] text-white' : 'border border-[#cfe7dd] bg-white text-[#006d67]'}`}>{featured ? 'Choose this plan' : 'Compare'}</button>
+        <button type="button" onClick={onChoose} className={`mt-3 h-9 w-full rounded-full text-[0.64rem] font-extrabold ${selected ? 'bg-[#f2c230] text-white' : featured ? 'bg-[#006d67] text-white' : 'border border-[#cfe7dd] bg-white text-[#006d67]'}`}>{selected ? 'Chosen' : 'Choose this plan'}</button>
     </article>
 );
 
@@ -1388,8 +1756,8 @@ const MobileProtectionProgress = ({ step }) => (
     <div className="flex items-center gap-1.5">
         {[0, 1, 2, 3, 4].map((item) => (
             <React.Fragment key={item}>
-                <span className={`h-3.5 w-3.5 rounded-full border ${item <= step + 1 ? 'border-[#f2c230] bg-[#f2c230]' : 'border-[#d8e5df] bg-white'}`} />
-                {item < 4 && <span className={`h-0.5 flex-1 rounded-full ${item < step + 1 ? 'bg-[#f2c230]' : 'bg-[#d8e5df]'}`} />}
+                <span className={`h-3.5 w-3.5 rounded-full border ${item <= step ? 'border-[#f2c230] bg-[#f2c230]' : 'border-[#d8e5df] bg-white'}`} />
+                {item < 4 && <span className={`h-0.5 flex-1 rounded-full ${item < step ? 'bg-[#f2c230]' : 'bg-[#d8e5df]'}`} />}
             </React.Fragment>
         ))}
     </div>
@@ -1404,19 +1772,6 @@ const MobileProtectionOption = ({ compact, onClick, option, selected }) => (
         <span>{option.label}</span>
         {!compact && <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${selected ? 'border-[#f2c230] bg-[#f2c230]' : 'border-slate-300 bg-white'}`}>{selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}</span>}
     </button>
-);
-
-const MobileProtectionGuide = () => (
-    <article className="mt-3 rounded-[1rem] border border-[#e4efe9] bg-white p-3 shadow-sm">
-        <div className="space-y-2">
-            {['What is your monthly income?', 'Any outstanding loan or debt?', 'Which best describes your life stage?', 'What matters most to protect first?'].map((item, index) => (
-                <div key={item} className="flex items-center justify-between rounded-[0.8rem] bg-[#f8faf9] px-3 py-2">
-                    <span className="inline-flex items-center gap-2 text-[0.66rem] font-semibold text-slate-600"><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#edf7f2] text-[0.58rem] font-extrabold text-[#006d67]">{index + 1}</span>{item}</span>
-                    <span className="h-2 w-2 rounded-full bg-[#f2c230]" />
-                </div>
-            ))}
-        </div>
-    </article>
 );
 
 const MobileRecommendedCoverCard = ({ calculator, coverageGap, recommendedCover }) => {
@@ -1450,8 +1805,6 @@ const TabButton = ({ active, onClick, children }) => <button type="button" onCli
 const PanelHeading = ({ icon: Icon, title, noMargin = false }) => <div className={`flex items-center gap-3 ${noMargin ? '' : 'mb-1'}`}><span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700"><Icon size={18} /></span><h3 className="dashboard-display-title text-[1.05rem] font-bold text-slate-950">{title}</h3></div>;
 const InfoCell = ({ label, value }) => <div><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9bb8af]">{label}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>;
 const InsightCard = ({ title, text, tone }) => <div className={`rounded-[1rem] border p-4 text-sm ${tone}`}><p className="font-semibold">{title}</p><p className="mt-1">{text}</p></div>;
-const ClaimRow = ({ item }) => <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0"><div><p className="text-sm font-semibold text-slate-900">{item.title}</p><p className="text-xs text-slate-500">{item.month}</p></div><div className="text-right"><p className={`text-sm font-extrabold ${item.status === 'Processing' ? 'text-amber-700' : 'text-primary-700'}`}>{item.amount}</p><p className={`text-xs font-semibold ${item.status === 'Processing' ? 'text-amber-700' : 'text-primary-700'}`}>{item.status}</p></div></div>;
-const PaymentRow = ({ item }) => <div className={`rounded-xl border px-4 py-3 ${item.tone}`}><div className="flex items-center justify-between gap-3"><div><p className="font-semibold">{item.name} - {item.provider}</p><p className="text-sm opacity-80">{item.note}</p></div><p className="text-xl font-extrabold">{item.amount}</p></div></div>;
 const GuidanceRow = ({ label, value, tone }) => <div className="rounded-[1rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3"><div className="flex items-center justify-between gap-4"><span className="text-sm text-slate-700">{label}</span><span className={`dashboard-metric-value text-[1.08rem] font-extrabold ${tone}`}>{value}</span></div></div>;
 const ChecklistRow = ({ text }) => <div className="flex items-start gap-3 rounded-[0.9rem] border border-slate-100 bg-[#f7fbf9] px-4 py-3 text-sm text-slate-700"><span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff3ea] text-[10px] font-extrabold text-[#175f54]">OK</span><span>{text}</span></div>;
 const CalcInput = ({ label, value, onChange }) => (
@@ -1501,12 +1854,6 @@ const CoverageMatrixCard = ({ type, covered, amount }) => {
     const Icon = meta.icon;
     const tone = covered ? 'border-emerald-200 bg-[#f8fcfa]' : meta.urgency === 'gap' ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-[#fff8ea]';
     return <article className={`rounded-[1.1rem] border p-4 text-center ${tone}`}><span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl" style={{ backgroundColor: `${meta.color}14`, color: meta.color }}><Icon size={20} /></span><p className="mt-3 font-semibold text-slate-900">{meta.matrixTitle}</p><p className={`mt-2 text-sm font-semibold ${covered ? 'text-[#175f54]' : meta.urgency === 'gap' ? 'text-rose-500' : 'text-amber-700'}`}>{covered ? '? Covered' : meta.urgency === 'optional' ? 'Optional' : meta.urgency === 'watch' ? '? Partial' : '? Not Covered'}</p><p className="mt-1 text-sm text-slate-500">{covered ? formatKES(amount) : meta.urgency === 'optional' ? 'Consider adding' : 'Get Covered'}</p></article>;
-};
-
-const SolutionCard = ({ type, recommended, covered, onCompare, onCalculate }) => {
-    const meta = POLICY_LIBRARY[type];
-    const Icon = meta.icon;
-    return <article className="rounded-[1.2rem] border border-emerald-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><span className="inline-flex h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: `${meta.color}14`, color: meta.color }}><Icon size={20} /></span><span className={`rounded-full px-3 py-1 text-xs font-semibold ${covered ? 'bg-[#eef8f3] text-[#175f54]' : 'bg-amber-50 text-amber-700'}`}>{covered ? 'In portfolio' : 'Worth reviewing'}</span></div><p className="mt-4 text-lg font-bold text-slate-950">{meta.label}</p><p className="mt-1 text-sm text-slate-500">{meta.subtitle}</p><div className="mt-4 rounded-xl border border-slate-100 bg-[#f8fcfa] px-4 py-3"><p className="text-xs uppercase tracking-[0.16em] text-[#9bb8af]">Suggested cover</p><p className="mt-1 text-2xl font-extrabold text-[#175f54]">{formatKES(recommended)}</p></div><p className="mt-3 text-sm text-slate-600">{covered ? 'Review policy limits and renewal terms before increasing premiums.' : 'Compare providers, exclusions, waiting periods, claim speed, and total cover value.'}</p><div className="mt-5 flex flex-wrap gap-2"><button type="button" onClick={onCompare} className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-[#eef8f3] px-4 py-2 text-sm font-semibold text-[#175f54]">Compare options<ArrowRight size={14} /></button><button type="button" onClick={onCalculate} className="inline-flex items-center gap-2 rounded-full border border-[#b8d0ff] bg-[#eef4ff] px-4 py-2 text-sm font-semibold text-[#1f55c7]">Calculate need</button></div></article>;
 };
 
 const Modal = ({ title, children, onClose }) => <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"><div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl"><div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><h3 className="text-lg font-bold text-slate-900">{title}</h3><button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button></div><div className="px-5 py-5">{children}</div></div></div>;

@@ -97,6 +97,12 @@ export async function createAsset(data) {
     return normalizeAsset(payload);
 }
 
+export async function updateAsset(uuid, data) {
+    const response = await apiClient.patch(`${ASSETS_ENDPOINT}${uuid}/`, data);
+    const payload = unwrapPayload(response);
+    return normalizeAsset(payload);
+}
+
 export async function deleteAsset(uuid) {
     await apiClient.delete(`${ASSETS_ENDPOINT}${uuid}/`);
     return uuid;
