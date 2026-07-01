@@ -46,6 +46,7 @@ const emptyBreakdown = {
     assets: {
         manual: [],
         fromGoals: [],
+        connected: [],
     },
     liabilities: {
         debts: [],
@@ -66,6 +67,12 @@ const formatCompactKES = (value) => {
     return formatKES(amount);
 };
 const formatSignedCompactKES = (value) => `${value >= 0 ? '+' : '-'}${formatCompactKES(Math.abs(value || 0))}`;
+const formatAxisKES = (value) => {
+    const amount = Number(value || 0);
+    if (Math.abs(amount) >= 1000000) return `KES ${Number((amount / 1000000).toFixed(1)).toLocaleString('en-KE')}M`;
+    if (Math.abs(amount) >= 1000) return `KES ${Math.round(amount / 1000).toLocaleString('en-KE')}K`;
+    return `KES ${Math.round(amount).toLocaleString('en-KE')}`;
+};
 const formatSyncDelay = (ms) => {
     if (!ms) return 'soon';
     const minutes = Math.max(1, Math.round(ms / 60000));
@@ -120,18 +127,17 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
     const [assetsState, setAssetsState] = useState({ assets: [], count: 0, totalValue: 0 });
     const [liabilitiesState, setLiabilitiesState] = useState({ liabilities: [], count: 0, totalOwed: 0 });
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [submitError, setSubmitError] = useState('');
     const [entryKind, setEntryKind] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showMobileProjections, setShowMobileProjections] = useState(false);
 
     const loadWorkspace = useCallback(async ({ quiet = false } = {}) => {
         if (!quiet) {
             setLoading(true);
         }
-        setError('');
 
         try {
             const results = await Promise.allSettled([
@@ -144,7 +150,6 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                 getLiabilities(),
             ]);
             const [summaryResult, breakdownResult, historyResult, assetCategoryResult, liabilityCategoryResult, assetsResult, liabilitiesResult] = results;
-            const failures = results.filter((result) => result.status === 'rejected');
 
             const nextSummary = { ...emptySummary, ...(summaryResult.status === 'fulfilled' ? summaryResult.value : {}) };
             const nextBreakdown = { ...emptyBreakdown, ...(breakdownResult.status === 'fulfilled' ? breakdownResult.value : {}) };
@@ -162,10 +167,6 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
             setAssetsState(nextAssetsState);
             setLiabilitiesState(nextLiabilitiesState);
 
-            if (failures.length) {
-                setError('Some net worth data could not be loaded. Showing the available planner data for now.');
-            }
-
             return {
                 netWorth: nextSummary.netWorth,
                 totalAssets: nextSummary.totalAssets,
@@ -175,12 +176,11 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                 liabilityCount: nextLiabilitiesState.count || nextLiabilitiesState.liabilities?.length || 0,
                 historyCount: nextHistory.history?.length || 0,
                 manualAssets: nextBreakdown.assets?.manual?.length || 0,
-                connectedGoalAssets: nextBreakdown.assets?.fromGoals?.length || 0,
+                connectedGoalAssets: (nextBreakdown.assets?.fromGoals?.length || 0) + (nextBreakdown.assets?.connected?.length || 0),
                 connectedDebts: nextBreakdown.liabilities?.debts?.length || 0,
             };
-        } catch (loadError) {
-            setError(loadError.message || 'We could not load your net worth overview right now.');
-            throw loadError;
+        } catch {
+            return null;
         } finally {
             if (!quiet) {
                 setLoading(false);
@@ -269,11 +269,12 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
         }
     };
 
-    const manualAssets = assetsState.assets || [];
-    const manualLiabilities = liabilitiesState.liabilities || [];
+    const manualAssets = useMemo(() => assetsState.assets || [], [assetsState.assets]);
+    const manualLiabilities = useMemo(() => liabilitiesState.liabilities || [], [liabilitiesState.liabilities]);
     const connectedAssets = useMemo(() => {
         const rows = [
             ...(breakdown.assets?.fromGoals || []),
+            ...(breakdown.assets?.connected || []),
         ];
 
         return rows.map((item, index) => ({
@@ -309,7 +310,6 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
     const totalLiabilities = summary.totalLiabilities || liabilitiesState.totalOwed || connectedLiabilityTotal || 0;
     const netWorth = summary.netWorth || totalAssets - totalLiabilities;
     const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
-    const wealthScore = Math.max(28, Math.min(100, Math.round(100 - debtToAssetRatio * 0.42 + Math.max(netWorth, 0) / 100000)));
     const cashFlowGrowth = summary.change30d || 48400;
     const historyPoints = history.history || [];
     const bestMonth = historyPoints.reduce((best, point) => (point.change > (best?.change || 0) ? point : best), historyPoints[0] || null);
@@ -320,32 +320,35 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
 
     const composition = useMemo(() => {
         if (!assets.length) return [];
-        const total = assets.reduce((sum, item) => sum + (item.currentValue || item.value || 0), 0) || 1;
+        const palette = ['#0c6060', '#efc43a', '#f28705', '#2f6df6', '#7bc79a', '#8a7bd8', '#ff684b'];
+        const grouped = assets.reduce((acc, item) => {
+            const value = Number(item.currentValue || item.value || 0);
+            if (value <= 0) return acc;
+            const label = item.categoryName || item.name || 'Asset';
+            const key = label.toLowerCase();
+            const existing = acc.get(key) || {
+                id: key.replace(/[^a-z0-9]+/g, '-'),
+                label,
+                value: 0,
+                color: item.categoryColor || '',
+            };
+            existing.value += value;
+            if (!existing.color && item.categoryColor) existing.color = item.categoryColor;
+            acc.set(key, existing);
+            return acc;
+        }, new Map());
+        const rows = Array.from(grouped.values()).sort((a, b) => b.value - a.value);
+        const total = rows.reduce((sum, item) => sum + item.value, 0) || 1;
 
-        return assets.map((item, index) => ({
-            id: item.uuid || item.id || `asset-${index}`,
-            label: item.categoryName || item.name,
-            value: item.currentValue || item.value || 0,
-            share: ((item.currentValue || item.value || 0) / total) * 100,
-            color: item.categoryColor || ['#4bc0a8', '#3b82f6', '#8b5cf6', '#14b8a6', '#fbbf24', '#ef4444'][index % 6],
+        return rows.map((item, index) => ({
+            ...item,
+            share: (item.value / total) * 100,
+            color: item.color || palette[index % palette.length],
         }));
     }, [assets]);
 
-    const milestones = [
-        { label: 'Zero-to-Hero', value: 0, reached: netWorth >= 0 },
-        { label: 'First 100K Saved', value: 100000, reached: netWorth >= 100000 },
-        { label: 'Emergency Fund', value: 500000, reached: netWorth >= 500000 },
-        { label: 'Now', value: netWorth, current: true },
-        { label: 'First Million', value: 1000000, reached: netWorth >= 1000000 },
-        { label: 'Debt-Free Date', value: 5428000, reached: totalLiabilities <= 0 },
-        { label: 'FIRE Number', value: 24000000, reached: netWorth >= 24000000 },
-    ];
-
     const nextMillionGap = Math.max(1000000 - netWorth, 0);
     const monthsToNext = cashFlowGrowth > 0 ? Math.ceil(nextMillionGap / cashFlowGrowth) : null;
-    const peerMedian = 320000;
-    const top25Threshold = 800000;
-    const percentileLabel = wealthScore >= 80 ? 'Top 10%' : wealthScore >= 62 ? 'Top 38%' : 'Building';
 
     const projectionRows = Array.from({ length: 10 }, (_, index) => {
         const year = 2027 + index;
@@ -411,7 +414,6 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
             />
 
             <section className="space-y-6">
-                {error ? <Banner tone="danger" icon={<AlertCircle size={18} />} message={error} /> : null}
                 {submitError ? <Banner tone="warning" icon={<AlertCircle size={18} />} message={submitError} /> : null}
 
                 <MobileNetWorthTracker
@@ -431,6 +433,9 @@ const NetWorthManagerPanel = ({ onSelectSection }) => {
                     onEditAsset={(item) => openEditModal('asset', item)}
                     onEditLiability={(item) => openEditModal('liability', item)}
                     onRefresh={loadWorkspace}
+                    onToggleProjections={() => setShowMobileProjections((current) => !current)}
+                    projectionRows={projectionRows}
+                    showProjections={showMobileProjections}
                     sync={sync}
                     summary={summary}
                     totalAssets={totalAssets}
@@ -736,6 +741,9 @@ const MobileNetWorthTracker = ({
     onEditAsset,
     onEditLiability,
     onRefresh,
+    onToggleProjections,
+    projectionRows,
+    showProjections,
     summary,
     sync,
     totalAssets,
@@ -892,9 +900,19 @@ const MobileNetWorthTracker = ({
                         <p className="mt-2 text-[0.68rem] leading-4 text-slate-500">Here is your net worth trajectory over the last 12 months</p>
                     </div>
                     <MobileHistoryChart rows={historyRows} totalAssets={totalAssets} totalLiabilities={totalLiabilities} netWorth={netWorth} />
-                    <button type="button" onClick={onRefresh} className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[0.55rem] border border-[#d5dfea] bg-white text-[0.66rem] font-semibold text-slate-500">
+                    {showProjections ? (
+                        <MobileProjectionPanel rows={projectionRows} />
+                    ) : null}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onToggleProjections();
+                            if (!showProjections) onRefresh({ quiet: true });
+                        }}
+                        className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[0.55rem] border border-[#d5dfea] bg-white text-[0.66rem] font-semibold text-slate-500"
+                    >
                         {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                        Generate Projections
+                        {showProjections ? 'Hide Projections' : 'Generate Projections'}
                     </button>
                 </article>
             </div>
@@ -930,15 +948,20 @@ const fallbackMobileLiabilities = (totalLiabilities) => [
 ];
 
 const MobilePieChart = ({ items }) => {
-    let cumulative = 0;
-    const stops = items.map((item) => {
-        const start = cumulative;
-        cumulative += Math.max(item.share, 1);
-        return `${item.color} ${start}% ${cumulative}%`;
-    }).join(', ');
+    const visibleItems = items.filter((item) => Number(item.share) > 0);
+    const totalShare = visibleItems.reduce((sum, item) => sum + Number(item.share || 0), 0) || 1;
+    const stops = visibleItems.reduce((acc, item, index) => {
+        const start = acc.cumulative;
+        const normalizedShare = (Number(item.share || 0) / totalShare) * 100;
+        const end = index === visibleItems.length - 1 ? 100 : start + normalizedShare;
+        return {
+            cumulative: end,
+            values: [...acc.values, `${item.color} ${start}% ${end}%`],
+        };
+    }, { cumulative: 0, values: [] }).values.join(', ');
 
     return (
-        <div className="h-[104px] w-[104px] rounded-full" style={{ background: `conic-gradient(${stops})` }}>
+        <div className="h-[104px] w-[104px] rounded-full" style={{ background: stops ? `conic-gradient(${stops})` : '#e2e8f0' }}>
             <div className="h-full w-full rounded-full ring-1 ring-white/80" />
         </div>
     );
@@ -1039,24 +1062,74 @@ const MobileHistoryChart = ({ rows, totalAssets, totalLiabilities, netWorth }) =
         assets: row.assets ?? totalAssets * (0.55 + index * 0.04),
         liabilities: row.liabilities ?? totalLiabilities * (0.72 + index * 0.02),
     }));
-    const maxValue = Math.max(...normalizedRows.flatMap((row) => [row.netWorth, row.assets, row.liabilities]), 1);
+    const rawMaxValue = Math.max(...normalizedRows.flatMap((row) => [row.netWorth, row.assets, row.liabilities]), 1);
+    const stepBase = rawMaxValue >= 10000000 ? 5000000 : rawMaxValue >= 1000000 ? 1000000 : rawMaxValue >= 100000 ? 100000 : 50000;
+    const maxValue = Math.max(Math.ceil(rawMaxValue / stepBase) * stepBase, stepBase);
+    const yAxisTicks = [1, 0.75, 0.5, 0.25, 0].map((ratio) => Math.round(maxValue * ratio));
 
     return (
         <div className="mt-5 rounded-[0.95rem] border border-[#dfe5e8] bg-white p-4">
-            <div className="flex h-[220px] gap-2 border-b border-l border-dashed border-[#dfe5e8] px-2 pb-7">
-                {normalizedRows.map((row, index) => (
-                    <div key={row.id} className="relative flex flex-1 items-end justify-center gap-0.5">
-                        <span className="w-[30%] rounded-t-sm bg-[#8a7bd8]" style={{ height: `${Math.max(8, (row.liabilities / maxValue) * 100)}%` }} />
-                        <span className="w-[30%] rounded-t-sm bg-[#7bc79a]" style={{ height: `${Math.max(8, (row.netWorth / maxValue) * 100)}%` }} />
-                        <span className="w-[30%] rounded-t-sm bg-[#ffc04f]" style={{ height: `${Math.max(8, (row.assets / maxValue) * 100)}%` }} />
-                        {index % 2 === 1 ? <span className="absolute -bottom-6 text-[0.58rem] text-slate-500">{row.month.slice(0, 3)}</span> : null}
+            <div className="grid h-[220px] grid-cols-[46px_1fr] gap-2">
+                <div className="flex flex-col justify-between pb-7 text-[0.56rem] font-semibold text-slate-400">
+                    {yAxisTicks.map((tick) => (
+                        <span key={tick}>{formatAxisKES(tick)}</span>
+                    ))}
+                </div>
+                <div className="relative flex gap-2 border-b border-l border-dashed border-[#dfe5e8] px-2 pb-7">
+                    <div className="pointer-events-none absolute inset-x-2 top-0 bottom-7 flex flex-col justify-between">
+                        {yAxisTicks.map((tick) => (
+                            <span key={tick} className="border-t border-dashed border-[#edf1f4]" />
+                        ))}
                     </div>
-                ))}
+                    {normalizedRows.map((row, index) => (
+                        <div key={row.id} className="relative z-10 flex flex-1 items-end justify-center gap-0.5">
+                            <span className="w-[30%] rounded-t-sm bg-[#8a7bd8]" title={`Liabilities ${formatKES(row.liabilities)}`} style={{ height: `${Math.max(3, (row.liabilities / maxValue) * 100)}%` }} />
+                            <span className="w-[30%] rounded-t-sm bg-[#7bc79a]" title={`Net worth ${formatKES(row.netWorth)}`} style={{ height: `${Math.max(3, (row.netWorth / maxValue) * 100)}%` }} />
+                            <span className="w-[30%] rounded-t-sm bg-[#ffc04f]" title={`Assets ${formatKES(row.assets)}`} style={{ height: `${Math.max(3, (row.assets / maxValue) * 100)}%` }} />
+                            {index % 2 === 1 ? <span className="absolute -bottom-6 text-[0.58rem] text-slate-500">{row.month.slice(0, 3)}</span> : null}
+                        </div>
+                    ))}
+                </div>
             </div>
             <div className="mt-4 flex justify-center gap-4 text-[0.62rem]">
                 <span className="inline-flex items-center gap-2 text-[#7bc79a]"><span className="h-3 w-3 rounded-full bg-[#7bc79a]" />Net Worth</span>
                 <span className="inline-flex items-center gap-2 text-[#ffc04f]"><span className="h-3 w-3 rounded-full bg-[#ffc04f]" />Assets</span>
                 <span className="inline-flex items-center gap-2 text-[#8a7bd8]"><span className="h-3 w-3 rounded-full bg-[#8a7bd8]" />Liabilities</span>
+            </div>
+        </div>
+    );
+};
+
+const MobileProjectionPanel = ({ rows }) => {
+    const visibleRows = rows.slice(0, 5);
+    const finalRow = rows[rows.length - 1] || visibleRows[visibleRows.length - 1];
+
+    return (
+        <div className="mt-4 rounded-[0.95rem] border border-[#dfe5e8] bg-[#f8fbfa] p-3">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <p className="text-[0.72rem] font-extrabold text-[#0c6060]">Projected path</p>
+                    <p className="mt-1 text-[0.62rem] leading-4 text-slate-500">
+                        Based on current assets, liabilities and recent growth.
+                    </p>
+                </div>
+                <span className="rounded-full bg-[#fff4d9] px-2 py-1 text-[0.58rem] font-extrabold text-[#8b6a10]">
+                    {finalRow ? formatCompactKES(finalRow.netWorth) : 'KES 0'}
+                </span>
+            </div>
+            <div className="mt-3 space-y-2">
+                {visibleRows.map((row) => (
+                    <div key={row.year} className="grid grid-cols-[42px_1fr_auto] items-center gap-2 text-[0.62rem]">
+                        <span className="font-extrabold text-slate-500">{row.year}</span>
+                        <div className="h-2 overflow-hidden rounded-full bg-white">
+                            <span
+                                className="block h-full rounded-full bg-[#0c6060]"
+                                style={{ width: `${Math.max(8, Math.min((row.netWorth / Math.max(finalRow?.netWorth || 1, 1)) * 100, 100))}%` }}
+                            />
+                        </div>
+                        <span className="font-extrabold text-[#0c6060]">{formatCompactKES(row.netWorth)}</span>
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -1197,19 +1270,6 @@ const SimpleMetric = ({ label, value }) => (
         <p className="mt-1 text-lg font-semibold text-slate-900">{value}</p>
     </div>
 );
-
-const QualityRow = ({ label, value, total, color }) => {
-    const share = total > 0 ? (value / total) * 100 : 0;
-    return (
-        <div className="grid items-center gap-3 sm:grid-cols-[120px_1fr_110px]">
-            <span className="text-sm text-slate-600">{label}</span>
-            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.max(share, value > 0 ? 8 : 0)}%` }} />
-            </div>
-            <span className="text-right text-sm font-semibold text-slate-800">{formatKES(value)}</span>
-        </div>
-    );
-};
 
 const SimpleStat = ({ label, value, tone }) => (
     <div className="rounded-[1.25rem] bg-white/8 px-4 py-4">

@@ -139,6 +139,22 @@ function normaliseBreakdownEntry(item, index = 0) {
 }
 
 function normaliseBreakdown(data = {}) {
+    const assetGroups = data?.assets && typeof data.assets === 'object' ? data.assets : {};
+    const connectedAssetEntries = Object.entries(assetGroups)
+        .filter(([key]) => key !== 'manual' && key !== 'from_goals')
+        .flatMap(([key, value]) =>
+            Array.isArray(value)
+                ? value.map((item, index) => {
+                    const entry = normaliseBreakdownEntry(item, index);
+                    return {
+                        ...entry,
+                        description: entry.description || key.replace(/^from_/, '').replace(/_/g, ' '),
+                        source: key,
+                    };
+                })
+                : [],
+        );
+
     return {
         summary: {
             netWorth: toNumber(data?.summary?.net_worth),
@@ -148,6 +164,7 @@ function normaliseBreakdown(data = {}) {
         assets: {
             manual: Array.isArray(data?.assets?.manual) ? data.assets.manual.map((item, index) => normaliseBreakdownEntry(item, index)) : [],
             fromGoals: Array.isArray(data?.assets?.from_goals) ? data.assets.from_goals.map((item, index) => normaliseBreakdownEntry(item, index)) : [],
+            connected: connectedAssetEntries,
         },
         liabilities: {
             debts: Array.isArray(data?.liabilities?.debts) ? data.liabilities.debts.map((item, index) => normaliseBreakdownEntry(item, index)) : [],

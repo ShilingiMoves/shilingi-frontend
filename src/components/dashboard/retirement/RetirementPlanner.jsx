@@ -32,6 +32,8 @@ import { USER_PROFILE_WORKSPACE_KEY } from "../user/UserGoalsFamilyForm";
 
 const RETIREMENT_CATEGORY_NAME = "Retirement Account";
 const RETIREMENT_ONBOARDING_KEY = "shilingi_retirement_onboarding_seen_v1";
+const RETIREMENT_ANSWERS_SAVED_MESSAGE =
+  "Your answers are confidential and have been saved. The recommended retirement target is a guide, however you can compare retirement options before you choose.";
 const ACCOUNT_OPTIONS = [
   "NSSF - National Social Security Fund",
   "Sanlam Umbrella Pension",
@@ -182,12 +184,6 @@ const retirementQuestionFlow = [
       },
     ],
   },
-];
-const retirementGuideQuestions = [
-  "When do you want to retire?",
-  "What monthly income do you want in retirement?",
-  "How much can you save each month?",
-  "How much have you already saved for retirement?",
 ];
 const normalize = (value) =>
   String(value || "")
@@ -566,8 +562,68 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
       [question.id]: option.value,
     }));
     setCalculator((current) => ({ ...current, ...option.calculator }));
+    setSuccess("");
   };
-  const completeMobileRetirementOnboarding = () => {
+  const startMobileRetirementQuestions = () => {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(RETIREMENT_ONBOARDING_KEY, "1");
+      } catch {
+        // Local state still moves the user forward if storage is unavailable.
+      }
+    }
+    setMobileFlowStep("questions");
+    setMobileQuestionIndex(0);
+  };
+  const resetMobileRetirementJourney = () => {
+    const nextWorkspace = { ...readProfileWorkspace() };
+    delete nextWorkspace.retirementPlanner;
+    delete nextWorkspace.retirementPlannerCompletedAt;
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          USER_PROFILE_WORKSPACE_KEY,
+          JSON.stringify(nextWorkspace),
+        );
+        window.localStorage.setItem(RETIREMENT_ONBOARDING_KEY, "1");
+      } catch {
+        // Reset remains available in-session even when storage is unavailable.
+      }
+    }
+    setProfileWorkspace(nextWorkspace);
+    setRetirementAnswers({});
+    setCalculator(defaultCalculator);
+    setMobileQuestionIndex(0);
+    setMobileFundView("funds");
+    setMobileFlowStep("questions");
+    setError("");
+    setSuccess("");
+  };
+  const handleMobileRetirementBack = () => {
+    if (mobileFlowStep === "questions") {
+      if (mobileQuestionIndex >= retirementQuestionFlow.length) {
+        setMobileQuestionIndex(retirementQuestionFlow.length - 1);
+        return;
+      }
+      if (mobileQuestionIndex > 0) {
+        setMobileQuestionIndex((current) => Math.max(current - 1, 0));
+        return;
+      }
+    }
+    if (
+      profileWorkspace.retirementPlannerCompletedAt ||
+      profileWorkspace.retirementPlanner?.completedAt
+    ) {
+      setMobileFlowStep("complete");
+      setMobileFundView("dashboard");
+      return;
+    }
+    startMobileRetirementQuestions();
+  };
+  const completeMobileRetirementOnboarding = (
+    nextView = "dashboard",
+    { keepNotice = false } = {},
+  ) => {
     const completedAt = new Date().toISOString();
     const nextWorkspace = {
       ...readProfileWorkspace(),
@@ -592,16 +648,16 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
     }
     setProfileWorkspace(nextWorkspace);
     setMobileFlowStep("complete");
+    setMobileFundView(nextView);
     setActiveTab("objectives");
+    setSuccess(keepNotice ? RETIREMENT_ANSWERS_SAVED_MESSAGE : "");
   };
   const handleMobileRetirementNext = () => {
     const currentQuestion = retirementQuestionFlow[mobileQuestionIndex];
-    if (!retirementAnswers[currentQuestion.id]) {
-      const fallback = currentQuestion.options[0];
-      applyMobileRetirementAnswer(currentQuestion, fallback);
-    }
+    if (!currentQuestion || !retirementAnswers[currentQuestion.id]) return;
     if (mobileQuestionIndex >= retirementQuestionFlow.length - 1) {
-      completeMobileRetirementOnboarding();
+      setMobileQuestionIndex(retirementQuestionFlow.length);
+      setSuccess(RETIREMENT_ANSWERS_SAVED_MESSAGE);
       return;
     }
     setMobileQuestionIndex((current) => current + 1);
@@ -707,22 +763,22 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
         loading={loading}
         onAddAccount={() => setShowMobileAddFund(true)}
         onAnswer={applyMobileRetirementAnswer}
-        onBack={() =>
-          mobileQuestionIndex === 0
-            ? setMobileFlowStep("welcome")
-            : setMobileQuestionIndex((current) => Math.max(current - 1, 0))
+        onBack={handleMobileRetirementBack}
+        onChooseComparePlan={() => setSuccess("")}
+        onCompareOptions={() =>
+          completeMobileRetirementOnboarding("compare", { keepNotice: true })
         }
-        onGetStarted={() => {
-          setMobileFlowStep("questions");
-          setMobileQuestionIndex(0);
-        }}
+        onComplete={() => completeMobileRetirementOnboarding("dashboard")}
+        onGetStarted={startMobileRetirementQuestions}
         onNext={handleMobileRetirementNext}
         onGoToDashboard={() => {
           setMobileFundView("dashboard");
           setActiveTab("objectives");
+          setSuccess("");
         }}
         onNewToThis={() => setMobileFlowStep("welcome")}
         onOpenCompare={() => setMobileFundView("compare")}
+        onReset={resetMobileRetirementJourney}
         projectedPot={projectedPot}
         questionIndex={mobileQuestionIndex}
         calculator={calculator}
@@ -1520,11 +1576,15 @@ const MobileRetirementOnboarding = ({
   onAnswer,
   onDashboardTabChange,
   onBack,
+  onChooseComparePlan,
+  onCompareOptions,
+  onComplete,
   onGoToDashboard,
   onGetStarted,
   onNext,
   onNewToThis,
   onOpenCompare,
+  onReset,
   projectedPot,
   questionIndex,
   retirementAssets,
@@ -1536,6 +1596,8 @@ const MobileRetirementOnboarding = ({
   const question = retirementQuestionFlow[questionIndex];
   const selectedValue = answers[question?.id];
   const gap = Math.max(fireNumber - projectedPot, 0);
+  const isReviewStep =
+    flowStep === "questions" && questionIndex >= retirementQuestionFlow.length;
   const welcomeLabel = displayName
     ? `Welcome ${displayName}, let's get you started`
     : "Welcome, let's get you started";
@@ -1548,7 +1610,7 @@ const MobileRetirementOnboarding = ({
             <button
               type="button"
               onClick={onBack}
-              className={`mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-100 ${flowStep === "welcome" ? "invisible" : ""}`}
+              className={`mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-100 ${flowStep === "welcome" || flowStep === "complete" ? "invisible" : ""}`}
               aria-label="Go back"
             >
               <ArrowLeft size={16} />
@@ -1630,7 +1692,74 @@ const MobileRetirementOnboarding = ({
             </div>
           )}
 
-          {flowStep === "questions" && question && (
+          {flowStep === "questions" && isReviewStep && (
+            <div className="pt-5">
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[0.72rem] font-extrabold text-[#0b6f66]">
+                    Set your objectives
+                  </p>
+                  <p className="text-[0.68rem] font-semibold text-slate-400">
+                    {retirementQuestionFlow.length} / {retirementQuestionFlow.length}
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  {retirementQuestionFlow.map((item) => (
+                    <span
+                      key={item.id}
+                      className="h-2 flex-1 rounded-full bg-[#eab62d]"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+                <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-[#0b6f66]">
+                  Recommendation ready
+                </p>
+                <h3 className="mt-2 text-[1rem] font-extrabold leading-5 text-slate-950">
+                  Your retirement target is ready to review.
+                </h3>
+                <p className="mt-2 text-[0.72rem] leading-5 text-slate-500">
+                  This target is based on your answers. You can save it, compare
+                  other retirement options, or reset and answer again.
+                </p>
+              </article>
+
+              <MobileRetirementTargetCard
+                fireNumber={fireNumber}
+                gap={gap}
+                projectedPot={projectedPot}
+                targetYear={targetYear}
+              />
+
+              <div className="mt-5 space-y-3">
+                <button
+                  type="button"
+                  onClick={onCompareOptions}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-full border border-emerald-100 bg-white text-[0.76rem] font-extrabold text-[#0b6f66]"
+                >
+                  Compare options
+                </button>
+                <button
+                  type="button"
+                  onClick={onComplete}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.76rem] font-extrabold text-white"
+                >
+                  Save this target
+                </button>
+                <button
+                  type="button"
+                  onClick={onReset}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-[0.76rem] font-extrabold text-rose-600 ring-1 ring-rose-100"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          )}
+
+          {flowStep === "questions" && question && !isReviewStep && (
             <div className="pt-5">
               <div className="mb-4">
                 <div className="flex items-center justify-between">
@@ -1678,67 +1807,22 @@ const MobileRetirementOnboarding = ({
                 </div>
               </article>
 
-              <div className="mt-4 rounded-[1.15rem] border border-emerald-100 bg-white p-3 shadow-sm">
-                <div className="space-y-2">
-                  {retirementGuideQuestions.map((item, index) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-3 rounded-xl bg-[#f7fbf9] px-3 py-3"
-                    >
-                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dff3eb] text-[0.68rem] font-extrabold text-[#0b6f66]">
-                        {index + 1}
-                      </span>
-                      <span className="flex-1 text-[0.7rem] font-semibold text-slate-700">
-                        {item}
-                      </span>
-                      <span className="h-2 w-2 rounded-full bg-[#eab62d]" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-[1.15rem] border border-[#f4dfab] bg-[#fff8e8] p-4">
-                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-[#d39808]">
-                  Recommended gap - feeling
-                </p>
-                <p className="mt-2 dashboard-metric-value text-[1.35rem] font-extrabold text-[#075e57]">
-                  {formatKES(gap || fireNumber)}
-                </p>
-                <div className="mt-3 space-y-2 text-[0.68rem] text-slate-600">
-                  <div className="flex justify-between gap-3">
-                    <span>Target retirement year</span>
-                    <strong className="text-slate-900">{targetYear}</strong>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span>Projected retirement pot</span>
-                    <strong className="text-slate-900">
-                      {formatKES(projectedPot)}
-                    </strong>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span>Estimated gap to close</span>
-                    <strong className="text-[#0b6f66]">
-                      {formatKES(gap)}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
               <div className="mt-5 flex gap-3">
                 <button
                   type="button"
-                  onClick={onBack}
+                  onClick={onReset}
                   className="h-11 w-[96px] rounded-full bg-white text-[0.76rem] font-extrabold text-[#0b6f66] ring-1 ring-emerald-100"
                 >
-                  Back
+                  Reset
                 </button>
                 <button
                   type="button"
                   onClick={onNext}
-                  className="h-11 flex-1 rounded-full bg-[#0b6f66] text-[0.76rem] font-extrabold text-white"
+                  disabled={!selectedValue}
+                  className="h-11 flex-1 rounded-full bg-[#0b6f66] text-[0.76rem] font-extrabold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   {questionIndex === retirementQuestionFlow.length - 1
-                    ? "Finish"
+                    ? "See recommendation"
                     : "Next"}
                 </button>
               </div>
@@ -1749,6 +1833,7 @@ const MobileRetirementOnboarding = ({
             <div className="pt-5">
               {view === "compare" ? (
                 <MobileCompareRetirementFunds
+                  onChoosePlan={onChooseComparePlan}
                   onGoToDashboard={onGoToDashboard}
                 />
               ) : view === "dashboard" ? (
@@ -1761,6 +1846,7 @@ const MobileRetirementOnboarding = ({
                   insightCards={insightCards}
                   onAddFund={onAddAccount}
                   onOpenCompare={onOpenCompare}
+                  onReset={onReset}
                   onTabChange={onDashboardTabChange}
                   projectedPot={projectedPot}
                   retirementAssets={retirementAssets}
@@ -1788,6 +1874,39 @@ const MobileRetirementOnboarding = ({
     </section>
   );
 };
+
+const MobileRetirementTargetCard = ({
+  fireNumber,
+  gap,
+  projectedPot,
+  targetYear,
+}) => (
+  <div className="mt-4 rounded-[1.15rem] border border-[#f4dfab] bg-[#fff8e8] p-4">
+    <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-[#d39808]">
+      Target retirement pot
+    </p>
+    <p className="mt-2 dashboard-metric-value text-[1.35rem] font-extrabold text-[#075e57]">
+      {formatKES(fireNumber)}
+    </p>
+    <p className="mt-1 text-[0.68rem] leading-4 text-slate-500">
+      To support your selected retirement income.
+    </p>
+    <div className="mt-3 space-y-2 text-[0.68rem] text-slate-600">
+      <div className="flex justify-between gap-3">
+        <span>Target retirement year</span>
+        <strong className="text-slate-900">{targetYear}</strong>
+      </div>
+      <div className="flex justify-between gap-3">
+        <span>Projected retirement pot</span>
+        <strong className="text-slate-900">{formatKES(projectedPot)}</strong>
+      </div>
+      <div className="flex justify-between gap-3">
+        <span>Estimated gap to close</span>
+        <strong className="text-[#0b6f66]">{formatKES(gap)}</strong>
+      </div>
+    </div>
+  </div>
+);
 
 const MobileRetirementSection = ({
   children,
@@ -1935,6 +2054,7 @@ const MobileExistingRetirementDashboard = ({
   insightCards,
   onAddFund,
   onOpenCompare,
+  onReset,
   onTabChange,
   projectedPot,
   retirementAssets,
@@ -1991,6 +2111,7 @@ const MobileExistingRetirementDashboard = ({
           fireNumber={fireNumber}
           fireProgress={fireProgress}
           onAddFund={onAddFund}
+          onReset={onReset}
           onTabChange={onTabChange}
           projectedPot={projectedPot}
           retirementAssets={visibleAssets}
@@ -2029,6 +2150,7 @@ const MobileRetirementOverviewTab = ({
   fireNumber,
   fireProgress,
   onAddFund,
+  onReset,
   onTabChange,
   projectedPot,
   retirementAssets,
@@ -2117,6 +2239,14 @@ const MobileRetirementOverviewTab = ({
         This is great! Your retirement fund is growing.
       </div>
     </article>
+
+    <button
+      type="button"
+      onClick={onReset}
+      className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-[0.76rem] font-extrabold text-rose-600 ring-1 ring-rose-100"
+    >
+      Reset
+    </button>
   </div>
 );
 
@@ -2404,22 +2534,26 @@ const MobileCalculatorReadout = ({ label, value }) => (
 
 const compareFundCategories = [
   {
+    id: "personal",
     title: "Personal Pension",
-    subtitle: "Small -> Monthly top-ups",
+    subtitle: "Monthly top-ups",
     active: true,
   },
   {
+    id: "annuity",
     title: "Annuity",
-    subtitle: "Small -> Guaranteed income",
+    subtitle: "Guaranteed income",
   },
   {
+    id: "drawdown",
     title: "Income Drawdown",
-    subtitle: "Small -> Flexible",
+    subtitle: "Flexible access",
   },
 ];
 
 const compareFundPlans = [
   {
+    categoryId: "personal",
     name: "Jenga Pension Plus",
     type: "Personal pension plan",
     bestFit: true,
@@ -2433,6 +2567,7 @@ const compareFundPlans = [
     action: "Choose this plan",
   },
   {
+    categoryId: "personal",
     name: "Mustakabali Pension",
     type: "Personal pension plan",
     rows: [
@@ -2445,6 +2580,7 @@ const compareFundPlans = [
     action: "Compare",
   },
   {
+    categoryId: "personal",
     name: "Hazina Retirement Fund",
     type: "Personal pension plan",
     rows: [
@@ -2456,6 +2592,34 @@ const compareFundPlans = [
     ],
     action: "Compare",
   },
+  {
+    categoryId: "annuity",
+    name: "Milele Guaranteed Income",
+    type: "Annuity plan",
+    bestFit: true,
+    rows: [
+      ["Expected income certainty", "High"],
+      ["Management fee", "1.8%"],
+      ["Min transfer amount", "KES 500,000"],
+      ["Income start age", "55+"],
+      ["Flexibility", "Fixed monthly income"],
+    ],
+    action: "Choose this plan",
+  },
+  {
+    categoryId: "drawdown",
+    name: "Uhuru Drawdown Portfolio",
+    type: "Income drawdown plan",
+    bestFit: true,
+    rows: [
+      ["Expected net return p.a.", "10.8%"],
+      ["Management fee", "1.6%"],
+      ["Min opening balance", "KES 250,000"],
+      ["Access from age", "50"],
+      ["Flexibility", "Flexible withdrawals"],
+    ],
+    action: "Choose this plan",
+  },
 ];
 
 const compareChecklist = [
@@ -2466,83 +2630,106 @@ const compareChecklist = [
   "Provider track record and RBA registration",
 ];
 
-const MobileCompareRetirementFunds = ({ onGoToDashboard }) => (
-  <div>
-    <div className="flex items-center gap-3">
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
-        <Landmark size={15} />
-      </span>
-      <h3 className="text-[0.95rem] font-extrabold text-slate-900">
-        Compare providers
-      </h3>
-    </div>
+const MobileCompareRetirementFunds = ({ onChoosePlan, onGoToDashboard }) => {
+  const [activeCategoryId, setActiveCategoryId] = useState(
+    compareFundCategories[0].id,
+  );
+  const [selectedPlanName, setSelectedPlanName] = useState("");
+  const visiblePlans = compareFundPlans.filter(
+    (plan) => plan.categoryId === activeCategoryId,
+  );
+  const handleChoosePlan = (plan) => {
+    setSelectedPlanName(plan.name);
+    onChoosePlan?.(plan);
+  };
 
-    <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {compareFundCategories.map((category) => (
-        <button
-          key={category.title}
-          type="button"
-          className={`min-w-[7.7rem] rounded-xl border px-3 py-2 text-left ${category.active ? "border-[#e6b72d] bg-[#f5c242] text-[#664a00]" : "border-slate-200 bg-white text-slate-700"}`}
-        >
-          <p className="text-[0.7rem] font-extrabold">{category.title}</p>
-          <p className="mt-0.5 text-[0.58rem] font-semibold opacity-75">
-            {category.subtitle}
-          </p>
-        </button>
-      ))}
-    </div>
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+          <Landmark size={15} />
+        </span>
+        <h3 className="text-[0.95rem] font-extrabold text-slate-900">
+          Compare providers
+        </h3>
+      </div>
 
-    <p className="mt-3 text-[0.68rem] leading-4 text-slate-500">
-      Sample plans for illustration - returns are not guaranteed and vary by
-      provider.
-    </p>
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {compareFundCategories.map((category) => {
+          const active = category.id === activeCategoryId;
+          return (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setActiveCategoryId(category.id)}
+              className={`min-w-[7.7rem] rounded-xl border px-3 py-2 text-left ${active ? "border-[#e6b72d] bg-[#f5c242] text-[#664a00]" : "border-slate-200 bg-white text-slate-700"}`}
+            >
+              <p className="text-[0.7rem] font-extrabold">{category.title}</p>
+              <p className="mt-0.5 text-[0.58rem] font-semibold opacity-75">
+                {category.subtitle}
+              </p>
+            </button>
+          );
+        })}
+      </div>
 
-    <div className="mt-4 space-y-3">
-      {compareFundPlans.map((plan) => (
-        <MobileComparePlanCard key={plan.name} plan={plan} />
-      ))}
-    </div>
+      <p className="mt-3 text-[0.68rem] leading-4 text-slate-500">
+        Sample plans for illustration - returns are not guaranteed and vary by
+        provider.
+      </p>
 
-    <div className="mt-5 flex items-center gap-3">
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
-        <CheckCircle2 size={15} />
-      </span>
-      <h3 className="text-[0.95rem] font-extrabold text-slate-900">
-        What to compare
-      </h3>
-    </div>
-    <div className="mt-3 rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
-      <div className="space-y-3">
-        {compareChecklist.map((item, index) => (
-          <div key={item} className="flex gap-3">
-            <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#e2f4eb] text-[0.62rem] font-extrabold text-[#0b6f66]">
-              {index + 1}
-            </span>
-            <p className="text-[0.72rem] leading-5 text-slate-600">{item}</p>
-          </div>
+      <div className="mt-4 space-y-3">
+        {visiblePlans.map((plan) => (
+          <MobileComparePlanCard
+            key={plan.name}
+            onChoose={handleChoosePlan}
+            plan={plan}
+            selected={selectedPlanName === plan.name}
+          />
         ))}
       </div>
+
+      <div className="mt-5 flex items-center gap-3">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e2f4eb] text-[#0b6f66]">
+          <CheckCircle2 size={15} />
+        </span>
+        <h3 className="text-[0.95rem] font-extrabold text-slate-900">
+          What to compare
+        </h3>
+      </div>
+      <div className="mt-3 rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
+        <div className="space-y-3">
+          {compareChecklist.map((item, index) => (
+            <div key={item} className="flex gap-3">
+              <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#e2f4eb] text-[0.62rem] font-extrabold text-[#0b6f66]">
+                {index + 1}
+              </span>
+              <p className="text-[0.72rem] leading-5 text-slate-600">{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-[1rem] border border-[#f4dfab] bg-[#fff8e8] px-4 py-3">
+        <p className="text-[0.72rem] leading-5 text-[#755a10]">
+          Fees compound. A 1% higher annual fee can shrink your final pot by
+          roughly 20% over 30 years - always compare net returns, not headline
+          figures.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onGoToDashboard}
+        className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white shadow-sm"
+      >
+        Go to Dashboard
+      </button>
     </div>
+  );
+};
 
-    <div className="mt-4 rounded-[1rem] border border-[#f4dfab] bg-[#fff8e8] px-4 py-3">
-      <p className="text-[0.72rem] leading-5 text-[#755a10]">
-        Fees compound. A 1% higher annual fee can shrink your final pot by
-        roughly 20% over 30 years - always compare net returns, not headline
-        figures.
-      </p>
-    </div>
-
-    <button
-      type="button"
-      onClick={onGoToDashboard}
-      className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#0b6f66] text-[0.78rem] font-extrabold text-white shadow-sm"
-    >
-      Go to Dashboard
-    </button>
-  </div>
-);
-
-const MobileComparePlanCard = ({ plan }) => (
+const MobileComparePlanCard = ({ onChoose, plan, selected }) => (
   <article className="rounded-[1.15rem] border border-emerald-100 bg-white p-4 shadow-sm">
     <div className="flex items-start justify-between gap-3">
       <div>
@@ -2575,9 +2762,10 @@ const MobileComparePlanCard = ({ plan }) => (
 
     <button
       type="button"
-      className={`mt-3 inline-flex h-10 w-full items-center justify-center rounded-full text-[0.72rem] font-extrabold ${plan.bestFit ? "bg-[#0b6f66] text-white" : "border border-emerald-100 bg-white text-[#0b6f66]"}`}
+      onClick={() => onChoose(plan)}
+      className={`mt-3 inline-flex h-10 w-full items-center justify-center rounded-full text-[0.72rem] font-extrabold ${selected || plan.bestFit ? "bg-[#0b6f66] text-white" : "border border-emerald-100 bg-white text-[#0b6f66]"}`}
     >
-      {plan.action}
+      {selected ? "Selected" : plan.action}
     </button>
   </article>
 );
