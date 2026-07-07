@@ -12,6 +12,7 @@ import {
 } from './sessionManager';
 import { resolveApiBaseUrl } from './apiConfig';
 import { fetchWithTimeout } from './secureFetch';
+import { syncStoredPreferredNameFromUser } from '../utils/memberIdentity';
 
 const API_URL = resolveApiBaseUrl({
     envUrl: import.meta.env.VITE_API_URL,
@@ -125,6 +126,7 @@ function extractUser(payload) {
 
 function storeUserProfile(user) {
     setStoredUserProfile(user);
+    syncStoredPreferredNameFromUser(user);
 }
 
 export async function loginUser(credentials) {

@@ -17,6 +17,7 @@ import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import DashboardOverview from '../components/dashboard/shell/DashboardOverview';
 import DashboardTopbar from '../components/dashboard/shell/DashboardTopbar';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
+import { updatePreferredName } from '../services/userApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
@@ -25,9 +26,11 @@ import incomeService from '../services/incomeService';
 import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
 import {
     clearQueuedPreferredNamePrompt,
+    hasAnyPreferredName,
     getStoredPreferredName,
     readQueuedPreferredNamePrompt,
     setStoredPreferredName,
+    syncStoredPreferredNameFromUser,
 } from '../utils/memberIdentity';
 
 const DebtManagerPanel = lazy(() => import('../components/dashboard/debt/DebtManagerPanel'));
@@ -113,6 +116,13 @@ const DashboardPage = () => {
             isMounted = false;
         };
     }, [activeSection]);
+
+    useEffect(() => {
+        syncStoredPreferredNameFromUser(profile);
+        if (hasAnyPreferredName(profile)) {
+            closePreferredNamePrompt();
+        }
+    }, [profile]);
 
     useEffect(() => {
         if (activeSection === 'buddy') {
@@ -438,6 +448,11 @@ const DashboardPage = () => {
                     reason={preferredNamePrompt.reason}
                     onClose={closePreferredNamePrompt}
                     onOpenProfile={openProfileFromPrompt}
+                    onSaved={(updatedUser) => {
+                        if (updatedUser?.email) {
+                            setProfile(updatedUser);
+                        }
+                    }}
                 />
             )}
 
@@ -489,15 +504,26 @@ const MobileDashboardNav = ({ activeSection, onOpenMore, onSelectSection }) => (
     </nav>
 );
 
-const PreferredNamePrompt = ({ reason, onClose, onOpenProfile }) => {
+const PreferredNamePrompt = ({ reason, onClose, onOpenProfile, onSaved }) => {
     const [preferredName, setPreferredName] = useState(() => getStoredPreferredName());
+    const [saving, setSaving] = useState(false);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const nextPreferredName = preferredName.trim();
         if (!nextPreferredName) return;
+
+        setSaving(true);
         setStoredPreferredName(nextPreferredName);
+        try {
+            const updatedUser = await updatePreferredName(nextPreferredName);
+            syncStoredPreferredNameFromUser(updatedUser);
+            onSaved?.(updatedUser);
+        } catch (error) {
+            console.warn('Preferred name saved locally until backend profile support is available:', error);
+        }
         onClose();
+        setSaving(false);
     };
 
     return (
@@ -537,10 +563,10 @@ const PreferredNamePrompt = ({ reason, onClose, onOpenProfile }) => {
                     <div className="flex flex-col gap-3 sm:flex-row">
                         <button
                             type="submit"
-                            disabled={!preferredName.trim()}
+                            disabled={!preferredName.trim() || saving}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Save name
+                            {saving ? 'Saving...' : 'Save name'}
                             <ArrowRight size={15} />
                         </button>
                         <button

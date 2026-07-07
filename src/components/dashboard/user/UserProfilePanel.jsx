@@ -20,7 +20,7 @@ import {
     WalletCards,
     X,
 } from 'lucide-react';
-import { getUserAccount, updateUserPreferences } from '../../../services/userApi';
+import { getUserAccount, updatePreferredName, updateUserPreferences } from '../../../services/userApi';
 import { useIncome } from '../../../contexts/IncomeContext';
 import DashboardOverviewFooter from '../shell/DashboardOverviewFooter';
 import IncomeForm from '../income/IncomeForm';
@@ -28,10 +28,12 @@ import IncomeList from '../income/IncomeList';
 import QuickIncomeModal from '../income/QuickIncomeModal';
 import {
     getDashboardDisplayName,
+    getBackendPreferredName,
     getMemberInitials,
     getMemberLabel,
     getStoredPreferredName,
     setStoredPreferredName,
+    syncStoredPreferredNameFromUser,
 } from '../../../utils/memberIdentity';
 import { USER_PROFILE_WORKSPACE_KEY } from './UserGoalsFamilyForm';
 
@@ -367,7 +369,7 @@ const SummaryCard = ({ label, value, subtitle, accent = '', dark = false, compac
 const GoalActionCard = ({ label, helper, color, active, onClick }) => <button type="button" onClick={onClick} className={`w-full rounded-[1rem] border px-4 py-4 text-left transition-all ${active ? 'border-primary-300 bg-[#eef8f4] shadow-sm' : 'border-emerald-200 border-dashed bg-[#f8fcfa] hover:border-primary-300 hover:bg-[#f1faf6] hover:shadow-sm'}`}><div className="flex items-start justify-between gap-3"><div className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${active ? 'bg-white shadow-sm ring-1 ring-emerald-100' : 'bg-white/95 ring-1 ring-emerald-100'}`}><span className={`inline-flex h-3.5 w-3.5 rounded-full ${color}`} /></div><span className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold ${active ? 'bg-primary-100 text-primary-700' : 'bg-white text-primary-700 ring-1 ring-emerald-100'}`}>+</span></div><p className="mt-4 text-sm font-semibold text-slate-900">{label}</p><p className="mt-1 text-xs text-slate-500">{helper}</p></button>;
 const SecurityCard = ({ icon: Icon, title, subtitle }) => <div className="rounded-[1.2rem] border border-slate-200 bg-[linear-gradient(180deg,_#fbfdfc_0%,_#f4f8f6_100%)] px-4 py-5 text-center shadow-sm"><div className="mx-auto inline-flex rounded-2xl bg-white p-3 text-primary-700 shadow-sm ring-1 ring-slate-200"><Icon size={20} /></div><p className="mt-4 text-base font-bold text-slate-950">{title}</p><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div>;
 const ModalShell = ({ title, icon: Icon, onClose, children }) => <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/38 p-3 backdrop-blur-[3px] sm:p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.35rem] border border-emerald-100 bg-white shadow-[0_22px_60px_rgba(15,23,42,0.14)] sm:rounded-[1.5rem]"><div className="sticky top-0 z-10 flex items-center justify-between border-b border-emerald-100 bg-white/96 px-4 py-3 backdrop-blur sm:px-5 sm:py-4"><div className="flex items-center gap-2.5 sm:gap-3"><div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eef8f4] text-primary-700 sm:h-10 sm:w-10"><Icon size={17} /></div><h3 className="text-[1.2rem] font-extrabold tracking-tight text-slate-950 sm:text-[1.45rem]">{title}</h3></div><button type="button" onClick={onClose} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-[#f6fbf8] text-slate-500 transition-colors hover:text-slate-900"><X size={17} /></button></div><div className="p-4 sm:p-5">{children}</div></div></div>;
-const PreferredNameCard = ({ memberLabel, preferredName, onChange, onSave }) => (
+const PreferredNameCard = ({ memberLabel, preferredName, saving = false, onChange, onSave }) => (
     <section className="rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
@@ -387,8 +389,8 @@ const PreferredNameCard = ({ memberLabel, preferredName, onChange, onSave }) => 
                         className="mt-2 w-full rounded-[1rem] border border-emerald-100 px-4 py-3 text-base text-slate-900 outline-none transition-colors focus:border-primary-500"
                     />
                 </label>
-                <button type="submit" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
-                    Save preferred name
+                <button type="submit" disabled={saving} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[1rem] bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    {saving ? 'Saving...' : 'Save preferred name'}
                 </button>
             </form>
         </div>
@@ -1006,7 +1008,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const [preferencesForm, setPreferencesForm] = useState({ primary_financial_goal: '', riskAppetite: 'Moderate', investmentHorizon: '5-10 Years', preferredProducts: 'T-Bills, MMFs, NSE Equities', financialMotivation: '' });
     const [preferredName, setPreferredName] = useState(getStoredPreferredName);
     const [preferredNameSaved, setPreferredNameSaved] = useState(() => Boolean(getStoredPreferredName().trim()));
-    const [submitting, setSubmitting] = useState({ baseline: false, goal: false, dependents: false, prefs: false, preferencesModal: false });
+    const [submitting, setSubmitting] = useState({ baseline: false, goal: false, dependents: false, prefs: false, preferencesModal: false, preferredName: false });
 
     useEffect(() => {
         const load = async () => {
@@ -1015,7 +1017,11 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 setError('');
                 const acct = await getUserAccount();
                 const ws = readWorkspace();
+                const accountPreferredName = getBackendPreferredName(acct) || getStoredPreferredName();
                 setUser(acct);
+                syncStoredPreferredNameFromUser(acct);
+                setPreferredName(accountPreferredName);
+                setPreferredNameSaved(Boolean(accountPreferredName.trim()));
                 setWorkspace(ws);
                 setBaselineForm({ monthly_income: acct?.profile?.monthly_income || '' });
                 setDependantsForm({ ...EMPTY_DEPENDANT_FORM });
@@ -1162,12 +1168,25 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
         setDependantsForm((current) => ({ ...current, [field]: value }));
     };
-    const savePreferredName = (event) => {
+    const savePreferredName = async (event) => {
         event.preventDefault();
         const nextPreferredName = preferredName.trim();
+        setSubmitting((current) => ({ ...current, preferredName: true }));
         setStoredPreferredName(nextPreferredName);
-        setPreferredNameSaved(Boolean(nextPreferredName));
-        setSuccess(nextPreferredName ? 'Preferred name saved. Your dashboard will now address you by that name.' : 'Preferred name cleared.');
+        try {
+            const updatedUser = await updatePreferredName(nextPreferredName);
+            if (updatedUser?.email) {
+                setUser(updatedUser);
+                syncStoredPreferredNameFromUser(updatedUser);
+            }
+            setPreferredNameSaved(Boolean(nextPreferredName));
+            setSuccess(nextPreferredName ? 'Preferred name saved. Your dashboard will now address you by that name.' : 'Preferred name cleared.');
+        } catch (err) {
+            setPreferredNameSaved(Boolean(nextPreferredName));
+            setSuccess(nextPreferredName ? 'Preferred name saved on this device. It will sync across devices after backend profile support is deployed.' : 'Preferred name cleared on this device.');
+        } finally {
+            setSubmitting((current) => ({ ...current, preferredName: false }));
+        }
     };
     const getNextGoalSlotIndex = (type) => {
         const slots = goalBucketByType[type]?.slots || [];
@@ -1406,6 +1425,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 <PreferredNameCard
                     memberLabel={memberLabel}
                     preferredName={preferredName}
+                    saving={submitting.preferredName}
                     onChange={setPreferredName}
                     onSave={savePreferredName}
                 />

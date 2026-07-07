@@ -4,7 +4,7 @@ import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { hasStoredAccessToken, loginUser } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
-import { queuePreferredNamePrompt } from '../utils/memberIdentity';
+import { hasAnyPreferredName, queuePreferredNamePrompt } from '../utils/memberIdentity';
 import { PENDING_PROFILE_SIGNUP_EMAIL_KEY } from './SignUpPage';
 
 const isPendingProfileSignup = (email) => {
@@ -60,13 +60,16 @@ const SignInPage = () => {
 
         try {
             setIsSubmitting(true);
-            await loginUser({
+            const loginPayload = await loginUser({
                 email: formValues.email.trim().toLowerCase(),
                 password: formValues.password,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
             const nextSection = getPostLoginSection(formValues.email);
-            queuePreferredNamePrompt(nextSection === 'user' ? 'signup' : 'returning');
+            const loggedInUser = loginPayload?.data?.user || loginPayload?.user || loginPayload?.data || loginPayload;
+            if (!hasAnyPreferredName(loggedInUser)) {
+                queuePreferredNamePrompt(nextSection === 'user' ? 'signup' : 'returning');
+            }
             clearPendingProfileSignup();
             persistDashboardSection(nextSection);
             const redirectTo = location.state?.from?.pathname || '/dashboard/app';

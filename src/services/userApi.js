@@ -6,6 +6,7 @@ import {
 import { resolveApiBaseUrl } from './apiConfig';
 import { fetchWithTimeout } from './secureFetch';
 import { refreshSession } from './authApi';
+import { syncStoredPreferredNameFromUser } from '../utils/memberIdentity';
 
 const API_URL = resolveApiBaseUrl({
     envUrl: import.meta.env.VITE_API_URL,
@@ -85,6 +86,7 @@ export async function getUserAccount() {
     const payload = await parseResponse(response);
     const user = payload?.data || payload;
     setStoredUserProfile(user);
+    syncStoredPreferredNameFromUser(user);
     return user;
 }
 
@@ -103,6 +105,7 @@ export async function updateUserAccount(formValues) {
     const payload = await parseResponse(response);
     const user = payload?.data || payload;
     setStoredUserProfile(user);
+    syncStoredPreferredNameFromUser(user);
     return user;
 }
 
@@ -122,6 +125,27 @@ export async function updateUserPreferences(formValues) {
     const user = payload?.data || payload;
     if (user?.email) {
         setStoredUserProfile(user);
+        syncStoredPreferredNameFromUser(user);
+    }
+    return user;
+}
+
+export async function updatePreferredName(preferredName) {
+    const nextPreferredName = String(preferredName || '').trim();
+    const response = await fetchWithAuthRefresh(USER_PROFILE_ENDPOINT, {
+        method: 'PATCH',
+        headers: buildHeaders(),
+        body: JSON.stringify({
+            preferred_name: nextPreferredName,
+            preferred_name_completed: Boolean(nextPreferredName),
+        }),
+    });
+
+    const payload = await parseResponse(response);
+    const user = payload?.data || payload;
+    if (user?.email) {
+        setStoredUserProfile(user);
+        syncStoredPreferredNameFromUser(user);
     }
     return user;
 }

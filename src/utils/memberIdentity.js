@@ -8,6 +8,26 @@ const MEMBER_NUMBER_PREFIX = '154';
 const MEMBER_NUMBER_SUFFIX_LENGTH = 4;
 const DEFAULT_MEMBER_NUMBER_SUFFIX = '2217';
 
+export const getBackendPreferredName = (user = {}) => {
+    const candidates = [
+        user?.profile?.preferred_name,
+        user?.profile?.preferredName,
+        user?.preferred_name,
+        user?.preferredName,
+    ];
+
+    return candidates.map((value) => String(value || '').trim()).find(Boolean) || '';
+};
+
+export const hasCompletedBackendPreferredNamePrompt = (user = {}) => {
+    const profile = user?.profile || {};
+    return Boolean(
+        getBackendPreferredName(user) ||
+        profile.preferred_name_completed ||
+        profile.preferredNameCompleted
+    );
+};
+
 const toStableOffset = (value) => {
     const source = String(value || 'shilingi-member').trim().toLowerCase();
     let hash = 0;
@@ -62,7 +82,7 @@ export const getMemberNumber = (user = {}) => {
 export const getMemberLabel = (user = {}) => `Member Number ${getMemberNumber(user)}`;
 
 export const getMemberInitials = (user = {}) => {
-    const preferredName = getStoredPreferredName().trim();
+    const preferredName = getBackendPreferredName(user) || getStoredPreferredName().trim();
     if (preferredName) {
         const nameParts = preferredName.split(/\s+/).filter(Boolean);
         const initials = nameParts.length > 1
@@ -104,6 +124,9 @@ export const hasCompletedPreferredNamePrompt = () => {
 };
 
 export const getDashboardDisplayName = (user = {}) => {
+    const backendPreferredName = getBackendPreferredName(user);
+    if (backendPreferredName) return backendPreferredName;
+
     const storedPreferredName = getStoredPreferredName().trim();
     if (storedPreferredName) return storedPreferredName;
 
@@ -130,6 +153,31 @@ export const setStoredPreferredName = (name) => {
         // Local storage may be blocked. The profile can still work without it.
     }
 };
+
+export const syncStoredPreferredNameFromUser = (user = {}) => {
+    const backendPreferredName = getBackendPreferredName(user);
+
+    if (!backendPreferredName) {
+        if (hasCompletedBackendPreferredNamePrompt(user) && typeof window !== 'undefined') {
+            try {
+                window.localStorage.setItem(PREFERRED_NAME_COMPLETED_KEY, '1');
+                clearQueuedPreferredNamePrompt();
+            } catch {
+                // Local storage may be blocked. Backend profile data remains authoritative.
+            }
+        }
+        return;
+    }
+
+    setStoredPreferredName(backendPreferredName);
+};
+
+export const hasAnyPreferredName = (user = {}) => (
+    Boolean(getBackendPreferredName(user)) ||
+    Boolean(getStoredPreferredName().trim()) ||
+    hasCompletedPreferredNamePrompt() ||
+    hasCompletedBackendPreferredNamePrompt(user)
+);
 
 export const queuePreferredNamePrompt = (reason = 'returning') => {
     if (typeof window === 'undefined') return;
