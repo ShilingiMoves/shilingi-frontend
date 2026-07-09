@@ -10,15 +10,6 @@ import { useAdaptivePolling } from '../../../hooks/useAdaptivePolling';
 const FINANCIAL_HEALTH_POLL_INTERVAL_MS = 5 * 60 * 1000;
 const FINANCIAL_HEALTH_MAX_POLL_INTERVAL_MS = 20 * 60 * 1000;
 
-function formatSyncDelay(ms) {
-    if (!ms) {
-        return 'soon';
-    }
-
-    const minutes = Math.max(1, Math.round(ms / 60000));
-    return `${minutes} min`;
-}
-
 const FinancialHealthDashboard = () => {
     const {
         healthScore,
@@ -168,26 +159,6 @@ const FinancialHealthDashboard = () => {
         );
     }
 
-    const syncLabel = syncStatus.pausedReason === 'hidden'
-        ? 'Live sync paused'
-        : syncStatus.pausedReason === 'offline'
-            ? 'Waiting for connection'
-            : syncStatus.isPolling
-                ? 'Syncing now'
-                : 'Live sync active';
-    const syncDetail = syncStatus.pausedReason === 'hidden'
-        ? 'Refresh resumes when this tab is active.'
-        : syncStatus.pausedReason === 'offline'
-            ? 'Dashboard will refresh when you are back online.'
-            : syncStatus.lastError
-                ? syncStatus.lastError
-                : `Next check in ${formatSyncDelay(syncStatus.nextRunInMs || syncStatus.currentIntervalMs)}.`;
-    const syncDotClass = syncStatus.pausedReason
-        ? 'bg-amber-400'
-        : syncStatus.isPolling
-            ? 'bg-blue-500'
-            : 'bg-emerald-500';
-
     return (
         <div className="min-h-screen bg-[linear-gradient(180deg,_#f8fafc_0%,_#eef4f8_100%)]">
             <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -211,12 +182,6 @@ const FinancialHealthDashboard = () => {
                                             Last updated: {new Date(lastRefresh).toLocaleTimeString()}
                                         </span>
                                     )}
-                                    <span className="hidden text-slate-300 sm:inline">|</span>
-                                    <span className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-700">
-                                        <span className={`h-2 w-2 rounded-full ${syncDotClass}`} />
-                                        {syncLabel}
-                                    </span>
-                                    <span className="text-slate-500">{syncDetail}</span>
                                 </div>
                             </div>
                             <button

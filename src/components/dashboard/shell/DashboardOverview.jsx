@@ -598,30 +598,6 @@ const relDate = (v) => {
     if (diff <= 0) return 'Today'; if (diff === 1) return 'Yesterday'; if (diff < 7) return `${diff}d ago`;
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
-const formatSyncDelay = (ms) => {
-    if (!ms) return 'soon';
-    const minutes = Math.max(1, Math.round(ms / 60000));
-    return `${minutes} min`;
-};
-const getOverviewSyncCopy = (sync = {}) => {
-    if (sync.pausedReason === 'hidden') {
-        return { label: 'Paused', detail: 'Resumes when active', dot: 'bg-amber-400' };
-    }
-    if (sync.pausedReason === 'offline') {
-        return { label: 'Offline', detail: 'Refresh waits for connection', dot: 'bg-amber-400' };
-    }
-    if (sync.isPolling) {
-        return { label: 'Syncing', detail: 'Updating your numbers', dot: 'bg-blue-500' };
-    }
-    if (sync.lastError) {
-        return { label: 'Retrying', detail: sync.lastError, dot: 'bg-rose-500' };
-    }
-    return {
-        label: 'Live',
-        detail: `Next check in ${formatSyncDelay(sync.nextRunInMs || sync.currentIntervalMs)}`,
-        dot: 'bg-emerald-500',
-    };
-};
 const settleWithConcurrency = async (tasks, concurrency = 4) => {
     const results = new Array(tasks.length);
     let nextIndex = 0;
@@ -1639,8 +1615,6 @@ const DesktopDashboardOverview = ({
         ? `${palette.label}, ${displayName}. Keep up the progress.`
         : 'Complete setup to unlock your personalized health score.';
     const tierLabel = user?.tier || user?.subscription_tier || user?.plan || 'Basic';
-    const syncCopy = getOverviewSyncCopy(sync);
-
     return (
         <div className="hidden min-h-screen bg-[#f8f8f8] lg:block">
             <div className="mx-auto grid min-h-screen max-w-[1280px] grid-cols-[296px_minmax(0,1fr)_343px] overflow-hidden rounded-[40px] bg-[#f8f8f8]">
@@ -1705,13 +1679,6 @@ const DesktopDashboardOverview = ({
                                 <p className="text-base text-[#111827]">{palette.label},</p>
                                 <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName}</h1>
                                 <p className="mt-2 text-base text-[#111827]">Your Financial Health score is {currentScore}/100</p>
-                            </div>
-                            <div className="max-w-[190px] rounded-full border border-emerald-100 bg-white px-3 py-2 text-right shadow-[0_0_1px_rgba(0,0,0,0.07)]">
-                                <p className="inline-flex items-center justify-end gap-2 text-xs font-bold text-[#0c6060]">
-                                    <span className={`h-2 w-2 rounded-full ${syncCopy.dot}`} />
-                                    {syncCopy.label}
-                                </p>
-                                <p className="mt-0.5 truncate text-[10px] text-[#6b7280]">{syncCopy.detail}</p>
                             </div>
                         </div>
                     </section>
@@ -1925,8 +1892,6 @@ const MobileDashboardOverview = ({
         ? `${palette.label}, ${displayName}. Keep building your money picture.`
         : 'Complete setup to unlock your personalized health score.';
     const transaction = live.tx[0] || null;
-    const syncCopy = getOverviewSyncCopy(sync);
-
     return (
         <div className="sm:hidden">
             <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f8f8f8] px-4 pb-28 pt-4">
@@ -1936,13 +1901,6 @@ const MobileDashboardOverview = ({
                             <p className="text-xs text-[#111827]">{palette.label},</p>
                             <h1 className="mt-0.5 truncate text-lg font-extrabold leading-tight text-[#0c6060]">{displayName}</h1>
                             <p className="mt-0.5 text-xs text-[#111827]">Your Financial Health score is {currentScore}/100</p>
-                        </div>
-                        <div className="max-w-[132px] rounded-full border border-emerald-100 bg-white px-2.5 py-1.5 text-right shadow-[0_0_1px_rgba(0,0,0,0.07)]">
-                            <p className="inline-flex items-center justify-end gap-1.5 text-[10px] font-bold text-[#0c6060]">
-                                <span className={`h-1.5 w-1.5 rounded-full ${syncCopy.dot}`} />
-                                {syncCopy.label}
-                            </p>
-                            <p className="mt-0.5 truncate text-[8px] text-[#6b7280]">{syncCopy.detail}</p>
                         </div>
                     </div>
                 </section>

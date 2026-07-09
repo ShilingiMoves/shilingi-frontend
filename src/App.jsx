@@ -22,6 +22,7 @@ const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const DataProtectionPage = lazy(() => import('./pages/DataProtectionPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const ReferPage = lazy(() => import('./pages/ReferPage'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLandingPage = lazy(() => import('./pages/DashboardLandingPage'));
 const SignInPage = lazy(() => import('./pages/SignInPage'));
@@ -58,10 +59,37 @@ function RouteLoader() {
     );
 }
 
+function useIsMobileLanding() {
+    const [isMobileLanding, setIsMobileLanding] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(max-width: 767px)').matches;
+    });
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return undefined;
+
+        const mediaQuery = window.matchMedia('(max-width: 767px)');
+        const handleChange = (event) => setIsMobileLanding(event.matches);
+
+        setIsMobileLanding(mediaQuery.matches);
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, []);
+
+    return isMobileLanding;
+}
+
+function LandingPage() {
+    const isMobileLanding = useIsMobileLanding();
+    return isMobileLanding ? <OnboardingPage /> : <Home />;
+}
+
 function AppLayout() {
     const location = useLocation();
-    const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts';
-    const hideShilingiBuddy = location.pathname === '/dashboard/app' || location.pathname === '/debts';
+    const isMobileLanding = useIsMobileLanding();
+    const isOnboardingSurface = location.pathname === '/onboarding' || (location.pathname === '/' && isMobileLanding);
+    const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts' || isOnboardingSurface;
+    const hideShilingiBuddy = location.pathname === '/dashboard/app' || location.pathname === '/debts' || isOnboardingSurface;
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -70,7 +98,8 @@ function AppLayout() {
                 <SessionActivityMonitor />
                 <Suspense fallback={<RouteLoader />}>
                     <Routes>
-                        <Route path="/" element={<Home />} />
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/onboarding" element={<OnboardingPage />} />
                         <Route path="/dashboard" element={<DashboardLandingPage />} />
                         <Route
                             path="/dashboard/app"
@@ -119,7 +148,7 @@ function AppLayout() {
                 </Suspense>
             </main>
             {!hideShilingiBuddy && <ShilingiBuddy />}
-            <CookieConsentBanner />
+            {!isOnboardingSurface && <CookieConsentBanner />}
         </div>
     );
 }
