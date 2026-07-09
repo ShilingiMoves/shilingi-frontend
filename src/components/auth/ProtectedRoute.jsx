@@ -4,16 +4,23 @@ import { hasStoredAccessToken } from '../../services/authApi';
 
 /**
  * A wrapper component for routes that require authentication.
- * If the user is not authenticated, it redirects them to the sign-in page,
+ * If the user is not authenticated, it redirects them to the right sign-in surface,
  * while preserving the attempted location so they can be redirected back after login.
  */
+const getSignInPath = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+        return '/onboarding?auth=signin';
+    }
+
+    return '/signin';
+};
+
 const ProtectedRoute = ({ children }) => {
     const isAuthenticated = hasStoredAccessToken();
     const location = useLocation();
 
     if (!isAuthenticated) {
-        // Redirect to /signin but keep the current location in state
-        return <Navigate to="/signin" state={{ from: location }} replace />;
+        return <Navigate to={getSignInPath()} state={{ from: location }} replace />;
     }
 
     return children;

@@ -186,7 +186,15 @@ export function clearSessionStorage() {
 export function handleUnauthorizedSession() {
     clearSessionStorage();
 
-    if (typeof window !== 'undefined' && window.location.pathname !== '/signin') {
-        window.location.assign('/signin');
+    if (typeof window !== 'undefined') {
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        const signInPath = isMobile ? '/onboarding?auth=signin' : '/signin';
+        const alreadyOnSignInPath = isMobile
+            ? window.location.pathname === '/onboarding' && window.location.search.includes('auth=signin')
+            : window.location.pathname === '/signin';
+
+        if (!alreadyOnSignInPath) {
+            window.location.assign(signInPath);
+        }
     }
 }

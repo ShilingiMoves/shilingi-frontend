@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     BadgeDollarSign,
     BarChart3,
@@ -19,7 +19,6 @@ import {
     PiggyBank,
     Target,
     TrendingUp,
-    UserRound,
     WalletCards,
 } from 'lucide-react';
 import { loginUser, registerUser, resendVerificationEmail } from '../services/authApi';
@@ -113,11 +112,15 @@ const planDetails = {
 };
 
 const planOrder = ['basic', 'plus', 'pro', 'elite'];
+const assessmentSteps = ['profile', 'stage', 'goals', 'confidence'];
 const steps = ['welcome', 'profile', 'stage', 'goals', 'confidence', 'results', 'plan', 'payment', 'account'];
 
 const OnboardingPage = () => {
     const navigate = useNavigate();
-    const [stepIndex, setStepIndex] = useState(0);
+    const [searchParams] = useSearchParams();
+    const initialAuthMode = normalizeAuthMode(searchParams.get('auth') || searchParams.get('mode'));
+    const isDirectAuthEntry = Boolean(initialAuthMode);
+    const [stepIndex, setStepIndex] = useState(() => (initialAuthMode ? steps.indexOf('account') : 0));
     const [answers, setAnswers] = useState({
         profile: '',
         stage: '',
@@ -128,7 +131,7 @@ const OnboardingPage = () => {
     const [billingCycle, setBillingCycle] = useState('monthly');
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [showOtherPlans, setShowOtherPlans] = useState(false);
-    const [accountMode, setAccountMode] = useState('choice');
+    const [accountMode, setAccountMode] = useState(() => initialAuthMode || 'choice');
     const [authError, setAuthError] = useState('');
     const [authSuccess, setAuthSuccess] = useState('');
     const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
@@ -297,24 +300,16 @@ const OnboardingPage = () => {
     return (
         <div className="min-h-screen bg-[#111111] px-0 py-0 font-sans text-[#232e3d] sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-8">
             <section className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden bg-[#f8f8f8] sm:min-h-[812px] sm:rounded-[40px]">
-                {currentStep !== 'welcome' && (
-                    <header className="relative z-10 flex items-center justify-between px-5 pb-3 pt-5">
+                {currentStep !== 'welcome' && currentStep !== 'account' && (
+                    <header className="relative z-10 flex items-center px-5 pb-3 pt-5">
                         <img src={onboardingLogo} alt="Shilingi Moves" className="h-auto w-[92px]" decoding="async" />
-                        <div className="flex items-center gap-3">
-                            <span className="relative flex h-2 w-2 rounded-full bg-rose-500">
-                                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-white" />
-                            </span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dfecea] bg-white text-[#0c6060]">
-                                <UserRound size={16} />
-                            </span>
-                        </div>
                     </header>
                 )}
 
-                {currentStep !== 'welcome' && currentStep !== 'results' && currentStep !== 'plan' && (
+                {assessmentSteps.includes(currentStep) && (
                     <div className="px-5">
                         <div className="mb-5 flex items-center gap-2">
-                            {steps.slice(1, 5).map((step) => (
+                            {assessmentSteps.map((step) => (
                                 <span
                                     key={step}
                                     className={`h-2 flex-1 rounded-full ${steps.indexOf(step) <= stepIndex ? 'bg-[#e1ad2b]' : 'bg-[#e9ecef]'}`}
@@ -433,6 +428,7 @@ const OnboardingPage = () => {
                                 setAccountMode('choice');
                                 setStepIndex(activePlan.price > 0 ? steps.indexOf('payment') : steps.indexOf('plan'));
                             }}
+                            showBack={!isDirectAuthEntry}
                             onModeChange={(mode) => {
                                 setAuthError('');
                                 setAuthSuccess('');
@@ -455,7 +451,7 @@ const OnboardingPage = () => {
                     )}
                 </div>
 
-                {['profile', 'stage', 'goals', 'confidence'].includes(currentStep) && !isAnalyzing && (
+                {assessmentSteps.includes(currentStep) && !isAnalyzing && (
                     <footer className="relative z-10 grid grid-cols-[0.32fr_1fr] gap-3 px-4 pb-7">
                         <button
                             type="button"
@@ -859,6 +855,7 @@ const AccountScreen = ({
     onSocialAuth,
     plan,
     showConfirmPassword,
+    showBack = true,
     showPassword,
     signinValues,
     signupValues,
@@ -872,13 +869,15 @@ const AccountScreen = ({
         </div>
 
         <div className="mt-8">
-            <button
-                type="button"
-                onClick={onBack}
-                className="mb-4 inline-flex items-center gap-1 text-xs font-bold text-[#0c6060]"
-            >
-                <ChevronLeft size={15} /> Back
-            </button>
+            {showBack && (
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="mb-4 inline-flex items-center gap-1 text-xs font-bold text-[#0c6060]"
+                >
+                    <ChevronLeft size={15} /> Back
+                </button>
+            )}
 
             <h1 className="text-[27px] font-extrabold leading-[31px] tracking-normal text-[#10231c]">
                 {accountMode === 'signin' ? 'Sign in to your account' : accountMode === 'verify' ? 'Verify this account' : 'Create your account'}
@@ -1094,6 +1093,11 @@ function getCanContinue(step, answers) {
     if (step === 'goals') return answers.goals.length > 0;
     if (step === 'confidence') return Boolean(answers.confidence);
     return false;
+}
+
+function normalizeAuthMode(value) {
+    if (value === 'signin' || value === 'signup' || value === 'choice') return value;
+    return '';
 }
 
 function getEmailVerificationRedirectUrl() {

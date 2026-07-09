@@ -68,6 +68,11 @@ const DashboardPage = () => {
     });
     const [hasIncomeData, setHasIncomeData] = useState(false);
 
+    const closePreferredNamePrompt = useCallback(() => {
+        clearQueuedPreferredNamePrompt();
+        setPreferredNamePrompt({ shouldShow: false, reason: 'returning' });
+    }, []);
+
     useEffect(() => {
         if (lastAppliedLocationKeyRef.current === location.key) {
             return;
@@ -122,7 +127,7 @@ const DashboardPage = () => {
         if (hasAnyPreferredName(profile)) {
             closePreferredNamePrompt();
         }
-    }, [profile]);
+    }, [closePreferredNamePrompt, profile]);
 
     useEffect(() => {
         if (activeSection === 'buddy') {
@@ -182,7 +187,10 @@ const DashboardPage = () => {
 
     const handleSignOut = () => {
         logoutUser();
-        navigate('/signin', { replace: true });
+        const signInPath = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+            ? '/onboarding?auth=signin'
+            : '/signin';
+        navigate(signInPath, { replace: true });
     };
     const handleOpenWebsite = () => {
         if (typeof window !== 'undefined') {
@@ -210,11 +218,6 @@ const DashboardPage = () => {
             mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }, [location.pathname, location.search, navigate]);
-
-    const closePreferredNamePrompt = () => {
-        clearQueuedPreferredNamePrompt();
-        setPreferredNamePrompt({ shouldShow: false, reason: 'returning' });
-    };
 
     const openProfileFromPrompt = () => {
         closePreferredNamePrompt();
