@@ -187,10 +187,7 @@ const DashboardPage = () => {
 
     const handleSignOut = () => {
         logoutUser();
-        const signInPath = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-            ? '/onboarding?auth=signin'
-            : '/signin';
-        navigate(signInPath, { replace: true });
+        navigate('/signin', { replace: true });
     };
     const handleOpenWebsite = () => {
         if (typeof window !== 'undefined') {

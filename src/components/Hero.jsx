@@ -374,7 +374,16 @@ const Hero = () => {
                     <div className="flex flex-col sm:flex-row">
                         <Link
                             to="/onboarding"
-                            className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#10b981] px-7 py-4 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#059669] hover:shadow-lg sm:w-auto"
+                            className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#10b981] px-7 py-4 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#059669] hover:shadow-lg sm:w-auto md:hidden"
+                        >
+                            Unlock better money habits
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 transition-colors">
+                                <ArrowRight size={15} />
+                            </span>
+                        </Link>
+                        <Link
+                            to="/signup"
+                            className="hidden w-full items-center justify-center gap-3 rounded-full bg-[#10b981] px-7 py-4 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#059669] hover:shadow-lg sm:w-auto md:inline-flex"
                         >
                             Unlock better money habits
                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 transition-colors">

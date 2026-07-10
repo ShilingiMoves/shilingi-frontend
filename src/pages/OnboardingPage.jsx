@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     BadgeDollarSign,
     BarChart3,
@@ -280,7 +280,7 @@ const OnboardingPage = () => {
                 onboarding_billing_cycle: billingCycle,
                 redirect_url: getEmailVerificationRedirectUrl(),
             });
-            markProfileSetupPending();
+            markProfileSetupPending(normalizedEmail);
             storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
             setAccountMode('verify');
@@ -320,7 +320,7 @@ const OnboardingPage = () => {
                 email: signinValues.email.trim().toLowerCase(),
                 password: signinValues.password,
             });
-            if (shouldShowProfileSetup()) {
+            if (shouldShowProfileSetup(signinValues.email)) {
                 navigate('/profile-setup', { replace: true });
                 return;
             }
@@ -1035,7 +1035,9 @@ const AccountScreen = ({
 }) => (
     <div className="flex flex-1 flex-col overflow-y-auto px-0 pb-4 pt-5">
         <div className="flex items-center justify-center">
-            <img src={onboardingLogo} alt="Shilingi Moves" className="h-auto w-[92px]" decoding="async" />
+            <Link to="/" aria-label="Go to Shilingi Moves home page">
+                <img src={onboardingLogo} alt="Shilingi Moves" className="h-auto w-[92px]" decoding="async" />
+            </Link>
         </div>
 
         <div className="mt-8">

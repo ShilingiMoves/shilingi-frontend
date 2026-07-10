@@ -102,7 +102,14 @@ const TrustAndCTA = () => {
                         <div className="flex justify-center">
                             <Link
                                 to="/onboarding"
-                                className="group inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-extrabold text-primary-700 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-2xl"
+                                className="group inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-extrabold text-primary-700 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-2xl md:hidden"
+                            >
+                                Get Started Today
+                                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                            </Link>
+                            <Link
+                                to="/signup"
+                                className="group hidden items-center justify-center rounded-full bg-white px-8 py-4 text-base font-extrabold text-primary-700 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-2xl md:inline-flex"
                             >
                                 Get Started Today
                                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />

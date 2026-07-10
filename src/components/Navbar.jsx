@@ -65,7 +65,7 @@ const Navbar = () => {
                         >
                             Sign In
                         </Link>
-                        <Button variant="primary" to="/onboarding" size="sm" className="min-h-[40px] px-5">
+                        <Button variant="primary" to="/signup" size="sm" className="min-h-[40px] px-5">
                             Create your account
                         </Button>
                     </div>
