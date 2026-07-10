@@ -373,7 +373,7 @@ const Hero = () => {
 
                     <div className="flex flex-col sm:flex-row">
                         <Link
-                            to="/signup"
+                            to="/onboarding"
                             className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#10b981] px-7 py-4 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#059669] hover:shadow-lg sm:w-auto"
                         >
                             Unlock better money habits

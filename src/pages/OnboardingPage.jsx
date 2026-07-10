@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     BadgeDollarSign,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { loginUser, registerUser, resendVerificationEmail } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
+import { markProfileSetupPending, shouldShowProfileSetup } from '../utils/profileSetupState';
 import onboardingIllustration from '../assets/onboarding-financial-coach.webp';
 import onboardingLogo from '../assets/shilingi-logo-animated.gif';
 
@@ -128,6 +129,7 @@ const OnboardingPage = () => {
         confidence: '',
     });
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisProgress, setAnalysisProgress] = useState(0);
     const [billingCycle, setBillingCycle] = useState('monthly');
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [showOtherPlans, setShowOtherPlans] = useState(false);
@@ -160,11 +162,8 @@ const OnboardingPage = () => {
     const goNext = () => {
         if (!canContinue) return;
         if (currentStep === 'confidence') {
+            setAnalysisProgress(0);
             setIsAnalyzing(true);
-            window.setTimeout(() => {
-                setIsAnalyzing(false);
-                setStepIndex(steps.indexOf('results'));
-            }, 900);
             return;
         }
         setStepIndex((current) => Math.min(current + 1, steps.length - 1));
@@ -196,10 +195,12 @@ const OnboardingPage = () => {
         setShowOtherPlans(false);
     };
 
-    const handleStartPlan = () => {
+    const handleStartPlan = (planKey = activePlanKey) => {
+        const planToStart = planDetails[planKey] || activePlan;
+        setSelectedPlan(planKey);
         setShowOtherPlans(false);
         setAccountMode('choice');
-        setStepIndex(steps.indexOf(activePlan.price > 0 ? 'payment' : 'account'));
+        setStepIndex(steps.indexOf(planToStart.price > 0 ? 'payment' : 'account'));
     };
 
     const handleSocialAuth = (provider) => {
@@ -222,6 +223,36 @@ const OnboardingPage = () => {
             [name]: name === 'password' ? sanitizePasswordInput(value) : value,
         }));
     };
+
+    useEffect(() => {
+        if (!isAnalyzing) return undefined;
+
+        const duration = 2200;
+        const startedAt = Date.now();
+        let finishId;
+        const intervalId = window.setInterval(() => {
+            const elapsed = Date.now() - startedAt;
+            const rawProgress = Math.min(elapsed / duration, 1);
+            const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
+            const nextProgress = Math.min(99, Math.floor(easedProgress * 100));
+            setAnalysisProgress(nextProgress);
+        }, 80);
+
+        const completeId = window.setTimeout(() => {
+            window.clearInterval(intervalId);
+            setAnalysisProgress(100);
+            finishId = window.setTimeout(() => {
+                setIsAnalyzing(false);
+                setStepIndex(steps.indexOf('results'));
+            }, 250);
+        }, duration);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.clearTimeout(completeId);
+            window.clearTimeout(finishId);
+        };
+    }, [isAnalyzing]);
 
     const handleSignupSubmit = async (event) => {
         event.preventDefault();
@@ -249,6 +280,7 @@ const OnboardingPage = () => {
                 onboarding_billing_cycle: billingCycle,
                 redirect_url: getEmailVerificationRedirectUrl(),
             });
+            markProfileSetupPending();
             storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
             setAccountMode('verify');
@@ -288,6 +320,10 @@ const OnboardingPage = () => {
                 email: signinValues.email.trim().toLowerCase(),
                 password: signinValues.password,
             });
+            if (shouldShowProfileSetup()) {
+                navigate('/profile-setup', { replace: true });
+                return;
+            }
             persistDashboardSection('overview');
             navigate('/dashboard/app', { replace: true, state: { section: 'overview' } });
         } catch (error) {
@@ -381,7 +417,7 @@ const OnboardingPage = () => {
                         </QuestionScreen>
                     )}
 
-                    {isAnalyzing && <AnalyzingScreen />}
+                    {isAnalyzing && <AnalyzingScreen progress={analysisProgress} />}
 
                     {currentStep === 'results' && !isAnalyzing && (
                         <ResultsScreen recommendation={recommendation} />
@@ -576,95 +612,219 @@ const OptionList = ({ options, value, onChange, multiple = false }) => (
     </div>
 );
 
-const AnalyzingScreen = () => (
-    <div className="flex flex-1 flex-col px-1">
-        <p className="text-xs font-bold text-[#0c6060]">Financial wellness snapshot</p>
-        <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#232e3d]">Assessing your financial snapshot</h1>
-        <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
-            This will not take long. We're scoring your financial profile to tailor effective financial solutions.
-        </p>
-        <div className="flex flex-1 items-center justify-center">
-            <div className="relative flex h-48 w-48 items-center justify-center rounded-full border-[6px] border-[#a4a4a4]">
-                <span className="text-[44px] font-extrabold text-[#0c6060]">00</span>
-                <span className="ml-1 text-xl font-extrabold text-[#0c6060]">%</span>
-                <p className="absolute bottom-12 w-32 text-center text-[11px] leading-4 text-[#8a8a8a]">
-                    Scoring in progress. Please wait a moment.
-                </p>
+const AnalyzingScreen = ({ progress }) => {
+    const radius = 88;
+    const circumference = 2 * Math.PI * radius;
+    const strokeOffset = circumference - (progress / 100) * circumference;
+    const paddedProgress = String(progress).padStart(2, '0');
+    const statusText = progress < 34
+        ? 'Reading your answers'
+        : progress < 68
+            ? 'Scoring your financial profile'
+            : progress < 100
+                ? 'Preparing your recommendation'
+                : 'Finishing your snapshot';
+
+    return (
+        <div className="flex flex-1 flex-col px-1">
+            <p className="text-xs font-bold text-[#0c6060]">Financial wellness snapshot</p>
+            <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#232e3d]">Assessing your financial snapshot</h1>
+            <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
+                This will not take long. We're scoring your financial profile to tailor effective financial solutions.
+            </p>
+            <div className="flex flex-1 items-center justify-center">
+                <div className="relative flex h-52 w-52 items-center justify-center">
+                    <svg className="absolute inset-0 -rotate-90" viewBox="0 0 208 208" aria-hidden="true">
+                        <circle
+                            cx="104"
+                            cy="104"
+                            r={radius}
+                            fill="none"
+                            stroke="#d8d8d8"
+                            strokeWidth="8"
+                        />
+                        <circle
+                            cx="104"
+                            cy="104"
+                            r={radius}
+                            fill="none"
+                            stroke="#0c6060"
+                            strokeLinecap="round"
+                            strokeWidth="8"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeOffset}
+                            className="transition-[stroke-dashoffset] duration-100 ease-out"
+                        />
+                    </svg>
+                    <div className="relative flex flex-col items-center">
+                        <div className="flex items-start">
+                            <span className="text-[44px] font-extrabold tabular-nums text-[#0c6060]">{paddedProgress}</span>
+                            <span className="ml-1 mt-2 text-xl font-extrabold text-[#0c6060]">%</span>
+                        </div>
+                        <p className="mt-2 w-36 text-center text-[11px] font-semibold leading-4 text-[#8a8a8a]">
+                            {statusText}
+                        </p>
+                    </div>
+                    <p className="absolute -bottom-10 w-48 text-center text-[11px] leading-4 text-[#8a8a8a]">
+                        Calculating your wellness score. Please wait a moment.
+                    </p>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
-const ResultsScreen = ({ recommendation }) => (
-    <div className="flex flex-1 flex-col px-1">
-        <p className="text-xs font-bold text-[#0c6060]">Your financial wellness snapshot</p>
-        <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#232e3d]">Here's what we found</h1>
-        <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
-            Your financial wellness snapshot is built from your answers.
-        </p>
+const ResultsScreen = ({ recommendation }) => {
+    const radius = 36;
+    const circumference = 2 * Math.PI * radius;
+    const strokeOffset = circumference - (recommendation.score / 100) * circumference;
+    const scoreLabel = recommendation.score >= 75
+        ? 'Strong financial position'
+        : recommendation.score >= 55
+            ? 'Good foundation to build on'
+            : 'Ready for guided support';
 
-        <div className="mt-5 rounded-[24px] border border-[#edf0f0] bg-white p-4 shadow-[0_18px_45px_rgba(35,46,61,0.06)]">
-            <div className="flex items-center gap-4">
-                <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[7px] border-[#e1ad2b]">
-                    <span className="text-3xl font-extrabold text-[#0c6060]">{recommendation.score}</span>
-                    <span className="text-sm font-extrabold text-[#0c6060]">%</span>
-                </div>
-                <div>
-                    <p className="text-xs font-bold uppercase text-[#0c6060]">{recommendation.stage}</p>
-                    <h2 className="mt-1 text-xl font-extrabold leading-6 text-[#232e3d]">{recommendation.plan.name}</h2>
-                    <p className="mt-1 text-xs leading-5 text-[#5e5f60]">{recommendation.plan.description}</p>
-                </div>
-            </div>
-        </div>
+    return (
+        <div className="flex flex-1 flex-col px-1">
+            <p className="text-xs font-bold text-[#0c6060]">Financial Wellness Snapshot</p>
+            <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#232e3d]">Here's what we found</h1>
+            <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
+                Your financial wellness snapshot is built from your answers.
+            </p>
 
-        <div className="mt-4 space-y-3">
-            {recommendation.insights.map((item) => (
-                <div key={item.label} className="flex min-h-[58px] items-center gap-3 rounded-xl bg-[#eaf1f0] px-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e1ad2b] text-white">
-                        <item.icon size={17} />
-                    </span>
+            <div className="mt-5 space-y-3">
+                <div className="flex min-h-[86px] items-center gap-4 rounded-xl border border-[#dce8e4] bg-white px-4 shadow-[0_8px_22px_rgba(25,33,61,0.06)]">
+                    <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
+                        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
+                            <circle
+                                cx="40"
+                                cy="40"
+                                r={radius}
+                                fill="none"
+                                stroke="#edf3f1"
+                                strokeWidth="7"
+                            />
+                            <circle
+                                cx="40"
+                                cy="40"
+                                r={radius}
+                                fill="none"
+                                stroke="#0c6060"
+                                strokeLinecap="round"
+                                strokeWidth="7"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeOffset}
+                            />
+                        </svg>
+                        <div className="relative flex items-start">
+                            <span className="text-[25px] font-extrabold tabular-nums text-[#0c6060]">{recommendation.score}</span>
+                            <span className="ml-0.5 mt-1 text-[11px] font-extrabold text-[#0c6060]">%</span>
+                        </div>
+                    </div>
                     <div className="min-w-0">
-                        <p className="text-[10px] font-extrabold uppercase tracking-normal text-[#0c6060]">{item.label}</p>
-                        <p className="truncate text-sm font-extrabold text-[#232e3d]">{item.value}</p>
+                        <p className="text-[10px] font-extrabold uppercase tracking-normal text-[#0c6060]">Your wellness score</p>
+                        <p className="mt-1 text-sm font-extrabold leading-5 text-[#232e3d]">{scoreLabel}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-[#6c7471]">This percentage shows where you are today based on your answers.</p>
                     </div>
                 </div>
-            ))}
-        </div>
 
-        <div className="mt-4 rounded-[20px] bg-[#e1ad2b] p-4 text-white">
-            <p className="text-xs font-bold uppercase">{recommendation.plan.eyebrow}</p>
-            <p className="mt-1 text-lg font-extrabold">{recommendation.plan.name}</p>
-            <div className="mt-3 grid gap-2">
-                {recommendation.plan.tools.map((tool) => (
-                    <span key={tool} className="flex items-center gap-2 text-sm font-bold">
-                        <Check size={15} /> {tool}
-                    </span>
+                {recommendation.insights.map((item) => (
+                    <div key={item.label} className="flex min-h-[58px] items-center gap-3 rounded-xl bg-[#eaf1f0] px-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e1ad2b] text-white">
+                            <item.icon size={17} />
+                        </span>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-extrabold uppercase tracking-normal text-[#0c6060]">{item.label}</p>
+                            <p className="truncate text-sm font-extrabold text-[#232e3d]">{item.value}</p>
+                        </div>
+                    </div>
                 ))}
+
+                <div className="flex min-h-[64px] items-center gap-3 rounded-xl bg-[#e1ad2b] px-3 text-white shadow-[0_10px_24px_rgba(185,139,26,0.2)]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/22 text-white">
+                        <Check size={18} strokeWidth={3} />
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-extrabold uppercase tracking-normal text-white/75">Recommended plan</p>
+                        <p className="truncate text-sm font-extrabold text-white">{recommendation.plan.name}</p>
+                        <p className="mt-0.5 text-[11px] font-semibold text-white/80">{recommendation.plan.eyebrow}</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const PlanSelectionScreen = ({
-    activePlan,
     activePlanKey,
     billingCycle,
-    isRecommended,
     onBack,
     onBillingChange,
     onChoosePlan,
     onStartPlan,
-    onToggleOtherPlans,
     recommendedPlanKey,
-    showOtherPlans,
 }) => {
+    const carouselRef = useRef(null);
+    const scrollFrameRef = useRef(null);
+    const carouselPlanKeys = useMemo(
+        () => [recommendedPlanKey, ...planOrder.filter((planKey) => planKey !== recommendedPlanKey)],
+        [recommendedPlanKey]
+    );
+    const activeCarouselIndex = Math.max(0, carouselPlanKeys.indexOf(activePlanKey));
+
+    useEffect(() => {
+        const carousel = carouselRef.current;
+        if (!carousel) return undefined;
+
+        const nextPlanKey = carouselPlanKeys[activeCarouselIndex] || recommendedPlanKey;
+        const activeSlide = carousel.querySelector(`[data-plan-key="${nextPlanKey}"]`);
+        activeSlide?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+        const intervalId = window.setInterval(() => {
+            const currentIndex = Math.max(0, carouselPlanKeys.indexOf(nextPlanKey));
+            const nextIndex = (currentIndex + 1) % carouselPlanKeys.length;
+            onChoosePlan(carouselPlanKeys[nextIndex]);
+        }, 4200);
+
+        return () => {
+            window.clearInterval(intervalId);
+            if (scrollFrameRef.current) {
+                window.cancelAnimationFrame(scrollFrameRef.current);
+            }
+        };
+    }, [activeCarouselIndex, activePlanKey, carouselPlanKeys, onChoosePlan, recommendedPlanKey]);
+
+    const handleCarouselScroll = () => {
+        const carousel = carouselRef.current;
+        if (!carousel || scrollFrameRef.current) return;
+
+        scrollFrameRef.current = window.requestAnimationFrame(() => {
+            scrollFrameRef.current = null;
+            const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2;
+            let closestPlanKey = activePlanKey;
+            let closestDistance = Number.POSITIVE_INFINITY;
+
+            carouselPlanKeys.forEach((planKey) => {
+                const slide = carousel.querySelector(`[data-plan-key="${planKey}"]`);
+                if (!slide) return;
+
+                const slideCenter = slide.offsetLeft + slide.clientWidth / 2;
+                const distance = Math.abs(carouselCenter - slideCenter);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestPlanKey = planKey;
+                }
+            });
+
+            if (closestPlanKey !== activePlanKey) {
+                onChoosePlan(closestPlanKey);
+            }
+        });
+    };
+
     return (
         <div className="flex max-h-[calc(100vh-22px)] flex-1 flex-col overflow-y-auto px-0 pb-2 pt-5 sm:max-h-[790px]">
-            <div className="flex items-center justify-center">
-                <img src={onboardingLogo} alt="Shilingi Moves" className="h-auto w-[92px]" decoding="async" />
-            </div>
-
-            <div className="mt-5 flex justify-center">
+            <div className="flex justify-center">
                 <PlanSwitcher billingCycle={billingCycle} onChange={onBillingChange} />
             </div>
 
@@ -677,54 +837,61 @@ const PlanSelectionScreen = ({
                     <ChevronLeft size={15} /> Back to snapshot
                 </button>
                 <h1 className="text-[22px] font-extrabold leading-7 text-[#141c2b]">
-                    {isRecommended ? 'Recommended Plan' : 'Selected Plan'}
+                    Shilingi Moves Plans
                 </h1>
                 <p className="mt-2 text-[13px] leading-[21px] text-[#8e97ab]">
-                    Based on your financial wellness snapshot, here is the plan best suited to your next stage.
+                    Swipe through each plan to compare pricing, features, and what fits your financial goals.
                 </p>
             </div>
 
-            <PlanCard
-                billingCycle={billingCycle}
-                isRecommended={isRecommended}
-                onStartPlan={onStartPlan}
-                plan={activePlan}
-                planKey={activePlanKey}
-            />
+            <div
+                ref={carouselRef}
+                onScroll={handleCarouselScroll}
+                className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+                {carouselPlanKeys.map((planKey) => {
+                    const isSelected = planKey === activePlanKey;
+                    const isRecommendedPlan = planKey === recommendedPlanKey;
+
+                    return (
+                        <div
+                            key={planKey}
+                            data-plan-key={planKey}
+                            className="w-[calc(100%-8px)] shrink-0 snap-center"
+                        >
+                            <PlanCard
+                                billingCycle={billingCycle}
+                                isRecommended={isRecommendedPlan}
+                                isSelected={isSelected}
+                                onSelect={() => onChoosePlan(planKey)}
+                                onStartPlan={onStartPlan}
+                                plan={planDetails[planKey]}
+                                planKey={planKey}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="mt-2 flex items-center justify-center gap-2">
+                {carouselPlanKeys.map((planKey) => (
+                    <button
+                        key={`${planKey}-dot`}
+                        type="button"
+                        onClick={() => onChoosePlan(planKey)}
+                        className={`h-2 rounded-full transition-all ${planKey === activePlanKey ? 'w-5 bg-[#0c6060]' : 'w-2 bg-[#d9dbe9]'}`}
+                        aria-label={`View ${planDetails[planKey].name}`}
+                    />
+                ))}
+            </div>
 
             <button
                 type="button"
-                onClick={onToggleOtherPlans}
-                className="mt-5 text-center text-[15px] font-extrabold text-[#0c6060] underline underline-offset-2"
+                onClick={() => onChoosePlan(planOrder[0])}
+                className="mt-4 text-center text-[15px] font-extrabold text-[#0c6060] underline underline-offset-2"
             >
-                {showOtherPlans ? 'Hide other Plans' : 'View other Plans'}
+                Compare all plans
             </button>
-
-            {showOtherPlans && (
-                <div className="mt-4 grid gap-3 pb-4">
-                    {planOrder.map((planKey) => (
-                        <button
-                            key={planKey}
-                            type="button"
-                            onClick={() => onChoosePlan(planKey)}
-                            className={`rounded-2xl border bg-white p-4 text-left shadow-[0_8px_20px_rgba(25,33,61,0.07)] ${planKey === activePlanKey ? 'border-[#0c6060]' : 'border-[#f1f2f9]'}`}
-                        >
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <p className="text-sm font-extrabold text-[#eabb3a]">{planDetails[planKey].name}</p>
-                                    <p className="mt-1 text-xl font-extrabold text-[#0c6060]">{formatPlanPrice(planDetails[planKey], billingCycle)}</p>
-                                </div>
-                                {planKey === recommendedPlanKey && (
-                                    <span className="rounded-full bg-[#deefe5] px-2 py-1 text-[10px] font-bold text-[#00a63e]">
-                                        Recommended
-                                    </span>
-                                )}
-                            </div>
-                            <p className="mt-2 text-xs leading-5 text-[#6f6c8f]">{planDetails[planKey].description}</p>
-                        </button>
-                    ))}
-                </div>
-            )}
         </div>
     );
 };
@@ -749,9 +916,9 @@ const PlanSwitcher = ({ billingCycle, onChange }) => (
     </div>
 );
 
-const PlanCard = ({ billingCycle, isRecommended, onStartPlan, plan, planKey }) => (
-    <article className="mt-5 overflow-hidden rounded-[24px] bg-white shadow-[0_2px_15px_rgba(25,33,61,0.1)]">
-        <div className="border border-[#f1f2f9] px-8 py-6">
+const PlanCard = ({ billingCycle, isRecommended, isSelected, onSelect, onStartPlan, plan, planKey }) => (
+    <article className={`overflow-hidden rounded-[24px] border bg-white shadow-[0_2px_15px_rgba(25,33,61,0.1)] ${isSelected ? 'border-[#0c6060]' : 'border-[#dfe3ec]'}`}>
+        <div className="px-8 py-6">
             <div className="flex flex-col gap-4">
                 {isRecommended && (
                     <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[#deefe5] px-2 py-1 text-[10px] text-[#00a63e]">
@@ -767,7 +934,10 @@ const PlanCard = ({ billingCycle, isRecommended, onStartPlan, plan, planKey }) =
                 <p className="text-sm leading-6 text-[#514f6e]">{plan.description}</p>
                 <button
                     type="button"
-                    onClick={onStartPlan}
+                    onClick={() => {
+                        onSelect();
+                        onStartPlan(planKey);
+                    }}
                     className="inline-flex min-h-[52px] w-full items-center justify-center rounded-full border border-[#d9dbe9] bg-[linear-gradient(174deg,#ffffff_62%,#fbfbfe_83%)] px-5 text-lg font-bold text-[#170f49] shadow-[inset_0_-2px_2px_rgba(27,35,85,0.07),inset_0_4px_6px_rgba(255,255,255,0.4)]"
                 >
                     Get started
@@ -775,7 +945,7 @@ const PlanCard = ({ billingCycle, isRecommended, onStartPlan, plan, planKey }) =
             </div>
         </div>
 
-        <div className="border border-[#f1f2f9] px-8 py-6">
+        <div className="border-t border-[#dfe3ec] px-8 py-6">
             <p className="text-base font-bold text-[#170f49]">Features:</p>
             <p className="mt-2 text-sm leading-6 text-[#6f6c8f]">Access to financial wellness</p>
             <div className="mt-5 grid gap-4">
