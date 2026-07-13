@@ -8,8 +8,11 @@ const MEMBER_NUMBER_PREFIX = '154';
 const MEMBER_NUMBER_SUFFIX_LENGTH = 4;
 const DEFAULT_MEMBER_NUMBER_SUFFIX = '2217';
 
+export const normalizePreferredNameToFirstName = (name) => String(name || '').trim().split(/\s+/).filter(Boolean)[0] || '';
+
 export const getBackendPreferredName = (user = {}) => {
     const candidates = [
+        user?.first_name,
         user?.profile?.preferred_name,
         user?.profile?.preferredName,
         user?.preferred_name,
@@ -23,6 +26,7 @@ export const hasCompletedBackendPreferredNamePrompt = (user = {}) => {
     const profile = user?.profile || {};
     return Boolean(
         getBackendPreferredName(user) ||
+        String(user?.first_name || '').trim() ||
         profile.preferred_name_completed ||
         profile.preferredNameCompleted
     );
@@ -138,7 +142,7 @@ export const setStoredPreferredName = (name) => {
     if (typeof window === 'undefined') return;
 
     try {
-        const nextName = String(name || '').trim();
+        const nextName = normalizePreferredNameToFirstName(name);
         if (nextName) {
             window.localStorage.setItem(PREFERRED_NAME_KEY, nextName);
             window.localStorage.setItem(PREFERRED_NAME_COMPLETED_KEY, '1');

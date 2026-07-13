@@ -32,6 +32,7 @@ import {
     getMemberInitials,
     getMemberLabel,
     getStoredPreferredName,
+    normalizePreferredNameToFirstName,
     setStoredPreferredName,
     syncStoredPreferredNameFromUser,
 } from '../../../utils/memberIdentity';
@@ -1484,8 +1485,13 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     };
     const savePreferredName = async (event) => {
         event.preventDefault();
-        const nextPreferredName = preferredName.trim();
+        const nextPreferredName = normalizePreferredNameToFirstName(preferredName);
+        if (!nextPreferredName) {
+            setError('Please enter the name you prefer to be called.');
+            return;
+        }
         setSubmitting((current) => ({ ...current, preferredName: true }));
+        setPreferredName(nextPreferredName);
         setStoredPreferredName(nextPreferredName);
         try {
             const updatedUser = await updatePreferredName(nextPreferredName);
@@ -1494,10 +1500,10 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 syncStoredPreferredNameFromUser(updatedUser);
             }
             setPreferredNameSaved(Boolean(nextPreferredName));
-            setSuccess(nextPreferredName ? 'Preferred name saved. Your dashboard will now address you by that name.' : 'Preferred name cleared.');
+            setSuccess('Preferred name saved. Your dashboard will now address you by that name.');
         } catch (err) {
             setPreferredNameSaved(Boolean(nextPreferredName));
-            setSuccess(nextPreferredName ? 'Preferred name saved on this device. It will sync across devices after backend profile support is deployed.' : 'Preferred name cleared on this device.');
+            setSuccess('Preferred name saved on this device. It will sync across devices after backend profile support is deployed.');
         } finally {
             setSubmitting((current) => ({ ...current, preferredName: false }));
         }

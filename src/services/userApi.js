@@ -6,7 +6,7 @@ import {
 import { resolveApiBaseUrl } from './apiConfig';
 import { fetchWithTimeout } from './secureFetch';
 import { refreshSession } from './authApi';
-import { syncStoredPreferredNameFromUser } from '../utils/memberIdentity';
+import { normalizePreferredNameToFirstName, syncStoredPreferredNameFromUser } from '../utils/memberIdentity';
 
 const API_URL = resolveApiBaseUrl({
     envUrl: import.meta.env.VITE_API_URL,
@@ -131,7 +131,38 @@ export async function updateUserPreferences(formValues) {
 }
 
 export async function updatePreferredName(preferredName) {
-    const nextPreferredName = String(preferredName || '').trim();
+    const nextPreferredName = normalizePreferredNameToFirstName(preferredName);
+    if (!nextPreferredName) {
+        throw new Error('Please enter the name you prefer to be called.');
+    }
+
+    const response = await fetchWithAuthRefresh(USER_ENDPOINT, {
+        method: 'PATCH',
+        headers: buildHeaders(),
+        body: JSON.stringify({
+            first_name: nextPreferredName,
+        }),
+    });
+
+    await fetchWithAuthRefresh(USER_PROFILE_ENDPOINT, {
+        method: 'PATCH',
+        headers: buildHeaders(),
+        body: JSON.stringify({
+            preferred_name_completed: true,
+        }),
+    }).catch(() => null);
+
+    const payload = await parseResponse(response);
+    const user = payload?.data || payload;
+    if (user?.email) {
+        setStoredUserProfile(user);
+        syncStoredPreferredNameFromUser(user);
+    }
+    return user;
+}
+
+export async function updateProfilePreferredName(preferredName) {
+    const nextPreferredName = normalizePreferredNameToFirstName(preferredName);
     const response = await fetchWithAuthRefresh(USER_PROFILE_ENDPOINT, {
         method: 'PATCH',
         headers: buildHeaders(),

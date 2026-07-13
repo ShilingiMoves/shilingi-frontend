@@ -28,6 +28,7 @@ import {
     clearQueuedPreferredNamePrompt,
     hasAnyPreferredName,
     getStoredPreferredName,
+    normalizePreferredNameToFirstName,
     readQueuedPreferredNamePrompt,
     setStoredPreferredName,
     syncStoredPreferredNameFromUser,
@@ -510,10 +511,11 @@ const PreferredNamePrompt = ({ reason, onClose, onOpenProfile, onSaved }) => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        const nextPreferredName = preferredName.trim();
+        const nextPreferredName = normalizePreferredNameToFirstName(preferredName);
         if (!nextPreferredName) return;
 
         setSaving(true);
+        setPreferredName(nextPreferredName);
         setStoredPreferredName(nextPreferredName);
         try {
             const updatedUser = await updatePreferredName(nextPreferredName);
