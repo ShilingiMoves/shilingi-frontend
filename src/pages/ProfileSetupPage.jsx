@@ -194,7 +194,7 @@ const ProfileSetupPage = () => {
                 {sheet === 'income' && (
                     <SetupSheet title="Add Income" onClose={() => setSheet(null)}>
                         <SheetSelect label="Source of income" value={incomeForm.source} onChange={(value) => setIncomeForm((current) => ({ ...current, source: value }))} options={['Salary', 'Business', 'Consultancy', 'Freelance', 'Investment Income']} />
-                        <SheetInput label="Amount" value={incomeForm.amount} onChange={(value) => setIncomeForm((current) => ({ ...current, amount: value }))} placeholder="Eg. KES 30,000" />
+                        <SheetInput label="Amount" money value={incomeForm.amount} onChange={(value) => setIncomeForm((current) => ({ ...current, amount: value }))} placeholder="Eg. KES 30,000" />
                         <div className="grid grid-cols-2 gap-3">
                             <SheetSelect label="Period" value={incomeForm.period} onChange={(value) => setIncomeForm((current) => ({ ...current, period: value }))} options={['MONTHLY', 'WEEKLY', 'YEARLY']} />
                             <SheetInput label="Date" type="date" value={incomeForm.income_date} onChange={(value) => setIncomeForm((current) => ({ ...current, income_date: value }))} />
@@ -222,10 +222,10 @@ const ProfileSetupPage = () => {
                     <SetupSheet title="Add Financial Goal" onClose={() => setSheet(null)}>
                         <SheetSelect label="Goal type" value={goalForm.type} onChange={(value) => setGoalForm((current) => ({ ...current, type: value }))} options={['Short Term Goal', 'Medium Term Goal', 'Long Term Goal']} />
                         <SheetInput label="Goal name" value={goalForm.name} onChange={(value) => setGoalForm((current) => ({ ...current, name: value }))} placeholder="Eg. Emergency Fund" />
-                        <SheetInput label="Target amount" value={goalForm.targetAmount} onChange={(value) => setGoalForm((current) => ({ ...current, targetAmount: value }))} placeholder="Eg. KES 30,000" />
+                        <SheetInput label="Target amount" money value={goalForm.targetAmount} onChange={(value) => setGoalForm((current) => ({ ...current, targetAmount: value }))} placeholder="Eg. KES 30,000" />
                         <div className="grid grid-cols-2 gap-3">
-                            <SheetInput label="Current savings" value={goalForm.currentSavings} onChange={(value) => setGoalForm((current) => ({ ...current, currentSavings: value }))} placeholder="Eg. KES 10,000" />
-                            <SheetInput label="Monthly contribution" value={goalForm.monthlyContribution} onChange={(value) => setGoalForm((current) => ({ ...current, monthlyContribution: value }))} placeholder="Eg. KES 1,000" />
+                            <SheetInput label="Current savings" money value={goalForm.currentSavings} onChange={(value) => setGoalForm((current) => ({ ...current, currentSavings: value }))} placeholder="Eg. KES 10,000" />
+                            <SheetInput label="Monthly contribution" money value={goalForm.monthlyContribution} onChange={(value) => setGoalForm((current) => ({ ...current, monthlyContribution: value }))} placeholder="Eg. KES 1,000" />
                         </div>
                         <SheetInput label="Target date" type="date" value={goalForm.targetDate} onChange={(value) => setGoalForm((current) => ({ ...current, targetDate: value }))} />
                         <SheetSelect label="Link to a product" value={goalForm.linkedProduct} onChange={(value) => setGoalForm((current) => ({ ...current, linkedProduct: value }))} options={['Money Market Fund', 'Savings Account', 'SACCO', 'Treasury Bills']} />
@@ -240,7 +240,7 @@ const ProfileSetupPage = () => {
                         <SheetSelect label="Relationship" value={dependentForm.relationship} onChange={(value) => setDependentForm((current) => ({ ...current, relationship: value }))} options={['Father', 'Mother', 'Child', 'Sibling', 'Grandfather', 'Grandmother', 'Other']} />
                         <SheetInput label="Number of dependents" value={dependentForm.count} onChange={(value) => setDependentForm((current) => ({ ...current, count: value }))} placeholder="Eg. 2" />
                         <SheetSelect label="Beneficiary type" value={dependentForm.beneficiaryType} onChange={(value) => setDependentForm((current) => ({ ...current, beneficiaryType: value }))} options={['Direct Beneficiary', 'Indirect Beneficiary']} />
-                        <SheetInput label="Support amount" value={dependentForm.supportAmount} onChange={(value) => setDependentForm((current) => ({ ...current, supportAmount: value }))} placeholder="Eg. KES 10,000" />
+                        <SheetInput label="Support amount" money value={dependentForm.supportAmount} onChange={(value) => setDependentForm((current) => ({ ...current, supportAmount: value }))} placeholder="Eg. KES 10,000" />
                         <SheetSelect label="Frequency" value={dependentForm.frequency} onChange={(value) => setDependentForm((current) => ({ ...current, frequency: value }))} options={['MONTHLY', 'QUARTERLY', 'YEARLY']} />
                         <button type="button" onClick={addDependent} className="mt-2 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#0c6060] text-sm font-bold text-white">
                             <Plus size={18} /> Add Dependent
@@ -444,14 +444,15 @@ const SetupSheet = ({ children, onClose, title }) => (
     </div>
 );
 
-const SheetInput = ({ label, onChange, type = 'text', value, placeholder = '' }) => (
+const SheetInput = ({ label, money = false, onChange, type = 'text', value, placeholder = '' }) => (
     <label className="block text-xs font-extrabold capitalize text-[#8e97ab]">
         {label}
         <input
             type={type}
             value={value}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => onChange(money ? formatMoneyInput(event.target.value) : event.target.value)}
             placeholder={placeholder}
+            inputMode={money ? 'numeric' : undefined}
             className="mt-2 min-h-[48px] w-full rounded-xl border border-[#dde1ea] bg-[#f7f8fa] px-4 text-sm font-semibold text-[#10231c] outline-none placeholder:text-[#757575] focus:border-[#0c6060]"
         />
     </label>
@@ -482,6 +483,12 @@ function toTitle(value) {
 function parseMoney(value) {
     const normalized = String(value || '').replace(/[^\d.]/g, '');
     return Number(normalized) || 0;
+}
+
+function formatMoneyInput(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+    if (!digits) return '';
+    return `KES ${Number(digits).toLocaleString('en-KE')}`;
 }
 
 function formatKes(value) {

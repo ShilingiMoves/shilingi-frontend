@@ -717,6 +717,320 @@ const PlanningImpactCard = ({ icon: Icon, title, body, badge, cta, onClick }) =>
         </button>
     </div>
 );
+
+const compactKES = (value) => {
+    const amount = Number(value || 0);
+    if (amount <= 0) return 'KES 0';
+    if (amount >= 1000000) return `KES ${Number(amount / 1000000).toFixed(amount >= 10000000 ? 0 : 1)}M`;
+    if (amount >= 1000) return `KES ${Math.round(amount / 1000)}K`;
+    return `KES ${amount.toLocaleString('en-KE')}`;
+};
+
+const shortRelationName = (relation = '') => String(relation).replace(/\s*\([^)]*\)/g, '').replace(/-in-Law/g, '').trim() || 'Dependant';
+
+const MobileProfileWorkspace = ({
+    activeTab,
+    completion,
+    dateLabel,
+    dependants,
+    dependantsSummary,
+    goalBucketByType,
+    goalBuckets,
+    goalCount,
+    incomeValue,
+    incomes,
+    memberInitials,
+    onAddDependant,
+    onAddIncome,
+    onEditDependant,
+    onEditIncome,
+    onOpenGoal,
+    onQuickAddIncome,
+    onRemoveDependant,
+    onSelectTab,
+    profileGreeting,
+    profileIntro,
+    remaining,
+    totalDependantsSupport,
+}) => (
+    <div className="lg:hidden">
+        <div className="mx-auto max-w-[430px] space-y-4 pb-20">
+            <MobileProfileTabs activeTab={activeTab} onSelectTab={onSelectTab} />
+            <MobileProfileHero
+                completion={completion}
+                dateLabel={dateLabel}
+                memberInitials={memberInitials}
+                profileGreeting={profileGreeting}
+                profileIntro={profileIntro}
+                remaining={remaining}
+            />
+
+            {activeTab === 'goals' && (
+                <MobileGoalsView
+                    goalBucketByType={goalBucketByType}
+                    goalBuckets={goalBuckets}
+                    goalCount={goalCount}
+                    onOpenGoal={onOpenGoal}
+                />
+            )}
+
+            {activeTab === 'income' && (
+                <MobileIncomeView
+                    incomeValue={incomeValue}
+                    incomes={incomes}
+                    onAddIncome={onAddIncome}
+                    onEditIncome={onEditIncome}
+                    onQuickAddIncome={onQuickAddIncome}
+                />
+            )}
+
+            {activeTab === 'dependents' && (
+                <MobileDependantsView
+                    dependants={dependants}
+                    dependantsSummary={dependantsSummary}
+                    onAddDependant={onAddDependant}
+                    onEditDependant={onEditDependant}
+                    onRemoveDependant={onRemoveDependant}
+                    totalDependantsSupport={totalDependantsSupport}
+                />
+            )}
+        </div>
+    </div>
+);
+
+const MobileProfileTabs = ({ activeTab, onSelectTab }) => (
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {tabs.map(({ id, label }) => (
+            <button
+                key={id}
+                type="button"
+                onClick={() => onSelectTab(id)}
+                className={`h-8 shrink-0 rounded-full border px-3 text-[11px] font-semibold transition-colors ${activeTab === id ? 'border-[#eabb3a] bg-[#eabb3a] text-white' : 'border-[#dde1ea] bg-white text-[#5e6a80]'}`}
+            >
+                {label}
+            </button>
+        ))}
+    </div>
+);
+
+const MobileProfileHero = ({ completion, dateLabel, memberInitials, profileGreeting, profileIntro, remaining }) => (
+    <section className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(148deg,_#2a6b55_0%,_#16453a_100%)] p-5 text-white shadow-[0_14px_30px_rgba(20,69,58,0.2)]">
+        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#e9b54a]/10" />
+        <div className="relative">
+            <span className="inline-flex rounded-full border border-white/35 px-3 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#eaf3ee]">
+                {dateLabel}
+            </span>
+            <div className="mt-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[3px] border-[#f0d18a] bg-[#e9b54a] text-lg font-extrabold text-[#143d33]">
+                    {memberInitials}
+                </div>
+                <h1 className="min-w-0 truncate text-[1.35rem] font-extrabold leading-tight tracking-[-0.02em]">
+                    {profileGreeting}
+                </h1>
+            </div>
+            <p className="mt-3 text-[12px] leading-5 text-[#d9e8e0]">{profileIntro}</p>
+            <div className="mt-4 rounded-[16px] border border-white/15 bg-[#143d33]/55 p-4">
+                <p className="text-[1.75rem] font-extrabold leading-none text-[#e9b54a]">{completion}%</p>
+                <p className="mt-1 text-[11px] font-bold">Profile Complete</p>
+                <div className="mt-3 h-1.5 rounded-full bg-white/16">
+                    <div className="h-1.5 rounded-full bg-[#e9b54a]" style={{ width: `${completion}%` }} />
+                </div>
+                <p className="mt-3 font-mono text-[9px] tracking-[0.08em] text-[#c9dcd3]">
+                    {remaining > 0 ? `${remaining} sections remaining` : 'profile setup looks strong'}
+                </p>
+            </div>
+        </div>
+    </section>
+);
+
+const MobileGoalsView = ({ goalBucketByType, goalBuckets, goalCount, onOpenGoal }) => {
+    const totals = Object.fromEntries(goalBuckets.map((bucket) => [
+        bucket.type,
+        bucket.goals.reduce((sum, goal) => sum + Number(goal.targetAmount || 0), 0),
+    ]));
+
+    return (
+        <section className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+                <MobileStatCard label="Short term goals" value={compactKES(totals.short)} helper={`${goalBucketByType.short?.goals.length || 0}/3 Goals added`} tone="text-[#15613f]" />
+                <MobileStatCard label="Medium term goals" value={compactKES(totals.medium)} helper={`${goalBucketByType.medium?.goals.length || 0}/3 Goals added`} tone="text-[#1f7a5a]" />
+                <MobileStatCard label="Long term goals" value={compactKES(totals.long)} helper={`${goalBucketByType.long?.goals.length || 0}/3 Goals added`} tone="text-[#2563eb]" />
+                <MobileStatCard label="Active goals" value={String(goalCount)} helper="Goal slots filled" tone="text-[#d6891c]" />
+            </div>
+
+            {goalBuckets.map(({ type, meta, goals }) => (
+                <MobileGoalSection
+                    key={type}
+                    goals={goals}
+                    meta={meta}
+                    onAdd={() => onOpenGoal(type)}
+                    onEdit={(slotIndex) => onOpenGoal(type, slotIndex)}
+                />
+            ))}
+        </section>
+    );
+};
+
+const MobileStatCard = ({ label, value, helper, tone = 'text-[#15613f]' }) => (
+    <div className="min-h-[96px] rounded-[14px] border border-[#e7e9e4] bg-white p-3.5">
+        <p className="text-[11px] font-extrabold uppercase leading-4 text-[#65746c]">{label}</p>
+        <p className={`mt-2 text-[18px] font-extrabold leading-none ${tone}`}>{value}</p>
+        <p className="mt-2 text-[11px] leading-4 text-[#5f7168]">{helper}</p>
+    </div>
+);
+
+const MobileGoalSection = ({ goals, meta, onAdd, onEdit }) => (
+    <article className="rounded-[16px] border border-[#e3e3e5] bg-white p-4 shadow-[0_14px_28px_rgba(0,0,0,0.05)]">
+        <div className="border-b border-[#dde1ea] pb-2">
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="text-[15px] font-bold text-[#0c6060]">{meta.label.replace('-', ' ')} goals</h2>
+                <button type="button" onClick={onAdd} className="text-[11px] font-bold text-[#eabb3a]">+ Add Goal</button>
+            </div>
+            <p className="mt-1 text-[11px] leading-4 text-[#707974]">
+                {meta.label === 'Short-Term' ? 'Here is a summary of your short term financial goals' : meta.label === 'Medium-Term' ? 'Plan your financial objectives for the next few years' : 'Set your ambitions for distant future financial stability'}
+            </p>
+        </div>
+        <div className="mt-4 space-y-3">
+            {goals.length > 0 ? goals.map((goal) => (
+                <MobileGoalCard key={`${meta.label}-${goal.slotIndex}-${goal.name}`} goal={goal} onEdit={() => onEdit(goal.slotIndex)} />
+            )) : (
+                <button type="button" onClick={onAdd} className="w-full rounded-[18px] border border-dashed border-[#dde1ea] bg-[#f8faf9] px-4 py-8 text-center text-[12px] font-bold text-[#0c6060]">
+                    Add your first {meta.label.toLowerCase()} goal
+                </button>
+            )}
+        </div>
+    </article>
+);
+
+const MobileGoalCard = ({ goal, onEdit }) => {
+    const progress = Math.round(goalProgress(goal.currentSavings, goal.targetAmount));
+    return (
+        <div className="rounded-[18px] bg-white px-4 py-4 shadow-[0_0_2px_rgba(0,0,0,0.25)]">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <p className="text-[10px] text-[#67677a]">{goal.slotLabel || 'Goal'}</p>
+                    <p className="mt-1 text-[13px] font-bold text-[#303048]">{goal.name || 'Untitled goal'}</p>
+                </div>
+                <p className="text-right text-[13px] font-extrabold text-[#0c6060]">{formatKESValue(goal.targetAmount, 'KES 0')}</p>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+                <p className="text-[10px] text-[#8e97ab]">Progress</p>
+                <span className="rounded-full bg-[#eabb3a] px-2 py-0.5 text-[9px] text-white">{progress}%</span>
+            </div>
+            <div className="mt-2 h-1 rounded-full bg-[#e3e3e5]">
+                <div className="h-1 rounded-full bg-[#f46040]" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="mt-2 text-[10px] text-[#8e97ab]">Due {formatGoalDate(goal.targetDate)}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-dashed border-[#dde1ea] pt-3">
+                <button type="button" onClick={onEdit} className="rounded-lg border border-[#dde1ea] py-2 text-[11px] font-semibold text-[#5e6a80]">Edit</button>
+                <button type="button" onClick={onEdit} className="rounded-lg border border-rose-200 py-2 text-[11px] font-semibold text-rose-500">Delete</button>
+            </div>
+        </div>
+    );
+};
+
+const MobileIncomeView = ({ incomeValue, incomes, onAddIncome, onEditIncome, onQuickAddIncome }) => {
+    const sortedIncomes = [...(incomes || [])].sort((a, b) => incomeAmount(b) - incomeAmount(a));
+    const sideIncome = sortedIncomes.slice(1).reduce((sum, income) => sum + incomeAmount(income), 0);
+    const savingsRate = incomeValue > 0 ? 0 : 0;
+
+    return (
+        <section className="space-y-3">
+            <article className="rounded-[16px] border border-[#e3e3e5] bg-white p-4">
+                <p className="text-[12px] leading-5 text-[#5f7168]">Capture your income baseline, manage current sources, and keep your planning inputs fresh.</p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                    <button type="button" onClick={onQuickAddIncome} className="rounded-full border border-[#dce8df] bg-white px-4 py-3 text-[12px] font-bold text-[#0c6060]">+ Quick Add</button>
+                    <button type="button" onClick={onAddIncome} className="rounded-full bg-[#0c6060] px-4 py-3 text-[12px] font-bold text-white">+ Add Income</button>
+                </div>
+            </article>
+            <div className="rounded-[16px] bg-[#0c7068] p-4 text-white">
+                <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-white/65">Total monthly income</p>
+                <p className="mt-3 text-[24px] font-extrabold text-[#e9b54a]">{formatKESValue(incomeValue, 'Not added yet')}</p>
+                <p className="mt-2 text-[11px] text-white/75">{new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <MobileStatCard label="Primary salary" value={formatKESValue(incomeAmount(sortedIncomes[0]), 'Not added yet')} helper="Add salary income" tone="text-[#0c6060]" />
+                <MobileStatCard label="Side income" value={formatKESValue(sideIncome, 'Not added yet')} helper="Add extra income" tone="text-[#0c6060]" />
+                <MobileStatCard label="Savings rate" value={`${savingsRate}%`} helper="Goal: 20%" tone="text-[#744af2]" />
+                <MobileStatCard label="Income sources" value={String(sortedIncomes.length)} helper="Sources recorded" tone="text-[#d6891c]" />
+            </div>
+            <article className="rounded-[16px] border border-[#e3e3e5] bg-white p-4">
+                <div className="flex items-start justify-between gap-3 border-b border-[#dde1ea] pb-3">
+                    <div>
+                        <h2 className="text-[15px] font-bold text-[#0c6060]">Source of Income</h2>
+                        <p className="mt-1 text-[11px] text-[#707974]">Here is a summary of your sources of income</p>
+                    </div>
+                    <button type="button" onClick={onAddIncome} className="text-[11px] font-bold text-[#eabb3a]">+ Add Income</button>
+                </div>
+                <div className="mt-3 space-y-2">
+                    {sortedIncomes.length > 0 ? sortedIncomes.slice(0, 5).map((income, index) => (
+                        <button key={income.uuid || income.id || `${income.description}-${index}`} type="button" onClick={() => onEditIncome(income)} className="flex w-full items-center justify-between gap-3 rounded-[16px] border border-[#edf0ee] bg-white p-3 text-left">
+                            <span className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e9b54a] text-white"><Wallet size={15} /></span>
+                                <span>
+                                    <span className="block text-[10px] text-[#8e97ab]">{income.source || income.category_name || 'Income'}</span>
+                                    <span className="block text-[13px] font-bold text-[#303048]">{income.description || income.source || 'Income source'}</span>
+                                </span>
+                            </span>
+                            <span className="text-right text-[12px] font-extrabold text-[#303048]">{formatKESValue(incomeAmount(income), 'KES 0')}</span>
+                        </button>
+                    )) : (
+                        <button type="button" onClick={onAddIncome} className="w-full rounded-[16px] border border-dashed border-[#dde1ea] bg-[#f8faf9] px-4 py-8 text-[12px] font-bold text-[#0c6060]">
+                            Add your first income source
+                        </button>
+                    )}
+                </div>
+            </article>
+        </section>
+    );
+};
+
+const MobileDependantsView = ({ dependants, dependantsSummary, onAddDependant, onEditDependant, onRemoveDependant, totalDependantsSupport }) => (
+    <section className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+            <MobileStatCard label="Total dependants" value={String(dependantsSummary.totalPeople)} helper={`${formatKESValue(Math.round(totalDependantsSupport), 'KES 0')}/mo support`} tone="text-[#0c6060]" />
+            <MobileStatCard label="Parents" value={String(dependantsSummary.parentCount)} helper="Parent support" tone="text-[#0c6060]" />
+            <MobileStatCard label="Siblings" value={String(dependantsSummary.siblingCount)} helper="Sibling support" tone="text-[#2563eb]" />
+            <MobileStatCard label="Other dependants" value={String(dependantsSummary.otherCount)} helper="Other support" tone="text-[#d6891c]" />
+        </div>
+        <article className="rounded-[16px] border border-[#e3e3e5] bg-white p-4">
+            <div className="flex items-start justify-between gap-3 border-b border-[#dde1ea] pb-3">
+                <div>
+                    <h2 className="text-[15px] font-bold text-[#0c6060]">My Dependants</h2>
+                    <p className="mt-1 text-[11px] text-[#707974]">Here is a summary of your dependants</p>
+                </div>
+                <button type="button" onClick={onAddDependant} className="text-[11px] font-bold text-[#eabb3a]">+ Add Dependants</button>
+            </div>
+            <div className="mt-3 space-y-2">
+                {dependants.length > 0 ? dependants.map((dependant, index) => (
+                    <div key={`${dependant.relation}-${index}`} className="rounded-[16px] border border-[#edf0ee] bg-white p-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold ${dependant.benType === 'Direct' ? 'bg-[#e6f8ec] text-[#2fa85a]' : 'bg-[#fff0e8] text-[#f46040]'}`}>
+                                    {dependant.benType || 'Beneficiary'}
+                                </span>
+                                <p className="mt-2 text-[10px] text-[#8e97ab]">{dependant.category || dependantCategory(dependant.relation)}</p>
+                                <p className="text-[13px] font-bold text-[#303048]">{shortRelationName(dependant.relation)}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] text-[#8e97ab]">Support Amount</p>
+                                <p className="text-[13px] font-extrabold text-[#303048]">{formatKESValue(dependant.amount, 'KES 0')}</p>
+                                <div className="mt-2 flex justify-end gap-2">
+                                    <button type="button" onClick={() => onEditDependant(index)} className="text-[#5e6a80]"><Pencil size={14} /></button>
+                                    <button type="button" onClick={() => onRemoveDependant(index)} className="text-rose-500"><X size={14} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )) : (
+                    <button type="button" onClick={onAddDependant} className="w-full rounded-[16px] border border-dashed border-[#dde1ea] bg-[#f8faf9] px-4 py-8 text-center text-[12px] font-bold text-[#0c6060]">
+                        No dependants yet. Add the people you support.
+                    </button>
+                )}
+            </div>
+        </article>
+    </section>
+);
 const SecurityStatusCard = ({ icon: Icon, title, subtitle, badge, badgeTone = 'bg-[#e7f6f1] text-[#166a55]', accent = false, actionText }) => (
     <div className={`rounded-[1.2rem] border px-5 py-6 text-center shadow-sm ${accent ? 'border-[#b7ddd0] bg-[linear-gradient(180deg,_#eef8f4_0%,_#e6f4ee_100%)]' : 'border-emerald-100 bg-white'}`}>
         <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#eef8f4] text-[#1f7f63]">
@@ -1388,6 +1702,33 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             {(error || incomeError) && <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm"><div className="flex items-start gap-3"><AlertCircle size={18} className="mt-0.5 shrink-0" /><div><p className="font-semibold">We could not finish that update.</p><p className="mt-1">{error || incomeError}</p></div></div></div>}
             {success && <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-sm text-primary-800 shadow-sm">{success}</div>}
 
+            <MobileProfileWorkspace
+                activeTab={activeTab}
+                completion={completion}
+                dateLabel={dateLabel}
+                dependants={dependants}
+                dependantsSummary={dependantsSummary}
+                goalBucketByType={goalBucketByType}
+                goalBuckets={goalBuckets}
+                goalCount={goalCount}
+                incomeValue={incomeValue}
+                incomes={incomes}
+                memberInitials={memberInitials}
+                onAddDependant={openNewDependantForm}
+                onAddIncome={() => { setSelectedIncome(null); setShowIncomeForm(true); }}
+                onEditDependant={openEditDependantForm}
+                onEditIncome={(income) => { setSelectedIncome(income || null); setShowIncomeForm(true); }}
+                onOpenGoal={(type, slotIndex) => openGoalModal(type, typeof slotIndex === 'number' ? slotIndex : getNextGoalSlotIndex(type))}
+                onQuickAddIncome={() => setShowQuickIncome(true)}
+                onRemoveDependant={removeDependant}
+                onSelectTab={setActiveTab}
+                profileGreeting={profileGreeting}
+                profileIntro={profileIntro}
+                remaining={remaining}
+                totalDependantsSupport={totalDependantsSupport}
+            />
+
+            <div className="hidden space-y-6 lg:block">
             <section className="relative overflow-hidden rounded-[1.35rem] bg-primary-600 p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.12)] sm:p-5">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(240,201,77,0.14),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.06),_transparent_30%)]" />
@@ -1495,6 +1836,7 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                     </article>
                 </section>
             )}
+            </div>
 
             {goalModalOpen && <ModalShell title={`${selectedGoalMeta.label} Goal`} icon={Target} onClose={() => setGoalModalOpen(false)}><form onSubmit={saveGoalModal} className="space-y-4 sm:space-y-5"><div><p className="text-sm font-medium text-slate-700">Choose goal slot</p><div className="mt-3 grid gap-2 sm:gap-3 md:grid-cols-3">{GOAL_SLOT_LABELS.map((label, index) => <GoalTypeCard key={label} active={goalForm.slotIndex === index} label={label} helper={selectedGoalMeta.helper} color={selectedGoalMeta.color} onClick={() => { const nextSlot = selectedGoalSlots[index] || EMPTY_GOAL_DETAILS; setGoalForm((current) => ({ ...current, slotIndex: index, name: nextSlot.name || '', targetAmount: nextSlot.targetAmount || '', currentSavings: nextSlot.currentSavings || '', targetDate: nextSlot.targetDate || '', monthlyContribution: nextSlot.monthlyContribution || '', linkedProduct: nextSlot.linkedProduct || '' })); }} />)}</div></div><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Goal Name" value={goalForm.name} onChange={(e) => setGoalForm((current) => ({ ...current, name: e.target.value }))}><option value="">Select a goal name</option>{selectedGoalNameOptions.map((goalName) => <option key={goalName} value={goalName}>{goalName}</option>)}</Select><Input label="Target Amount (KES)" value={goalForm.targetAmount} onChange={(e) => setGoalForm((current) => ({ ...current, targetAmount: e.target.value }))} placeholder="e.g. 100,000" /><Input label="Current Savings (KES)" value={goalForm.currentSavings} onChange={(e) => setGoalForm((current) => ({ ...current, currentSavings: e.target.value }))} placeholder="e.g. 25,000" /><Input label="Target Date" type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm((current) => ({ ...current, targetDate: e.target.value }))} /><Input label="Monthly Contribution (KES)" value={goalForm.monthlyContribution} onChange={(e) => setGoalForm((current) => ({ ...current, monthlyContribution: e.target.value }))} placeholder="e.g. 5,000" /></div><Select label="Link to Product (Optional)" value={goalForm.linkedProduct} onChange={(e) => setGoalForm((current) => ({ ...current, linkedProduct: e.target.value }))}><option value="">-- Select a savings vehicle --</option><option value="MMF">Money Market Fund</option><option value="SACCO">SACCO</option><option value="Savings Account">Savings Account</option><option value="Fixed Deposit">Fixed Deposit</option></Select><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setGoalModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.goal}>{submitting.goal ? 'Saving...' : `Save ${GOAL_SLOT_LABELS[goalForm.slotIndex]}`}</PrimaryButton></div></form></ModalShell>}
 
