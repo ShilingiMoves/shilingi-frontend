@@ -41,6 +41,8 @@ const SignUpPage = () => {
         password: '',
         password_confirm: '',
     });
+    const [formTouched, setFormTouched] = useState({});
+    const [formSubmitted, setFormSubmitted] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +62,12 @@ const SignUpPage = () => {
             ...current,
             [name]: name.includes('password') ? sanitizePasswordInput(value) : value,
         }));
+        setFormTouched((current) => ({ ...current, [name]: true }));
+    };
+
+    const handleBlur = (event) => {
+        const { name } = event.target;
+        setFormTouched((current) => ({ ...current, [name]: true }));
     };
 
     const handleDetailsSubmit = (event) => {
@@ -67,6 +75,15 @@ const SignUpPage = () => {
         setError('');
         setSuccess('');
         setIsAccountAlreadyVerified(false);
+        setFormSubmitted(true);
+
+        const detailIssue = getRequiredDetailIssue(formValues);
+        if (detailIssue) {
+            setFormTouched((current) => ({ ...current, first_name: true, last_name: true, email: true }));
+            setError(detailIssue);
+            return;
+        }
+
         setFormValues((current) => ({
             ...current,
             email: current.email.trim().toLowerCase(),
@@ -102,7 +119,7 @@ const SignUpPage = () => {
             storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
             setStep('verify');
-            setSuccess('Your account was created. Please verify your email before signing in.');
+            setSuccess('Your account was created. Please verify your email, then we will open your dashboard.');
         } catch (err) {
             const normalizedEmail = formValues.email.trim().toLowerCase();
             if (normalizedEmail && isExistingAccountError(err)) {
@@ -111,7 +128,7 @@ const SignUpPage = () => {
                     setVerificationEmail(normalizedEmail);
                     setStep('verify');
                     setIsAccountAlreadyVerified(isAlreadyVerifiedResponse(resendResult));
-                    setSuccess(getVerificationResendSuccessMessage(resendResult, 'This account already exists but still needs verification. We sent a fresh verification email. Please check your inbox and spam folder, then open the link to verify your email.'));
+                    setSuccess(getVerificationResendSuccessMessage(resendResult, 'This account already exists but still needs verification. We sent a fresh verification email. Please check your inbox and spam folder, then open the link to verify your email and continue to your dashboard.'));
                     return;
                 } catch (resendError) {
                     setError(getExistingAccountRecoveryMessage(resendError));
@@ -205,7 +222,7 @@ const SignUpPage = () => {
                             ) : (
                                 <>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        We have sent you an email at <span className="font-semibold text-gray-900">{verificationEmail}</span>. Click the link in your inbox to verify your email and continue setting up your account.
+                                        We have sent you an email at <span className="font-semibold text-gray-900">{verificationEmail}</span>. Click the link in your inbox to verify your email and open your dashboard.
                                     </p>
                                     <p className="mt-3 text-sm leading-6 text-gray-500">
                                         If you do not see the email, please check your spam or junk folder.
@@ -230,13 +247,13 @@ const SignUpPage = () => {
 
                     {step === 'form' ? (
                         <form onSubmit={handleDetailsSubmit} className="grid gap-4 sm:grid-cols-2">
-                            <Field label="First name" name="first_name" value={formValues.first_name} onChange={handleChange} placeholder="John" required />
-                            <Field label="Last name" name="last_name" value={formValues.last_name} onChange={handleChange} placeholder="Doe" required />
+                            <Field error={getDetailFieldError('first_name', formValues, formTouched, formSubmitted)} label="First name" name="first_name" showRequiredMarker={formSubmitted && !String(formValues.first_name || '').trim()} value={formValues.first_name} onBlur={handleBlur} onChange={handleChange} placeholder="John" required />
+                            <Field error={getDetailFieldError('last_name', formValues, formTouched, formSubmitted)} label="Last name" name="last_name" showRequiredMarker={formSubmitted && !String(formValues.last_name || '').trim()} value={formValues.last_name} onBlur={handleBlur} onChange={handleChange} placeholder="Doe" required />
                             <div className="sm:col-span-2">
-                                <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
+                                <Field error={getDetailFieldError('email', formValues, formTouched, formSubmitted)} label="Email address" name="email" showRequiredMarker={formSubmitted && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(formValues.email || '').trim())} type="email" value={formValues.email} onBlur={handleBlur} onChange={handleChange} placeholder="example@gmail.com" required />
                             </div>
                             <div className="sm:col-span-2">
-                                <Field label="Phone number (optional)" name="phone_number" value={formValues.phone_number} onChange={handleChange} placeholder="0700 000 000" />
+                                <Field label="Phone number" name="phone_number" value={formValues.phone_number} onBlur={handleBlur} onChange={handleChange} optional placeholder="0700 000 000" />
                             </div>
                             <div className="sm:col-span-2">
                                 <Button type="submit" variant="primary" className="w-full justify-center">
@@ -402,13 +419,49 @@ function getPasswordIssues(password, passwordConfirm) {
     return '';
 }
 
-const Field = ({ label, ...props }) => (
+function getRequiredDetailIssue(values = {}) {
+    const requiredFields = ['first_name', 'last_name', 'email'];
+    const missingField = requiredFields.find((field) => !String(values[field] || '').trim());
+
+    if (missingField) {
+        return 'Please complete all required fields marked with a red star before continuing.';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(values.email || '').trim())) {
+        return 'Please enter a valid email address.';
+    }
+
+    return '';
+}
+
+function getDetailFieldError(field, values = {}, touched = {}, submitted = false) {
+    const shouldShow = submitted || touched[field];
+    if (!shouldShow) return '';
+
+    const value = String(values[field] || '').trim();
+    if (!value) return 'Required field.';
+
+    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return 'Enter a valid email.';
+    }
+
+    return '';
+}
+
+const Field = ({ error = '', label, optional = false, required = false, showRequiredMarker = false, ...props }) => (
     <label className="flex flex-col gap-2 text-sm font-medium text-gray-700">
-        {label}
+        <span>
+            {label}
+            {showRequiredMarker && <span className="ml-1 text-rose-600">*</span>}
+            {optional && <span className="ml-1 text-gray-400">(optional)</span>}
+        </span>
         <input
             {...props}
-            className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-primary-500"
+            required={required}
+            aria-invalid={Boolean(error)}
+            className={`w-full rounded-2xl border px-4 py-3 text-base text-gray-900 outline-none transition-colors ${error ? 'border-rose-400 focus:border-rose-500' : 'border-gray-200 focus:border-primary-500'}`}
         />
+        {error && <span className="-mt-1 text-xs font-semibold text-rose-600">{error}</span>}
     </label>
 );
 

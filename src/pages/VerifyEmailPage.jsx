@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, MailCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { resendVerificationEmail, verifyEmail } from '../services/authApi';
+import { persistDashboardSection } from '../utils/dashboardDataState';
 
 const VerifyEmailPage = () => {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token') || '';
     const emailFromLink = searchParams.get('email') || '';
@@ -21,7 +23,8 @@ const VerifyEmailPage = () => {
 
         async function completeVerification() {
             try {
-                const verificationResult = await verifyEmail({ token });
+                const verificationResponse = await verifyEmail({ token });
+                const verificationResult = verificationResponse.result;
 
                 if (!isMounted) return;
                 const verifiedEmail = extractEmailFromPayload(verificationResult);
@@ -29,8 +32,21 @@ const VerifyEmailPage = () => {
                     setRecoveryEmail(verifiedEmail);
                     storeVerificationEmail(verifiedEmail);
                 }
+
+                if (verificationResponse.authenticated) {
+                    setStatus('complete');
+                    setMessage('Your email is verified. Opening your dashboard now...');
+                    persistDashboardSection('overview');
+                    window.setTimeout(() => {
+                        if (isMounted) {
+                            navigate('/dashboard/app', { replace: true, state: { section: 'overview' } });
+                        }
+                    }, 600);
+                    return;
+                }
+
                 setStatus('complete');
-                setMessage('Your email is verified. Sign in with the password you created to continue to your dashboard.');
+                setMessage('Your email is verified. We could not open your dashboard automatically because the verification response did not include a secure login token yet.');
             } catch (error) {
                 if (!isMounted) return;
                 setResendCooldownSeconds(getRetryDelaySeconds(error.message));
@@ -44,7 +60,7 @@ const VerifyEmailPage = () => {
         return () => {
             isMounted = false;
         };
-    }, [token]);
+    }, [navigate, token]);
 
     useEffect(() => {
         if (resendCooldownSeconds <= 0) return undefined;
@@ -188,9 +204,12 @@ const VerifyEmailPage = () => {
                     message={message}
                 >
                     <div className="mt-8">
-                        <Button to="/signin" variant="primary" className="justify-center px-8">
-                            Sign in
+                        <Button to="/dashboard/app" variant="primary" className="justify-center px-8">
+                            Open dashboard
                         </Button>
+                        <p className="mt-3 text-sm leading-6 text-gray-500">
+                            If the dashboard asks you to sign in, the backend still needs to return login tokens after email verification.
+                        </p>
                     </div>
                 </StatusPanel>
             </VerificationShell>

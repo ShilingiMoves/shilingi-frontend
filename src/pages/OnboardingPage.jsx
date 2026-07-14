@@ -146,6 +146,8 @@ const OnboardingPage = () => {
         password: '',
         password_confirm: '',
     });
+    const [signupTouched, setSignupTouched] = useState({});
+    const [signupSubmitted, setSignupSubmitted] = useState(false);
     const [signinValues, setSigninValues] = useState({
         email: '',
         password: '',
@@ -214,6 +216,12 @@ const OnboardingPage = () => {
             ...current,
             [name]: name.includes('password') ? sanitizePasswordInput(value) : value,
         }));
+        setSignupTouched((current) => ({ ...current, [name]: true }));
+    };
+
+    const handleSignupBlur = (event) => {
+        const { name } = event.target;
+        setSignupTouched((current) => ({ ...current, [name]: true }));
     };
 
     const handleSigninChange = (event) => {
@@ -258,6 +266,21 @@ const OnboardingPage = () => {
         event.preventDefault();
         setAuthError('');
         setAuthSuccess('');
+        setSignupSubmitted(true);
+
+        const fieldIssue = getSignupFieldIssue(signupValues);
+        if (fieldIssue) {
+            setSignupTouched((current) => ({
+                ...current,
+                first_name: true,
+                last_name: true,
+                email: true,
+                password: true,
+                password_confirm: true,
+            }));
+            setAuthError(fieldIssue);
+            return;
+        }
 
         const passwordIssue = getPasswordIssue(signupValues.password, signupValues.password_confirm);
         if (passwordIssue) {
@@ -284,7 +307,7 @@ const OnboardingPage = () => {
             storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
             setAccountMode('verify');
-            setAuthSuccess('Your account was created. Please verify your email before signing in.');
+            setAuthSuccess('Your account was created. Please verify your email, then we will open your dashboard.');
         } catch (error) {
             const normalizedEmail = signupValues.email.trim().toLowerCase();
             if (normalizedEmail && isExistingAccountError(error)) {
@@ -296,7 +319,7 @@ const OnboardingPage = () => {
                     storePendingSignupEmail(normalizedEmail);
                     setVerificationEmail(normalizedEmail);
                     setAccountMode('verify');
-                    setAuthSuccess('This account already exists but still needs verification. We sent a fresh verification email.');
+                    setAuthSuccess('This account already exists but still needs verification. We sent a fresh verification email so you can open your dashboard.');
                     return;
                 } catch (resendError) {
                     setAuthError(resendError.message || 'This account already exists, but we could not resend verification right now.');
@@ -473,12 +496,15 @@ const OnboardingPage = () => {
                             onSigninChange={handleSigninChange}
                             onSigninSubmit={handleSigninSubmit}
                             onSignupChange={handleSignupChange}
+                            onSignupBlur={handleSignupBlur}
                             onSignupSubmit={handleSignupSubmit}
                             onSocialAuth={handleSocialAuth}
                             plan={activePlan}
                             showConfirmPassword={showConfirmPassword}
                             showPassword={showPassword}
                             signinValues={signinValues}
+                            signupSubmitted={signupSubmitted}
+                            signupTouched={signupTouched}
                             signupValues={signupValues}
                             toggleConfirmPassword={() => setShowConfirmPassword((current) => !current)}
                             togglePassword={() => setShowPassword((current) => !current)}
@@ -518,7 +544,7 @@ const OnboardingPage = () => {
                             }}
                             className="inline-flex min-h-[54px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-extrabold text-white shadow-sm"
                         >
-                            Choose Your Plan
+                            View Plan
                         </button>
                     </footer>
                 )}
@@ -674,86 +700,40 @@ const AnalyzingScreen = ({ progress }) => {
     );
 };
 
-const ResultsScreen = ({ recommendation }) => {
-    const radius = 36;
-    const circumference = 2 * Math.PI * radius;
-    const strokeOffset = circumference - (recommendation.score / 100) * circumference;
-    const scoreLabel = recommendation.score >= 75
-        ? 'Strong financial position'
-        : recommendation.score >= 55
-            ? 'Good foundation to build on'
-            : 'Ready for guided support';
+const ResultsScreen = ({ recommendation }) => (
+    <div className="flex flex-1 flex-col px-1">
+        <p className="text-xs font-bold text-[#0c6060]">Financial Wellness Snapshot</p>
+        <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#232e3d]">Here's what we found</h1>
+        <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
+            Your financial wellness snapshot is built from your answers.
+        </p>
 
-    return (
-        <div className="flex flex-1 flex-col px-1">
-            <p className="text-xs font-bold text-[#0c6060]">Financial Wellness Snapshot</p>
-            <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#232e3d]">Here's what we found</h1>
-            <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
-                Your financial wellness snapshot is built from your answers.
-            </p>
-
-            <div className="mt-5 space-y-3">
-                <div className="flex min-h-[86px] items-center gap-4 rounded-xl border border-[#dce8e4] bg-white px-4 shadow-[0_8px_22px_rgba(25,33,61,0.06)]">
-                    <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
-                        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
-                            <circle
-                                cx="40"
-                                cy="40"
-                                r={radius}
-                                fill="none"
-                                stroke="#edf3f1"
-                                strokeWidth="7"
-                            />
-                            <circle
-                                cx="40"
-                                cy="40"
-                                r={radius}
-                                fill="none"
-                                stroke="#0c6060"
-                                strokeLinecap="round"
-                                strokeWidth="7"
-                                strokeDasharray={circumference}
-                                strokeDashoffset={strokeOffset}
-                            />
-                        </svg>
-                        <div className="relative flex items-start">
-                            <span className="text-[25px] font-extrabold tabular-nums text-[#0c6060]">{recommendation.score}</span>
-                            <span className="ml-0.5 mt-1 text-[11px] font-extrabold text-[#0c6060]">%</span>
-                        </div>
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] font-extrabold uppercase tracking-normal text-[#0c6060]">Your wellness score</p>
-                        <p className="mt-1 text-sm font-extrabold leading-5 text-[#232e3d]">{scoreLabel}</p>
-                        <p className="mt-1 text-[11px] leading-4 text-[#6c7471]">This percentage shows where you are today based on your answers.</p>
-                    </div>
-                </div>
-
-                {recommendation.insights.map((item) => (
-                    <div key={item.label} className="flex min-h-[58px] items-center gap-3 rounded-xl bg-[#eaf1f0] px-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e1ad2b] text-white">
-                            <item.icon size={17} />
-                        </span>
-                        <div className="min-w-0">
-                            <p className="text-[10px] font-extrabold uppercase tracking-normal text-[#0c6060]">{item.label}</p>
-                            <p className="truncate text-sm font-extrabold text-[#232e3d]">{item.value}</p>
-                        </div>
-                    </div>
-                ))}
-
-                <div className="flex min-h-[64px] items-center gap-3 rounded-xl bg-[#e1ad2b] px-3 text-white shadow-[0_10px_24px_rgba(185,139,26,0.2)]">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/22 text-white">
-                        <Check size={18} strokeWidth={3} />
+        <div className="mt-5 space-y-3">
+            {recommendation.insights.map((item) => (
+                <div key={item.label} className="flex min-h-[64px] items-center gap-3 rounded-xl bg-[#eaf1f0] px-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#e1ad2b] text-white">
+                        <item.icon size={18} />
                     </span>
                     <div className="min-w-0">
-                        <p className="text-[10px] font-extrabold uppercase tracking-normal text-white/75">Recommended plan</p>
-                        <p className="truncate text-sm font-extrabold text-white">{recommendation.plan.name}</p>
-                        <p className="mt-0.5 text-[11px] font-semibold text-white/80">{recommendation.plan.eyebrow}</p>
+                        <p className="text-[10px] font-extrabold uppercase tracking-normal text-[#0c6060]">{item.label}</p>
+                        <p className="truncate text-sm font-extrabold text-[#232e3d]">{item.value}</p>
                     </div>
+                </div>
+            ))}
+
+            <div className="flex min-h-[68px] items-center gap-3 rounded-xl bg-[#e1ad2b] px-3 text-white shadow-[0_10px_24px_rgba(185,139,26,0.2)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/22 text-white">
+                    <Check size={18} strokeWidth={3} />
+                </span>
+                <div className="min-w-0">
+                    <p className="text-[10px] font-extrabold uppercase tracking-normal text-white/75">Recommended plan</p>
+                    <p className="truncate text-sm font-extrabold text-white">{recommendation.plan.name}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-white/80">{recommendation.plan.eyebrow}</p>
                 </div>
             </div>
         </div>
-    );
-};
+    </div>
+);
 
 const PlanSelectionScreen = ({
     activePlanKey,
@@ -932,16 +912,6 @@ const PlanCard = ({ billingCycle, isRecommended, isSelected, onSelect, onStartPl
                     {plan.price > 0 && <span className="pb-1 text-xs text-[#a0a3bd]">{billingCycle === 'annual' ? 'yearly' : 'monthly'}</span>}
                 </div>
                 <p className="text-sm leading-6 text-[#514f6e]">{plan.description}</p>
-                <button
-                    type="button"
-                    onClick={() => {
-                        onSelect();
-                        onStartPlan(planKey);
-                    }}
-                    className="inline-flex min-h-[52px] w-full items-center justify-center rounded-full border border-[#d9dbe9] bg-[linear-gradient(174deg,#ffffff_62%,#fbfbfe_83%)] px-5 text-lg font-bold text-[#170f49] shadow-[inset_0_-2px_2px_rgba(27,35,85,0.07),inset_0_4px_6px_rgba(255,255,255,0.4)]"
-                >
-                    Get started
-                </button>
             </div>
         </div>
 
@@ -958,20 +928,26 @@ const PlanCard = ({ billingCycle, isRecommended, isSelected, onSelect, onStartPl
                     </div>
                 ))}
             </div>
+            <button
+                type="button"
+                onClick={() => {
+                    onSelect();
+                    onStartPlan(planKey);
+                }}
+                className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 text-base font-extrabold text-white shadow-[0_12px_22px_rgba(12,96,96,0.18)] transition hover:bg-[#0a5757] focus:outline-none focus:ring-2 focus:ring-[#0c6060] focus:ring-offset-2"
+            >
+                Get started
+            </button>
         </div>
     </article>
 );
 
 const PaymentScreen = ({ billingCycle, onBack, onContinue, plan }) => (
     <div className="flex flex-1 flex-col overflow-y-auto px-0 pb-4 pt-5">
-        <div className="flex items-center justify-center">
-            <img src={onboardingLogo} alt="Shilingi Moves" className="h-auto w-[92px]" decoding="async" />
-        </div>
-
         <button
             type="button"
             onClick={onBack}
-            className="mt-6 inline-flex w-fit items-center gap-1 text-xs font-bold text-[#0c6060]"
+            className="inline-flex w-fit items-center gap-1 text-xs font-bold text-[#0c6060]"
         >
             <ChevronLeft size={15} /> Back to plan
         </button>
@@ -1019,6 +995,7 @@ const AccountScreen = ({
     onBack,
     onModeChange,
     onSigninChange,
+    onSignupBlur,
     onSigninSubmit,
     onSignupChange,
     onSignupSubmit,
@@ -1028,6 +1005,8 @@ const AccountScreen = ({
     showBack = true,
     showPassword,
     signinValues,
+    signupSubmitted,
+    signupTouched,
     signupValues,
     toggleConfirmPassword,
     togglePassword,
@@ -1058,7 +1037,7 @@ const AccountScreen = ({
                 {accountMode === 'signin'
                     ? 'Welcome back. Sign in to continue into Shilingi Moves.'
                     : accountMode === 'verify'
-                        ? 'Open the verification link we sent, then sign in to continue.'
+                        ? 'Open the verification link we sent so we can take you into your dashboard.'
                         : `Let's get your account ready for ${plan.name} on ${billingCycle} billing.`}
             </p>
         </div>
@@ -1095,6 +1074,7 @@ const AccountScreen = ({
         {accountMode === 'signup' && (
             <EmailSignupForm
                 isSubmitting={isSubmitting}
+                onBlur={onSignupBlur}
                 onChange={onSignupChange}
                 onModeChange={onModeChange}
                 onSubmit={onSignupSubmit}
@@ -1102,6 +1082,8 @@ const AccountScreen = ({
                 showPassword={showPassword}
                 toggleConfirmPassword={toggleConfirmPassword}
                 togglePassword={togglePassword}
+                submitted={signupSubmitted}
+                touched={signupTouched}
                 values={signupValues}
             />
         )}
@@ -1120,14 +1102,14 @@ const AccountScreen = ({
             <div className="mt-6 rounded-[24px] bg-white p-5 shadow-[0_2px_15px_rgba(25,33,61,0.1)]">
                 <MailCheck size={32} className="text-[#0c6060]" />
                 <p className="mt-4 text-sm leading-6 text-[#5f7168]">
-                    We sent a verification email to <span className="font-bold text-[#10231c]">{verificationEmail}</span>. Verify your email, then sign in to open your dashboard.
+                    We sent a verification email to <span className="font-bold text-[#10231c]">{verificationEmail}</span>. Verify your email, then we will open your dashboard.
                 </p>
                 <button
                     type="button"
                     onClick={() => onModeChange('signin')}
                     className="mt-5 inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-bold text-white"
                 >
-                    Sign in after verification
+                    Open dashboard after verification
                 </button>
             </div>
         )}
@@ -1178,24 +1160,27 @@ const BrandIcon = ({ provider }) => {
 
 const EmailSignupForm = ({
     isSubmitting,
+    onBlur,
     onChange,
     onModeChange,
     onSubmit,
     showConfirmPassword,
     showPassword,
+    submitted = false,
+    touched = {},
     toggleConfirmPassword,
     togglePassword,
     values,
 }) => (
     <form onSubmit={onSubmit} className="mt-5 space-y-3">
         <div className="grid grid-cols-2 gap-3">
-            <AuthField label="First name" name="first_name" value={values.first_name} onChange={onChange} required />
-            <AuthField label="Last name" name="last_name" value={values.last_name} onChange={onChange} required />
+            <AuthField error={getSignupFieldError('first_name', values, touched, submitted)} label="First name" name="first_name" showRequiredMarker={submitted && !String(values.first_name || '').trim()} value={values.first_name} onBlur={onBlur} onChange={onChange} required />
+            <AuthField error={getSignupFieldError('last_name', values, touched, submitted)} label="Last name" name="last_name" showRequiredMarker={submitted && !String(values.last_name || '').trim()} value={values.last_name} onBlur={onBlur} onChange={onChange} required />
         </div>
-        <AuthField label="Email address" name="email" type="email" value={values.email} onChange={onChange} required />
-        <AuthField label="Phone number" name="phone_number" value={values.phone_number} onChange={onChange} />
-        <PasswordInput label="Password" name="password" value={values.password} onChange={onChange} visible={showPassword} onToggle={togglePassword} />
-        <PasswordInput label="Confirm password" name="password_confirm" value={values.password_confirm} onChange={onChange} visible={showConfirmPassword} onToggle={toggleConfirmPassword} />
+        <AuthField error={getSignupFieldError('email', values, touched, submitted)} label="Email address" name="email" showRequiredMarker={submitted && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(values.email || '').trim())} type="email" value={values.email} onBlur={onBlur} onChange={onChange} required />
+        <AuthField label="Phone number" name="phone_number" value={values.phone_number} onBlur={onBlur} onChange={onChange} optional />
+        <PasswordInput error={getSignupFieldError('password', values, touched, submitted)} label="Password" name="password" showRequiredMarker={submitted && !passwordRules.every((rule) => rule.test(values.password))} value={values.password} onBlur={onBlur} onChange={onChange} visible={showPassword} onToggle={togglePassword} />
+        <PasswordInput error={getSignupFieldError('password_confirm', values, touched, submitted)} label="Confirm password" name="password_confirm" showRequiredMarker={submitted && values.password !== values.password_confirm} value={values.password_confirm} onBlur={onBlur} onChange={onChange} visible={showConfirmPassword} onToggle={toggleConfirmPassword} />
         <div className="space-y-2 rounded-2xl bg-white p-4 text-xs text-[#5f7168]">
             {passwordRules.map((rule) => (
                 <div key={rule.id} className="flex items-center gap-2">
@@ -1226,27 +1211,39 @@ const EmailSigninForm = ({ isSubmitting, onChange, onModeChange, onSubmit, value
     </form>
 );
 
-const AuthField = ({ label, ...props }) => (
+const AuthField = ({ error = '', label, optional = false, required = false, showRequiredMarker = false, ...props }) => (
     <label className="block text-xs font-bold text-[#5f7168]">
-        {label}
+        <span className="flex items-center gap-1">
+            {label}
+            {showRequiredMarker && <span className="text-sm leading-none text-rose-600">*</span>}
+            {optional && <span className="font-medium text-[#8a9891]">(optional)</span>}
+        </span>
         <input
             {...props}
-            className="mt-2 min-h-[48px] w-full rounded-2xl border border-[#e1e7e4] bg-white px-4 text-base text-[#10231c] outline-none focus:border-[#0c6060]"
+            required={required}
+            aria-invalid={Boolean(error)}
+            className={`mt-2 min-h-[48px] w-full rounded-2xl border bg-white px-4 text-base text-[#10231c] outline-none ${error ? 'border-rose-400 focus:border-rose-500' : 'border-[#e1e7e4] focus:border-[#0c6060]'}`}
         />
+        {error && <span className="mt-1 block text-[11px] font-semibold text-rose-600">{error}</span>}
     </label>
 );
 
-const PasswordInput = ({ hideToggle = false, label, name, onChange, onToggle, value, visible }) => (
+const PasswordInput = ({ error = '', hideToggle = false, label, name, onBlur, onChange, onToggle, showRequiredMarker = false, value, visible }) => (
     <label className="block text-xs font-bold text-[#5f7168]">
-        {label}
-        <span className="mt-2 flex min-h-[48px] items-center gap-2 rounded-2xl border border-[#e1e7e4] bg-white px-4 focus-within:border-[#0c6060]">
+        <span className="flex items-center gap-1">
+            {label}
+            {showRequiredMarker && <span className="text-sm leading-none text-rose-600">*</span>}
+        </span>
+        <span className={`mt-2 flex min-h-[48px] items-center gap-2 rounded-2xl border bg-white px-4 ${error ? 'border-rose-400 focus-within:border-rose-500' : 'border-[#e1e7e4] focus-within:border-[#0c6060]'}`}>
             <Lock size={16} className="text-[#5f7168]" />
             <input
                 name={name}
                 type={visible ? 'text' : 'password'}
                 value={value}
+                onBlur={onBlur}
                 onChange={onChange}
                 required
+                aria-invalid={Boolean(error)}
                 className="min-w-0 flex-1 bg-transparent text-base text-[#10231c] outline-none"
             />
             {!hideToggle && (
@@ -1255,6 +1252,7 @@ const PasswordInput = ({ hideToggle = false, label, name, onChange, onToggle, va
                 </button>
             )}
         </span>
+        {error && <span className="mt-1 block text-[11px] font-semibold text-rose-600">{error}</span>}
     </label>
 );
 
@@ -1290,6 +1288,45 @@ function storePendingSignupEmail(email) {
 
 function sanitizePasswordInput(value) {
     return String(value || '').replace(/[\r\n]/g, '');
+}
+
+function getSignupFieldIssue(values = {}) {
+    const requiredFields = ['first_name', 'last_name', 'email', 'password', 'password_confirm'];
+    const missingField = requiredFields.find((field) => !String(values[field] || '').trim());
+
+    if (missingField) {
+        return 'Please complete all required fields marked with a red star before creating your account.';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(values.email || '').trim())) {
+        return 'Please enter a valid email address.';
+    }
+
+    return '';
+}
+
+function getSignupFieldError(field, values = {}, touched = {}, submitted = false) {
+    const shouldShow = submitted || touched[field];
+    if (!shouldShow) return '';
+
+    const value = String(values[field] || '').trim();
+    if (!value) {
+        return 'Required field.';
+    }
+
+    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return 'Enter a valid email.';
+    }
+
+    if (field === 'password' && value && !passwordRules.every((rule) => rule.test(value))) {
+        return 'Use 8-15 chars with uppercase, lowercase, number, and symbol.';
+    }
+
+    if (field === 'password_confirm' && value && values.password !== values.password_confirm) {
+        return 'Passwords must match.';
+    }
+
+    return '';
 }
 
 function getPasswordIssue(password, passwordConfirm) {

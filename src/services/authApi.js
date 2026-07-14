@@ -277,7 +277,16 @@ export async function verifyEmail(payload) {
     );
 
     const result = await parseResponse(response);
-    return result?.data || result;
+    const authenticated = storeTokens(result);
+
+    if (authenticated) {
+        storeUserProfile(extractUser(result));
+    }
+
+    return {
+        authenticated,
+        result: result?.data || result,
+    };
 }
 
 export async function resendVerificationEmail(payload) {
