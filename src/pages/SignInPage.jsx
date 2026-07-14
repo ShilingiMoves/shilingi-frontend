@@ -163,7 +163,13 @@ const SignInPage = () => {
                     </form>
 
                     <p className="mt-6 text-sm text-gray-600">
-                        New to Shilingi Moves? <Link to="/signup" className="font-semibold text-primary-700 hover:text-primary-600">Create your account</Link>
+                        New to Shilingi Moves?{' '}
+                        <Link to="/onboarding" className="font-semibold text-primary-700 hover:text-primary-600 sm:hidden">
+                            Create your account
+                        </Link>
+                        <Link to="/signup" className="hidden font-semibold text-primary-700 hover:text-primary-600 sm:inline">
+                            Create your account
+                        </Link>
                     </p>
                 </section>
             </div>
