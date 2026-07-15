@@ -299,7 +299,7 @@ const OnboardingPage = () => {
                 email: normalizedEmail,
                 phone_number: signupValues.phone_number.trim(),
                 password: signupValues.password,
-                password_confirm: signupValues.password,
+                password_confirm: signupValues.password_confirm,
                 default_currency: 'KES',
                 onboarding_plan: activePlanKey,
                 onboarding_billing_cycle: billingCycle,

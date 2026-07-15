@@ -112,7 +112,7 @@ const SignUpPage = () => {
                 email: normalizedEmail,
                 phone_number: formValues.phone_number.trim(),
                 password: formValues.password,
-                password_confirm: formValues.password,
+                password_confirm: formValues.password_confirm,
                 default_currency: 'KES',
                 redirect_url: getEmailVerificationRedirectUrl(),
             });

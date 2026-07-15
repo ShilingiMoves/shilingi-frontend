@@ -86,20 +86,9 @@ const ForgotPasswordPage = () => {
             const normalizedEmail = formValues.email.trim().toLowerCase();
             const resetPayload = {
                 token: formValues.token.trim(),
-                password: formValues.password,
-                password_confirm: formValues.password_confirm,
                 new_password: formValues.password,
                 new_password_confirm: formValues.password_confirm,
             };
-
-            if (normalizedEmail) {
-                resetPayload.email = normalizedEmail;
-            }
-
-            if (formValues.uid.trim()) {
-                resetPayload.uid = formValues.uid.trim();
-                resetPayload.uidb64 = formValues.uid.trim();
-            }
 
             const resetResult = await completePasswordSetup(resetPayload);
             setStep('complete');
