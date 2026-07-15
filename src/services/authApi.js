@@ -185,6 +185,24 @@ function storeUserProfile(user) {
 }
 
 export async function loginUser(credentials) {
+    const normalizedCredentials = normalizeLoginCredentials(credentials);
+
+    try {
+        return await submitLogin(normalizedCredentials);
+    } catch (error) {
+        const canRetryWithUsername = shouldRetryLoginWithUsername(error, normalizedCredentials);
+        if (!canRetryWithUsername) {
+            throw error;
+        }
+
+        return submitLogin({
+            username: normalizedCredentials.email,
+            password: normalizedCredentials.password,
+        });
+    }
+}
+
+async function submitLogin(credentials) {
     const response = await authRequestWithRetry(
         LOGIN_ENDPOINT,
         {
@@ -210,6 +228,24 @@ export async function loginUser(credentials) {
     storeUserProfile(extractUser(payload));
 
     return payload;
+}
+
+function normalizeLoginCredentials(credentials = {}) {
+    const email = String(credentials.email || credentials.username || '').trim().toLowerCase();
+    return {
+        ...credentials,
+        email,
+        username: credentials.username || email,
+        password: credentials.password,
+    };
+}
+
+function shouldRetryLoginWithUsername(error, credentials = {}) {
+    return Boolean(
+        credentials.email
+        && credentials.username !== credentials.email
+        && (error?.status === 400 || error?.status === 401)
+    );
 }
 
 export async function registerUser(payload) {
