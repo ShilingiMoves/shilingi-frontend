@@ -138,6 +138,7 @@ const OnboardingPage = () => {
     const [authSuccess, setAuthSuccess] = useState('');
     const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
     const [verificationEmail, setVerificationEmail] = useState('');
+    const [isAccountAlreadyVerified, setIsAccountAlreadyVerified] = useState(false);
     const [signupValues, setSignupValues] = useState({
         first_name: '',
         last_name: '',
@@ -266,6 +267,7 @@ const OnboardingPage = () => {
         event.preventDefault();
         setAuthError('');
         setAuthSuccess('');
+        setIsAccountAlreadyVerified(false);
         setSignupSubmitted(true);
 
         const fieldIssue = getSignupFieldIssue(signupValues);
@@ -306,20 +308,22 @@ const OnboardingPage = () => {
             markProfileSetupPending(normalizedEmail);
             storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
+            setIsAccountAlreadyVerified(false);
             setAccountMode('verify');
-            setAuthSuccess('Your account was created. Please verify your email, then we will open your dashboard.');
+            setAuthSuccess('Your account was created. Please verify your email, then sign in with your email and password to open your dashboard.');
         } catch (error) {
             const normalizedEmail = signupValues.email.trim().toLowerCase();
             if (normalizedEmail && isExistingAccountError(error)) {
                 try {
-                    await resendVerificationEmail({
+                    const resendResult = await resendVerificationEmail({
                         email: normalizedEmail,
                         redirect_url: getEmailVerificationRedirectUrl(),
                     });
                     storePendingSignupEmail(normalizedEmail);
                     setVerificationEmail(normalizedEmail);
+                    setIsAccountAlreadyVerified(isAlreadyVerifiedResponse(resendResult));
                     setAccountMode('verify');
-                    setAuthSuccess('This account already exists but still needs verification. We sent a fresh verification email so you can open your dashboard.');
+                    setAuthSuccess(getVerificationResendSuccessMessage(resendResult, 'This account already exists but still needs verification. We sent a fresh verification email. Verify your email, then sign in to open your dashboard.'));
                     return;
                 } catch (resendError) {
                     setAuthError(resendError.message || 'This account already exists, but we could not resend verification right now.');
@@ -351,6 +355,33 @@ const OnboardingPage = () => {
             navigate('/dashboard/app', { replace: true, state: { section: 'overview' } });
         } catch (error) {
             setAuthError(error.message || 'We could not sign you in right now.');
+        } finally {
+            setIsAuthSubmitting(false);
+        }
+    };
+
+    const handleResendVerification = async () => {
+        const email = verificationEmail || signupValues.email.trim().toLowerCase() || signinValues.email.trim().toLowerCase();
+        setAuthError('');
+        setAuthSuccess('');
+
+        if (!email) {
+            setAuthError('Enter your email address so we can send a fresh verification link.');
+            return;
+        }
+
+        try {
+            setIsAuthSubmitting(true);
+            const resendResult = await resendVerificationEmail({
+                email,
+                redirect_url: getEmailVerificationRedirectUrl(),
+            });
+            storePendingSignupEmail(email);
+            setVerificationEmail(email);
+            setIsAccountAlreadyVerified(isAlreadyVerifiedResponse(resendResult));
+            setAuthSuccess(getVerificationResendSuccessMessage(resendResult, 'We sent another verification email. Please check your inbox and spam folder, then sign in after verifying your account.'));
+        } catch (error) {
+            setAuthError(error.message || 'We could not send another verification email right now.');
         } finally {
             setIsAuthSubmitting(false);
         }
@@ -498,6 +529,7 @@ const OnboardingPage = () => {
                             onSignupChange={handleSignupChange}
                             onSignupBlur={handleSignupBlur}
                             onSignupSubmit={handleSignupSubmit}
+                            onResendVerification={handleResendVerification}
                             onSocialAuth={handleSocialAuth}
                             plan={activePlan}
                             showConfirmPassword={showConfirmPassword}
@@ -508,6 +540,7 @@ const OnboardingPage = () => {
                             signupValues={signupValues}
                             toggleConfirmPassword={() => setShowConfirmPassword((current) => !current)}
                             togglePassword={() => setShowPassword((current) => !current)}
+                            isAccountAlreadyVerified={isAccountAlreadyVerified}
                             verificationEmail={verificationEmail}
                         />
                     )}
@@ -992,6 +1025,7 @@ const AccountScreen = ({
     authSuccess,
     billingCycle,
     isSubmitting,
+    isAccountAlreadyVerified,
     onBack,
     onModeChange,
     onSigninChange,
@@ -999,6 +1033,7 @@ const AccountScreen = ({
     onSigninSubmit,
     onSignupChange,
     onSignupSubmit,
+    onResendVerification,
     onSocialAuth,
     plan,
     showConfirmPassword,
@@ -1037,7 +1072,9 @@ const AccountScreen = ({
                 {accountMode === 'signin'
                     ? 'Welcome back. Sign in to continue into Shilingi Moves.'
                     : accountMode === 'verify'
-                        ? 'Open the verification link we sent so we can take you into your dashboard.'
+                        ? isAccountAlreadyVerified
+                            ? 'This account is verified. Sign in with your email and password.'
+                            : 'Open the verification link we sent, then sign in with your email and password.'
                         : `Let's get your account ready for ${plan.name} on ${billingCycle} billing.`}
             </p>
         </div>
@@ -1102,15 +1139,38 @@ const AccountScreen = ({
             <div className="mt-6 rounded-[24px] bg-white p-5 shadow-[0_2px_15px_rgba(25,33,61,0.1)]">
                 <MailCheck size={32} className="text-[#0c6060]" />
                 <p className="mt-4 text-sm leading-6 text-[#5f7168]">
-                    We sent a verification email to <span className="font-bold text-[#10231c]">{verificationEmail}</span>. Verify your email, then we will open your dashboard.
+                    {isAccountAlreadyVerified ? (
+                        <>
+                            <span className="font-bold text-[#10231c]">{verificationEmail}</span> is already verified. Sign in with your email and password to open your dashboard.
+                        </>
+                    ) : (
+                        <>
+                            We sent a verification email to <span className="font-bold text-[#10231c]">{verificationEmail}</span>. Verify your email, then sign in with your password.
+                        </>
+                    )}
                 </p>
                 <button
                     type="button"
                     onClick={() => onModeChange('signin')}
                     className="mt-5 inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-bold text-white"
                 >
-                    Open dashboard after verification
+                    {isAccountAlreadyVerified ? 'Sign in to your account' : 'Sign in after verification'}
                 </button>
+                {!isAccountAlreadyVerified && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={onResendVerification}
+                            disabled={isSubmitting}
+                            className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-[#0c6060]/25 bg-white px-6 text-sm font-bold text-[#0c6060] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isSubmitting ? 'Sending verification email...' : 'Resend verification email'}
+                        </button>
+                        <p className="mt-3 text-center text-xs leading-5 text-[#6c7b75]">
+                            If it does not arrive, check spam or confirm the email address is correct.
+                        </p>
+                    </>
+                )}
             </div>
         )}
     </div>
@@ -1284,6 +1344,30 @@ function storePendingSignupEmail(email) {
     } catch {
         // The account can still be verified and signed in without session storage.
     }
+}
+
+function getVerificationResendSuccessMessage(payload, fallback) {
+    const backendMessage = extractBackendMessage(payload);
+    return backendMessage || fallback;
+}
+
+function isAlreadyVerifiedResponse(payload) {
+    const backendMessage = extractBackendMessage(payload).toLowerCase();
+    return Boolean(payload?.already_verified)
+        || Boolean(payload?.data?.already_verified)
+        || backendMessage.includes('already verified')
+        || backendMessage.includes('already active');
+}
+
+function extractBackendMessage(payload) {
+    const candidates = [
+        payload?.message,
+        payload?.detail,
+        payload?.data?.message,
+        payload?.data?.detail,
+    ];
+
+    return candidates.find((message) => typeof message === 'string' && message.trim()) || '';
 }
 
 function sanitizePasswordInput(value) {

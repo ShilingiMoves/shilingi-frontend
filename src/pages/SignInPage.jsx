@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
-import { hasStoredAccessToken, loginUser } from '../services/authApi';
+import { hasStoredAccessToken, loginUser, resendVerificationEmail } from '../services/authApi';
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { hasAnyPreferredName, queuePreferredNamePrompt } from '../utils/memberIdentity';
 import { shouldShowProfileSetup } from '../utils/profileSetupState';
@@ -80,7 +80,21 @@ const SignInPage = () => {
             const redirectTo = location.state?.from?.pathname || '/dashboard/app';
             navigate(redirectTo, { replace: true, state: { section: nextSection } });
         } catch (err) {
-            setError(err.message || 'We could not sign you in right now.');
+            if (shouldResendVerification(err)) {
+                const email = formValues.email.trim().toLowerCase();
+                try {
+                    await resendVerificationEmail({
+                        email,
+                        redirect_url: getEmailVerificationRedirectUrl(),
+                    });
+                    setSuccess('This account still needs email verification. We sent a fresh verification email. Please verify your email, then come back and sign in.');
+                    setError('');
+                } catch (resendError) {
+                    setError(resendError.message || 'This account still needs email verification, but we could not send a fresh verification email right now.');
+                }
+            } else {
+                setError(err.message || 'We could not sign you in right now.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -239,6 +253,34 @@ const Field = ({ label, ...props }) => (
 
 function sanitizePasswordInput(value) {
     return String(value || '').replace(/[\r\n]/g, '');
+}
+
+function shouldResendVerification(error) {
+    const message = String(error?.message || '').toLowerCase();
+    const payloadText = JSON.stringify(error?.payload || {}).toLowerCase();
+    const combined = `${message} ${payloadText}`;
+
+    return (
+        combined.includes('verify')
+        || combined.includes('verification')
+        || combined.includes('not verified')
+        || combined.includes('inactive')
+        || combined.includes('not active')
+    );
+}
+
+function getEmailVerificationRedirectUrl() {
+    const configuredUrl = import.meta.env.VITE_EMAIL_VERIFICATION_REDIRECT_URL;
+
+    if (configuredUrl) {
+        return configuredUrl;
+    }
+
+    if (typeof window === 'undefined') {
+        return '/verify-email';
+    }
+
+    return `${window.location.origin}/verify-email`;
 }
 
 export default SignInPage;

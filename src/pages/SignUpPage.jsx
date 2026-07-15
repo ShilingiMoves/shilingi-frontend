@@ -119,7 +119,7 @@ const SignUpPage = () => {
             storePendingSignupEmail(normalizedEmail);
             setVerificationEmail(normalizedEmail);
             setStep('verify');
-            setSuccess('Your account was created. Please verify your email, then we will open your dashboard.');
+            setSuccess('Your account was created. Please verify your email, then sign in with your email and password to open your dashboard.');
         } catch (err) {
             const normalizedEmail = formValues.email.trim().toLowerCase();
             if (normalizedEmail && isExistingAccountError(err)) {
@@ -128,7 +128,7 @@ const SignUpPage = () => {
                     setVerificationEmail(normalizedEmail);
                     setStep('verify');
                     setIsAccountAlreadyVerified(isAlreadyVerifiedResponse(resendResult));
-                    setSuccess(getVerificationResendSuccessMessage(resendResult, 'This account already exists but still needs verification. We sent a fresh verification email. Please check your inbox and spam folder, then open the link to verify your email and continue to your dashboard.'));
+                    setSuccess(getVerificationResendSuccessMessage(resendResult, 'This account already exists but still needs verification. We sent a fresh verification email. Please check your inbox and spam folder, then open the link to verify your email. After that, sign in to open your dashboard.'));
                     return;
                 } catch (resendError) {
                     setError(getExistingAccountRecoveryMessage(resendError));
@@ -222,7 +222,7 @@ const SignUpPage = () => {
                             ) : (
                                 <>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
-                                        We have sent you an email at <span className="font-semibold text-gray-900">{verificationEmail}</span>. Click the link in your inbox to verify your email and open your dashboard.
+                                    We have sent you an email at <span className="font-semibold text-gray-900">{verificationEmail}</span>. Click the link in your inbox to verify your email, then sign in to open your dashboard.
                                     </p>
                                     <p className="mt-3 text-sm leading-6 text-gray-500">
                                         If you do not see the email, please check your spam or junk folder.

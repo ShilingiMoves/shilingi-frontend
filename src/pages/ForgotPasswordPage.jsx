@@ -83,11 +83,18 @@ const ForgotPasswordPage = () => {
 
         try {
             setIsSubmitting(true);
+            const normalizedEmail = formValues.email.trim().toLowerCase();
             const resetPayload = {
                 token: formValues.token.trim(),
+                password: formValues.password,
+                password_confirm: formValues.password_confirm,
                 new_password: formValues.password,
-                new_password_confirm: formValues.password,
+                new_password_confirm: formValues.password_confirm,
             };
+
+            if (normalizedEmail) {
+                resetPayload.email = normalizedEmail;
+            }
 
             if (formValues.uid.trim()) {
                 resetPayload.uid = formValues.uid.trim();
@@ -98,11 +105,14 @@ const ForgotPasswordPage = () => {
             setStep('complete');
 
             try {
-                if (!resetResult.authenticated) {
+                if (!resetResult.authenticated && normalizedEmail) {
                     await loginUser({
-                        email: formValues.email.trim().toLowerCase(),
+                        email: normalizedEmail,
                         password: formValues.password,
                     });
+                }
+                if (!normalizedEmail && !resetResult.authenticated) {
+                    throw new Error('Email address was not available for automatic sign in.');
                 }
                 clearStoredResetEmail();
                 persistDashboardSection('overview');
@@ -187,7 +197,6 @@ const ForgotPasswordPage = () => {
                             {!resetToken && (
                                 <Field label="Reset token" name="token" value={formValues.token} onChange={handleChange} placeholder="Paste the token from your email link" required />
                             )}
-                            <Field label="Email address" name="email" type="email" value={formValues.email} onChange={handleChange} placeholder="example@gmail.com" required />
                             <Field label="New password" name="password" type="password" value={formValues.password} onChange={handleChange} placeholder="Create a new password" autoComplete="new-password" required />
                             <Field label="Confirm new password" name="password_confirm" type="password" value={formValues.password_confirm} onChange={handleChange} placeholder="Repeat your new password" autoComplete="new-password" required />
 

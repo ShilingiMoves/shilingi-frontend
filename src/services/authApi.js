@@ -56,14 +56,69 @@ async function parseResponse(response, { handleUnauthorized = true } = {}) {
             handleUnauthorizedSession();
         }
 
-        const firstFieldError = payload?.errors
-            ? Object.values(payload.errors).flat().find(Boolean)
-            : null;
-        const message = payload?.message || payload?.detail || firstFieldError || `Request failed with status ${response.status}`;
+        const message = getFriendlyAuthErrorMessage(payload, response.status);
         throw new AuthApiError(message, { payload, status: response.status });
     }
 
     return payload;
+}
+
+function getFriendlyAuthErrorMessage(payload, status) {
+    const rawMessage = getApiErrorMessage(payload) || `Request failed with status ${status}`;
+    const normalized = String(rawMessage || '').replace(/_/g, ' ').toLowerCase();
+
+    if (normalized.includes('email') && normalized.includes('not verified')) {
+        return 'Please verify your email before signing in. Check your inbox for the verification link.';
+    }
+
+    if (normalized.includes('inactive') || normalized.includes('disabled')) {
+        return 'This account is not active yet. Please verify your email or contact support if you believe this is a mistake.';
+    }
+
+    if (
+        status === 401
+        || normalized.includes('invalid email or password')
+        || normalized.includes('invalid credentials')
+        || normalized.includes('unable to log in')
+        || normalized.includes('no active account')
+    ) {
+        return 'The email or password you entered is incorrect. Please check your details and try again.';
+    }
+
+    return humanizeApiErrorMessage(rawMessage);
+}
+
+function getApiErrorMessage(payload) {
+    if (!payload) return '';
+
+    const directMessage = payload.message || payload.detail || payload.error;
+    if (directMessage) return directMessage;
+
+    const errorSource = payload.errors || payload;
+    if (errorSource && typeof errorSource === 'object' && !Array.isArray(errorSource)) {
+        const firstEntry = Object.entries(errorSource).find(([, value]) => {
+            if (Array.isArray(value)) return value.length > 0;
+            return typeof value === 'string' && value.trim();
+        });
+
+        if (firstEntry) {
+            const [field, value] = firstEntry;
+            const firstValue = Array.isArray(value) ? value[0] : value;
+            return `${field}: ${firstValue}`;
+        }
+    }
+
+    if (Array.isArray(payload)) return payload.find(Boolean) || '';
+    return '';
+}
+
+function humanizeApiErrorMessage(message) {
+    return String(message || '')
+        .replace(/^non[_\s-]?field[_\s-]?errors?:\s*/i, '')
+        .replace(/^[a-z0-9_]+:\s*/i, '')
+        .replace(/_/g, ' ')
+        .trim()
+        || 'We could not complete that request. Please try again.';
 }
 
 function wait(ms) {

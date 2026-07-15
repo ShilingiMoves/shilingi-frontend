@@ -222,10 +222,27 @@ const tabs = [
     { id: 'dependents', label: 'Dependants', icon: Users },
 ];
 
+const normalizeSetupDependants = (setupDependents = []) => setupDependents.map((item) => ({
+    relation: item.relationship || item.relation || '',
+    number: Number(item.count || item.number || 1),
+    benType: String(item.beneficiaryType || item.benType || '').toLowerCase().startsWith('indirect') ? 'Indirect' : 'Direct',
+    amount: Number(String(item.supportAmount ?? item.amount ?? '').replace(/[^\d.]/g, '')) || 0,
+    freq: String(item.frequency || item.freq || 'MONTHLY').toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase()),
+    category: item.relationship || item.category || item.relation || '',
+    updatedAt: item.updatedAt || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+})).filter((item) => item.relation);
+
 const readWorkspace = () => {
     if (typeof window === 'undefined') return defaults;
     try {
-        return { ...defaults, ...JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}') };
+        const workspace = { ...defaults, ...JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}') };
+        if ((!Array.isArray(workspace.dependants) || workspace.dependants.length === 0) && Array.isArray(workspace.setupDependents)) {
+            return {
+                ...workspace,
+                dependants: normalizeSetupDependants(workspace.setupDependents),
+            };
+        }
+        return workspace;
     } catch {
         return defaults;
     }
@@ -1733,6 +1750,22 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 remaining={remaining}
                 totalDependantsSupport={totalDependantsSupport}
             />
+
+            {activeTab === 'dependents' && editingDependents && (
+                <div className="fixed inset-0 z-50 flex items-end bg-slate-950/45 px-3 pb-3 lg:hidden">
+                    <div className="max-h-[88vh] w-full overflow-y-auto rounded-[24px] bg-white p-3 shadow-[0_-18px_42px_rgba(15,23,42,0.22)]">
+                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200" />
+                        <DependantsFormPanel
+                            form={dependantsForm}
+                            onChange={handleDependantFieldChange}
+                            onSave={saveDependents}
+                            onCancel={closeDependantForm}
+                            isSaving={submitting.dependents}
+                            isEditing={editingDependantIndex >= 0}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="hidden space-y-6 lg:block">
             <section className="relative overflow-hidden rounded-[1.35rem] bg-primary-600 p-4 text-white shadow-[0_16px_48px_rgba(15,23,42,0.12)] sm:p-5">

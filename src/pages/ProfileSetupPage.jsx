@@ -14,7 +14,7 @@ import incomeService from '../services/incomeService';
 import { updateUserPreferences } from '../services/userApi';
 import { markDashboardDataExists, persistDashboardSection } from '../utils/dashboardDataState';
 import { USER_PROFILE_WORKSPACE_KEY } from '../components/dashboard/user/UserGoalsFamilyForm';
-import { completeProfileSetup } from '../utils/profileSetupState';
+import { completeProfileSetup, markProfileSetupPending } from '../utils/profileSetupState';
 
 const setupSteps = ['income', 'goals', 'dependents'];
 const defaultIncomeForm = {
@@ -46,14 +46,15 @@ const defaultDependentForm = {
 const ProfileSetupPage = () => {
     const navigate = useNavigate();
     const [stepIndex, setStepIndex] = useState(-1);
-    const [incomeItems, setIncomeItems] = useState([]);
-    const [goalItems, setGoalItems] = useState([]);
-    const [dependentItems, setDependentItems] = useState([]);
+    const [incomeItems, setIncomeItems] = useState(() => readProfileSetupDraft().incomeItems);
+    const [goalItems, setGoalItems] = useState(() => readProfileSetupDraft().goalItems);
+    const [dependentItems, setDependentItems] = useState(() => readProfileSetupDraft().dependentItems);
     const [sheet, setSheet] = useState(null);
     const [incomeForm, setIncomeForm] = useState(defaultIncomeForm);
     const [goalForm, setGoalForm] = useState(defaultGoalForm);
     const [dependentForm, setDependentForm] = useState(defaultDependentForm);
     const [isSaving, setIsSaving] = useState(false);
+    const [logoFailed, setLogoFailed] = useState(false);
     const [notice, setNotice] = useState('');
 
     const currentStep = setupSteps[stepIndex] || 'welcome';
@@ -63,7 +64,7 @@ const ProfileSetupPage = () => {
         [incomeItems]
     );
 
-    const finishSetup = async (section = 'overview') => {
+    const finishSetup = async (section = 'overview', { complete = true } = {}) => {
         setIsSaving(true);
         setNotice('');
 
@@ -79,7 +80,11 @@ const ProfileSetupPage = () => {
             }
             await syncIncomeToApi(incomeItems).catch(() => null);
             markDashboardDataExists();
-            completeProfileSetup();
+            if (complete) {
+                completeProfileSetup();
+            } else {
+                markProfileSetupPending();
+            }
             persistDashboardSection(section);
             navigate('/dashboard/app', { replace: true, state: { section } });
         } finally {
@@ -114,6 +119,10 @@ const ProfileSetupPage = () => {
             setNotice('Add the relationship and support amount before saving.');
             return;
         }
+        if (parseMoney(dependentForm.supportAmount) <= 0) {
+            setNotice('Add a valid support amount before saving.');
+            return;
+        }
         setDependentItems((current) => [...current, { ...dependentForm, id: crypto.randomUUID?.() || String(Date.now()) }]);
         setDependentForm(defaultDependentForm);
         setNotice('Your dependant has been added.');
@@ -124,11 +133,22 @@ const ProfileSetupPage = () => {
         <div className="min-h-screen bg-[#111111] font-sans text-[#10231c] sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-8">
             <section className="relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden bg-[#f8f8f8] sm:min-h-[812px] sm:rounded-[40px]">
                 <header className="flex justify-center px-5 pt-10">
-                    <img src={onboardingLogo} alt="Shilingi Moves" className="h-auto w-[92px]" decoding="async" />
+                    {logoFailed ? (
+                        <span className="text-lg font-extrabold text-[#0c6060]">Shilingi Moves</span>
+                    ) : (
+                        <img
+                            src={onboardingLogo}
+                            alt="Shilingi Moves"
+                            className="h-auto w-[92px]"
+                            decoding="async"
+                            fetchPriority="high"
+                            onError={() => setLogoFailed(true)}
+                        />
+                    )}
                 </header>
 
                 {currentStep === 'welcome' ? (
-                    <WelcomeSetupScreen onSkip={() => finishSetup()} onStart={() => setStepIndex(0)} />
+                    <WelcomeSetupScreen onSkip={() => finishSetup('overview', { complete: false })} onStart={() => setStepIndex(0)} />
                 ) : (
                     <main className="flex flex-1 flex-col px-4 pb-6 pt-5">
                         <SetupIntro currentStep={progressIndex} />
@@ -182,7 +202,7 @@ const ProfileSetupPage = () => {
                             <button
                                 type="button"
                                 disabled={isSaving}
-                                onClick={() => finishSetup('overview')}
+                                onClick={() => finishSetup('overview', { complete: false })}
                                 className="inline-flex min-h-[38px] w-full items-center justify-center text-sm font-bold text-[#0c6060] underline underline-offset-2"
                             >
                                 Skip for now
@@ -495,6 +515,54 @@ function formatKes(value) {
     return `KES ${Math.round(Number(value) || 0).toLocaleString('en-KE')}`;
 }
 
+function readProfileSetupDraft() {
+    if (typeof window === 'undefined') {
+        return { incomeItems: [], goalItems: [], dependentItems: [] };
+    }
+
+    try {
+        const workspace = JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
+        return {
+            incomeItems: Array.isArray(workspace.setupIncomes) ? workspace.setupIncomes : [],
+            goalItems: Array.isArray(workspace.setupGoals) ? workspace.setupGoals : [],
+            dependentItems: readStoredDependents(workspace),
+        };
+    } catch {
+        return { incomeItems: [], goalItems: [], dependentItems: [] };
+    }
+}
+
+function readStoredDependents(workspace = {}) {
+    if (Array.isArray(workspace.setupDependents) && workspace.setupDependents.length > 0) {
+        return workspace.setupDependents;
+    }
+
+    if (!Array.isArray(workspace.dependants)) {
+        return [];
+    }
+
+    return workspace.dependants.map((item) => ({
+        id: item.id || crypto.randomUUID?.() || String(Date.now()),
+        relationship: item.relation || 'Father',
+        count: String(item.number || 1),
+        beneficiaryType: String(item.benType || '').toLowerCase().startsWith('indirect') ? 'Indirect Beneficiary' : 'Direct Beneficiary',
+        supportAmount: formatMoneyInput(item.amount || ''),
+        frequency: String(item.freq || 'Monthly').toUpperCase(),
+    }));
+}
+
+function toDashboardDependants(dependentItems = []) {
+    return dependentItems.map((item) => ({
+        relation: item.relationship,
+        number: Number(item.count || 1),
+        benType: String(item.beneficiaryType || '').toLowerCase().startsWith('indirect') ? 'Indirect' : 'Direct',
+        amount: parseMoney(item.supportAmount),
+        freq: toTitle(item.frequency || 'MONTHLY'),
+        category: item.relationship,
+        updatedAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    }));
+}
+
 async function syncIncomeToApi(incomeItems) {
     if (incomeItems.length === 0) return;
 
@@ -515,19 +583,29 @@ async function syncIncomeToApi(incomeItems) {
     }).catch(() => null)));
 }
 
-async function persistLocalSetup({ dependentItems, goalItems }) {
+async function persistLocalSetup({ dependentItems, goalItems, incomeItems = [] }) {
     if (typeof window === 'undefined') return;
 
+    let existingWorkspace = {};
+    try {
+        existingWorkspace = JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
+    } catch {
+        existingWorkspace = {};
+    }
     const firstShortGoal = goalItems.find((item) => item.type.includes('Short'))?.name || goalItems[0]?.name || '';
     const firstMediumGoal = goalItems.find((item) => item.type.includes('Medium'))?.name || '';
     const firstLongGoal = goalItems.find((item) => item.type.includes('Long'))?.name || goalItems[1]?.name || '';
+    const dashboardDependants = toDashboardDependants(dependentItems);
 
     const workspace = {
+        ...existingWorkspace,
         shortTermGoal: firstShortGoal,
         mediumTermGoal: firstMediumGoal,
         longTermGoal: firstLongGoal,
         dependentsCount: String(dependentItems.reduce((sum, item) => sum + (Number(item.count) || 1), 0) || ''),
         familyNotes: dependentItems.map((item) => `${item.relationship}: ${formatKes(parseMoney(item.supportAmount))} ${toTitle(item.frequency)}`).join('\n'),
+        dependants: dashboardDependants,
+        setupIncomes: incomeItems,
         setupGoals: goalItems,
         setupDependents: dependentItems,
     };

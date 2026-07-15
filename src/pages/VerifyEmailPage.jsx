@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, MailCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { resendVerificationEmail, verifyEmail } from '../services/authApi';
-import { persistDashboardSection } from '../utils/dashboardDataState';
 
 const VerifyEmailPage = () => {
-    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token') || '';
     const emailFromLink = searchParams.get('email') || '';
@@ -35,18 +33,12 @@ const VerifyEmailPage = () => {
 
                 if (verificationResponse.authenticated) {
                     setStatus('complete');
-                    setMessage('Your email is verified. Opening your dashboard now...');
-                    persistDashboardSection('overview');
-                    window.setTimeout(() => {
-                        if (isMounted) {
-                            navigate('/dashboard/app', { replace: true, state: { section: 'overview' } });
-                        }
-                    }, 600);
+                    setMessage('Your email is verified. Please sign in with your email and password to open your dashboard.');
                     return;
                 }
 
                 setStatus('complete');
-                setMessage('Your email is verified. We could not open your dashboard automatically because the verification response did not include a secure login token yet.');
+                setMessage('Your email is verified. Please sign in with your email and password to open your dashboard.');
             } catch (error) {
                 if (!isMounted) return;
                 setResendCooldownSeconds(getRetryDelaySeconds(error.message));
@@ -60,7 +52,7 @@ const VerifyEmailPage = () => {
         return () => {
             isMounted = false;
         };
-    }, [navigate, token]);
+    }, [token]);
 
     useEffect(() => {
         if (resendCooldownSeconds <= 0) return undefined;
@@ -96,7 +88,7 @@ const VerifyEmailPage = () => {
             storeVerificationEmail(email);
             setRecoveryEmail(email);
             setStatus('resent');
-            setMessage('We sent a fresh verification email. Please check your inbox and spam folder, then open the verification link to set your password.');
+            setMessage('We sent a fresh verification email. Please check your inbox and spam folder, then open the verification link to activate your account.');
         } catch (error) {
             const retryDelay = getRetryDelaySeconds(error.message);
             if (retryDelay > 0) {
@@ -204,11 +196,11 @@ const VerifyEmailPage = () => {
                     message={message}
                 >
                     <div className="mt-8">
-                        <Button to="/dashboard/app" variant="primary" className="justify-center px-8">
-                            Open dashboard
+                        <Button to="/signin" variant="primary" className="justify-center px-8">
+                            Sign in to dashboard
                         </Button>
                         <p className="mt-3 text-sm leading-6 text-gray-500">
-                            If the dashboard asks you to sign in, the backend still needs to return login tokens after email verification.
+                            Use the same email and password you created for your Shilingi Moves account.
                         </p>
                     </div>
                 </StatusPanel>
