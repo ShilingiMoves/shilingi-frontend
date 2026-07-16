@@ -7,7 +7,7 @@ export const deriveBudgetCategoryType = (categoryName = '') => {
         return 'Savings';
     }
 
-    if (normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('shopping') || normalized.includes('lifestyle') || normalized.includes('travel') || normalized.includes('dining') || normalized.includes('restaurant') || normalized.includes('holiday') || normalized.includes('beauty') || normalized.includes('subscription') || normalized.includes('clothes') || normalized.includes('gift') || normalized.includes('hobbies')) {
+    if (normalized.includes('want') || normalized.includes('entertain') || normalized.includes('fun') || normalized.includes('shopping') || normalized.includes('lifestyle') || normalized.includes('travel') || normalized.includes('dining') || normalized.includes('restaurant') || normalized.includes('holiday') || normalized.includes('beauty') || normalized.includes('subscription') || normalized.includes('clothes') || normalized.includes('gift') || normalized.includes('hobbies')) {
         return 'Wants';
     }
 
