@@ -398,3 +398,195 @@ export const buildRetirementInsights = (snapshot, options = {}) => {
 
     return insights.slice(0, 4);
 };
+
+const gradeForScore = (score) => {
+    if (score >= 80) return 'A';
+    if (score >= 70) return 'B';
+    if (score >= 60) return 'C';
+    if (score >= 45) return 'D';
+    return 'E';
+};
+
+const statusForScore = (score) => {
+    if (score >= 80) return { status: 'EXCELLENT', status_display: 'Excellent' };
+    if (score >= 65) return { status: 'GOOD', status_display: 'Good' };
+    if (score >= 45) return { status: 'FAIR', status_display: 'Fair' };
+    return { status: 'NEEDS_ATTENTION', status_display: 'Needs Attention' };
+};
+
+const clampScore = (value) => Math.min(100, Math.max(0, Math.round(toNumber(value))));
+
+const component = ({ key, name, description, score, weight, data = {} }) => ({
+    key,
+    name,
+    description,
+    score: clampScore(score),
+    weight,
+    grade: gradeForScore(score),
+    data,
+});
+
+export const buildDerivedFinancialHealth = ({ profile = {}, live = {}, healthScore = 0 } = {}) => {
+    const snapshot = buildFinancialSnapshot({ profile, live, healthScore });
+    const hasPlannerData = Boolean(
+        snapshot.profile?.monthly_income ||
+        snapshot.budget.count ||
+        snapshot.debt.count ||
+        snapshot.investments.count ||
+        snapshot.protection.count ||
+        snapshot.retirement.count ||
+        snapshot.netWorth.total ||
+        snapshot.goals.count
+    );
+
+    const budgetUsage = snapshot.budget.budgetUsage;
+    const budgetScore = snapshot.budget.count
+        ? clampScore(100 - Math.max(0, budgetUsage - 85) * 1.6 + (snapshot.budget.surplus > 0 ? 8 : -10))
+        : 35;
+    const savingsScore = snapshot.netWorth.savingsRate > 0
+        ? clampScore(snapshot.netWorth.savingsRate >= 20 ? 90 : 45 + snapshot.netWorth.savingsRate * 2)
+        : (snapshot.goals.count ? 55 : 30);
+    const debtScore = snapshot.debt.total <= 0
+        ? 88
+        : clampScore(100 - snapshot.debt.pressure * 1.8 - snapshot.debt.highInterestCount * 12);
+    const investmentScore = snapshot.investments.count
+        ? clampScore(58 + Math.min(snapshot.investments.count * 8, 24) + (snapshot.investments.total > 0 ? 10 : 0))
+        : 32;
+    const protectionScore = snapshot.protection.count
+        ? clampScore(45 + (snapshot.protection.hasMedical ? 22 : 0) + (snapshot.protection.hasLife ? 18 : 0) + Math.min(snapshot.protection.count * 4, 15))
+        : ((snapshot.dependants > 0 || snapshot.debt.total > 0) ? 28 : 50);
+    const retirementScore = snapshot.retirement.monthlyContribution > 0
+        ? clampScore(55 + Math.min(snapshot.retirement.monthlyContribution / Math.max(snapshot.profile?.monthly_income || 1, 1) * 180, 35))
+        : 32;
+
+    const components = [
+        component({
+            key: 'budget',
+            name: 'Budget & Spending',
+            description: 'How well your planned budget matches actual spending.',
+            score: budgetScore,
+            weight: 22,
+            data: {
+                categories: snapshot.budget.count,
+                usage_percent: Math.round(snapshot.budget.budgetUsage),
+            },
+        }),
+        component({
+            key: 'savings',
+            name: 'Savings Rate',
+            description: 'Whether income is creating room for goals and emergencies.',
+            score: savingsScore,
+            weight: 18,
+            data: {
+                savings_rate: `${Math.round(snapshot.netWorth.savingsRate)}%`,
+                goals: snapshot.goals.count,
+            },
+        }),
+        component({
+            key: 'debt',
+            name: 'Debt Pressure',
+            description: 'How much debt repayments are pressing against income.',
+            score: debtScore,
+            weight: 18,
+            data: {
+                debt_balance: formatKES(snapshot.debt.total),
+                income_pressure: `${Math.round(snapshot.debt.pressure)}%`,
+            },
+        }),
+        component({
+            key: 'investments',
+            name: 'Investments & Net Worth',
+            description: 'Your progress toward building long-term assets.',
+            score: investmentScore,
+            weight: 16,
+            data: {
+                assets: snapshot.investments.count,
+                value: formatKES(snapshot.investments.total),
+            },
+        }),
+        component({
+            key: 'protection',
+            name: 'Protection',
+            description: 'Whether key risks are covered before they interrupt the plan.',
+            score: protectionScore,
+            weight: 13,
+            data: {
+                policies: snapshot.protection.count,
+                cover: formatKES(snapshot.protection.cover),
+            },
+        }),
+        component({
+            key: 'retirement',
+            name: 'Retirement Readiness',
+            description: 'Whether retirement savings are active and consistent.',
+            score: retirementScore,
+            weight: 13,
+            data: {
+                monthly_contribution: formatKES(snapshot.retirement.monthlyContribution),
+                retirement_assets: snapshot.retirement.count,
+            },
+        }),
+    ];
+
+    const overallScore = hasPlannerData
+        ? clampScore(components.reduce((sum, item) => sum + item.score * (item.weight / 100), 0))
+        : 0;
+    const status = statusForScore(overallScore);
+    const advisorActions = buildAdvisorActions(snapshot);
+    const insightGroups = advisorActions.reduce((groups, action) => {
+        const type = action.tone === 'rose' ? 'CRITICAL' : action.tone === 'amber' ? 'WARNING' : action.tone === 'emerald' ? 'POSITIVE' : 'TIP';
+        const key = type === 'CRITICAL' ? 'critical' : type === 'WARNING' ? 'warnings' : type === 'POSITIVE' ? 'positive' : 'tips';
+        groups[key].push({
+            type,
+            title: action.title,
+            message: action.description,
+            component: action.badge,
+            target: action.target,
+        });
+        return groups;
+    }, { positive: [], warnings: [], critical: [], tips: [] });
+
+    if (!hasPlannerData) {
+        insightGroups.tips.push({
+            type: 'TIP',
+            title: 'Start with your first planner',
+            message: 'Add income, budget, debt, investments, protection, or retirement details so Shilingi can calculate your score clearly.',
+            component: 'First step',
+            target: 'user',
+        });
+    }
+
+    return {
+        score: {
+            overall_score: overallScore,
+            change_from_previous: 0,
+            score_date: new Date().toISOString(),
+            ...status,
+        },
+        breakdown: {
+            overall: {
+                score: overallScore,
+                status: status.status,
+                status_display: status.status_display,
+            },
+            components,
+        },
+        insights: {
+            score: overallScore,
+            insights: insightGroups,
+            priority_actions: advisorActions.slice(0, 3).map((action) => ({
+                title: action.title,
+                message: action.description,
+                target: action.target,
+                badge: action.badge,
+            })),
+            summary: {
+                positive_count: insightGroups.positive.length,
+                warnings_count: insightGroups.warnings.length,
+                critical_count: insightGroups.critical.length,
+                tips_count: insightGroups.tips.length,
+            },
+        },
+        snapshot,
+    };
+};

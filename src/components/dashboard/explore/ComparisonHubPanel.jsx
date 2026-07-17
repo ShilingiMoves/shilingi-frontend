@@ -712,9 +712,6 @@ const ComparisonHubPanel = () => {
                 </div>
             </section>
 
-            <footer className="rounded-[1rem] border border-[#d0ddd9] bg-white px-5 py-5 text-center text-xs leading-6 text-slate-500 shadow-sm">
-                <strong className="text-[#145f57]">Shilingi Moves</strong> - Compare Hub | A personalized financial decision engine for Kenyans
-            </footer>
             <button
                 type="button"
                 onClick={openWizard}

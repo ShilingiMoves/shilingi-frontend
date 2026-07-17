@@ -40,7 +40,7 @@ import {
     PREFERRED_NAME_KEY,
     PREFERRED_NAME_UPDATED_EVENT,
 } from '../../../utils/memberIdentity';
-import DashboardOverviewFooter from './DashboardOverviewFooter';
+import { buildDerivedFinancialHealth } from '../../../utils/financialIntelligence';
 import { useAdaptivePolling } from '../../../hooks/useAdaptivePolling';
 
 const toneMap = {
@@ -776,10 +776,29 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
         const stepFlags = [income > 0, budget.length > 0, spending.length > 0, tx.length > 0, invRows.length > 0, goalRows.length > 0, Math.abs(netWorth) > 0];
         const hasLiveData = stepFlags.some(Boolean);
         const completion = Math.round((stepFlags.filter(Boolean).length / stepFlags.length) * 100);
+        const derivedHealth = buildDerivedFinancialHealth({
+            profile: user?.profile || user || {},
+            live: {
+                income,
+                spent,
+                savings,
+                netWorth,
+                raw: {
+                    incomes,
+                    budgets,
+                    expenses: currentMonthExpenses,
+                    goals,
+                    investments: inv,
+                    debts,
+                },
+            },
+        });
+        const apiHealthScore = Number(healthScore?.overall_score ?? 0);
+        const apiHealthComponents = Array.isArray(healthBreakdown?.components) ? healthBreakdown.components : [];
         const nextHealthSnapshot = {
-            score: hasLiveData ? Number(healthScore?.overall_score ?? 0) : 0,
-            statusDisplay: hasLiveData ? (healthScore?.status_display || 'Score ready') : 'No data yet',
-            components: hasLiveData && Array.isArray(healthBreakdown?.components) ? healthBreakdown.components : [],
+            score: hasLiveData ? (apiHealthScore || derivedHealth.score.overall_score) : 0,
+            statusDisplay: hasLiveData ? (healthScore?.status_display || derivedHealth.score.status_display || 'Score ready') : 'No data yet',
+            components: hasLiveData && apiHealthComponents.length ? apiHealthComponents : derivedHealth.breakdown.components,
         };
 
         if (isActive()) {
@@ -1517,7 +1536,6 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                     </article>
                 </section>
 
-                <DashboardOverviewFooter onSelectSection={onSelectSection} />
                 {calendarModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
                         <form onSubmit={handleCalendarSubmit} className="w-full max-w-md rounded-[1.35rem] border border-emerald-100 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.22)]">

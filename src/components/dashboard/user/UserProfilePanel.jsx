@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import NumericInput from '../../common/NumericInput';
 import {
     AlertCircle,
@@ -6,6 +6,7 @@ import {
     Bell,
     BarChart3,
     Briefcase,
+    CheckCircle2,
     GraduationCap,
     Home,
     KeyRound,
@@ -22,7 +23,6 @@ import {
 } from 'lucide-react';
 import { getUserAccount, updatePreferredName, updateUserPreferences } from '../../../services/userApi';
 import { useIncome } from '../../../contexts/IncomeContext';
-import DashboardOverviewFooter from '../shell/DashboardOverviewFooter';
 import IncomeForm from '../income/IncomeForm';
 import IncomeList from '../income/IncomeList';
 import QuickIncomeModal from '../income/QuickIncomeModal';
@@ -736,6 +736,94 @@ const PlanningImpactCard = ({ icon: Icon, title, body, badge, cta, onClick }) =>
     </div>
 );
 
+const ProfileConfirmationCard = ({
+    className = '',
+    dependantCount,
+    incomeTotal,
+    needsDependantsConfirmation,
+    needsIncomeConfirmation,
+    onConfirmDependants,
+    onConfirmIncome,
+}) => (
+    <section className={`rounded-[1.25rem] border border-amber-200 bg-[#fff8e7] p-4 shadow-sm sm:p-5 ${className}`}>
+        <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f0c94d] text-[#143d33]">
+                <CheckCircle2 size={20} />
+            </span>
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-extrabold text-[#143d33]">Confirm your completed profile details</p>
+                <p className="mt-1 text-xs leading-5 text-[#6b5b2a]">
+                    You have added the information. Confirm the final details so your profile score can count them.
+                </p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    {needsIncomeConfirmation && (
+                        <button type="button" onClick={onConfirmIncome} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-[#0c6060] px-4 text-xs font-bold text-white">
+                            <CheckCircle2 size={15} /> Confirm income sources
+                        </button>
+                    )}
+                    {needsDependantsConfirmation && (
+                        <button type="button" onClick={onConfirmDependants} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-bold text-[#0c6060] ring-1 ring-[#cbd8d2]">
+                            <CheckCircle2 size={15} /> Confirm {dependantCount || 'dependant'} {dependantCount === 1 ? 'dependant' : 'dependants'}
+                        </button>
+                    )}
+                </div>
+                <p className="mt-3 text-[11px] font-semibold text-[#8a6a14]">
+                    Current income: {formatKESValue(incomeTotal, 'Not added yet')}
+                </p>
+            </div>
+        </div>
+    </section>
+);
+
+const ProfileConfirmationModal = ({ dependantCount, incomeCount, incomeTotal, onCancel, onConfirm, type }) => {
+    const isIncome = type === 'income';
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <div className="w-full max-w-[360px] rounded-[24px] bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eaf7f2] text-[#0c6060]">
+                    <CheckCircle2 size={23} />
+                </span>
+                <h2 className="mt-4 text-lg font-extrabold text-[#10231c]">
+                    {isIncome ? 'Confirm income sources' : 'Confirm dependants'}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
+                    {isIncome
+                        ? `You have ${incomeCount || 'your'} income ${incomeCount === 1 ? 'source' : 'sources'} totaling ${formatKESValue(incomeTotal, 'KES 0')}. Are these all your income sources?`
+                        : `You have added ${dependantCount} ${dependantCount === 1 ? 'dependant' : 'dependants'}. Is this the number you want to use for your profile?`}
+                </p>
+                <div className="mt-5 space-y-2">
+                    <button type="button" onClick={onConfirm} className="inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 text-sm font-bold text-white">
+                        {isIncome ? 'Yes, all income is added' : 'Yes, dependants are correct'}
+                    </button>
+                    <button type="button" onClick={onCancel} className="inline-flex min-h-[42px] w-full items-center justify-center rounded-full border border-[#d8e2dd] bg-white px-5 text-sm font-bold text-[#0c6060]">
+                        Go back and edit
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ProfileCompleteGuideModal = ({ onClose, onGoToDashboard }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+        <div className="w-full max-w-[360px] rounded-[24px] bg-white p-5 text-center shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff7df] text-[#9b7416]">
+                <CheckCircle2 size={28} />
+            </span>
+            <h2 className="mt-4 text-xl font-extrabold text-[#0c6060]">Profile complete</h2>
+            <p className="mt-2 text-sm leading-6 text-[#5e5f60]">
+                Great work. Your profile is now 100%. Go to your dashboard to see your money picture at a glance and continue improving each pillar.
+            </p>
+            <button type="button" onClick={onGoToDashboard} className="mt-5 inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 text-sm font-bold text-white">
+                Go to dashboard
+            </button>
+            <button type="button" onClick={onClose} className="mt-2 inline-flex min-h-[42px] w-full items-center justify-center rounded-full border border-[#d8e2dd] bg-white px-5 text-sm font-bold text-[#0c6060]">
+                Stay on profile
+            </button>
+        </div>
+    </div>
+);
+
 const compactKES = (value) => {
     const amount = Number(value || 0);
     if (amount <= 0) return 'KES 0';
@@ -1333,6 +1421,10 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     const [editingPrefs, setEditingPrefs] = useState(false);
     const [goalModalOpen, setGoalModalOpen] = useState(false);
     const [preferencesModalOpen, setPreferencesModalOpen] = useState(false);
+    const [confirmationPrompt, setConfirmationPrompt] = useState(null);
+    const [showProfileCompleteGuide, setShowProfileCompleteGuide] = useState(false);
+    const mobileConfirmationPromptedRef = useRef({ income: false, dependents: false });
+    const profileCompleteGuideShownRef = useRef(false);
     const [baselineForm, setBaselineForm] = useState({ monthly_income: '' });
     const [dependantsForm, setDependantsForm] = useState(EMPTY_DEPENDANT_FORM);
     const [prefsForm, setPrefsForm] = useState({ receive_notifications: true, receive_weekly_summary: true });
@@ -1395,17 +1487,67 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
     ), [workspace]);
     const goalBucketByType = useMemo(() => Object.fromEntries(goalBuckets.map((bucket) => [bucket.type, bucket])), [goalBuckets]);
     const goalCount = goalBuckets.reduce((sum, bucket) => sum + bucket.goals.length, 0);
+    const hasGoalsInEveryHorizon = goalBuckets.every((bucket) => bucket.goals.length > 0);
     const dependants = useMemo(() => Array.isArray(workspace.dependants) ? workspace.dependants : [], [workspace.dependants]);
     const dependantsSummary = useMemo(() => buildDependantsSummary(dependants), [dependants]);
+    const setupConfirmations = workspace.setupConfirmations || {};
+    const allIncomeConfirmed = (Boolean(incomeValue) || incomes.length > 0) && setupConfirmations.income === true;
+    const dependantsConfirmed = dependants.length > 0 && setupConfirmations.dependents === true;
+    const needsIncomeConfirmation = (Boolean(incomeValue) || incomes.length > 0) && setupConfirmations.income !== true;
+    const needsDependantsConfirmation = dependants.length > 0 && setupConfirmations.dependents !== true;
     const sections = useMemo(() => ([
-        { id: 'income', label: 'Income', complete: Boolean(incomeValue) || incomes.length > 0 },
-        { id: 'goals', label: 'Goals', complete: goalCount > 0 },
-        { id: 'dependents', label: 'Dependants', complete: dependants.length > 0 },
-    ]), [dependants.length, goalCount, incomeValue, incomes.length, user]);
+        { id: 'income', label: 'Income', complete: allIncomeConfirmed },
+        { id: 'goals', label: 'Goals', complete: hasGoalsInEveryHorizon },
+        { id: 'dependents', label: 'Dependants', complete: dependantsConfirmed },
+    ]), [allIncomeConfirmed, dependantsConfirmed, hasGoalsInEveryHorizon]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || loading || confirmationPrompt || goalModalOpen || preferencesModalOpen || showIncomeForm || showQuickIncome || editingDependents) {
+            return undefined;
+        }
+
+        const isMobile = window.matchMedia('(max-width: 1023px)').matches;
+        if (!isMobile) return undefined;
+
+        const nextPrompt = needsIncomeConfirmation && !mobileConfirmationPromptedRef.current.income
+            ? 'income'
+            : needsDependantsConfirmation && !mobileConfirmationPromptedRef.current.dependents
+                ? 'dependents'
+                : '';
+
+        if (!nextPrompt) return undefined;
+
+        const timer = window.setTimeout(() => {
+            mobileConfirmationPromptedRef.current[nextPrompt] = true;
+            setConfirmationPrompt(nextPrompt);
+        }, 350);
+
+        return () => window.clearTimeout(timer);
+    }, [confirmationPrompt, editingDependents, goalModalOpen, loading, needsDependantsConfirmation, needsIncomeConfirmation, preferencesModalOpen, showIncomeForm, showQuickIncome]);
     const validTabIds = tabs.map((tab) => tab.id);
-    const completionChecks = [user?.first_name, incomeValue, goalCount > 0, dependants.length > 0, ...sections.map((s) => s.complete)];
+    const completionChecks = [user?.first_name, ...sections.map((s) => s.complete)];
     const completion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
     const remaining = sections.filter((s) => !s.complete).length;
+
+    useEffect(() => {
+        if (
+            loading ||
+            completion < 100 ||
+            profileCompleteGuideShownRef.current ||
+            confirmationPrompt ||
+            goalModalOpen ||
+            preferencesModalOpen ||
+            showIncomeForm ||
+            showQuickIncome ||
+            editingDependents
+        ) {
+            return;
+        }
+
+        profileCompleteGuideShownRef.current = true;
+        const timer = window.setTimeout(() => setShowProfileCompleteGuide(true), 250);
+        return () => window.clearTimeout(timer);
+    }, [completion, confirmationPrompt, editingDependents, goalModalOpen, loading, preferencesModalOpen, showIncomeForm, showQuickIncome]);
     const memberLabel = getMemberLabel(user);
     const memberInitials = getMemberInitials(user);
     const profileDisplayName = preferredNameSaved ? preferredName.trim() : getDashboardDisplayName(user);
@@ -1642,6 +1784,10 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
                 ...workspace,
                 dependants: nextDependants,
                 dependentsCount: String(nextSummary.totalPeople),
+                setupConfirmations: {
+                    ...(workspace.setupConfirmations || {}),
+                    dependents: false,
+                },
             };
             writeWorkspace(next);
             setWorkspace(next);
@@ -1660,6 +1806,10 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             ...workspace,
             dependants: nextDependants,
             dependentsCount: String(nextSummary.totalPeople),
+            setupConfirmations: {
+                ...(workspace.setupConfirmations || {}),
+                dependents: false,
+            },
         };
         writeWorkspace(next);
         setWorkspace(next);
@@ -1667,6 +1817,35 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
             closeDependantForm();
         }
         setSuccess('Dependant removed.');
+    };
+
+    const openProfileConfirmation = (type) => {
+        setConfirmationPrompt(type);
+        setError('');
+        setSuccess('');
+    };
+
+    const confirmProfileSection = () => {
+        if (!confirmationPrompt) return;
+        const nextConfirmations = {
+            ...(workspace.setupConfirmations || {}),
+            [confirmationPrompt]: true,
+        };
+        const next = {
+            ...workspace,
+            setupConfirmations: nextConfirmations,
+        };
+        writeWorkspace(next);
+        setWorkspace(next);
+        setConfirmationPrompt(null);
+        setSuccess(confirmationPrompt === 'income'
+            ? 'Income sources confirmed. Your profile score can now include income.'
+            : 'Dependant count confirmed. Your profile score can now include dependants.');
+    };
+
+    const goToDashboardOverview = () => {
+        setShowProfileCompleteGuide(false);
+        onSelectSection?.('overview');
     };
 
     const savePrefs = async (e) => {
@@ -1724,6 +1903,17 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
         <div className="space-y-6">
             {(error || incomeError) && <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800 shadow-sm"><div className="flex items-start gap-3"><AlertCircle size={18} className="mt-0.5 shrink-0" /><div><p className="font-semibold">We could not finish that update.</p><p className="mt-1">{error || incomeError}</p></div></div></div>}
             {success && <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-sm text-primary-800 shadow-sm">{success}</div>}
+            {(needsIncomeConfirmation || needsDependantsConfirmation) && (
+                <ProfileConfirmationCard
+                    className="hidden lg:block"
+                    needsIncomeConfirmation={needsIncomeConfirmation}
+                    needsDependantsConfirmation={needsDependantsConfirmation}
+                    incomeTotal={incomeValue}
+                    dependantCount={dependantCount}
+                    onConfirmIncome={() => openProfileConfirmation('income')}
+                    onConfirmDependants={() => openProfileConfirmation('dependents')}
+                />
+            )}
 
             <MobileProfileWorkspace
                 activeTab={activeTab}
@@ -1881,9 +2071,25 @@ const UserProfilePanel = ({ initialTab, onSelectSection }) => {
 
             {preferencesModalOpen && <ModalShell title="Primary Goal & Preferences" icon={Wallet} onClose={() => setPreferencesModalOpen(false)}><form onSubmit={savePreferencesModal} className="space-y-4 sm:space-y-5"><Select label="Primary Financial Goal" value={preferencesForm.primary_financial_goal} onChange={(e) => setPreferencesForm((current) => ({ ...current, primary_financial_goal: e.target.value }))}><option value="">Select a goal</option><option value="SAVE_EMERGENCY">Save & Invest</option><option value="PAY_DEBT">Pay Off Debt</option><option value="SAVE_INVEST">Save and Invest</option><option value="BUDGET_BETTER">Budget Better</option><option value="RETIREMENT">Retirement</option><option value="OTHER">Other</option></Select><div className="grid gap-3 sm:gap-4 md:grid-cols-2"><Select label="Risk Appetite" value={preferencesForm.riskAppetite} onChange={(e) => setPreferencesForm((current) => ({ ...current, riskAppetite: e.target.value }))}><option>Conservative</option><option>Moderate</option><option>Aggressive</option></Select><Select label="Investment Horizon" value={preferencesForm.investmentHorizon} onChange={(e) => setPreferencesForm((current) => ({ ...current, investmentHorizon: e.target.value }))}><option>Under 12 months</option><option>1-5 Years</option><option>5-10 Years</option><option>10+ Years</option></Select></div><Input label="Preferred Products" value={preferencesForm.preferredProducts} onChange={(e) => setPreferencesForm((current) => ({ ...current, preferredProducts: e.target.value }))} /><TextArea label="Financial Motivation (Optional)" rows={4} value={preferencesForm.financialMotivation} onChange={(e) => setPreferencesForm((current) => ({ ...current, financialMotivation: e.target.value }))} /><div className="flex flex-col gap-3 pt-1 sm:flex-row sm:pt-2"><SecondaryButton type="button" className="sm:min-w-[112px]" onClick={() => setPreferencesModalOpen(false)}>Cancel</SecondaryButton><PrimaryButton type="submit" className="flex-1" disabled={submitting.preferencesModal}>{submitting.preferencesModal ? 'Saving...' : 'Save Changes'}</PrimaryButton></div></form></ModalShell>}
 
-            {showIncomeForm && <IncomeForm income={selectedIncome} onClose={() => { setSelectedIncome(null); setShowIncomeForm(false); }} onSuccess={async () => { await syncIncome(); setSuccess('Income manager updated.'); }} />}
+            {confirmationPrompt && (
+                <ProfileConfirmationModal
+                    type={confirmationPrompt}
+                    incomeTotal={incomeValue}
+                    incomeCount={incomes.length}
+                    dependantCount={dependantCount}
+                    onCancel={() => setConfirmationPrompt(null)}
+                    onConfirm={confirmProfileSection}
+                />
+            )}
+            {showProfileCompleteGuide && (
+                <ProfileCompleteGuideModal
+                    onClose={() => setShowProfileCompleteGuide(false)}
+                    onGoToDashboard={goToDashboardOverview}
+                />
+            )}
+
+            {showIncomeForm && <IncomeForm income={selectedIncome} onClose={() => { setSelectedIncome(null); setShowIncomeForm(false); }} onSuccess={async () => { const next = { ...workspace, setupConfirmations: { ...(workspace.setupConfirmations || {}), income: false } }; writeWorkspace(next); setWorkspace(next); await syncIncome(); setSuccess('Income manager updated. Confirm your income sources when everything is complete.'); }} />}
             <QuickIncomeModal isOpen={showQuickIncome} onClose={() => setShowQuickIncome(false)} />
-            <DashboardOverviewFooter onSelectSection={onSelectSection} />
         </div>
     );
 };

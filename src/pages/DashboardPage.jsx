@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
+    CheckCircle2,
     Bot,
     Calculator,
     FileText,
@@ -21,7 +22,13 @@ import { updatePreferredName } from '../services/userApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
-import { DEFAULT_DASHBOARD_SECTION, getInitialDashboardSection, persistDashboardSection } from '../utils/dashboardDataState';
+import {
+    DEFAULT_DASHBOARD_SECTION,
+    getInitialDashboardSection,
+    persistDashboardPillarProgress,
+    persistDashboardSection,
+    readDashboardPillarProgressItem,
+} from '../utils/dashboardDataState';
 import incomeService from '../services/incomeService';
 import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
 import {
@@ -55,6 +62,25 @@ const getRequestedDashboardSection = (location) => {
     return dashboardSectionMap[requestedSection] ? requestedSection : '';
 };
 
+const resumableDashboardSections = new Set([
+    'cashflow',
+    'budget',
+    'debt',
+    'investments',
+    'protection',
+    'retirement',
+    'networth',
+    'comparehub',
+    'resourceshub',
+    'learninghub',
+    'communityhub',
+    'marketwatch',
+    'health',
+    'user',
+]);
+
+const getResumeSessionKey = (sectionId) => `shilingi_resume_notice_seen_${sectionId}`;
+
 const DashboardPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -64,6 +90,7 @@ const DashboardPage = () => {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [preferredNamePrompt, setPreferredNamePrompt] = useState(() => readQueuedPreferredNamePrompt());
+    const [resumePrompt, setResumePrompt] = useState(null);
     const [activeSection, setActiveSection] = useState(() => {
         return getRequestedDashboardSection(location) || getInitialDashboardSection();
     });
@@ -143,6 +170,46 @@ const DashboardPage = () => {
         }
 
         persistDashboardSection(activeSection);
+    }, [activeSection]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !resumableDashboardSections.has(activeSection)) {
+            setResumePrompt(null);
+            return;
+        }
+
+        const sessionKey = getResumeSessionKey(activeSection);
+        if (window.sessionStorage.getItem(sessionKey) === '1') {
+            setResumePrompt(null);
+            return;
+        }
+
+        const progress = readDashboardPillarProgressItem(activeSection);
+        if (!progress?.updatedAt) {
+            setResumePrompt(null);
+            return;
+        }
+
+        window.sessionStorage.setItem(sessionKey, '1');
+        setResumePrompt({
+            sectionId: activeSection,
+            label: progress.label || dashboardSectionMap[activeSection]?.label || 'this planner',
+            startedAt: progress.startedAt,
+        });
+    }, [activeSection]);
+
+    useEffect(() => {
+        if (!resumableDashboardSections.has(activeSection)) {
+            return undefined;
+        }
+
+        const timer = window.setTimeout(() => {
+            persistDashboardPillarProgress(activeSection, {
+                label: dashboardSectionMap[activeSection]?.label || 'this planner',
+            });
+        }, 300);
+
+        return () => window.clearTimeout(timer);
     }, [activeSection]);
 
     useEffect(() => {
@@ -457,6 +524,14 @@ const DashboardPage = () => {
                 />
             )}
 
+            {resumePrompt && (
+                <PillarResumePrompt
+                    label={resumePrompt.label}
+                    startedAt={resumePrompt.startedAt}
+                    onClose={() => setResumePrompt(null)}
+                />
+            )}
+
             <MobileDashboardNav
                 activeSection={activeSection}
                 onOpenMore={() => setMobileSidebarOpen(true)}
@@ -503,6 +578,42 @@ const MobileDashboardNav = ({ activeSection, onOpenMore, onSelectSection }) => (
             </button>
         </div>
     </nav>
+);
+
+const PillarResumePrompt = ({ label, startedAt, onClose }) => (
+    <div className="fixed inset-0 z-[65] flex items-end justify-center bg-slate-950/38 px-3 pb-3 pt-16 backdrop-blur-[2px] sm:items-center sm:px-4 sm:py-6">
+        <section className="w-full max-w-md rounded-[1.5rem] border border-emerald-100 bg-white p-5 text-center shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f6f3] text-[#0c6060]">
+                <CheckCircle2 size={30} strokeWidth={1.9} />
+            </div>
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.22em] text-[#d9a62e]">Welcome Back</p>
+            <h2 className="mt-2 text-[22px] font-extrabold leading-7 text-[#10231c]">
+                Congratulations, you already started
+            </h2>
+            <p className="mx-auto mt-3 max-w-[310px] text-[13px] leading-5 text-[#5f7168]">
+                You were working on {label}. Continue from where you left off, finish this journey, and keep taking control of where every shilling goes.
+            </p>
+            {startedAt && (
+                <p className="mt-3 text-[11px] font-semibold text-[#8ba099]">
+                    Started {new Date(startedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </p>
+            )}
+            <button
+                type="button"
+                onClick={onClose}
+                className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#0c6060] text-[13px] font-bold text-white"
+            >
+                Continue where I left off
+            </button>
+            <button
+                type="button"
+                onClick={onClose}
+                className="mt-3 flex h-10 w-full items-center justify-center text-[12px] font-bold text-[#5f7168]"
+            >
+                Not now
+            </button>
+        </section>
+    </div>
 );
 
 const PreferredNamePrompt = ({ reason, onClose, onOpenProfile, onSaved }) => {
