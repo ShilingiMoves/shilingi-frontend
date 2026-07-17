@@ -739,7 +739,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
             };
         });
         const groupedSpending = Object.values(currentMonthExpenses.reduce((acc, expense) => {
-            const label = expense.category_name || expense.category || expense.description || 'Other';
+            const label = expense.description || expense.name || expense.category_name || expense.category || 'Other';
             const amount = Math.abs(toNum(expense.amount));
             if (!acc[label]) acc[label] = { label, amount: 0 };
             acc[label].amount += amount;
@@ -833,6 +833,22 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
         let mounted = true;
         loadOverviewData({ isActive: () => mounted });
         return () => { mounted = false; };
+    }, [loadOverviewData]);
+
+    useEffect(() => {
+        let mounted = true;
+        const refreshFromPlannerChange = () => {
+            loadOverviewData({ isActive: () => mounted });
+        };
+
+        window.addEventListener('healthRefreshRequested', refreshFromPlannerChange);
+        window.addEventListener('focus', refreshFromPlannerChange);
+
+        return () => {
+            mounted = false;
+            window.removeEventListener('healthRefreshRequested', refreshFromPlannerChange);
+            window.removeEventListener('focus', refreshFromPlannerChange);
+        };
     }, [loadOverviewData]);
 
     const overviewSync = useAdaptivePolling({

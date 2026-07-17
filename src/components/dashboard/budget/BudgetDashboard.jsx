@@ -133,9 +133,9 @@ const mobilePlanStarterBudgets = [
     { lane: 'Savings', splitKey: 'savings', categoryName: 'Goal Savings' },
 ];
 const defaultMobileAllocationRows = {
-    Needs: ['Housing', 'Food', 'Transport', 'Utilities', 'Healthcare', 'Insurance', 'School Fees', 'Other Essentials'],
-    Wants: ['Entertainment', 'Subscriptions', 'Take outs', 'Shopping', 'Spa dates', 'Travel', 'Hobbies', 'Other Wants'],
-    Savings: ['Emergency Fund', 'Money Market Fund', 'SACCO Contributions', 'Pension', 'Stocks - Unit Trusts', 'Other Savings'],
+    Needs: ['Rent', 'Food', 'Water', 'Electricity', 'Transport to work', 'Healthcare', 'School fees', 'Debt repayments', 'Insurance', 'Internet'],
+    Wants: ['Eating out', 'New phone upgrade', 'Entertainment', 'Vacations', 'Gaming', 'Designer clothes', 'Subscriptions'],
+    Savings: ['Emergency fund', 'Chama', 'SACCO contributions', 'Money market funds', 'Retirement savings', 'Stocks', 'Business capital'],
 };
 
 const buildMobileAllocationItems = (savingsGoal = 'Emergency Fund') => ({
@@ -154,6 +154,15 @@ const normalizeAllocationRows = (rows = []) => (
             amount: toNumber(row?.amount),
         }))
         .filter((row) => row.name && row.amount > 0)
+);
+
+const normalizeAllocationNames = (rows = []) => (
+    rows
+        .map((row) => ({
+            name: String(typeof row === 'string' ? row : row?.name || '').trim(),
+            amount: toNumber(row?.amount),
+        }))
+        .filter((row) => row.name)
 );
 
 const normalizeMobileAllocationItems = (items, savingsGoal = 'Emergency Fund') => {
@@ -175,6 +184,11 @@ const getLaneParentBudget = (budgetRows = [], lane) => (
     budgetRows.find((budget) => normalizeLabel(budget?.category_name) === normalizeLabel(lane)) ||
     budgetRows.find((budget) => deriveBudgetCategoryType(budget?.category_name) === lane)
 );
+
+const saveMobileBudgetProgress = (setup, stage) => {
+    if (!setup?.split || stage === 'expenses' || stage === 'complete') return;
+    saveBudgetSetup({ ...setup, progressStage: stage, lastTouchedAt: new Date().toISOString() });
+};
 
 const unwrapCategoryPayload = (category) => category?.category || category?.data || category;
 const normalizeCategoryOption = (category) => {
@@ -238,6 +252,8 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
     const [mobileCustomSplit, setMobileCustomSplit] = useState({ needs: 45, wants: 25, savings: 30 });
     const [mobileAllocationItems, setMobileAllocationItems] = useState(() => buildMobileAllocationItems('Emergency Fund'));
     const [showMobileBudgetReadyNotice, setShowMobileBudgetReadyNotice] = useState(false);
+    const [showMobileResumeNotice, setShowMobileResumeNotice] = useState(false);
+    const [showMobileExpenseGuideNotice, setShowMobileExpenseGuideNotice] = useState(false);
     const [desktopIncomeModalOpen, setDesktopIncomeModalOpen] = useState(false);
     const [desktopTransactionModalOpen, setDesktopTransactionModalOpen] = useState(false);
     
@@ -306,10 +322,24 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             const nextLane = getNextMobileBudgetLane(normalizedBudgets);
             if (setup?.split) {
                 setMobileBudgetSetup(setup);
+                setMobileSavingsGoal(setup.savingsGoal || 'Emergency Fund');
+                setMobileSavingsTargetAmount(setup.savingsTargetAmount ? String(setup.savingsTargetAmount) : '');
+                setMobileSavingsTargetDate(setup.savingsTargetDate || '');
+                setMobileSavingsPriority(setup.savingsPriority || 'High');
+                setMobileAllocationItems(getStoredAllocationItems(setup, setup.savingsGoal || 'Emergency Fund'));
                 setMobileBudgetLane(nextLane || 'Needs');
-                setMobileBudgetStage(normalizedBudgets.length > 0 ? 'expenses' : 'items');
+                if (normalizedBudgets.length > 0) {
+                    setMobileBudgetStage('expenses');
+                    setShowMobileResumeNotice(false);
+                    setShowMobileExpenseGuideNotice(toNumber(expensesData.count) === 0 && (expensesData.expenses || []).length === 0);
+                } else {
+                    setMobileBudgetStage(setup.progressStage || 'savings');
+                    setShowMobileResumeNotice(Boolean(setup.progressStage));
+                    setShowMobileExpenseGuideNotice(false);
+                }
             } else {
                 setMobileBudgetStage('intro');
+                setShowMobileExpenseGuideNotice(false);
             }
         } catch (err) {
             setError(err.message || 'Could not load your budget data right now.');
@@ -481,20 +511,25 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
     const handlePrepareMobilePlan = (plan) => {
         setSubmitError('');
         if (plan.id === 'custom') {
+            const setup = { id: plan.id, label: plan.label, split: plan.split, progressStage: 'custom' };
             setMobileCustomSplit(plan.split);
-            setMobileBudgetSetup({ id: plan.id, label: plan.label, split: plan.split });
+            setMobileBudgetSetup(setup);
+            saveMobileBudgetProgress(setup, 'custom');
             setMobileBudgetStage('custom');
             return;
         }
 
-        setMobileBudgetSetup({ id: plan.id, label: plan.label, split: plan.split });
+        const setup = { id: plan.id, label: plan.label, split: plan.split, progressStage: 'savings' };
+        setMobileBudgetSetup(setup);
+        saveMobileBudgetProgress(setup, 'savings');
         setMobileBudgetStage('savings');
     };
 
     const handleSaveCustomSplit = (split) => {
-        const setup = { id: 'custom', label: 'Create your own budget', split };
+        const setup = { id: 'custom', label: 'Create your own budget', split, progressStage: 'savings' };
         setMobileCustomSplit(split);
         setMobileBudgetSetup(setup);
+        saveMobileBudgetProgress(setup, 'savings');
         setMobileBudgetStage('savings');
     };
 
@@ -642,6 +677,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             ]);
             setBudgets(budgetsData);
             setSummary(summaryData);
+            markDashboardDataExists();
             triggerHealthRefresh('expense:change');
             setOverviewReturnView('expenses');
             setActiveTab('overview');
@@ -778,7 +814,19 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                                 onTargetAmountChange={setMobileSavingsTargetAmount}
                                 onTargetDateChange={setMobileSavingsTargetDate}
                                 onPriorityChange={setMobileSavingsPriority}
-                                onContinue={() => setMobileBudgetStage('allocation')}
+                                onContinue={() => {
+                                    const setup = {
+                                        ...(mobileBudgetSetup || {}),
+                                        savingsGoal: mobileSavingsGoal,
+                                        savingsTargetAmount: toNumber(mobileSavingsTargetAmount),
+                                        savingsTargetDate: mobileSavingsTargetDate,
+                                        savingsPriority: mobileSavingsPriority,
+                                        progressStage: 'allocation',
+                                    };
+                                    setMobileBudgetSetup(setup);
+                                    saveMobileBudgetProgress(setup, 'allocation');
+                                    setMobileBudgetStage('allocation');
+                                }}
                             />
                         ) : mobileBudgetStage === 'allocation' ? (
                             <MobileAllocationReviewStep
@@ -798,8 +846,11 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                                 budgets={budgets}
                                 expenses={expenses}
                                 setup={mobileBudgetSetup}
+                                showExpenseGuideNotice={showMobileExpenseGuideNotice}
                                 showReadyNotice={showMobileBudgetReadyNotice}
                                 totalIncome={totalIncome}
+                                onExpenseGuideSeen={() => setShowMobileExpenseGuideNotice(false)}
+                                onOpenDashboard={() => onSelectSection?.('overview')}
                                 onReadyNoticeSeen={() => setShowMobileBudgetReadyNotice(false)}
                                 onSetupChange={setMobileBudgetSetup}
                                 onExpenseSaved={refreshExpenses}
@@ -844,6 +895,11 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                                     </div>
                                 )}
                             </>
+                        )}
+                        {showMobileResumeNotice && mobileBudgetStage !== 'expenses' && (
+                            <MobileResumeBudgetNotice
+                                onClose={() => setShowMobileResumeNotice(false)}
+                            />
                         )}
                     </div>
                 </>
@@ -1256,6 +1312,7 @@ const DesktopBudgetPlannerFlow = ({
                     <MobileTransactionSheet
                         budgets={budgets}
                         defaultLane="Needs"
+                        expenses={expenses}
                         setup={mobileBudgetSetup}
                         onClose={() => setDesktopTransactionModalOpen(false)}
                         onSaved={handleTransactionSaved}
@@ -1849,6 +1906,7 @@ const MobileAllocationReviewStep = ({
 }) => {
     const [activeLane, setActiveLane] = useState('Needs');
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [laneNotice, setLaneNotice] = useState(null);
     const split = setup?.split || { needs: 0, wants: 0, savings: 0 };
     const allocationRows = [
         ['Needs', split.needs, 'Housing', getLaneLimit(setup, income, 'Needs')],
@@ -1869,7 +1927,18 @@ const MobileAllocationReviewStep = ({
     ));
     const totalEntered = mobileBudgetLaneOrder.reduce((sum, lane) => sum + laneTotals[lane], 0);
     const hasAnyAmount = totalEntered > 0;
-    const canCreate = hasAnyAmount && overLimitLanes.length === 0 && !hasUnnamedAmount && !isSubmitting;
+    const missingLanes = mobileBudgetLaneOrder.filter((lane) => laneTotals[lane] <= 0);
+    const allLanesComplete = missingLanes.length === 0;
+    const currentLaneComplete = laneTotals[activeLane] > 0 && laneTotals[activeLane] <= laneLimits[activeLane];
+    const canCreate = hasAnyAmount && allLanesComplete && overLimitLanes.length === 0 && !hasUnnamedAmount && !isSubmitting;
+
+    useEffect(() => {
+        saveMobileBudgetProgress({
+            ...(setup || {}),
+            allocationItems,
+            progressStage: 'allocation',
+        }, 'allocation');
+    }, [allocationItems, setup]);
 
     const updateRow = (lane, index, field, value) => {
         onItemsChange((current) => ({
@@ -1892,6 +1961,20 @@ const MobileAllocationReviewStep = ({
             ...current,
             [lane]: (current?.[lane] || []).map((row) => ({ ...row, amount: '' })),
         }));
+    };
+
+    const moveToNextLane = () => {
+        if (!currentLaneComplete) return;
+        const activeIndex = mobileBudgetLaneOrder.indexOf(activeLane);
+        const nextLane = mobileBudgetLaneOrder[activeIndex + 1];
+        setLaneNotice({
+            lane: activeLane,
+            title: `${activeLane} added`,
+            body: nextLane
+                ? `Great work. Now add your ${nextLane.toLowerCase()} so your budget is complete.`
+                : 'Great work. Your Needs, Wants, and Savings are ready for review.',
+            nextLane,
+        });
     };
 
     const requestCreate = () => {
@@ -1997,7 +2080,22 @@ const MobileAllocationReviewStep = ({
                 </div>
             )}
 
+            {!allLanesComplete && (
+                <div className="mt-4 rounded-[10px] border border-[#dbeee5] bg-[#f8fcfa] px-4 py-3 text-xs leading-5 text-[#0c6060]">
+                    Needs, Wants, and Savings are all required. Add at least one amount under {missingLanes.join(', ')}.
+                </div>
+            )}
+
             {submitError && <div className="mt-4 rounded-[10px] border border-rose-200 bg-rose-50 px-4 py-3 text-xs leading-5 text-rose-700">{submitError}</div>}
+
+            <button
+                type="button"
+                disabled={!currentLaneComplete}
+                onClick={moveToNextLane}
+                className="mt-5 flex h-12 w-full items-center justify-center rounded-full border border-[#b7d8d4] bg-[#f5fbfa] text-[13px] font-bold text-[#0c6060] disabled:border-[#e1e5e3] disabled:bg-[#f4f6f5] disabled:text-[#9aa7a1]"
+            >
+                {activeLane === 'Savings' ? 'Finish Savings and review' : `Finish ${activeLane} and continue`}
+            </button>
 
             <button
                 type="button"
@@ -2020,6 +2118,18 @@ const MobileAllocationReviewStep = ({
                     totalEntered={totalEntered}
                 />
             )}
+
+            {laneNotice && (
+                <MobileLaneCompleteNotice
+                    body={laneNotice.body}
+                    onClose={() => {
+                        const nextLane = laneNotice.nextLane;
+                        setLaneNotice(null);
+                        if (nextLane) setActiveLane(nextLane);
+                    }}
+                    title={laneNotice.title}
+                />
+            )}
         </section>
     );
 };
@@ -2033,12 +2143,56 @@ const MobileAllocationInputRow = ({ amount, name, onAmountChange, onNameChange }
             placeholder="Category"
             className="h-10 min-w-0 rounded-[9px] border border-transparent bg-white px-3 text-[12px] font-bold text-[#10231c] outline-none focus:border-[#0c6060]"
         />
-        <NumericInput
-            value={amount}
-            onChange={(event) => onAmountChange(event.target.value)}
-            placeholder="KES 0"
-            className="h-10 w-full rounded-[9px] border border-transparent bg-white px-3 text-right font-mono text-[12px] font-bold text-[#10231c] outline-none focus:border-[#0c6060]"
-        />
+        <div className="flex h-10 items-center rounded-[9px] border border-transparent bg-white px-3 focus-within:border-[#0c6060]">
+            <span className="shrink-0 font-mono text-[10px] font-bold text-[#b8c2bd]">KES</span>
+            <NumericInput
+                value={amount}
+                onChange={(event) => onAmountChange(event.target.value)}
+                placeholder="Add amount"
+                className="h-full min-w-0 flex-1 border-0 bg-transparent pl-2 text-right font-mono text-[12px] font-bold text-[#10231c] placeholder:text-[#b8c2bd] focus:outline-none"
+            />
+        </div>
+    </div>
+);
+
+const MobileLaneCompleteNotice = ({ body, onClose, title }) => (
+    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-slate-950/35 px-3 pb-3 pt-16 sm:hidden">
+        <section className="w-full rounded-[24px] bg-white px-5 py-5 text-center shadow-[0_-12px_40px_rgba(15,23,42,0.22)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f6f3] text-[#0c6060]">
+                <Check size={28} strokeWidth={2.6} />
+            </div>
+            <h2 className="mt-4 text-[19px] font-extrabold text-[#10231c]">{title}</h2>
+            <p className="mx-auto mt-2 max-w-[280px] text-[13px] leading-5 text-[#5f7168]">{body}</p>
+            <button
+                type="button"
+                onClick={onClose}
+                className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#0c6060] text-[13px] font-bold text-white"
+            >
+                Continue
+            </button>
+        </section>
+    </div>
+);
+
+const MobileResumeBudgetNotice = ({ onClose }) => (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/35 px-3 pb-3 pt-16 sm:hidden">
+        <section className="w-full rounded-[24px] bg-white px-5 py-5 text-center shadow-[0_-12px_40px_rgba(15,23,42,0.22)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f6f3] text-[#0c6060]">
+                <HeartHandshake size={28} strokeWidth={1.9} />
+            </div>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-[#d9a62e]">Welcome Back</p>
+            <h2 className="mt-2 text-[19px] font-extrabold text-[#10231c]">Finish where you left off</h2>
+            <p className="mx-auto mt-2 max-w-[285px] text-[13px] leading-5 text-[#5f7168]">
+                Thank you for logging back in. Your budget planner progress is saved, so you can continue from this step.
+            </p>
+            <button
+                type="button"
+                onClick={onClose}
+                className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#0c6060] text-[13px] font-bold text-white"
+            >
+                Continue budget planner
+            </button>
+        </section>
     </div>
 );
 
@@ -2383,29 +2537,6 @@ const MobileBudgetPlanSelector = ({ onSelect, isSubmitting = false, submitError 
     );
 };
 
-const MobilePlanCard = ({ plan, onSelect, disabled = false }) => {
-    return (
-        <article className="relative min-h-[180px] overflow-hidden rounded-[20px] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-            <div className="relative z-10 flex h-full min-h-[180px] flex-col justify-between px-6 py-5 pr-[112px]">
-                <div className="text-[#0c6060]">
-                    <h3 className="text-[14px] font-semibold leading-4">{plan.label}</h3>
-                    <p className="mt-2 max-w-[200px] text-[12px] font-light leading-4">{plan.description}</p>
-                </div>
-                <button
-                    type="button"
-                    onClick={onSelect}
-                    disabled={disabled}
-                    className="mt-4 inline-flex h-8 w-[92px] items-center justify-center gap-2 rounded-full bg-[#0c6060] text-[12px] font-bold text-white shadow-[0_8px_18px_rgba(12,96,96,0.18)] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    <Check size={10} strokeWidth={3} />
-                    Select
-                </button>
-            </div>
-            <MobilePlanIllustration type={plan.illustration} tone={plan.tone} />
-        </article>
-    );
-};
-
 const MobilePlanHero = () => (
     <div className="relative h-[110px] w-[110px] shrink-0">
         <img
@@ -2417,8 +2548,7 @@ const MobilePlanHero = () => (
     </div>
 );
 
-const MobilePlanIllustration = ({ type, tone }) => {
-    const warm = tone === 'warm';
+const MobilePlanCard = ({ disabled, onSelect, plan }) => {
     const Icon = {
         planner: PiggyBank,
         wallet: Wallet,
@@ -2426,47 +2556,52 @@ const MobilePlanIllustration = ({ type, tone }) => {
         debt: BadgeDollarSign,
         city: Home,
         balanced: Wallet,
-    }[type] || Wallet;
+    }[plan.illustration] || Wallet;
 
     return (
-        <div className="absolute bottom-8 right-6 flex h-[92px] w-[102px] items-center justify-center">
-            <div className={`absolute inset-x-4 bottom-0 h-12 rounded-full ${warm ? 'bg-[#ffe6ac]' : 'bg-[#cfeaff]'}`} />
-            <div className={`relative flex h-[72px] w-[72px] items-center justify-center rounded-[24px] ${warm ? 'bg-[#f9bf45] text-[#aa5d04]' : 'bg-[#d7efff] text-[#007eb6]'}`}>
-                <Icon size={36} strokeWidth={1.8} />
+        <article className="relative min-h-[137px] overflow-hidden rounded-[14px] border border-[#e6e6e6] bg-white p-5 shadow-[0_16px_32px_rgba(15,23,42,0.05)]">
+            <div className="max-w-[190px]">
+                <h3 className="text-[15px] font-bold leading-5 text-[#0c6060]">{plan.label}</h3>
+                <p className="mt-2 text-[11px] leading-[15px] text-[#b56a00]">{plan.description}</p>
+                <button
+                    type="button"
+                    onClick={onSelect}
+                    disabled={disabled}
+                    className="mt-4 inline-flex h-[27px] min-w-[80px] items-center justify-center gap-2 rounded-full bg-[#0c6060] px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:bg-[#c7cdd4]"
+                >
+                    <Check size={12} />
+                    Select
+                </button>
             </div>
-            <span className={`absolute right-1 top-2 h-2 w-2 rounded-full ${warm ? 'bg-[#f5a623]' : 'bg-[#0290c9]'}`} />
-            <span className={`absolute left-1 top-6 h-3 w-3 rotate-45 rounded-[3px] ${warm ? 'bg-[#ffe4a3]' : 'bg-[#e5f6ff]'}`} />
-        </div>
+            <div className="absolute bottom-6 right-5 flex h-[82px] w-[82px] items-center justify-center rounded-[24px] bg-[#f7c449] text-[#9b6200]">
+                <Icon size={34} strokeWidth={1.8} />
+            </div>
+        </article>
     );
 };
 
-const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotice = false, totalIncome = 0, onReadyNoticeSeen, onSetupChange, onExpenseSaved, onAddBudgetItem, onComparePlans }) => {
+const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showExpenseGuideNotice = false, showReadyNotice = false, totalIncome = 0, onExpenseGuideSeen, onOpenDashboard, onReadyNoticeSeen, onSetupChange, onExpenseSaved, onAddBudgetItem, onComparePlans }) => {
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [activeFilter, setActiveFilter] = useState('All');
+    const [summaryView, setSummaryView] = useState('summary');
     const [editingLane, setEditingLane] = useState('');
     const [editRows, setEditRows] = useState([]);
-    const [removedBudgetIds, setRemovedBudgetIds] = useState([]);
     const [editError, setEditError] = useState('');
     const [savingEdits, setSavingEdits] = useState(false);
     const hasBudgetLimits = budgets.length > 0;
-    // Use the shared category classifier so mobile filters match desktop tracking rules.
-    const filteredExpenses = useMemo(
-        () => (
-            activeFilter === 'All'
-                ? expenses
-                : expenses.filter((expense) => getExpenseLane(expense, budgets) === activeFilter)
-        ),
-        [activeFilter, budgets, expenses]
-    );
-    const visibleExpenses = filteredExpenses.slice(0, 3);
     const allocationItems = useMemo(() => getStoredAllocationItems(setup), [setup]);
     const filteredBudgets = activeFilter === 'All'
         ? budgets
         : budgets.filter((budget) => deriveBudgetCategoryType(budget?.category_name) === activeFilter);
     const totalAllocated = filteredBudgets.reduce((sum, item) => sum + toNumber(item?.amount), 0);
     const totalSpent = filteredBudgets.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
-    const remainingBudget = Math.max(totalAllocated - totalSpent, 0);
-    const spendingPercent = totalAllocated > 0 ? Math.min(Math.round((totalSpent / totalAllocated) * 100), 100) : 0;
+    const dashboardAllocated = budgets.reduce((sum, item) => sum + toNumber(item?.amount), 0);
+    const dashboardSpent = budgets.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
+    const dashboardRemaining = Math.max(dashboardAllocated - dashboardSpent, 0);
+    const activeRemaining = activeFilter === 'All' ? dashboardRemaining : Math.max(totalAllocated - totalSpent, 0);
+    const activeAllocated = activeFilter === 'All' ? dashboardAllocated : totalAllocated;
+    const activeSpent = activeFilter === 'All' ? dashboardSpent : totalSpent;
+    const activePercent = activeAllocated > 0 ? Math.min(Math.round((activeSpent / activeAllocated) * 100), 100) : 0;
     const laneRows = mobileBudgetLaneOrder.map((lane) => {
         const laneBudgets = budgets.filter((budget) => deriveBudgetCategoryType(budget?.category_name) === lane);
         const laneExpenses = expenses.filter((expense) => getExpenseLane(expense, budgets) === lane);
@@ -2487,37 +2622,36 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotic
                     const expenseDate = new Date(expense?.expense_date || expense?.created_at || '');
                     return expenseDate.getMonth() === date.getMonth() && expenseDate.getFullYear() === date.getFullYear();
                 })
-                .reduce((sum, expense) => sum + toNumber(expense?.amount), 0);
+                .reduce((sum, expense) => sum + Math.abs(toNumber(expense?.amount)), 0);
             return { month, amount };
         });
     }, [expenses]);
     const maxMonthlySpend = Math.max(...monthBuckets.map((item) => item.amount), 1);
-    const emptyTitle = activeFilter === 'All'
-        ? 'No recurring transactions'
-        : `No ${activeFilter.toLowerCase()} transactions`;
 
     const handleSaved = async () => {
         await onExpenseSaved();
+        onExpenseGuideSeen?.();
         setShowExpenseModal(false);
     };
 
-    const openLaneEditor = (lane) => {
-        const laneRows = normalizeAllocationRows(allocationItems?.[lane])
-            .map((row) => ({
-                name: row.name,
-                amount: String(row.amount || ''),
-            }));
+    const openGuidedExpense = () => {
+        onExpenseGuideSeen?.();
+        setShowExpenseModal(true);
+    };
 
+    const openLaneEditor = (lane) => {
+        const rows = normalizeAllocationRows(allocationItems?.[lane]).map((row) => ({
+            name: row.name,
+            amount: String(row.amount || ''),
+        }));
         setEditingLane(lane);
-        setEditRows(laneRows.length > 0 ? laneRows : [{ name: '', amount: '' }]);
-        setRemovedBudgetIds([]);
+        setEditRows(rows.length > 0 ? rows : [{ name: '', amount: '' }]);
         setEditError('');
     };
 
     const closeLaneEditor = () => {
         setEditingLane('');
         setEditRows([]);
-        setRemovedBudgetIds([]);
         setEditError('');
     };
 
@@ -2528,20 +2662,9 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotic
         )));
     };
 
-    const addEditRow = () => {
-        setEditRows((current) => [...current, { name: '', amount: '' }]);
-    };
-
-    const removeEditRow = (index) => {
-        setEditRows((current) => {
-            const nextRows = current.filter((_, rowIndex) => rowIndex !== index);
-            return nextRows.length > 0 ? nextRows : [{ name: '', amount: '' }];
-        });
-    };
-
     const saveLaneEdits = async () => {
         const activeRows = editRows
-            .map((row) => ({ ...row, name: String(row.name || '').trim(), amount: toNumber(row.amount) }))
+            .map((row) => ({ name: String(row.name || '').trim(), amount: toNumber(row.amount) }))
             .filter((row) => row.name || row.amount > 0);
         const hasInvalidRow = activeRows.some((row) => !row.name || row.amount <= 0);
         const laneTotal = activeRows.reduce((sum, row) => sum + row.amount, 0);
@@ -2551,7 +2674,6 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotic
             setEditError('Each item needs a name and an amount greater than zero.');
             return;
         }
-
         if (laneLimit > 0 && laneTotal > laneLimit) {
             setEditError(`${editingLane} is above the selected budget limit by ${formatCurrency(laneTotal - laneLimit)}.`);
             return;
@@ -2559,10 +2681,9 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotic
 
         try {
             setSavingEdits(true);
-            setEditError('');
             const parentBudget = getLaneParentBudget(budgets, editingLane);
             if (parentBudget?.uuid || parentBudget?.id) {
-                const payload = {
+                await updateBudget(parentBudget.uuid || parentBudget.id, {
                     category: getBudgetCategoryIdentifier(parentBudget),
                     amount: Math.round(laneTotal),
                     currency: 'KES',
@@ -2573,15 +2694,13 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotic
                     categoryName: parentBudget.category_name || `${editingLane} Budget`,
                     categoryType: editingLane,
                     notes: `Updated from mobile ${editingLane} budget summary`,
-                };
-                await updateBudget(parentBudget.uuid || parentBudget.id, payload);
+                });
             }
-
             const nextSetup = {
                 ...(setup || {}),
                 allocationItems: {
                     ...(setup?.allocationItems || {}),
-                    [editingLane]: activeRows.map((row) => ({ name: row.name, amount: row.amount })),
+                    [editingLane]: activeRows,
                 },
             };
             saveBudgetSetup(nextSetup);
@@ -2596,378 +2715,167 @@ const MobileExpenseStage = ({ budgets = [], expenses = [], setup, showReadyNotic
         }
     };
 
-    const dashboardAllocated = budgets.reduce((sum, item) => sum + toNumber(item?.amount), 0);
-    const dashboardSpent = budgets.reduce((sum, item) => sum + toNumber(item?.total_spent), 0);
-    const dashboardRemaining = Math.max(dashboardAllocated - dashboardSpent, 0);
-    const activeRemaining = activeFilter === 'All' ? dashboardRemaining : remainingBudget;
-    const activeAllocated = activeFilter === 'All' ? dashboardAllocated : totalAllocated;
-    const activeSpent = activeFilter === 'All' ? dashboardSpent : totalSpent;
-    const activePercent = activeAllocated > 0 ? Math.min(Math.round((activeSpent / activeAllocated) * 100), 100) : 0;
+    const openActionView = (view) => {
+        setSummaryView(view);
+        if (view === 'expenses') setShowExpenseModal(true);
+    };
+
+    if (summaryView !== 'summary') {
+        const title = summaryView === 'manage' ? 'Update budget items' : summaryView === 'compare' ? 'Compare budget models' : 'Add expenses';
+        const body = summaryView === 'manage'
+            ? 'Choose a budget lane to edit your planned items, then come back to your summary when done.'
+            : summaryView === 'compare'
+                ? 'Reviewing models helps you decide if your current split still fits your month.'
+                : 'Log a transaction, then return to your summary to see the update.';
+        return (
+            <section className="pb-24 pt-5">
+                <button type="button" onClick={() => setSummaryView('summary')} className="mb-5 inline-flex items-center gap-2 text-[12px] font-bold text-[#0c6060]">
+                    <ArrowLeft size={14} />
+                    Back to budget summary
+                </button>
+                <div className="rounded-[20px] border border-[#e3e8e5] bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.05)]">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d9a62e]">Next Best Action</p>
+                    <h1 className="mt-2 text-[22px] font-extrabold text-[#10231c]">{title}</h1>
+                    <p className="mt-2 text-[12px] leading-5 text-[#5f7168]">{body}</p>
+                    {summaryView === 'manage' && (
+                        <div className="mt-5 grid gap-3">
+                            {mobileBudgetLaneOrder.map((lane) => (
+                                <button key={lane} type="button" onClick={() => openLaneEditor(lane)} className="flex h-12 items-center justify-between rounded-[12px] border border-[#d9e2de] px-4 text-[13px] font-bold text-[#0c6060]">
+                                    Edit {lane}
+                                    <ArrowLeft size={14} className="rotate-180" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {summaryView === 'compare' && (
+                        <button type="button" onClick={onComparePlans} className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#0c6060] text-[13px] font-bold text-white">
+                            Open compare models
+                        </button>
+                    )}
+                    {summaryView === 'expenses' && (
+                        <button type="button" onClick={() => setShowExpenseModal(true)} className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#0c6060] text-[13px] font-bold text-white">
+                            Add expense
+                        </button>
+                    )}
+                </div>
+                {editingLane && (
+                    <MobileBudgetEditSheet
+                        editError={editError}
+                        isSaving={savingEdits}
+                        lane={editingLane}
+                        laneLimit={getLaneLimit(setup, totalIncome, editingLane)}
+                        onAddRow={() => setEditRows((current) => [...current, { name: '', amount: '' }])}
+                        onClose={closeLaneEditor}
+                        onRemoveRow={(index) => setEditRows((current) => {
+                            const nextRows = current.filter((_, rowIndex) => rowIndex !== index);
+                            return nextRows.length > 0 ? nextRows : [{ name: '', amount: '' }];
+                        })}
+                        onSave={saveLaneEdits}
+                        onUpdateRow={updateEditRow}
+                        rows={editRows}
+                    />
+                )}
+                {showExpenseModal && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 px-3 pb-3 pt-16 sm:hidden">
+                        <MobileTransactionSheet budgets={budgets} defaultLane={activeFilter === 'All' ? 'Needs' : activeFilter} expenses={expenses} setup={setup} onClose={() => setShowExpenseModal(false)} onSaved={handleSaved} />
+                    </div>
+                )}
+            </section>
+        );
+    }
 
     return (
         <section className="pb-24 pt-5">
             <div className="pb-2">
                 <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d9a62e]">Budget Planner</p>
                 <h1 className="mt-2 text-[22px] font-extrabold leading-7 text-[#0c6060]">Your budget summary</h1>
-                <p className="mt-1 text-[12px] leading-5 text-[#5f7168]">
-                    Review your allocated budget and add transactions when you spend.
-                </p>
+                <p className="mt-1 text-[12px] leading-5 text-[#5f7168]">Review your allocated budget and add transactions when you spend.</p>
             </div>
-
             <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
                 {['All', 'Needs', 'Wants', 'Savings'].map((label) => (
-                    <button
-                        key={label}
-                        type="button"
-                        onClick={() => setActiveFilter(label)}
-                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                            activeFilter === label ? 'bg-[#f3c13a] text-white' : 'bg-white text-[#707974]'
-                        }`}
-                        aria-pressed={activeFilter === label}
-                    >
+                    <button key={label} type="button" onClick={() => setActiveFilter(label)} className={`rounded-full px-3 py-1 text-[11px] font-semibold ${activeFilter === label ? 'bg-[#f3c13a] text-white' : 'bg-white text-[#707974]'}`}>
                         {label}
                     </button>
                 ))}
             </div>
-
             {!hasBudgetLimits ? (
                 <div className="mt-8 rounded-[20px] bg-white px-5 py-7 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-                    <div className="mx-auto flex h-[80px] w-[80px] items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5]">
-                        <Wallet size={34} className="text-[#0c6060]" />
-                    </div>
+                    <Wallet size={34} className="mx-auto text-[#0c6060]" />
                     <h2 className="mt-5 text-[18px] font-bold text-[#141c2b]">No budget limits yet</h2>
-                    <p className="mx-auto mt-2 max-w-[285px] text-[13px] leading-5 text-[#8e97ab]">
-                        Add your Needs, Wants, and Savings limits first, then your dashboard will show a clean budget summary here.
-                    </p>
-                    <MobileExpenseActions
-                        hasBudgetLimits={hasBudgetLimits}
-                        onAddBudgetItem={onAddBudgetItem}
-                        onAddTransaction={() => setShowExpenseModal(true)}
-                    />
+                    <p className="mx-auto mt-2 max-w-[285px] text-[13px] leading-5 text-[#8e97ab]">Add your Needs, Wants, and Savings limits first.</p>
+                    <MobileExpenseActions hasBudgetLimits={hasBudgetLimits} onAddBudgetItem={onAddBudgetItem} onAddTransaction={() => setShowExpenseModal(true)} />
                 </div>
             ) : (
                 <>
-                    <div className="mt-4 space-y-4">
-                        <section className="px-2 py-4 text-center">
-                            <p className="text-[12px] leading-5 text-[#67677a]">
-                                {activeFilter === 'All' ? 'Your remaining budget balance' : `${activeFilter} remaining budget balance`}
-                            </p>
-                            <p className="mt-1 text-[36px] font-bold leading-tight text-[#303048]">
-                                {formatCurrency(activeRemaining)}
-                            </p>
-                            <div className="mx-auto mt-3 flex min-h-[34px] max-w-[311px] items-center rounded-full px-4 text-left text-[12px] text-[#232e3d]" style={{ backgroundImage: 'linear-gradient(124deg, rgba(234,187,58,0.44) 0%, rgba(234,187,58,0) 92%)' }}>
-                                Your budget is ready. Add expenses as you spend.
+                    <section className="mt-4 px-2 py-4 text-center">
+                        <p className="text-[12px] leading-5 text-[#67677a]">{activeFilter === 'All' ? 'Your remaining budget balance' : `${activeFilter} remaining budget balance`}</p>
+                        <p className="mt-1 text-[36px] font-bold leading-tight text-[#303048]">{formatCurrency(activeRemaining)}</p>
+                        <div className="mx-auto mt-3 flex min-h-[34px] max-w-[311px] items-center rounded-full px-4 text-left text-[12px] text-[#232e3d]" style={{ backgroundImage: 'linear-gradient(124deg, rgba(234,187,58,0.44) 0%, rgba(234,187,58,0) 92%)' }}>
+                            Your budget is ready. Add expenses as you spend.
+                        </div>
+                    </section>
+                    <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-4 py-[18px] shadow-[0_32px_51px_-13px_rgba(34,24,63,0.06)]">
+                        <div className="flex items-start justify-between">
+                            <div><p className="text-[10px] text-[#67677a]">Spent so far</p><p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(activeSpent)}</p></div>
+                            <div className="text-right"><p className="text-[10px] text-[#67677a]">Budget Allocated</p><p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(activeAllocated)}</p></div>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between"><p className="text-[10px] text-[#8e97ab]">Spending Progress</p><span className="rounded-full bg-[#eabb3a] px-2 text-[10px] text-white">{activePercent}%</span></div>
+                        <div className="mt-2 h-1 overflow-hidden rounded-full bg-[#e3e3e5]"><span className="block h-full bg-[#0c6060]" style={{ width: `${activePercent}%` }} /></div>
+                    </section>
+                    {activeFilter === 'All' ? (
+                        <section className="mt-4 rounded-[23px] border border-[#e3e3e5] bg-white px-[26px] py-4 shadow-[0_32px_51px_-13px_rgba(0,0,0,0.06)]">
+                            {laneRows.map((row) => <MobileBudgetLaneRow key={row.lane} row={row} />)}
+                        </section>
+                    ) : (
+                        <section className="mt-4 rounded-[18px] border border-[#e3e3e5] bg-white px-4 py-4 shadow-[0_18px_35px_rgba(15,23,42,0.05)]">
+                            <div className="mb-3 flex items-center justify-between">
+                                <div><h2 className="text-[15px] font-bold text-[#0c6060]">My {activeFilter}</h2><p className="mt-1 text-[11px] text-[#8e97ab]">Here is a summary of your {activeFilter.toLowerCase()} budget.</p></div>
+                                <button type="button" onClick={() => openLaneEditor(activeFilter)} className="text-[11px] font-bold text-[#d9a62e]">Edit</button>
+                            </div>
+                            <div className="space-y-3">
+                                {normalizeAllocationRows(allocationItems?.[activeFilter]).map((item) => (
+                                    <div key={`${activeFilter}-${item.name}`} className="flex h-[54px] items-center gap-3 rounded-[12px] border border-[#e3e8e5] bg-white px-3">
+                                        <Wallet size={15} className="text-[#0c6060]" />
+                                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#10231c]">{item.name}</span>
+                                        <span className="font-mono text-[12px] text-[#10231c]">{formatCurrency(item.amount)}</span>
+                                    </div>
+                                ))}
                             </div>
                         </section>
-
-                        <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-4 py-[18px] shadow-[0_32px_51px_-13px_rgba(34,24,63,0.06)]">
+                    )}
+                    <section className="mt-4 rounded-[16px] border border-[#e3e3e5] bg-white py-4 shadow-[0_32px_26px_rgba(0,0,0,0.05)]">
+                        <div className="px-5">
                             <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-[10px] text-[#67677a]">Spent so far</p>
-                                    <p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(activeSpent)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-[#67677a]">Budget Allocated</p>
-                                    <p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(activeAllocated)}</p>
-                                </div>
+                                <div><p className="text-[13px] font-semibold text-[#141c2b]">This month spending</p><p className="text-[24px] font-bold text-[#0c6060]">{formatCurrency(monthBuckets[5]?.amount || dashboardSpent)}</p></div>
+                                <span className="rounded-[6px] border border-[#ecedf0] bg-[#fafafa] px-3 py-2 text-[10px] font-semibold text-[#555e67]">This month</span>
                             </div>
-                            <div className="mt-3 flex items-center justify-between">
-                                <p className="text-[10px] text-[#8e97ab]">Spending Progress</p>
-                                <span className="rounded-full bg-[#eabb3a] px-2 text-[10px] text-white">{activePercent}%</span>
-                            </div>
-                            <div className="mt-2 grid h-1 w-full grid-cols-[50fr_30fr_20fr] overflow-hidden rounded-full bg-[#e3e3e5]">
-                                <span className="bg-[#f46040]" />
-                                <span className="bg-[#56bada]" />
-                                <span className="bg-[#6347eb]" />
-                            </div>
-                            <div className="mt-2 flex gap-4 text-[10px] font-medium">
-                                <span className="text-[#f46040]">Needs</span>
-                                <span className="text-[#56bada]">Wants</span>
-                                <span className="text-[#6347eb]">Savings</span>
-                            </div>
-                        </section>
-
-                        {activeFilter === 'All' ? (
-                            <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-[26px] py-4 shadow-[0_32px_51px_-13px_rgba(0,0,0,0.06)]">
-                                {laneRows.map((row) => (
-                                    <MobileBudgetLaneRow key={row.lane} row={row} />
-                                ))}
-                            </section>
-                        ) : (
-                            <section className="rounded-[18px] border border-[#e3e3e5] bg-white px-4 py-4 shadow-[0_18px_35px_rgba(15,23,42,0.05)]">
-                                <div className="mb-3 flex items-center justify-between">
-                                    <div>
-                                        <h2 className="text-[15px] font-bold text-[#0c6060]">My {activeFilter}</h2>
-                                        <p className="mt-1 text-[11px] text-[#8e97ab]">Here is a summary of your {activeFilter.toLowerCase()} budget.</p>
+                            <div className="mt-4 flex h-[88px] items-end justify-center gap-2">
+                                {monthBuckets.map((bucket, index) => (
+                                    <div key={bucket.month} className="flex flex-1 flex-col items-center gap-2">
+                                        <span className={`w-full rounded-t-[4px] ${index === monthBuckets.length - 1 ? 'bg-[#eabb3a]' : 'bg-[rgba(234,187,58,0.28)]'}`} style={{ height: `${Math.max((bucket.amount / maxMonthlySpend) * 88, 18)}px` }} />
+                                        <span className="text-[10px] text-[#8e97ab]">{bucket.month}</span>
                                     </div>
-                                    <button type="button" onClick={() => openLaneEditor(activeFilter)} className="text-[11px] font-bold text-[#d9a62e]">
-                                        Edit
-                                    </button>
-                                </div>
-                                <div className="space-y-3">
-                                    {normalizeAllocationRows(allocationItems?.[activeFilter]).length > 0 ? (
-                                        normalizeAllocationRows(allocationItems?.[activeFilter]).map((item) => (
-                                            <div key={`${activeFilter}-${item.name}`} className="flex h-[54px] items-center gap-3 rounded-[12px] border border-[#e3e8e5] bg-white px-3">
-                                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#f0f6f2] text-[#0c6060]">
-                                                    <Wallet size={15} />
-                                                </span>
-                                                <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#10231c]">{item.name}</span>
-                                                <span className="font-mono text-[12px] text-[#10231c]">{formatCurrency(item.amount)}</span>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="rounded-[12px] bg-[#f8fcfa] px-4 py-3 text-[12px] text-[#5f7168]">
-                                            No {activeFilter.toLowerCase()} budget items yet.
-                                        </p>
-                                    )}
-                                </div>
-                            </section>
-                        )}
-
-                        <section className="rounded-[16px] border border-[#e3e3e5] bg-white py-4 shadow-[0_32px_26px_rgba(0,0,0,0.05)]">
-                            <div className="grid grid-cols-4 gap-2 px-5">
-                                {['3M', '6M', '1Y', 'All'].map((range) => (
-                                    <span key={range} className={`rounded-[12px] border px-2 py-2 text-center text-[12px] ${range === '6M' ? 'border-[#0c6060] bg-[#0c6060] text-white' : 'border-[#dde1ea] text-[#8e97ab]'}`}>
-                                        {range}
-                                    </span>
                                 ))}
                             </div>
-                            <div className="mt-4 px-5">
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-[13px] font-semibold text-[#141c2b]">This month spending</p>
-                                        <p className="text-[24px] font-bold text-[#0c6060]">{formatCurrency(monthBuckets[5]?.amount || dashboardSpent)}</p>
-                                    </div>
-                                    <span className="rounded-[6px] border border-[#ecedf0] bg-[#fafafa] px-3 py-2 text-[10px] font-semibold text-[#555e67]">
-                                        This month
-                                    </span>
-                                </div>
-                                <div className="mt-4 flex h-[88px] items-end justify-center gap-2">
-                                    {monthBuckets.map((bucket, index) => (
-                                        <div key={bucket.month} className="flex flex-1 flex-col items-center gap-2">
-                                            <span
-                                                className={`w-full rounded-t-[4px] ${index === monthBuckets.length - 1 ? 'bg-[#eabb3a]' : 'bg-[rgba(234,187,58,0.28)]'}`}
-                                                style={{ height: `${Math.max((bucket.amount / maxMonthlySpend) * 88, 18)}px` }}
-                                            />
-                                            <span className="text-[10px] text-[#8e97ab]">{bucket.month}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-
+                        </div>
+                    </section>
                     <div className="mt-5">
                         <p className="text-[16px] font-bold tracking-[-0.02em] text-[#232e3d]">Next Best Actions</p>
                         <p className="mt-1 text-[12px] leading-4 text-[#8e97ab]">The most useful next steps from this budget.</p>
                         <div className="mt-3 space-y-3">
-                            <MobileActionCard tone="amber" title="Update budget items" body="Adjust your budget items if your real spending pattern has changed this month." cta="Manage Items" onClick={() => openLaneEditor(activeFilter === 'All' ? 'Needs' : activeFilter)} />
-                            <MobileActionCard tone="green" title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expenses" onClick={() => setShowExpenseModal(true)} />
-                            <MobileActionCard tone="purple" title="Compare budget models" body="See how switching to another split would change your monthly allocations." cta="Compare Types" onClick={onComparePlans} />
+                            <MobileActionCard tone="amber" title="Update budget items" body="Adjust your budget items if your real spending pattern has changed this month." cta="Manage Items" onClick={() => openActionView('manage')} />
+                            <MobileActionCard tone="green" title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expenses" onClick={() => openActionView('expenses')} />
+                            <MobileActionCard tone="purple" title="Compare budget models" body="See how switching to another split would change your monthly allocations." cta="Compare Types" onClick={() => openActionView('compare')} />
                         </div>
+                        <button type="button" onClick={onOpenDashboard} className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#b7d8d4] bg-white text-[13px] font-bold text-[#0c6060] shadow-[0_10px_22px_rgba(15,23,42,0.05)]"><Home size={16} />See Your Dashboard at a Glance</button>
                     </div>
                 </>
             )}
-
-            {showExpenseModal && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 px-3 pb-3 pt-16 sm:hidden">
-                    <MobileTransactionSheet
-                        budgets={budgets}
-                        defaultLane={activeFilter === 'All' ? 'Needs' : activeFilter}
-                        setup={setup}
-                        onClose={() => setShowExpenseModal(false)}
-                        onSaved={handleSaved}
-                    />
-                </div>
-            )}
-
-            {editingLane && (
-                <MobileBudgetEditSheet
-                    editError={editError}
-                    isSaving={savingEdits}
-                    lane={editingLane}
-                    laneLimit={getLaneLimit(setup, totalIncome, editingLane)}
-                    onAddRow={addEditRow}
-                    onClose={closeLaneEditor}
-                    onRemoveRow={removeEditRow}
-                    onSave={saveLaneEdits}
-                    onUpdateRow={updateEditRow}
-                    rows={editRows}
-                />
-            )}
-
-            {showReadyNotice && (
-                <MobileBudgetReadyNotice
-                    allocated={dashboardAllocated}
-                    onClose={onReadyNoticeSeen}
-                />
-            )}
-        </section>
-    );
-
-    return (
-        <section className="pb-24 pt-5">
-            <div className="flex items-end justify-between gap-3">
-                <div className="min-w-0 pb-2">
-                    <p className="text-[12px] font-medium leading-4 text-[#111827]">Welcome to your</p>
-                    <h1 className="mt-[10px] text-[18px] font-extrabold leading-6 text-[#0c6060]">Budget Planner</h1>
-                    <p className="mt-[7px] text-[12px] leading-5 text-[#111827]">Let's take your budgeting to the next level</p>
-                </div>
-                <MobilePlanHero />
-            </div>
-
-            <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-                {['All', 'Needs', 'Wants', 'Savings'].map((label) => (
-                    <button
-                        key={label}
-                        type="button"
-                        onClick={() => setActiveFilter(label)}
-                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                            activeFilter === label ? 'bg-[#f3c13a] text-white' : 'bg-white text-[#707974]'
-                        }`}
-                        aria-pressed={activeFilter === label}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
-
-            {visibleExpenses.length === 0 ? (
-                <>
-                    <div className="mt-8 rounded-[20px] bg-white px-5 py-7 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-                        <div className="mx-auto flex h-[80px] w-[80px] items-center justify-center rounded-full border border-[#dde1ea] bg-[#eff1f5] text-[36px]">
-                            📭
-                        </div>
-                        <h2 className="mt-5 text-[18px] font-bold text-[#141c2b]">{emptyTitle}</h2>
-                        <p className="mx-auto mt-2 max-w-[285px] text-[13px] leading-5 text-[#8e97ab]">
-                            {activeFilter === 'All'
-                                ? 'Add your transactions for your budget to see the magic and turn your allocated savings into action with simple next moves.'
-                                : `You have not added any ${activeFilter.toLowerCase()} transactions yet.`}
-                        </p>
-                        <MobileExpenseActions
-                            hasBudgetLimits={hasBudgetLimits}
-                            onAddBudgetItem={onAddBudgetItem}
-                            onAddTransaction={() => setShowExpenseModal(true)}
-                        />
-                    </div>
-
-                    <div className="mt-5">
-                        <p className="text-[16px] font-bold tracking-[-0.02em] text-[#232e3d]">Use Your Savings Limit Wisely</p>
-                        <p className="mt-1 text-[12px] leading-4 text-[#8e97ab]">
-                            Choose a budget type and add income so we can suggest how to put your savings allocation to work.
-                        </p>
-                        <div className="mt-3 space-y-3">
-                            <MobileSavingsSuggestion tone="amber" title="Emergency Buffer in MMF" body="Keep 3-6 months of essentials liquid in a money market fund for fast access and steadier returns than a normal account." />
-                            <MobileSavingsSuggestion tone="green" title="Short-Term Goals" body="Use MMFs or a high-yield savings lane for goals coming up in under 12 months." />
-                            <MobileSavingsSuggestion tone="purple" title="Treasury Bills" body="Put part of your savings into T-Bills when you want low-risk parking for planned cash." />
-                            <MobileSavingsSuggestion tone="rose" title="Long-Term Wealth" body="Channel the final slice into retirement, long-term investments, or disciplined debt reduction." />
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <>
-                    <div className="mt-4 space-y-4">
-                        <section className="px-2 py-4 text-center">
-                            <p className="text-[12px] leading-5 text-[#67677a]">
-                                {activeFilter === 'All' ? 'Your remaining budget balance' : `${activeFilter} remaining budget balance`}
-                            </p>
-                            <p className="mt-1 text-[36px] font-bold leading-tight text-[#303048]">
-                                {formatCurrency(remainingBudget)}
-                            </p>
-                            <div className="mx-auto mt-3 flex min-h-[34px] max-w-[311px] items-center rounded-full px-4 text-left text-[12px] text-[#232e3d]" style={{ backgroundImage: 'linear-gradient(124deg, rgba(234,187,58,0.44) 0%, rgba(234,187,58,0) 92%)' }}>
-                                😎 Congrats! your month is moving well
-                            </div>
-                        </section>
-
-                        <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-4 py-[18px] shadow-[0_32px_51px_-13px_rgba(34,24,63,0.06)]">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-[10px] text-[#67677a]">Spent so far</p>
-                                    <p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(totalSpent)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-[#67677a]">Budget Allocated</p>
-                                    <p className="mt-0.5 text-[16px] font-bold text-[#303048]">{formatCurrency(totalAllocated)}</p>
-                                </div>
-                            </div>
-                            <div className="mt-3 flex items-center justify-between">
-                                <p className="text-[10px] text-[#8e97ab]">Spending Progress</p>
-                                <span className="rounded-full bg-[#eabb3a] px-2 text-[10px] text-[#eff1f5]">{spendingPercent}%</span>
-                            </div>
-                            <div className="mt-2 grid h-1 w-full grid-cols-[50fr_30fr_20fr] overflow-hidden rounded-full bg-[#e3e3e5]">
-                                <span className="bg-[#f46040]" />
-                                <span className="bg-[#56bada]" />
-                                <span className="bg-[#6347eb]" />
-                            </div>
-                            <div className="mt-2 flex gap-4 text-[10px] font-medium">
-                                <span className="text-[#f46040]">• Needs</span>
-                                <span className="text-[#56bada]">• Wants</span>
-                                <span className="text-[#6347eb]">• Savings</span>
-                            </div>
-                        </section>
-
-                        <section className="rounded-[23px] border border-[#e3e3e5] bg-white px-[26px] py-4 shadow-[0_32px_51px_-13px_rgba(0,0,0,0.06)]">
-                            {laneRows.map((row) => (
-                                <MobileBudgetLaneRow key={row.lane} row={row} />
-                            ))}
-                        </section>
-
-                        <section className="rounded-[16px] border border-[#e3e3e5] bg-white py-4 shadow-[0_32px_26px_rgba(0,0,0,0.05)]">
-                            <div className="grid grid-cols-4 gap-2 px-5">
-                                {['3M', '6M', '1Y', 'All'].map((range) => (
-                                    <span key={range} className={`rounded-[12px] border px-2 py-2 text-center text-[12px] ${range === '6M' ? 'border-[#0c6060] bg-[#0c6060] text-white' : 'border-[#dde1ea] text-[#8e97ab]'}`}>
-                                        {range}
-                                    </span>
-                                ))}
-                            </div>
-                            <div className="mt-4 px-5">
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-[13px] font-semibold text-[#141c2b]">March spending</p>
-                                        <p className="text-[24px] font-bold text-[#0c6060]">{formatCurrency(monthBuckets[5]?.amount || totalSpent)}</p>
-                                    </div>
-                                    <span className="rounded-[6px] border border-[#ecedf0] bg-[#fafafa] px-3 py-2 text-[10px] font-semibold text-[#555e67]">
-                                        This month
-                                    </span>
-                                </div>
-                                <div className="mt-4 flex h-[88px] items-end justify-center gap-2">
-                                    {monthBuckets.map((bucket, index) => (
-                                        <div key={bucket.month} className="flex flex-1 flex-col items-center gap-2">
-                                            <span
-                                                className={`w-full rounded-t-[4px] ${index === monthBuckets.length - 1 ? 'bg-[#eabb3a]' : 'bg-[rgba(234,187,58,0.28)]'}`}
-                                                style={{ height: `${Math.max((bucket.amount / maxMonthlySpend) * 88, 18)}px` }}
-                                            />
-                                            <span className="text-[10px] text-[#8e97ab]">{bucket.month}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-
-                    <div className="mt-5">
-                        <p className="text-[16px] font-bold tracking-[-0.02em] text-[#232e3d]">Next Best Actions</p>
-                        <p className="mt-1 text-[12px] leading-4 text-[#8e97ab]">The most useful next steps from this budget.</p>
-                        <div className="mt-3 space-y-3">
-                            <MobileActionCard tone="amber" title="Update budget items" body="Adjust your budget items if your real spending pattern has changed this month." cta="Manage Items" onClick={onAddBudgetItem} />
-                            <MobileActionCard tone="green" title="Keep expenses current" body="Log recent spending so the budget health stays accurate and your dashboard stays useful." cta="Add Expenses" onClick={() => setShowExpenseModal(true)} />
-                            <MobileActionCard tone="purple" title="Compare budget models" body="See how switching to another split would change your monthly allocations." cta="Compare Types" onClick={onComparePlans} />
-                        </div>
-                    </div>
-                </>
-            )}
-
-            {showExpenseModal && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 px-3 pb-3 pt-16 sm:hidden">
-                    <MobileTransactionSheet
-                        budgets={budgets}
-                        defaultLane={activeFilter === 'All' ? 'Needs' : activeFilter}
-                        setup={setup}
-                        onClose={() => setShowExpenseModal(false)}
-                        onSaved={handleSaved}
-                    />
-                </div>
-            )}
+            {hasBudgetLimits && <button type="button" onClick={() => setShowExpenseModal(true)} className="fixed bottom-24 right-5 z-40 inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-[#0c6060] px-3.5 text-[11px] font-bold text-white shadow-[0_10px_22px_rgba(12,96,96,0.24)] sm:hidden"><Plus size={14} />Expense</button>}
+            {showExpenseModal && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 px-3 pb-3 pt-16 sm:hidden"><MobileTransactionSheet budgets={budgets} defaultLane={activeFilter === 'All' ? 'Needs' : activeFilter} expenses={expenses} setup={setup} onClose={() => setShowExpenseModal(false)} onSaved={handleSaved} /></div>}
+            {editingLane && <MobileBudgetEditSheet editError={editError} isSaving={savingEdits} lane={editingLane} laneLimit={getLaneLimit(setup, totalIncome, editingLane)} onAddRow={() => setEditRows((current) => [...current, { name: '', amount: '' }])} onClose={closeLaneEditor} onRemoveRow={(index) => setEditRows((current) => { const nextRows = current.filter((_, rowIndex) => rowIndex !== index); return nextRows.length > 0 ? nextRows : [{ name: '', amount: '' }]; })} onSave={saveLaneEdits} onUpdateRow={updateEditRow} rows={editRows} />}
+            {showReadyNotice && <MobileBudgetReadyNotice allocated={dashboardAllocated} onClose={onReadyNoticeSeen} />}
+            {showExpenseGuideNotice && !showReadyNotice && hasBudgetLimits && <MobileAddExpenseGuideNotice onAddExpense={openGuidedExpense} onClose={onExpenseGuideSeen} />}
         </section>
     );
 };
@@ -3019,6 +2927,40 @@ const MobileBudgetReadyNotice = ({ allocated, onClose }) => (
             >
                 View budget summary
             </button>
+        </section>
+    </div>
+);
+
+const MobileAddExpenseGuideNotice = ({ onAddExpense, onClose }) => (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/40 px-3 pb-3 pt-16 sm:hidden">
+        <section className="w-full rounded-[26px] bg-white px-5 pb-5 pt-4 text-center shadow-[0_-18px_45px_rgba(15,23,42,0.24)]">
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#dde1ea]" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f6f3] text-[#0c6060]">
+                <Receipt size={32} strokeWidth={1.9} />
+            </div>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.22em] text-[#d9a62e]">Track Performance</p>
+            <h2 className="mt-2 text-[21px] font-extrabold leading-7 text-[#10231c]">
+                Add your first expense
+            </h2>
+            <p className="mx-auto mt-3 max-w-[286px] text-[13px] leading-5 text-[#5f7168]">
+                This helps Shilingi show how you are performing, update your financial health, and surface better insights on your dashboard.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex h-12 items-center justify-center rounded-full border border-[#d9e2de] bg-white text-[13px] font-bold text-[#0c6060]"
+                >
+                    Later
+                </button>
+                <button
+                    type="button"
+                    onClick={onAddExpense}
+                    className="flex h-12 items-center justify-center rounded-full bg-[#0c6060] text-[13px] font-bold text-white"
+                >
+                    Add Expense
+                </button>
+            </div>
         </section>
     </div>
 );
@@ -3164,13 +3106,13 @@ const MobileActionCard = ({ tone, title, body, cta, onClick }) => {
     );
 };
 
-const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, onClose, onSaved }) => {
+const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', expenses = [], setup, onClose, onSaved }) => {
     const [selectedLane, setSelectedLane] = useState(defaultLane);
-    const [status, setStatus] = useState('Received');
     const [budgetCategories, setBudgetCategories] = useState([]);
     const [categoriesLoading, setCategoriesLoading] = useState(true);
     const [formData, setFormData] = useState({
         category: '',
+        otherCategory: '',
         amount: '',
         expense_date: todayDate(),
         period: 'Monthly',
@@ -3179,33 +3121,72 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
     });
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const selectedLaneBudget = useMemo(
+        () => getLaneParentBudget(budgets, selectedLane),
+        [budgets, selectedLane]
+    );
+    const selectedLaneSpent = useMemo(
+        () => budgets
+            .filter((budget) => deriveBudgetCategoryType(budget?.category_name) === selectedLane)
+            .reduce((sum, budget) => sum + toNumber(budget?.total_spent), 0),
+        [budgets, selectedLane]
+    );
+    const selectedLaneRemaining = Math.max(toNumber(selectedLaneBudget?.amount) - selectedLaneSpent, 0);
     const categoryOptions = useMemo(
         () => {
             const categoriesByName = new Map(
                 budgetCategories.map((category) => [normalizeLabel(category.name), category])
             );
-            const allocationItems = getStoredAllocationItems(setup);
-            const parentBudget = getLaneParentBudget(budgets, selectedLane);
+            const allocationItems = setup?.allocationItems || {};
+            const parentBudget = selectedLaneBudget;
             const parentCategory = parentBudget
                 ? categoriesByName.get(normalizeLabel(parentBudget?.category_name))
                 : null;
             const parentValue = parentCategory?.value || (parentBudget ? getBudgetCategoryIdentifier(parentBudget) : '');
-            const laneSpent = budgets
-                .filter((budget) => deriveBudgetCategoryType(budget?.category_name) === selectedLane)
-                .reduce((sum, budget) => sum + toNumber(budget?.total_spent), 0);
+            const expensesForLane = expenses.filter((expense) => getExpenseLane(expense, budgets) === selectedLane);
 
-            const itemRows = normalizeAllocationRows(allocationItems?.[selectedLane]);
+            const storedRows = normalizeAllocationNames(allocationItems?.[selectedLane]);
+            const fallbackRows = defaultMobileAllocationRows[selectedLane].map((name) => ({ name, amount: 0 }));
+            const itemRows = storedRows.length > 0 ? storedRows : fallbackRows;
             if (parentBudget && parentValue && itemRows.length > 0) {
-                return itemRows.map((item) => ({
-                    value: `${parentValue}::${item.name}`,
-                    categoryValue: parentValue,
-                    name: item.name,
-                    remaining: item.amount,
-                    laneRemaining: Math.max(toNumber(parentBudget?.amount) - laneSpent, 0),
-                }));
+                const options = itemRows.map((item) => {
+                    const itemSpent = expensesForLane
+                        .filter((expense) => normalizeLabel(expense?.description || expense?.name || expense?.category_name) === normalizeLabel(item.name))
+                        .reduce((sum, expense) => sum + Math.abs(toNumber(expense?.amount)), 0);
+                    const hasItemLimit = item.amount > 0;
+                    const remaining = hasItemLimit
+                        ? Math.max(item.amount - itemSpent, 0)
+                        : selectedLaneRemaining;
+
+                    return {
+                        value: `${parentValue}::${item.name}`,
+                        categoryValue: parentValue,
+                        name: item.name,
+                        remaining,
+                        allocated: hasItemLimit ? item.amount : null,
+                        spent: itemSpent,
+                        laneRemaining: selectedLaneRemaining,
+                        hasItemLimit,
+                    };
+                });
+
+                return [
+                    ...options,
+                    {
+                        value: `${parentValue}::Other`,
+                        categoryValue: parentValue,
+                        name: 'Other',
+                        remaining: selectedLaneRemaining,
+                        allocated: null,
+                        spent: 0,
+                        laneRemaining: selectedLaneRemaining,
+                        hasItemLimit: false,
+                        isOther: true,
+                    },
+                ];
             }
 
-            return budgets
+            const fallbackBudgetOptions = budgets
                 .filter((budget) => deriveBudgetCategoryType(budget?.category_name) === selectedLane)
                 .map((budget) => {
                     const matchedCategory = categoriesByName.get(normalizeLabel(budget?.category_name));
@@ -3218,14 +3199,37 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
                     };
                 })
                 .filter((item) => item.name && item.value);
+
+            if (fallbackBudgetOptions.length === 0) return fallbackBudgetOptions;
+
+            return [
+                ...fallbackBudgetOptions,
+                {
+                    value: `${fallbackBudgetOptions[0].categoryValue}::Other`,
+                    categoryValue: fallbackBudgetOptions[0].categoryValue,
+                    name: 'Other',
+                    remaining: selectedLaneRemaining,
+                    allocated: null,
+                    spent: 0,
+                    laneRemaining: selectedLaneRemaining,
+                    hasItemLimit: false,
+                    isOther: true,
+                },
+            ];
         },
-        [budgetCategories, budgets, selectedLane, setup]
+        [budgetCategories, budgets, expenses, selectedLane, selectedLaneBudget, selectedLaneRemaining, setup]
     );
     const selectedCategory = categoryOptions.find((item) => String(item.value) === String(formData.category));
+    const selectedCategoryName = selectedCategory?.isOther
+        ? formData.otherCategory.trim()
+        : selectedCategory?.name;
+    const getCategoryAvailableAmount = (category) => (
+        category ? Math.min(category.remaining, category.laneRemaining ?? category.remaining) : 0
+    );
 
     useEffect(() => {
         setSelectedLane(defaultLane);
-        setFormData((current) => ({ ...current, category: '' }));
+        setFormData((current) => ({ ...current, category: '', otherCategory: '' }));
     }, [defaultLane]);
 
     useEffect(() => {
@@ -3256,6 +3260,23 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
         setFormData((current) => ({ ...current, [name]: value }));
     };
 
+    const updateCategory = (value) => {
+        setError('');
+        setFormData((current) => ({
+            ...current,
+            category: value,
+            otherCategory: categoryOptions.find((item) => String(item.value) === String(value))?.isOther
+                ? current.otherCategory
+                : '',
+        }));
+    };
+
+    const updateTransactionType = (lane) => {
+        setError('');
+        setSelectedLane(lane);
+        setFormData((current) => ({ ...current, category: '', otherCategory: '' }));
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
@@ -3264,13 +3285,17 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
             setError(`Choose a ${selectedLane.toLowerCase()} item before adding a transaction.`);
             return;
         }
+        if (selectedCategory?.isOther && !formData.otherCategory.trim()) {
+            setError('Type the other category name before adding this expense.');
+            return;
+        }
         if (!formData.amount || Number(formData.amount) <= 0) {
             setError('Enter a valid transaction amount greater than zero.');
             return;
         }
 
         const expenseAmount = Number(formData.amount || 0);
-        const availableAmount = selectedCategory ? Math.min(selectedCategory.remaining, selectedCategory.laneRemaining ?? selectedCategory.remaining) : 0;
+        const availableAmount = getCategoryAvailableAmount(selectedCategory);
         if (selectedCategory && expenseAmount > availableAmount) {
             setError(`This transaction exceeds the remaining ${selectedLane.toLowerCase()} limit for ${selectedCategory.name}. Remaining available is ${formatCurrency(availableAmount)}.`);
             return;
@@ -3283,11 +3308,11 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
             await createExpense({
                 category: selectedCategory?.categoryValue || formData.category,
                 amount: formData.amount,
-                description: selectedCategory?.name || `${selectedLane} transaction`,
+                description: selectedCategoryName || `${selectedLane} transaction`,
                 expense_date: formData.expense_date,
                 payment_method: 'CASH',
                 currency: 'KES',
-                notes: `${status}; ${formData.period}; ${formData.is_recurring ? 'recurring' : 'one-off'}`,
+                notes: `Received; ${selectedLane}; ${formData.period}; ${formData.is_recurring ? 'recurring' : 'one-off'}`,
             });
             markDashboardDataExists();
             await onSaved();
@@ -3311,8 +3336,7 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
                 >
                     <X size={14} />
                 </button>
-                <p className="text-[11px] text-[#8e97ab]">{setup?.label || 'Budget plan'}</p>
-                <h3 className="mt-1 text-[18px] font-bold text-[#0a1018]">Add Item</h3>
+                <h3 className="mt-1 text-[18px] font-bold text-[#0a1018]">Add Expenses</h3>
             </div>
 
             {error && (
@@ -3322,29 +3346,27 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4 px-5 pb-7">
-                <p className="text-[12px] leading-none text-[#707070]">Start by choosing where do you want your money to be</p>
-                <div className="grid grid-cols-3 gap-2">
-                    {['Received', 'Expected', 'Cancelled'].map((option) => {
-                        const active = status === option;
-                        return (
-                            <button
-                                key={option}
-                                type="button"
-                                onClick={() => setStatus(option)}
-                                className={`flex h-[42px] items-center justify-center gap-2 rounded-[10px] bg-white px-2 text-[12px] shadow-[0_0_1px_rgba(0,0,0,0.25)] ${active ? 'text-[#eabb3a]' : 'text-[#717182]'}`}
-                            >
-                                <span className={`h-5 w-5 rounded-[10px] border-2 ${active ? 'border-[#eabb3a] bg-[#eabb3a]/20' : 'border-[#8e8e93]'}`} />
-                                {option}
-                            </button>
-                        );
-                    })}
+                <div>
+                    <MobileFieldLabel label="Transaction Type" />
+                    <select
+                        value={selectedLane}
+                        onChange={(event) => updateTransactionType(event.target.value)}
+                        className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
+                    >
+                        {mobileBudgetLaneOrder.map((lane) => (
+                            <option key={lane} value={lane}>Eg. {lane}</option>
+                        ))}
+                    </select>
+                    <p className="mt-2 rounded-[10px] bg-[#fff8e4] px-3 py-2 text-[11px] font-semibold leading-4 text-[#8a6400]">
+                        {formatCurrency(selectedLaneRemaining)} remaining in your {selectedLane.toLowerCase()} budget.
+                    </p>
                 </div>
 
                 <div>
-                    <MobileFieldLabel label={`${selectedLane} Item`} />
+                    <MobileFieldLabel label="Transaction Category" />
                     <select
                         value={formData.category}
-                        onChange={(event) => updateField('category', event.target.value)}
+                        onChange={(event) => updateCategory(event.target.value)}
                         disabled={categoriesLoading}
                         className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
                     >
@@ -3352,13 +3374,40 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
                             {categoriesLoading ? 'Loading items...' : categoryOptions.length ? `Eg. ${categoryOptions[0].name}` : `No ${selectedLane.toLowerCase()} items`}
                         </option>
                         {categoryOptions.map((item) => (
-                            <option key={item.value} value={item.value}>{item.name}</option>
+                            <option key={item.value} value={item.value}>
+                                {item.name}
+                            </option>
                         ))}
                     </select>
+                    {selectedCategory?.isOther && (
+                        <div className="mt-3">
+                            <MobileFieldLabel label={`Other ${selectedLane.toLowerCase()} category`} />
+                            <input
+                                type="text"
+                                value={formData.otherCategory}
+                                onChange={(event) => updateField('otherCategory', event.target.value)}
+                                placeholder="Eg. Gifts, water refill, chama boost"
+                                className="mt-2 h-[42px] w-full rounded-[12px] border border-[#dde1ea] bg-[#f7f8fa] px-[14px] text-[14px] font-medium text-[#757575] outline-none focus:border-[#0c6060]"
+                            />
+                        </div>
+                    )}
                     {selectedCategory && (
-                        <p className="mt-1 text-[11px] font-semibold text-[#0c6060]">
-                            Remaining: {formatCurrency(Math.min(selectedCategory.remaining, selectedCategory.laneRemaining ?? selectedCategory.remaining))}
-                        </p>
+                        <div className="mt-2 rounded-[10px] bg-[#f8fcfa] px-3 py-2 text-[11px] leading-4 text-[#0c6060]">
+                            <p className="font-bold">
+                                Remaining: {formatCurrency(getCategoryAvailableAmount(selectedCategory))}
+                            </p>
+                            {selectedCategory.hasItemLimit ? (
+                                <p className="mt-0.5 text-[#5f7168]">
+                                    Spent {formatCurrency(selectedCategory.spent || 0)} of {formatCurrency(selectedCategory.allocated)} in {selectedCategory.name}.
+                                </p>
+                            ) : (
+                                <p className="mt-0.5 text-[#5f7168]">
+                                    {selectedCategory.isOther
+                                        ? `This custom item uses the remaining ${selectedLane.toLowerCase()} budget limit.`
+                                        : `This item uses the remaining ${selectedLane.toLowerCase()} budget limit.`}
+                                </p>
+                            )}
+                        </div>
                     )}
                 </div>
 
@@ -3427,7 +3476,7 @@ const MobileTransactionSheet = ({ budgets = [], defaultLane = 'Needs', setup, on
                     className="flex h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#0c6060] p-4 text-[16px] font-bold text-white disabled:cursor-not-allowed disabled:bg-[#c7cdd4]"
                 >
                     <Plus size={20} />
-                    {submitting ? 'Adding...' : 'Add Transaction'}
+                    {submitting ? 'Adding...' : 'Add Expenses'}
                 </button>
             </form>
         </div>
