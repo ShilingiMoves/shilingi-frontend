@@ -4,7 +4,7 @@ const API_VERSION = '/api/v1';
 
 function toNumber(value) {
     if (value === null || value === undefined || value === '') return 0;
-    const parsed = Number(value);
+    const parsed = Number(String(value).replace(/[^\d.-]/g, ''));
     return Number.isNaN(parsed) ? 0 : parsed;
 }
 
@@ -20,7 +20,19 @@ function normaliseDebt(rawDebt, index = 0) {
         creditor: rawDebt?.creditor_name ?? rawDebt?.creditor ?? rawDebt?.name ?? 'Unknown creditor',
         balance: currentBalance,
         interestRate: toNumber(rawDebt?.interestRate ?? rawDebt?.interest_rate ?? rawDebt?.apr),
-        minimumPayment: toNumber(rawDebt?.minimumPayment ?? rawDebt?.minimum_payment),
+        minimumPayment: toNumber(
+            rawDebt?.minimumPayment
+            ?? rawDebt?.minimum_payment
+            ?? rawDebt?.monthlyPayment
+            ?? rawDebt?.monthly_payment
+            ?? rawDebt?.monthlyRepayment
+            ?? rawDebt?.monthly_repayment
+            ?? rawDebt?.repayment_amount
+            ?? rawDebt?.installment
+            ?? rawDebt?.instalment
+            ?? rawDebt?.monthly_installment
+            ?? rawDebt?.monthly_instalment
+        ),
         dueDate: rawDebt?.dueDate ?? rawDebt?.due_date ?? '',
         status: rawDebt?.status ?? (currentBalance > 0 ? 'ACTIVE' : 'PAID_OFF'),
         notes: rawDebt?.notes ?? rawDebt?.description ?? '',
@@ -55,6 +67,9 @@ function prepareDebtPayload(formValues) {
         current_balance: balance.toString(),
         interest_rate: interestRate === null ? null : interestRate.toString(),
         minimum_payment: minimumPayment.toString(),
+        minimumPayment: minimumPayment.toString(),
+        monthly_payment: minimumPayment.toString(),
+        monthly_repayment: minimumPayment.toString(),
         due_date: formValues.dueDate || null,
         status: formValues.status || 'ACTIVE',
         notes: formValues.notes,
@@ -67,6 +82,17 @@ function prepareDebtPayload(formValues) {
     };
 }
 
+function extractDebtRecord(payload) {
+    return payload?.data?.debt
+        ?? payload?.data?.item
+        ?? payload?.data?.record
+        ?? payload?.debt
+        ?? payload?.item
+        ?? payload?.record
+        ?? payload?.data
+        ?? payload;
+}
+
 export async function getDebts() {
     const response = await apiClient.get(`${API_VERSION}/debts/`);
     return extractDebtCollection(response).map((debt, index) => normaliseDebt(debt, index));
@@ -74,12 +100,12 @@ export async function getDebts() {
 
 export async function createDebt(formValues) {
     const response = await apiClient.post(`${API_VERSION}/debts/`, prepareDebtPayload(formValues));
-    return normaliseDebt(response?.data ?? response?.debt ?? response);
+    return normaliseDebt(extractDebtRecord(response));
 }
 
 export async function updateDebt(debtId, formValues) {
     const response = await apiClient.patch(`${API_VERSION}/debts/${debtId}/`, prepareDebtPayload(formValues));
-    return normaliseDebt(response?.data ?? response?.debt ?? response);
+    return normaliseDebt(extractDebtRecord(response));
 }
 
 export async function deleteDebt(debtId) {

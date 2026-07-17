@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+    ArrowLeft,
+    ArrowRight,
     Briefcase,
+    CheckCircle2,
     ChevronDown,
     PartyPopper,
     Plus,
@@ -17,13 +20,19 @@ import { USER_PROFILE_WORKSPACE_KEY } from '../components/dashboard/user/UserGoa
 import { completeProfileSetup, markProfileSetupPending } from '../utils/profileSetupState';
 
 const setupSteps = ['income', 'goals', 'dependents'];
+const setupStepLabels = {
+    income: 'Income Manager',
+    goals: 'Financial Goals',
+    dependents: 'Dependants',
+};
+const goalNameOptions = ['School Fees', 'Emergency Fund', 'Trip', 'Home Deposit', 'Business Capital', 'Other'];
+const linkedProductOptions = ['Savings Account', 'MMF', 'Fixed Deposit', 'Treasury Bills', 'Other'];
 const defaultIncomeForm = {
     source: 'Salary',
     amount: '',
     period: 'MONTHLY',
     income_date: new Date().toISOString().split('T')[0],
     status: 'RECEIVED',
-    description: '',
     is_recurring: true,
 };
 const defaultGoalForm = {
@@ -33,7 +42,7 @@ const defaultGoalForm = {
     currentSavings: '',
     monthlyContribution: '',
     targetDate: '',
-    linkedProduct: 'Money Market Fund',
+    linkedProduct: 'MMF',
 };
 const defaultDependentForm = {
     relationship: 'Father',
@@ -45,17 +54,22 @@ const defaultDependentForm = {
 
 const ProfileSetupPage = () => {
     const navigate = useNavigate();
-    const [stepIndex, setStepIndex] = useState(-1);
-    const [incomeItems, setIncomeItems] = useState(() => readProfileSetupDraft().incomeItems);
-    const [goalItems, setGoalItems] = useState(() => readProfileSetupDraft().goalItems);
-    const [dependentItems, setDependentItems] = useState(() => readProfileSetupDraft().dependentItems);
+    const [setupDraft] = useState(() => readProfileSetupDraft());
+    const [stepIndex, setStepIndex] = useState(() => getResumeStepIndex(setupDraft));
+    const [incomeItems, setIncomeItems] = useState(() => setupDraft.incomeItems);
+    const [goalItems, setGoalItems] = useState(() => setupDraft.goalItems);
+    const [dependentItems, setDependentItems] = useState(() => setupDraft.dependentItems);
+    const [confirmations, setConfirmations] = useState(() => setupDraft.confirmations);
     const [sheet, setSheet] = useState(null);
+    const [prompt, setPrompt] = useState(null);
     const [incomeForm, setIncomeForm] = useState(defaultIncomeForm);
     const [goalForm, setGoalForm] = useState(defaultGoalForm);
     const [dependentForm, setDependentForm] = useState(defaultDependentForm);
     const [isSaving, setIsSaving] = useState(false);
     const [logoFailed, setLogoFailed] = useState(false);
     const [notice, setNotice] = useState('');
+    const [showCelebration, setShowCelebration] = useState(false);
+    const resumePromptShownRef = useRef(false);
 
     const currentStep = setupSteps[stepIndex] || 'welcome';
     const progressIndex = Math.max(stepIndex, 0);
@@ -63,13 +77,35 @@ const ProfileSetupPage = () => {
         () => incomeItems.reduce((sum, item) => sum + parseMoney(item.amount), 0),
         [incomeItems]
     );
+    const goalCoverage = useMemo(() => ({
+        short: goalItems.some((item) => String(item.type || '').includes('Short')),
+        medium: goalItems.some((item) => String(item.type || '').includes('Medium')),
+        long: goalItems.some((item) => String(item.type || '').includes('Long')),
+    }), [goalItems]);
+    const allGoalCategoriesComplete = goalCoverage.short && goalCoverage.medium && goalCoverage.long;
 
-    const finishSetup = async (section = 'overview', { complete = true } = {}) => {
+    useEffect(() => {
+        if (resumePromptShownRef.current || !setupDraft.hasDraft || stepIndex < 0) return;
+        resumePromptShownRef.current = true;
+
+        const step = setupSteps[stepIndex];
+        const timer = window.setTimeout(() => {
+            setPrompt({
+                type: 'encouragement',
+                message: getResumeEncouragement(step),
+                onDone: () => undefined,
+            });
+        }, 350);
+
+        return () => window.clearTimeout(timer);
+    }, [setupDraft.hasDraft, stepIndex]);
+
+    const finishSetup = async (section = 'overview', { complete = true, confirmationSnapshot = confirmations } = {}) => {
         setIsSaving(true);
         setNotice('');
 
         try {
-            await persistLocalSetup({ incomeItems, goalItems, dependentItems });
+            await persistLocalSetup({ incomeItems, goalItems, dependentItems, confirmations: confirmationSnapshot });
             if (totalIncome > 0) {
                 await updateUserPreferences({
                     monthly_income: String(totalIncome),
@@ -98,8 +134,9 @@ const ProfileSetupPage = () => {
             return;
         }
         setIncomeItems((current) => [...current, { ...incomeForm, id: crypto.randomUUID?.() || String(Date.now()) }]);
+        setConfirmations((current) => ({ ...current, income: false }));
         setIncomeForm(defaultIncomeForm);
-        setNotice('Great! Your income is set up. You can add another or continue.');
+        setNotice('Great. Add any other income source, then confirm the list before moving forward.');
         setSheet(null);
     };
 
@@ -110,7 +147,7 @@ const ProfileSetupPage = () => {
         }
         setGoalItems((current) => [...current, { ...goalForm, id: crypto.randomUUID?.() || String(Date.now()) }]);
         setGoalForm(defaultGoalForm);
-        setNotice('Your goal has been added.');
+        setNotice('Goal added. Add one goal in each short, medium, and long-term category to complete this step.');
         setSheet(null);
     };
 
@@ -124,9 +161,88 @@ const ProfileSetupPage = () => {
             return;
         }
         setDependentItems((current) => [...current, { ...dependentForm, id: crypto.randomUUID?.() || String(Date.now()) }]);
+        setConfirmations((current) => ({ ...current, dependents: false }));
         setDependentForm(defaultDependentForm);
-        setNotice('Your dependant has been added.');
+        setNotice('Your dependant has been added. Confirm the count once the list is complete.');
         setSheet(null);
+    };
+
+    const goBack = () => {
+        const nextIndex = Math.max(0, stepIndex - 1);
+        if (nextIndex === stepIndex) return;
+        moveToStep(nextIndex, 'back');
+    };
+
+    const goForward = () => {
+        if (currentStep === 'income') {
+            if (incomeItems.length === 0) {
+                setNotice('Add at least one income source before continuing.');
+                return;
+            }
+            if (!confirmations.income) {
+                setPrompt('confirmIncome');
+                return;
+            }
+            moveToStep(1, 'forward');
+            return;
+        }
+
+        if (currentStep === 'goals') {
+            if (!allGoalCategoriesComplete) {
+                setNotice('Add at least one short-term, medium-term, and long-term goal before continuing.');
+                return;
+            }
+            moveToStep(2, 'forward');
+            return;
+        }
+
+        if (currentStep === 'dependents') {
+            if (dependentItems.length === 0) {
+                setNotice('Add your dependants before completing profile setup.');
+                return;
+            }
+            if (!confirmations.dependents) {
+                setPrompt('confirmDependents');
+                return;
+            }
+            celebrateAndFinish();
+        }
+    };
+
+    const showStepEncouragement = (message, onDone) => {
+        setNotice('');
+        setPrompt({ type: 'encouragement', message, onDone });
+    };
+
+    const moveToStep = (nextIndex, direction = 'forward') => {
+        const nextStep = setupSteps[nextIndex];
+        const previousStep = setupSteps[stepIndex];
+        showStepEncouragement(getTransitionEncouragement({ direction, nextStep, previousStep }), () => setStepIndex(nextIndex));
+    };
+
+    const celebrateAndFinish = () => {
+        playCelebrationSound();
+        setShowCelebration(true);
+    };
+
+    const proceedToDashboard = () => {
+        setShowCelebration(false);
+        finishSetup('overview');
+    };
+
+    const confirmDependantsAndCelebrate = () => {
+        const nextConfirmations = { ...confirmations, dependents: true };
+        setConfirmations(nextConfirmations);
+        setPrompt(null);
+        setNotice('');
+        playCelebrationSound();
+        setShowCelebration({ confirmationSnapshot: nextConfirmations });
+    };
+
+    const proceedToDashboardAfterConfirmation = () => {
+        const confirmationSnapshot = showCelebration?.confirmationSnapshot || confirmations;
+        setShowCelebration(false);
+        finishSetup('overview', { confirmationSnapshot });
     };
 
     return (
@@ -151,7 +267,7 @@ const ProfileSetupPage = () => {
                     <WelcomeSetupScreen onSkip={() => finishSetup('overview', { complete: false })} onStart={() => setStepIndex(0)} />
                 ) : (
                     <main className="flex flex-1 flex-col px-4 pb-6 pt-5">
-                        <SetupIntro currentStep={progressIndex} />
+                        <SetupIntro currentStep={currentStep} />
                         <StepProgress currentStep={progressIndex} />
 
                         {notice && (
@@ -184,20 +300,31 @@ const ProfileSetupPage = () => {
                         )}
 
                         <div className="mt-auto space-y-3 pt-5">
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    disabled={isSaving || stepIndex <= 0}
+                                    onClick={goBack}
+                                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[#cbd8d2] bg-white px-4 text-sm font-bold text-[#0c6060] disabled:opacity-45"
+                                >
+                                    <ArrowLeft size={16} /> Back
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isSaving}
+                                    onClick={goForward}
+                                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[#cbd8d2] bg-white px-4 text-sm font-bold text-[#0c6060] disabled:opacity-45"
+                                >
+                                    Forward <ArrowRight size={16} />
+                                </button>
+                            </div>
                             <button
                                 type="button"
                                 disabled={isSaving}
-                                onClick={() => {
-                                    if (stepIndex >= setupSteps.length - 1) {
-                                        finishSetup('overview');
-                                        return;
-                                    }
-                                    setNotice('');
-                                    setStepIndex((current) => current + 1);
-                                }}
+                                onClick={goForward}
                                 className="inline-flex min-h-[54px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-bold text-white disabled:bg-[#a8c3bd]"
                             >
-                                {isSaving ? 'Saving...' : 'Continue'}
+                                {isSaving ? 'Saving...' : stepIndex >= setupSteps.length - 1 ? 'Complete setup' : 'Continue'}
                             </button>
                             <button
                                 type="button"
@@ -231,7 +358,6 @@ const ProfileSetupPage = () => {
                                 </button>
                             ))}
                         </div>
-                        <SheetInput label="Description" value={incomeForm.description} onChange={(value) => setIncomeForm((current) => ({ ...current, description: value }))} placeholder="Type something" />
                         <button type="button" onClick={addIncome} className="mt-2 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#0c6060] text-sm font-bold text-white">
                             <Plus size={18} /> Add Income
                         </button>
@@ -241,14 +367,14 @@ const ProfileSetupPage = () => {
                 {sheet === 'goal' && (
                     <SetupSheet title="Add Financial Goal" onClose={() => setSheet(null)}>
                         <SheetSelect label="Goal type" value={goalForm.type} onChange={(value) => setGoalForm((current) => ({ ...current, type: value }))} options={['Short Term Goal', 'Medium Term Goal', 'Long Term Goal']} />
-                        <SheetInput label="Goal name" value={goalForm.name} onChange={(value) => setGoalForm((current) => ({ ...current, name: value }))} placeholder="Eg. Emergency Fund" />
+                        <SheetSelect label="Goal name" value={goalForm.name} onChange={(value) => setGoalForm((current) => ({ ...current, name: value }))} options={goalNameOptions} />
                         <SheetInput label="Target amount" money value={goalForm.targetAmount} onChange={(value) => setGoalForm((current) => ({ ...current, targetAmount: value }))} placeholder="Eg. KES 30,000" />
                         <div className="grid grid-cols-2 gap-3">
                             <SheetInput label="Current savings" money value={goalForm.currentSavings} onChange={(value) => setGoalForm((current) => ({ ...current, currentSavings: value }))} placeholder="Eg. KES 10,000" />
                             <SheetInput label="Monthly contribution" money value={goalForm.monthlyContribution} onChange={(value) => setGoalForm((current) => ({ ...current, monthlyContribution: value }))} placeholder="Eg. KES 1,000" />
                         </div>
                         <SheetInput label="Target date" type="date" value={goalForm.targetDate} onChange={(value) => setGoalForm((current) => ({ ...current, targetDate: value }))} />
-                        <SheetSelect label="Link to a product" value={goalForm.linkedProduct} onChange={(value) => setGoalForm((current) => ({ ...current, linkedProduct: value }))} options={['Money Market Fund', 'Savings Account', 'SACCO', 'Treasury Bills']} />
+                        <SheetSelect label="Link to a product" value={goalForm.linkedProduct} onChange={(value) => setGoalForm((current) => ({ ...current, linkedProduct: value }))} options={linkedProductOptions} />
                         <button type="button" onClick={addGoal} className="mt-2 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#0c6060] text-sm font-bold text-white">
                             <Plus size={18} /> Add Goal
                         </button>
@@ -266,6 +392,49 @@ const ProfileSetupPage = () => {
                             <Plus size={18} /> Add Dependent
                         </button>
                     </SetupSheet>
+                )}
+
+                {prompt === 'confirmIncome' && (
+                    <ConfirmDialog
+                        title="Confirm income sources"
+                        body={`You have added ${incomeItems.length} income ${incomeItems.length === 1 ? 'source' : 'sources'} totaling ${formatKes(totalIncome)}. Are these all your sources of income?`}
+                        confirmLabel="Yes, all income is added"
+                        onClose={() => setPrompt(null)}
+                        onConfirm={() => {
+                            setConfirmations((current) => ({ ...current, income: true }));
+                            setPrompt(null);
+                            setNotice('Income confirmed. You can move to financial goals.');
+                        }}
+                    />
+                )}
+
+                {prompt === 'confirmDependents' && (
+                    <ConfirmDialog
+                        title="Confirm dependants"
+                        body={`You have added ${totalDependants(dependentItems)} ${totalDependants(dependentItems) === 1 ? 'dependant' : 'dependants'}. Is this the number you want to use for your profile?`}
+                        confirmLabel={setupDraft.hasDraft ? 'Yes, finish my profile' : 'Yes, dependants are correct'}
+                        onClose={() => setPrompt(null)}
+                        onConfirm={confirmDependantsAndCelebrate}
+                    />
+                )}
+
+                {prompt?.type === 'encouragement' && (
+                    <EncouragementDialog
+                        message={prompt.message}
+                        onContinue={() => {
+                            const onDone = prompt.onDone;
+                            setPrompt(null);
+                            onDone?.();
+                        }}
+                    />
+                )}
+
+                {showCelebration && (
+                    <CelebrationDialog
+                        isReturning={setupDraft.hasDraft}
+                        isSaving={isSaving}
+                        onProceed={showCelebration?.confirmationSnapshot ? proceedToDashboardAfterConfirmation : proceedToDashboard}
+                    />
                 )}
             </section>
         </div>
@@ -308,7 +477,7 @@ const SetupIntro = ({ currentStep }) => (
         <p className="font-mono text-[11px] uppercase tracking-[1.98px] text-[#eabb3a]">Make it yours</p>
         <h1 className="mt-2 text-[27px] font-extrabold leading-[31px] tracking-normal text-[#10231c]">Complete your profile</h1>
         <p className="mt-2 text-[14.5px] leading-[22px] text-[#5e5f60]">
-            Let&apos;s set up your financial profile to understand your current state.
+            {setupStepLabels[currentStep] || 'Profile'} helps shape the dashboard around your real money picture.
         </p>
     </div>
 );
@@ -442,6 +611,76 @@ const SummaryRow = ({ icon: Icon, label, meta, value }) => (
     </div>
 );
 
+const ConfirmDialog = ({ body, confirmLabel, onClose, onConfirm, title }) => (
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/45 px-5">
+        <div className="w-full max-w-[360px] rounded-[24px] bg-white p-5 shadow-[0_24px_48px_rgba(0,0,0,0.22)]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eaf7f2] text-[#0c6060]">
+                <CheckCircle2 size={23} />
+            </span>
+            <h2 className="mt-4 text-lg font-extrabold text-[#10231c]">{title}</h2>
+            <p className="mt-2 text-sm leading-6 text-[#5e5f60]">{body}</p>
+            <div className="mt-5 space-y-2">
+                <button type="button" onClick={onConfirm} className="inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 text-sm font-bold text-white">
+                    {confirmLabel}
+                </button>
+                <button type="button" onClick={onClose} className="inline-flex min-h-[42px] w-full items-center justify-center rounded-full border border-[#d8e2dd] bg-white px-5 text-sm font-bold text-[#0c6060]">
+                    Go back and edit
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
+const EncouragementDialog = ({ message, onContinue }) => (
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/45 px-5">
+        <div className="w-full max-w-[360px] rounded-[24px] bg-white p-5 text-center shadow-[0_24px_48px_rgba(0,0,0,0.22)]">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff7df] text-[#9b7416]">
+                <PartyPopper size={24} />
+            </span>
+            <h2 className="mt-4 text-lg font-extrabold text-[#10231c]">Nice progress</h2>
+            <p className="mt-2 text-sm leading-6 text-[#5e5f60]">{message}</p>
+            <button type="button" onClick={onContinue} className="mt-5 inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 text-sm font-bold text-white">
+                Continue
+            </button>
+        </div>
+    </div>
+);
+
+const CelebrationDialog = ({ isReturning = false, isSaving, onProceed }) => (
+    <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#063b38]/92 px-5">
+        <div className="pointer-events-none absolute inset-0">
+            {Array.from({ length: 28 }).map((_, index) => (
+                <span
+                    key={index}
+                    className="absolute top-[-40px] h-8 w-2 rounded-full opacity-90 animate-[confettiDrop_2.8s_linear_infinite]"
+                    style={{
+                        left: `${(index * 37) % 100}%`,
+                        animationDelay: `${(index % 9) * 0.18}s`,
+                        backgroundColor: ['#eabb3a', '#ffffff', '#72d6a3', '#ff8a65'][index % 4],
+                    }}
+                />
+            ))}
+        </div>
+        <div className="relative w-full max-w-[360px] rounded-[28px] bg-white p-6 text-center shadow-[0_30px_70px_rgba(0,0,0,0.28)]">
+            <style>{'@keyframes confettiDrop{0%{transform:translateY(-48px) rotate(0deg);opacity:0}10%{opacity:1}100%{transform:translateY(820px) rotate(540deg);opacity:.25}}'}</style>
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#fff7df] text-[#9b7416]">
+                <PartyPopper size={32} />
+            </span>
+            <h2 className="mt-5 text-2xl font-extrabold leading-8 text-[#0c6060]">
+                {isReturning ? 'Welcome back, profile complete!' : 'Congratulations!'}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[#5e5f60]">
+                {isReturning
+                    ? 'You came back and finished the important details. Head to your dashboard to see your money picture at a glance and keep improving each component.'
+                    : 'Your profile setup is complete. Proceed to your dashboard to see your finances at a glance and keep improving each component.'}
+            </p>
+            <button type="button" disabled={isSaving} onClick={onProceed} className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#0c6060] px-5 text-sm font-bold text-white disabled:bg-[#a8c3bd]">
+                {isSaving ? 'Preparing dashboard...' : 'Go to my dashboard'}
+            </button>
+        </div>
+    </div>
+);
+
 const SetupChecklistItem = ({ number, text }) => (
     <div className="mt-4 flex items-center gap-3">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eabb3a] text-sm font-extrabold text-white">{number}</span>
@@ -515,20 +754,106 @@ function formatKes(value) {
     return `KES ${Math.round(Number(value) || 0).toLocaleString('en-KE')}`;
 }
 
+function hasAllGoalCategories(goalItems = []) {
+    return ['Short', 'Medium', 'Long'].every((horizon) => (
+        goalItems.some((item) => String(item.type || '').includes(horizon))
+    ));
+}
+
+function getResumeStepIndex(draft = {}) {
+    if (!draft.hasDraft) return -1;
+    if (!draft.incomeItems?.length || draft.confirmations?.income !== true) return 0;
+    if (!hasAllGoalCategories(draft.goalItems)) return 1;
+    return 2;
+}
+
+function getResumeEncouragement(step) {
+    const messages = {
+        income: 'Welcome back. Start by confirming your Income Manager so the dashboard can trust your cash flow picture.',
+        goals: 'Welcome back. Your income is in place. Finish your short, medium, and long-term goals so your plan has direction.',
+        dependents: 'Welcome back. You are nearly done. Confirm your dependants so Shilingi Moves can shape protection, emergency fund, and family support guidance.',
+    };
+
+    return messages[step] || 'Welcome back. Pick up where you left off and finish your profile setup.';
+}
+
+function getTransitionEncouragement({ direction, nextStep, previousStep }) {
+    if (direction === 'back') {
+        const backMessages = {
+            income: 'No problem. Review your Income Manager and make sure every source is captured before moving forward again.',
+            goals: 'Good call. Review your financial goals and make sure short, medium, and long-term plans are all represented.',
+        };
+        return backMessages[nextStep] || 'You can review this step and adjust anything before completing your profile.';
+    }
+
+    if (previousStep === 'income' && nextStep === 'goals') {
+        return 'Income Manager is ready. Next, give your money a job with short, medium, and long-term goals.';
+    }
+
+    if (previousStep === 'goals' && nextStep === 'dependents') {
+        return 'Your goals are mapped. Next, add dependants so Shilingi Moves can protect your real household picture.';
+    }
+
+    const forwardMessages = {
+        goals: 'Keep going. Financial goals turn your income into a plan you can track.',
+        dependents: 'Almost there. Dependants help the dashboard understand who your money supports.',
+    };
+
+    return forwardMessages[nextStep] || 'Nice progress. Keep going to finish your profile.';
+}
+
+function totalDependants(dependentItems = []) {
+    return dependentItems.reduce((sum, item) => sum + (Number(item.count) || 1), 0);
+}
+
+function playCelebrationSound() {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const audio = new AudioContext();
+        const notes = [523.25, 659.25, 783.99];
+        notes.forEach((frequency, index) => {
+            const oscillator = audio.createOscillator();
+            const gain = audio.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audio.currentTime + index * 0.11);
+            gain.gain.setValueAtTime(0.0001, audio.currentTime + index * 0.11);
+            gain.gain.exponentialRampToValueAtTime(0.12, audio.currentTime + index * 0.11 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + index * 0.11 + 0.28);
+            oscillator.connect(gain);
+            gain.connect(audio.destination);
+            oscillator.start(audio.currentTime + index * 0.11);
+            oscillator.stop(audio.currentTime + index * 0.11 + 0.3);
+        });
+    } catch {
+        // Celebration visuals still run when browser audio is unavailable.
+    }
+}
+
 function readProfileSetupDraft() {
     if (typeof window === 'undefined') {
-        return { incomeItems: [], goalItems: [], dependentItems: [] };
+        return { incomeItems: [], goalItems: [], dependentItems: [], confirmations: { income: false, dependents: false }, hasDraft: false };
     }
 
     try {
         const workspace = JSON.parse(window.localStorage.getItem(USER_PROFILE_WORKSPACE_KEY) || '{}');
+        const incomeItems = Array.isArray(workspace.setupIncomes) ? workspace.setupIncomes : [];
+        const goalItems = Array.isArray(workspace.setupGoals) ? workspace.setupGoals : [];
+        const dependentItems = readStoredDependents(workspace);
         return {
-            incomeItems: Array.isArray(workspace.setupIncomes) ? workspace.setupIncomes : [],
-            goalItems: Array.isArray(workspace.setupGoals) ? workspace.setupGoals : [],
-            dependentItems: readStoredDependents(workspace),
+            incomeItems,
+            goalItems,
+            dependentItems,
+            confirmations: {
+                income: workspace.setupConfirmations?.income === true,
+                dependents: workspace.setupConfirmations?.dependents === true,
+            },
+            hasDraft: incomeItems.length > 0 || goalItems.length > 0 || dependentItems.length > 0,
         };
     } catch {
-        return { incomeItems: [], goalItems: [], dependentItems: [] };
+        return { incomeItems: [], goalItems: [], dependentItems: [], confirmations: { income: false, dependents: false }, hasDraft: false };
     }
 }
 
@@ -583,7 +908,7 @@ async function syncIncomeToApi(incomeItems) {
     }).catch(() => null)));
 }
 
-async function persistLocalSetup({ dependentItems, goalItems, incomeItems = [] }) {
+async function persistLocalSetup({ confirmations = {}, dependentItems, goalItems, incomeItems = [] }) {
     if (typeof window === 'undefined') return;
 
     let existingWorkspace = {};
@@ -608,6 +933,10 @@ async function persistLocalSetup({ dependentItems, goalItems, incomeItems = [] }
         setupIncomes: incomeItems,
         setupGoals: goalItems,
         setupDependents: dependentItems,
+        setupConfirmations: {
+            income: confirmations.income === true,
+            dependents: confirmations.dependents === true,
+        },
     };
 
     window.localStorage.setItem(USER_PROFILE_WORKSPACE_KEY, JSON.stringify(workspace));

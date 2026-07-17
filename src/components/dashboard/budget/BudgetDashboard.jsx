@@ -238,6 +238,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
     
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [syncNotice, setSyncNotice] = useState('');
     const [submitError, setSubmitError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
@@ -277,6 +278,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
         try {
             setLoading(true);
             setError('');
+            setSyncNotice('');
             
             const [budgetsResult, summaryResult, expensesResult, incomeSummaryResult, goalsResult, goalSummaryResult] = await Promise.allSettled([
                 getBudgets({ current: 'true' }),
@@ -309,11 +311,10 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             const resolvedIncome = incomeFromManager > 0 ? incomeFromManager : incomeFromProfile;
             setTotalIncome(resolvedIncome);
 
-            const failedRequests = [budgetsResult, summaryResult, expensesResult].filter(
-                (result) => result.status === 'rejected'
-            );
-            if (failedRequests.length > 0) {
-                setError('Some dashboard sections could not fully sync. Showing available data.');
+            if (budgetsResult.status === 'rejected') {
+                setError('We could not load your saved budget items. Please check your connection and try again.');
+            } else if (summaryResult.status === 'rejected' || expensesResult.status === 'rejected') {
+                setSyncNotice('Some totals are still syncing. Your saved budget items are available, and the summary will refresh automatically.');
             }
 
             // Mobile mirrors the saved data contract: income unlocks the model,
@@ -626,6 +627,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             const normalizedBudgets = Array.isArray(budgetsData) ? budgetsData : [];
             setBudgets(normalizedBudgets);
             setSummary(newSummary);
+            setSyncNotice('');
             markDashboardDataExists();
             triggerHealthRefresh(editingBudget ? 'budget:update' : 'budget:create');
             setOverviewReturnView('categories');
@@ -677,6 +679,7 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
             ]);
             setBudgets(budgetsData);
             setSummary(summaryData);
+            setSyncNotice('');
             markDashboardDataExists();
             triggerHealthRefresh('expense:change');
             setOverviewReturnView('expenses');
@@ -707,6 +710,18 @@ const BudgetDashboard = ({ activeTab: controlledActiveTab, onTabChange, onSelect
                         <div>
                             <p className="font-semibold">Could not load your budget data.</p>
                             <p className="mt-1">{error}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {syncNotice && !error && (
+                <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                        <div>
+                            <p className="font-semibold">Budget summary is syncing.</p>
+                            <p className="mt-1">{syncNotice}</p>
                         </div>
                     </div>
                 </div>
