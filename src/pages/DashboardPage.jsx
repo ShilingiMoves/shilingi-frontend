@@ -1,13 +1,10 @@
-import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
     CheckCircle2,
-    Bot,
     Calculator,
     FileText,
-    GraduationCap,
-    HeartHandshake,
     Home,
     LineChart,
     MoreHorizontal,
@@ -18,7 +15,8 @@ import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import DashboardOverview from '../components/dashboard/shell/DashboardOverview';
 import DashboardTopbar from '../components/dashboard/shell/DashboardTopbar';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
-import { updatePreferredName } from '../services/userApi';
+import { getUserTier, updatePreferredName } from '../services/userApi';
+import { getTierCatalog } from '../services/platformApi';
 import { IncomeProvider } from '../contexts/IncomeContext';
 import { NetWorthProvider } from '../contexts/NetWorthContext';
 import { FinancialHealthProvider } from '../contexts/FinancialHealthContext';
@@ -30,7 +28,8 @@ import {
     readDashboardPillarProgressItem,
 } from '../utils/dashboardDataState';
 import incomeService from '../services/incomeService';
-import { dashboardSectionMap } from '../components/dashboard/shell/dashboardSections';
+import { dashboardSectionMap, dashboardSidebarGroups } from '../components/dashboard/shell/dashboardSections';
+import { buildDashboardAccess, buildDashboardNavigationGroups, getSectionAccess, SECTION_FEATURE_MAP } from '../utils/tierAccess';
 import {
     clearQueuedPreferredNamePrompt,
     hasAnyPreferredName,
@@ -49,6 +48,7 @@ const InvestmentTracker = lazy(() => import('../components/dashboard/investments
 const FinancialHealthDashboard = lazy(() => import('../components/dashboard/financialhealth/FinancialHealthDashboard'));
 const ProtectionPlanner = lazy(() => import('../components/dashboard/protection/ProtectionPlanner'));
 const RetirementPlanner = lazy(() => import('../components/dashboard/retirement/RetirementPlanner'));
+const TaxPlanner = lazy(() => import('../components/dashboard/tax/TaxPlanner'));
 const SettingsPanel = lazy(() => import('../components/dashboard/settings/SettingsPanel'));
 const ComparisonHubPanel = lazy(() => import('../components/dashboard/explore/ComparisonHubPanel'));
 const ResourcesToolsPanel = lazy(() => import('../components/dashboard/explore/ResourcesToolsPanel'));
@@ -69,6 +69,7 @@ const resumableDashboardSections = new Set([
     'investments',
     'protection',
     'retirement',
+    'tax',
     'networth',
     'comparehub',
     'resourceshub',
@@ -95,11 +96,49 @@ const DashboardPage = () => {
         return getRequestedDashboardSection(location) || getInitialDashboardSection();
     });
     const [hasIncomeData, setHasIncomeData] = useState(false);
+    const [tierCatalog, setTierCatalog] = useState(null);
+    const [tierInfo, setTierInfo] = useState(() => getStoredUserProfile()?.tier_info || null);
+    const [accessReady, setAccessReady] = useState(() => Boolean(getStoredUserProfile()?.tier_info));
+    const [accessPrompt, setAccessPrompt] = useState(null);
+    const accessBySection = useMemo(() => buildDashboardAccess(tierCatalog, tierInfo || profile?.tier_info), [profile?.tier_info, tierCatalog, tierInfo]);
+    const navigationGroups = useMemo(
+        () => buildDashboardNavigationGroups(tierCatalog, dashboardSidebarGroups),
+        [tierCatalog]
+    );
 
     const closePreferredNamePrompt = useCallback(() => {
         clearQueuedPreferredNamePrompt();
         setPreferredNamePrompt({ shouldShow: false, reason: 'returning' });
     }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        Promise.all([getTierCatalog(), getUserTier()])
+            .then(([catalog, currentTier]) => {
+                if (!isMounted) return;
+                setTierCatalog(catalog);
+                setTierInfo(currentTier);
+                setProfile((current) => ({ ...current, tier: currentTier?.current_tier || current?.tier, tier_info: currentTier }));
+            })
+            .catch((err) => console.error('Failed to load tier access:', err))
+            .finally(() => { if (isMounted) setAccessReady(true); });
+        return () => { isMounted = false; };
+    }, []);
+
+    useEffect(() => {
+        const handleAccessDenied = () => {
+            const sectionAccess = getSectionAccess(accessBySection, activeSection);
+            setAccessPrompt({
+                ...sectionAccess,
+                allowed: false,
+                currentTier: sectionAccess.currentTier || tierInfo?.current_tier || profile?.tier || 'BASIC',
+                minimumTier: sectionAccess.minimumTier || 'PLUS',
+                title: sectionAccess.title || dashboardSectionMap[activeSection]?.label,
+            });
+        };
+        window.addEventListener('shilingi:access-denied', handleAccessDenied);
+        return () => window.removeEventListener('shilingi:access-denied', handleAccessDenied);
+    }, [accessBySection, activeSection, profile?.tier, tierInfo?.current_tier]);
 
     useEffect(() => {
         if (lastAppliedLocationKeyRef.current === location.key) {
@@ -132,6 +171,7 @@ const DashboardPage = () => {
                 }
 
                 setProfile(userProfile);
+                if (userProfile?.tier_info) setTierInfo(userProfile.tier_info);
                 const hasIncome = Boolean(
                     (incomeSummary?.total_income && Number(incomeSummary.total_income) > 0) ||
                     (incomeSummary?.income_count && Number(incomeSummary.income_count) > 0) ||
@@ -158,13 +198,7 @@ const DashboardPage = () => {
     }, [closePreferredNamePrompt, profile]);
 
     useEffect(() => {
-        if (activeSection === 'buddy') {
-            setActiveSection('overview');
-        }
-    }, [activeSection]);
-
-    useEffect(() => {
-        if (!dashboardSectionMap[activeSection] || activeSection === 'buddy') {
+        if (!dashboardSectionMap[activeSection]) {
             setActiveSection(DEFAULT_DASHBOARD_SECTION);
             return;
         }
@@ -264,9 +298,22 @@ const DashboardPage = () => {
     };
 
     const handleSelectSection = useCallback((sectionId) => {
-        if (!dashboardSectionMap[sectionId] || sectionId === 'buddy') {
+        if (sectionId === 'buddy') {
+            window.dispatchEvent(new CustomEvent('shilingi-buddy-open'));
+            setMobileSidebarOpen(false);
+            return;
+        }
+
+        if (!dashboardSectionMap[sectionId]) {
             setActiveSection(DEFAULT_DASHBOARD_SECTION);
             navigate({ pathname: location.pathname, search: `?section=${DEFAULT_DASHBOARD_SECTION}` }, { state: { section: DEFAULT_DASHBOARD_SECTION } });
+            return;
+        }
+
+        const sectionAccess = getSectionAccess(accessBySection, sectionId);
+        if (!sectionAccess.allowed) {
+            setAccessPrompt(sectionAccess);
+            setMobileSidebarOpen(false);
             return;
         }
 
@@ -282,7 +329,7 @@ const DashboardPage = () => {
         window.requestAnimationFrame(() => {
             mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         });
-    }, [location.pathname, location.search, navigate]);
+    }, [accessBySection, location.pathname, location.search, navigate]);
 
     const openProfileFromPrompt = () => {
         closePreferredNamePrompt();
@@ -304,6 +351,11 @@ const DashboardPage = () => {
     );
 
     const renderActiveSection = () => {
+        if (!accessReady && SECTION_FEATURE_MAP[activeSection]) return sectionLoader;
+        const sectionAccess = getSectionAccess(accessBySection, activeSection);
+        if (!sectionAccess.allowed) {
+            return standardShell(<UpgradeAccessPanel access={sectionAccess} onBack={() => handleSelectSection('overview')} />);
+        }
         switch (activeSection) {
             case 'overview':
                 return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} />;
@@ -331,6 +383,13 @@ const DashboardPage = () => {
                         <BudgetDashboard onSelectSection={handleSelectSection} user={profile} />
                     </Suspense>
                     </div>
+                );
+
+            case 'tax':
+                return standardShell(
+                    <Suspense fallback={sectionLoader}>
+                        <TaxPlanner />
+                    </Suspense>
                 );
 
             case 'networth':
@@ -381,28 +440,28 @@ const DashboardPage = () => {
             case 'comparehub':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ComparisonHubPanel />
+                        <ComparisonHubPanel currentTier={tierInfo?.current_tier || profile?.tier} />
                     </Suspense>
                 );
 
             case 'resourceshub':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <ResourcesToolsPanel onSelectSection={handleSelectSection} />
+                        <ResourcesToolsPanel currentTier={tierInfo?.current_tier || profile?.tier} onSelectSection={handleSelectSection} />
                     </Suspense>
                 );
 
             case 'learninghub':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <LearningHubPanel />
+                        <LearningHubPanel currentTier={tierInfo?.current_tier || profile?.tier} />
                     </Suspense>
                 );
 
             case 'communityhub':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <CommunityHubPanel />
+                        <CommunityHubPanel currentTier={tierInfo?.current_tier || profile?.tier} />
                     </Suspense>
                 );
 
@@ -418,33 +477,6 @@ const DashboardPage = () => {
                     <Suspense fallback={sectionLoader}>
                         <RetirementPlanner onSelectSection={handleSelectSection} user={profile} />
                     </Suspense>
-                );
-
-            case 'buddy':
-                return standardShell(
-                    <InsightPanel
-                        eyebrow="Insights"
-                        title="Shilingi Buddy AI"
-                        description="Position Shilingi Buddy as the always-available guide that helps members interpret the dashboard and decide what to do next."
-                        sections={[
-                            {
-                                icon: Bot,
-                                title: 'Personalized nudges',
-                                text: 'Prompt users when spending drifts, savings slows, or an important calendar event is getting close.',
-                            },
-                            {
-                                icon: GraduationCap,
-                                title: 'Context-aware learning',
-                                text: 'Recommend videos, articles, or tools tied to the user\'s current questions and goals.',
-                            },
-                            {
-                                icon: HeartHandshake,
-                                title: 'Decision support',
-                                text: 'Help members prepare for compare flows, planner updates, and next-step decisions with clearer context.',
-                            },
-                        ]}
-                        primaryAction={{ label: 'Open profile inputs', onClick: () => handleSelectSection('user') }}
-                    />
                 );
 
             case 'marketwatch':
@@ -492,6 +524,8 @@ const DashboardPage = () => {
                             onSelectSection={handleSelectSection}
                             mobileOpen={mobileSidebarOpen}
                             onCloseMobile={() => setMobileSidebarOpen(false)}
+                            accessBySection={accessBySection}
+                            navigationGroups={navigationGroups}
                         />
                     </div>
                 ) : (
@@ -503,6 +537,8 @@ const DashboardPage = () => {
                         onSelectSection={handleSelectSection}
                         mobileOpen={mobileSidebarOpen}
                         onCloseMobile={() => setMobileSidebarOpen(false)}
+                        accessBySection={accessBySection}
+                        navigationGroups={navigationGroups}
                     />
                 )}
 
@@ -530,6 +566,10 @@ const DashboardPage = () => {
                     startedAt={resumePrompt.startedAt}
                     onClose={() => setResumePrompt(null)}
                 />
+            )}
+
+            {accessPrompt && (
+                <UpgradeAccessModal access={accessPrompt} onClose={() => setAccessPrompt(null)} />
             )}
 
             <MobileDashboardNav
@@ -578,6 +618,37 @@ const MobileDashboardNav = ({ activeSection, onOpenMore, onSelectSection }) => (
             </button>
         </div>
     </nav>
+);
+
+const UpgradeAccessPanel = ({ access, onBack }) => (
+    <section className="mx-auto max-w-2xl rounded-[1.75rem] border border-amber-200 bg-white p-7 text-center shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <FileText size={26} />
+        </div>
+        <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-amber-700">Plan access</p>
+        <h2 className="mt-2 text-2xl font-extrabold text-slate-950">{access.minimumTier} membership required</h2>
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600">
+            Your current {access.currentTier} membership does not include {access.title || 'this planner'}. The backend remains the final authority for access.
+        </p>
+        <button type="button" onClick={onBack} className="mt-6 rounded-full bg-[#0c6060] px-6 py-3 text-sm font-semibold text-white">
+            Return to dashboard
+        </button>
+    </section>
+);
+
+const UpgradeAccessModal = ({ access, onClose }) => (
+    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-slate-950/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-5">
+        <section className="w-full max-w-md rounded-[1.5rem] border border-amber-200 bg-white p-6 text-center shadow-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-700">Upgrade required</p>
+            <h2 className="mt-2 text-xl font-extrabold text-slate-950">Available on {access.minimumTier}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+                This feature is not included in your current {access.currentTier} plan. No request was sent and your existing work was not changed.
+            </p>
+            <button type="button" onClick={onClose} className="mt-6 w-full rounded-full bg-[#0c6060] px-5 py-3 text-sm font-semibold text-white">
+                Continue with my plan
+            </button>
+        </section>
+    </div>
 );
 
 const PillarResumePrompt = ({ label, startedAt, onClose }) => (

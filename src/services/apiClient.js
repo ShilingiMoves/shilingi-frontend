@@ -1,5 +1,5 @@
 import { getAccessToken, handleUnauthorizedSession } from './sessionManager';
-import { resolveApiBaseUrl } from './apiConfig';
+import { getConfiguredApiUrl } from './apiConfig';
 import { fetchWithTimeout, isAbortError } from './secureFetch';
 import { refreshSession } from './authApi';
 
@@ -11,10 +11,7 @@ class ApiClient {
     }
 
     detectBaseURL() {
-        return resolveApiBaseUrl({
-            envUrl: import.meta.env.VITE_API_URL,
-            isDev: import.meta.env.DEV,
-        });
+        return getConfiguredApiUrl();
     }
 
     getAuthHeaders() {
@@ -81,7 +78,20 @@ class ApiClient {
                 firstFieldError || 
                 `Request failed with status ${response.status}`;
 
-            throw new Error(errorMessage);
+            const error = new Error(errorMessage);
+            error.name = 'ApiError';
+            error.status = response.status;
+            error.code = payload?.code || null;
+            error.errors = payload?.errors || null;
+            error.requestId = response.headers.get('X-Request-ID');
+            error.retryAfter = response.headers.get('Retry-After');
+            error.payload = payload;
+            if (response.status === 403 && typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('shilingi:access-denied', {
+                    detail: { code: error.code, payload, requestId: error.requestId },
+                }));
+            }
+            throw error;
         }
 
         return payload;

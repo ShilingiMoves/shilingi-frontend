@@ -16,6 +16,8 @@ import {
     X,
 } from 'lucide-react';
 import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets } from '../../../services/investmentTrackerApi';
+import { getLatestPlan, savePlan } from '../../../services/plannerApi';
+import PlannerSyncStatus from '../common/PlannerSyncStatus';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { useHealthRefresh } from '../../../hooks/useHealthRefresh';
 import { usePlannerFinancialContext } from '../../../hooks/usePlannerFinancialContext';
@@ -231,6 +233,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
     const [success, setSuccess] = useState('');
     const [assets, setAssets] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [savedPlan, setSavedPlan] = useState(null);
     const [activeTab, setActiveTab] = useState('risk');
     const [showTypeModal, setShowTypeModal] = useState(false);
     const [showFormModal, setShowFormModal] = useState(false);
@@ -255,9 +258,23 @@ const InvestmentTracker = ({ onSelectSection }) => {
         setLoading(true);
         setError('');
         try {
-            const [categoryList, assetList] = await Promise.all([getAssetCategories(), getAssets()]);
+            const [categoryList, assetList, backendPlan] = await Promise.all([
+                getAssetCategories(),
+                getAssets(),
+                getLatestPlan('investment'),
+            ]);
             setCategories(categoryList);
             setAssets(assetList);
+            setSavedPlan(backendPlan);
+            if (backendPlan) {
+                setSimulator((current) => ({
+                    ...current,
+                    monthlyContribution: backendPlan.monthly_contribution || current.monthlyContribution,
+                    durationYears: String(backendPlan.horizon_years || current.durationYears),
+                    expectedReturn: backendPlan.expected_annual_return_percent || current.expectedReturn,
+                    targetAmount: backendPlan.target_amount || current.targetAmount,
+                }));
+            }
         } catch (err) {
             setError(err.message || 'Failed to load investments');
         } finally {
@@ -515,7 +532,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
         setRiskAnswers((current) => ({ ...current, [questionId]: value }));
     };
 
-    const completeRiskProfile = (answers) => {
+    const completeRiskProfile = async (answers) => {
         const conservativeSignals = [
             answers.horizon === 'Within 2 years',
             answers.reaction === 'Sell everything',
@@ -555,7 +572,25 @@ const InvestmentTracker = ({ onSelectSection }) => {
         }
         setShowRiskOnboarding(false);
         setRiskProfileComplete(true);
-        setSuccess(`Risk profile saved as ${riskAppetite}.`);
+        try {
+            const horizonYears = Math.max(parseInt(String(nextWorkspace.investmentHorizon).match(/\d+/)?.[0] || '5', 10), 1);
+            const persistedPlan = await savePlan('investment', {
+                name: 'Investment risk profile',
+                goal_name: nextWorkspace.investmentObjective || 'Build long-term wealth',
+                risk_profile: riskAppetite === 'Aggressive' ? 'GROWTH' : riskAppetite === 'Conservative' ? 'CONSERVATIVE' : 'BALANCED',
+                initial_investment: String(Math.max(totals.totalValue, 0)),
+                monthly_contribution: String(Math.max(investmentPlan.monthlyContribution, 0)),
+                target_amount: String(Math.max(investmentPlan.targetAmount, 1)),
+                horizon_years: horizonYears,
+                expected_annual_return_percent: String(investmentPlan.expectedReturn),
+                annual_fee_percent: '0',
+                inflation_percent: '0',
+            }, savedPlan);
+            setSavedPlan(persistedPlan);
+            setSuccess(`Risk profile saved as ${riskAppetite}.`);
+        } catch (err) {
+            setError(err.message || 'Risk profile was completed, but the investment plan could not be saved.');
+        }
     };
 
     const handleRiskContinue = () => {
@@ -565,7 +600,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
             setRiskStep((current) => current + 1);
             return;
         }
-        completeRiskProfile(riskAnswers);
+        void completeRiskProfile(riskAnswers);
     };
 
     const calculatedGrowthRate = calculateAnnualizedGrowthRate({
@@ -582,6 +617,7 @@ const InvestmentTracker = ({ onSelectSection }) => {
         <div className="space-y-4">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-700">{success}</div>}
+            <PlannerSyncStatus plan={savedPlan} />
 
             {activeTab === 'risk' && (
                 <MobileRiskProfileFlow

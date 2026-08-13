@@ -3,6 +3,7 @@ import {
     ArrowDownUp,
     BookOpen,
     Briefcase,
+    Calculator,
     CircleUserRound,
     Cog,
     GraduationCap,
@@ -50,6 +51,17 @@ export const dashboardSections = [
         iconBg: 'bg-amber-100 text-amber-700',
         badge: 'Plan',
         description: 'Track income and expenses to understand where your money goes.',
+        group: 'planning',
+    },
+    {
+        id: 'tax',
+        label: 'Tax Planner',
+        helper: 'Estimate Kenyan PAYE',
+        icon: Calculator,
+        accent: 'from-emerald-500 to-teal-600',
+        iconBg: 'bg-emerald-100 text-emerald-700',
+        badge: 'Estimate',
+        description: 'Estimate PAYE, deductions, reliefs, and income after tax.',
         group: 'planning',
     },
     {
@@ -163,10 +175,11 @@ export const dashboardSections = [
         id: 'marketwatch',
         label: 'Market Watch',
         helper: 'See signals that affect your plans',
+        minimumTier: 'PRO',
         icon: LineChart,
         accent: 'from-primary-500 to-primary-600',
         iconBg: 'bg-primary-100 text-primary-700',
-        badge: 'Watch',
+        badge: 'Pro',
         description: 'Track rates, product movements, and market themes relevant to your plans.',
         group: 'insights',
     },
@@ -202,16 +215,6 @@ export const dashboardSections = [
         badge: 'Settings',
         description: 'Update notification, security, and display preferences.',
     },
-    {
-        id: 'guidance',
-        label: 'Shilingi Guidance',
-        helper: 'Kenyan money tools built around you',
-        icon: Briefcase,
-        accent: 'from-primary-600 to-amber-400',
-        iconBg: 'bg-primary-100 text-primary-700',
-        badge: 'Why it matters',
-        description: 'A practical dashboard shaped for savings, debt reduction, growth, and clarity.',
-    },
 ];
 
 export const dashboardSidebarGroups = [
@@ -223,7 +226,7 @@ export const dashboardSidebarGroups = [
     {
         id: 'planning',
         label: 'Planning tools',
-        items: ['budget', 'debt', 'investments', 'protection', 'retirement', 'networth'],
+        items: ['budget', 'tax', 'debt', 'investments', 'protection', 'retirement', 'networth'],
     },
     {
         id: 'explore',
@@ -245,6 +248,7 @@ export const dashboardNavSections = dashboardSections.filter((section) =>
     [
         'overview',
         'budget',
+        'tax',
         'cashflow',
         'debt',
         'investments',

@@ -25,32 +25,31 @@ const brandYellow = '#F0C94D';
 const brandYellowHover = '#E3BC43';
 
 const stats = [
-    { value: 4, label: 'Dashboard tiers' },
-    { value: 50, suffix: '+', label: 'Financial tools and calculators' },
-    { value: 5, label: 'Ecosystem modules' },
+    { value: 3, label: 'Dashboard tiers' },
+    { value: 8, label: 'Planners on Pro' },
+    { value: 4, label: 'Hubs in every plan' },
     { value: 0, start: 999, prefix: 'KES ', label: 'To get started' },
 ];
 
-const plans = [
+export const plans = [
     {
         key: 'basic',
         tier: 'Basic',
         name: 'Shilingi Basic',
         tagline: 'Get oriented. See the essentials of your money.',
-        price: { monthly: 'Free', annual: 'Free' },
+        price: 'Free',
         cta: 'Start for free',
         buttonClass: 'text-slate-950 hover:opacity-95',
         labelClass: 'text-slate-400',
-        annualText: '',
         includedTitle: "What's included",
         features: [
             { text: 'Financial Health Indicator', included: true, tone: 'green' },
-            { text: 'Budget Tracker (1 account)', included: true, tone: 'green' },
-            { text: 'Emergency Fund Calculator', included: true, tone: 'green' },
-            { text: '3 Learning Hub articles/month', included: true, tone: 'green' },
-            { text: 'Investment trackers (Plus+)', included: false },
-            { text: 'Debt repayment planner (Plus+)', included: false },
-            { text: 'Shilingi Buddy AI (Elite)', included: false },
+            { text: 'Budget Planner', included: true, tone: 'green' },
+            { text: 'Tax Planner', included: true, tone: 'green' },
+            { text: 'Four essential financial hubs', included: true, tone: 'green' },
+            { text: 'Shilingi Buddy AI Lite', included: true, tone: 'green' },
+            { text: 'Debt, Protection and Net Worth tools (Plus)', included: false },
+            { text: 'Investment, Retirement and Market Watch (Pro)', included: false },
         ],
     },
     {
@@ -58,22 +57,22 @@ const plans = [
         tier: 'Plus',
         name: 'Shilingi Plus',
         tagline: 'Organize deeply. Build your money habits.',
-        price: { monthly: '299', annual: '239' },
+        price: '499',
+        annualText: 'KES 4,990/year - 2 months free',
         currency: 'KES',
         period: '/mo',
-        cta: 'Start 7-day free trial',
+        cta: 'Choose Plus',
         buttonClass: 'text-slate-950 hover:opacity-95',
         labelClass: 'text-sky-300',
-        annualText: { monthly: 'or KES 239/mo billed annually', annual: 'Save KES 720/yr billed annually' },
         includedTitle: 'Everything in Basic, plus',
         features: [
-            { text: 'Unlimted Budget Accounts', included: true, tone: 'blue' },
-            { text: 'Debt Repayment Planner', included: true, tone: 'blue' },
-            { text: 'Savings Goals Tracker', included: true, tone: 'blue' },
-            { text: 'Full Learning Hub access', included: true, tone: 'blue' },
-            { text: 'Comparison Portal access', included: true, tone: 'blue' },
-            { text: 'Retirement readiness meter (Pro+)', included: false },
-            { text: 'Shilingi Buddy AI (Elite)', included: false },
+            { text: 'Debt Manager', included: true, tone: 'blue' },
+            { text: 'Protection Planner', included: true, tone: 'blue' },
+            { text: 'Net Worth Tracker', included: true, tone: 'blue' },
+            { text: 'Four expanded financial hubs', included: true, tone: 'blue' },
+            { text: 'Shilingi Buddy AI Coach', included: true, tone: 'blue' },
+            { text: 'Investment and Retirement planners (Pro)', included: false },
+            { text: 'Market Watch preview (Pro)', included: false },
         ],
     },
     {
@@ -81,108 +80,79 @@ const plans = [
         tier: 'Pro',
         name: 'Shilingi Pro',
         tagline: 'See the bigger picture. Build wealth with intent.',
-        price: { monthly: '399', annual: '319' },
+        price: '699',
+        annualText: 'KES 6,990/year - 2 months free',
         currency: 'KES',
         period: '/mo',
         cta: 'Choose Pro',
         buttonClass: 'text-slate-950 hover:opacity-95',
         labelClass: 'text-[#C4973A]',
-        annualText: { monthly: 'or KES 319/mo billed annually', annual: 'Save KES 960/yr billed annually' },
         includedTitle: 'Everything in Plus, plus',
         featured: true,
         badge: 'Most Popular',
         features: [
-            { text: 'Investment Tracker - full view', included: true, tone: 'gold' },
-            { text: 'Retirement Readiness Meter', included: true, tone: 'gold' },
-            { text: 'Tax Estimation Tools', included: true, tone: 'gold' },
-            { text: 'Insurance Checker', included: true, tone: 'gold' },
-            { text: 'Tools Suite - premium access', included: true, tone: 'gold' },
-            { text: 'Comparison Portal - full access', included: true, tone: 'gold' },
-            { text: 'Shilingi Buddy AI (Elite only)', included: false },
-        ],
-    },
-    {
-        key: 'elite',
-        tier: 'Elite',
-        name: 'Shilingi Elite',
-        tagline: 'Advanced intelligence. Your personalized money guidance workspace.',
-        price: { monthly: '499', annual: '399' },
-        currency: 'KES',
-        period: '/mo',
-        cta: 'Get Elite access',
-        buttonClass: 'text-slate-950 hover:opacity-95',
-        labelClass: 'text-[#E8B84B]',
-        annualText: { monthly: 'or KES 399/mo billed annually', annual: 'Save KES 1200/yr billed annually' },
-        includedTitle: 'Everything in Pro, plus',
-        features: [
-            { text: 'Shilingi Buddy AI companion', included: true, tone: 'amber' },
-            { text: 'Personalized planning prompts', included: true, tone: 'amber' },
-            { text: 'Advanced Tax and Estate Planning', included: true, tone: 'amber' },
-            { text: 'Diaspora Financial Tools', included: true, tone: 'amber' },
-            { text: 'Legacy and Wealth Transfer Planning', included: true, tone: 'amber' },
-            { text: 'Priority Support - 24hr response', included: true, tone: 'amber' },
+            { text: 'Investment Planner', included: true, tone: 'gold' },
+            { text: 'Retirement Planner', included: true, tone: 'gold' },
+            { text: 'Market Watch sample-data preview', included: true, tone: 'gold' },
+            { text: 'Four premium financial hubs', included: true, tone: 'gold' },
+            { text: 'Shilingi Buddy AI Wealth Strategist', included: true, tone: 'gold' },
         ],
     },
 ];
 
-const comparisonColumns = [
+export const comparisonColumns = [
     { name: 'Basic', price: 'Free' },
-    { name: 'Plus', price: 'KES 299' },
-    { name: 'Pro', price: 'KES 399', highlight: true },
-    { name: 'Elite', price: 'KES 499' },
+    { name: 'Plus', price: 'KES 499' },
+    { name: 'Pro', price: 'KES 699', highlight: true },
 ];
 
 const comparisonGroups = [
     {
         category: 'Budgeting and Cash Flow',
         rows: [
-            { feature: 'Budget tracking', values: ['1 account', true, true, true] },
-            { feature: 'Spending categories', values: ['5 categories', true, true, true] },
-            { feature: 'Net worth snapshot', values: [true, true, true, true] },
+            { feature: 'Budget Planner', values: [true, true, true] },
+            { feature: 'Net Worth Tracker', values: ['-', true, true] },
         ],
     },
     {
         category: 'Savings and Emergency Fund',
         rows: [
-            { feature: 'Emergency fund calculator', values: [true, true, true, true] },
-            { feature: 'Savings goals', values: ['-', '3 goals', 'Unlimited', true] },
+            { feature: 'Savings goals', values: [true, true, true] },
         ],
     },
     {
         category: 'Debt Management',
         rows: [
-            { feature: 'Debt repayment planner', values: ['-', true, true, true] },
+            { feature: 'Debt Manager', values: ['-', true, true] },
         ],
     },
     {
         category: 'Investments and Wealth',
         rows: [
-            { feature: 'Investment tracker', values: ['-', 'Basic', 'Full', true] },
-            { feature: 'Retirement readiness meter', values: ['-', '-', true, true] },
-            { feature: 'Legacy and wealth transfer', values: ['-', '-', '-', true] },
+            { feature: 'Investment Planner', values: ['-', '-', true] },
+            { feature: 'Retirement Planner', values: ['-', '-', true] },
+            { feature: 'Market Watch sample preview', values: ['-', '-', true] },
         ],
     },
     {
         category: 'Tax and Protection',
         rows: [
-            { feature: 'Tax estimation tools', values: ['-', '-', true, 'Advanced'] },
-            { feature: 'Insurance checker', values: ['-', '-', true, true] },
+            { feature: 'Tax Planner', values: [true, true, true] },
+            { feature: 'Protection Planner', values: ['-', true, true] },
         ],
     },
     {
         category: 'AI Guidance',
         rows: [
-            { feature: 'Shilingi Buddy AI', values: ['-', '-', '-', true] },
-            { feature: 'Personalized planning prompts', values: ['-', '-', '-', true] },
+            { feature: 'Shilingi Buddy AI', values: ['Lite', 'Coach', 'Wealth Strategist'] },
         ],
     },
     {
         category: 'Ecosystem Access',
         rows: [
-            { feature: 'Learning Hub', values: ['3 articles/mo', 'Full', true, true] },
-            { feature: 'Comparison Portal', values: ['Limited', 'Standard', 'Full', true] },
-            { feature: 'Community access', values: [true, true, true, true] },
-            { feature: 'Diaspora tools', values: ['-', '-', '-', true] },
+            { feature: 'Learning Hub', values: ['Basic', 'Expanded', 'Advanced'] },
+            { feature: 'Comparison Hub', values: ['Essential', 'Expanded', 'Premium'] },
+            { feature: 'Community access', values: ['Basic', 'Expanded', 'Advanced'] },
         ],
     },
 ];
@@ -190,37 +160,37 @@ const comparisonGroups = [
 const ecosystemCards = [
     {
         icon: Compass,
-        title: 'Comparison Portal',
+        title: 'Comparison Hub',
         text: 'Side-by-side product comparisons linked to your cash flow and risk profile.',
-        tier: 'Plus and above',
+        tier: 'Essential / Expanded / Premium',
         bg: 'bg-sky-500/15 text-sky-300',
     },
     {
         icon: Calculator,
         title: 'Resources',
-        text: '50+ calculators covering tax, retirement, mortgage, emergency fund and more.',
-        tier: 'Pro and above',
+        text: 'Tier-matched calculators and books, from savings and PAYE to investing and retirement.',
+        tier: '3 / 6 / 10 tools',
         bg: 'bg-amber-500/15 text-[#E8B84B]',
     },
     {
         icon: BookOpen,
         title: 'Learning Hub',
         text: 'Curated articles, podcasts and books matched to your financial stage.',
-        tier: 'All tiers',
+        tier: 'Essential / Expanded / Premium',
         bg: 'bg-emerald-500/15 text-emerald-300',
     },
     {
         icon: Users,
         title: 'Community',
         text: 'Peer groups, challenges, and accountability around your money goals.',
-        tier: 'All tiers',
+        tier: 'Beginner / Guided / Investor',
         bg: 'bg-emerald-500/15 text-emerald-300',
     },
     {
         icon: Bot,
         title: 'Shilingi Buddy AI',
         text: 'Your always-on financial companion for context, nudges, and decision support.',
-        tier: 'Elite only',
+        tier: 'Lite / Coach / Wealth Strategist',
         bg: 'bg-[#C4973A]/15 text-[#E8B84B]',
     },
 ];
@@ -228,7 +198,7 @@ const ecosystemCards = [
 const faqs = [
     {
         question: 'Which tier should I start with?',
-        answer: 'Start with Basic to explore the dashboard and see your financial health indicator. If you are actively paying off debt or growing savings, Plus is the natural next step. Choose Pro for investing and planning depth, and Elite for deeper AI guidance.',
+        answer: 'Start with Basic for Budget and Tax planning. Choose Plus when you need Debt, Protection, and Net Worth tools. Choose Pro for Investment, Retirement, Market Watch, and advanced content.',
     },
     {
         question: 'Can I switch tiers later?',
@@ -347,7 +317,6 @@ const AnimatedStatValue = ({ value, prefix = '', suffix = '', start = 0 }) => {
 };
 
 const DashboardLandingPage = () => {
-    const [billingMode, setBillingMode] = useState('monthly');
     const [openFaq, setOpenFaq] = useState(0);
 
     if (hasStoredAccessToken()) {
@@ -442,37 +411,9 @@ const DashboardLandingPage = () => {
                     </p>
                 </div>
 
-                <div className="mt-10 flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setBillingMode('monthly')}
-                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${billingMode === 'monthly'
-                            ? 'border-primary-600 bg-primary-50 text-primary-700'
-                            : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
-                            }`}
-                    >
-                        Monthly
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setBillingMode('annual')}
-                        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${billingMode === 'annual'
-                            ? 'border-primary-600 bg-primary-50 text-primary-700'
-                            : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'
-                            }`}
-                    >
-                        Annual
-                    </button>
-                    {billingMode === 'annual' && (
-                        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-                            Save 20%
-                        </span>
-                    )}
-                </div>
-
-                <div className="mt-8 grid gap-5 lg:grid-cols-4">
+                <div className="mt-10 grid gap-5 lg:grid-cols-3">
                     {plans.map((plan) => {
-                        const isFree = plan.price[billingMode] === 'Free';
+                        const isFree = plan.price === 'Free';
                         return (
                             <article
                                 key={plan.key}
@@ -494,13 +435,11 @@ const DashboardLandingPage = () => {
 
                                 <div className="mt-6 flex items-end gap-2">
                                     {!isFree && <span className="mb-1 text-sm text-slate-500">{plan.currency}</span>}
-                                    <span className="text-4xl font-extrabold text-slate-950">{plan.price[billingMode]}</span>
+                                    <span className="text-4xl font-extrabold text-slate-950">{plan.price}</span>
                                     {!isFree && <span className="mb-1 text-sm text-slate-500">{plan.period}</span>}
                                 </div>
 
-                                <p className="mt-2 min-h-[24px] text-xs text-slate-500">
-                                    {typeof plan.annualText === 'string' ? plan.annualText : plan.annualText?.[billingMode]}
-                                </p>
+                                <p className="mt-2 min-h-[24px] text-xs text-slate-500">{isFree ? 'Free forever' : plan.annualText}</p>
 
                                 <Link
                                     to="/signin"
@@ -528,7 +467,7 @@ const DashboardLandingPage = () => {
                 </div>
 
                 <p className="mt-5 text-center text-sm text-slate-500">
-                    All paid plans can be positioned with a 7-day free trial, and users still enter through the existing secure sign-in flow.
+                    Basic is free. Plus and Pro use the approved monthly prices and all users enter through the existing secure sign-in flow.
                 </p>
             </section>
 
@@ -562,7 +501,7 @@ const DashboardLandingPage = () => {
                             {comparisonGroups.map((group) => (
                                 <React.Fragment key={group.category}>
                                     <tr className="bg-slate-50">
-                                        <th colSpan={5} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: brandYellowHover }}>
+                                        <th colSpan={comparisonColumns.length + 1} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: brandYellowHover }}>
                                             {group.category}
                                         </th>
                                     </tr>

@@ -1,26 +1,27 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight, BookOpen, Flame, GraduationCap, Play, Star } from 'lucide-react';
+import { filterItemsForTier } from '../../../utils/tierAccess';
 
 const tabs = ['Learning Paths', 'Expert Articles', 'Short Videos', 'Financial Games', 'Quizzes & Assessments'];
 
 const pathCards = [
-    { title: 'T-Bills & Treasury Bonds', description: 'How to invest in government securities in Kenya', level: 'Beginner', duration: '8 min', xp: '40 XP', accent: 'bg-[#eef9f3]' },
-    { title: 'Building an Emergency Fund', description: 'Why you need 3-6 months of expenses saved', level: 'Intermediate', duration: '10 min', xp: '60 XP', accent: 'bg-[#eef8f5]' },
-    { title: 'Saving for a Home in Kenya', description: 'Mortgages, REITs, and land buying guide', level: 'Intermediate', duration: '15 min', xp: '80 XP', accent: 'bg-[#edf4ff]' },
-    { title: 'Understanding PAYE & KRA Taxes', description: 'File your returns and claim reliefs', level: 'Beginner', duration: '12 min', xp: '60 XP', accent: 'bg-[#fff6dd]' },
-    { title: 'Planning for Retirement at 50', description: 'NSSF, pension, and FIRE strategies', level: 'Advanced', duration: '20 min', xp: '100 XP', accent: 'bg-[#fff0f0]' },
-    { title: 'Financial Trivia Game', description: 'Test your financial knowledge and earn XP badges', level: 'Game', duration: '5-15 min', xp: '50 XP', accent: 'bg-[#f3ecff]' },
+    { title: 'T-Bills & Treasury Bonds', description: 'How to invest in government securities in Kenya', level: 'Beginner', duration: '8 min', xp: '40 XP', accent: 'bg-[#eef9f3]', minimumTier: 'PRO' },
+    { title: 'Building an Emergency Fund', description: 'Why you need 3-6 months of expenses saved', level: 'Intermediate', duration: '10 min', xp: '60 XP', accent: 'bg-[#eef8f5]', minimumTier: 'BASIC' },
+    { title: 'Saving for a Home in Kenya', description: 'Mortgages, REITs, and land buying guide', level: 'Intermediate', duration: '15 min', xp: '80 XP', accent: 'bg-[#edf4ff]', minimumTier: 'PLUS' },
+    { title: 'Understanding PAYE & KRA Taxes', description: 'File your returns and claim reliefs', level: 'Beginner', duration: '12 min', xp: '60 XP', accent: 'bg-[#fff6dd]', minimumTier: 'BASIC' },
+    { title: 'Planning for Retirement at 50', description: 'NSSF, pension, and FIRE strategies', level: 'Advanced', duration: '20 min', xp: '100 XP', accent: 'bg-[#fff0f0]', minimumTier: 'PRO' },
+    { title: 'Financial Trivia Game', description: 'Test your financial knowledge and earn XP badges', level: 'Game', duration: '5-15 min', xp: '50 XP', accent: 'bg-[#f3ecff]', minimumTier: 'BASIC' },
 ];
 
 const expertArticles = [
-    { title: 'Why Most Kenyans Fail to Save', meta: 'By Shilingi Financial Coach - 5 min read', tag: 'Featured', tagClass: 'bg-emerald-50 text-emerald-700' },
-    { title: 'NSE 2026: Where to Invest Now', meta: 'By Market Expert - 8 min read', tag: 'Trending', tagClass: 'bg-amber-50 text-amber-700' },
+    { title: 'Why Most Kenyans Fail to Save', meta: 'By Shilingi Financial Coach - 5 min read', tag: 'Featured', tagClass: 'bg-emerald-50 text-emerald-700', minimumTier: 'BASIC' },
+    { title: 'NSE 2026: Where to Invest Now', meta: 'By Market Expert - 8 min read', tag: 'Trending', tagClass: 'bg-amber-50 text-amber-700', minimumTier: 'PRO' },
 ];
 
 const assessments = [
-    { title: 'Financial IQ Test', meta: '20 questions - 10 mins' },
-    { title: 'Risk Appetite Assessment', meta: '15 questions - 7 mins' },
-    { title: 'Retirement Readiness Check', meta: '10 questions - 5 mins' },
+    { title: 'Financial IQ Test', meta: '20 questions - 10 mins', minimumTier: 'BASIC' },
+    { title: 'Risk Appetite Assessment', meta: '15 questions - 7 mins', minimumTier: 'PRO' },
+    { title: 'Retirement Readiness Check', meta: '10 questions - 5 mins', minimumTier: 'PRO' },
 ];
 
 const levelStyles = {
@@ -38,9 +39,11 @@ const visibleByTab = (tab) => {
     return pathCards;
 };
 
-const LearningHubPanel = () => {
+const LearningHubPanel = ({ currentTier = 'PRO' }) => {
     const [activeTab, setActiveTab] = useState(tabs[0]);
-    const visibleCards = useMemo(() => visibleByTab(activeTab), [activeTab]);
+    const visibleCards = useMemo(() => filterItemsForTier(visibleByTab(activeTab), currentTier), [activeTab, currentTier]);
+    const visibleArticles = useMemo(() => filterItemsForTier(expertArticles, currentTier), [currentTier]);
+    const visibleAssessments = useMemo(() => filterItemsForTier(assessments, currentTier), [currentTier]);
 
     return (
         <div className="space-y-4 pb-20">
@@ -135,7 +138,7 @@ const LearningHubPanel = () => {
                     <button type="button" className="text-sm font-semibold text-primary-700">All Articles -&gt;</button>
                 </div>
                 <div className="grid gap-3 xl:grid-cols-2">
-                    {expertArticles.map((article) => (
+                    {visibleArticles.map((article) => (
                         <article key={article.title} className="rounded-[1rem] border border-[#d0ddd9] bg-white p-4 shadow-sm">
                             <div className="flex items-start gap-4">
                                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[0.85rem] bg-[#eef8f5] text-primary-700">
@@ -157,7 +160,7 @@ const LearningHubPanel = () => {
                     <h3 className="text-[1.15rem] font-bold text-slate-950">Quizzes & Assessments</h3>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {assessments.map((item) => (
+                    {visibleAssessments.map((item) => (
                         <article key={item.title} className="rounded-[1rem] border border-[#d0ddd9] bg-white p-4 text-center shadow-sm">
                             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#eef8f5] text-primary-700">
                                 <GraduationCap size={18} />

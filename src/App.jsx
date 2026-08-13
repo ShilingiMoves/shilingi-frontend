@@ -69,7 +69,7 @@ function AppLayout() {
     const isOnboardingSurface = location.pathname === '/onboarding';
     const isProfileSetupSurface = location.pathname === '/profile-setup';
     const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface;
-    const hideShilingiBuddy = location.pathname === '/dashboard/app' || location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface;
+    const hideShilingiBuddy = location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface;
 
     return (
         <div className="min-h-screen flex flex-col">

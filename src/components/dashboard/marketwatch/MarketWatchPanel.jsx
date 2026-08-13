@@ -237,7 +237,7 @@ const ecosystemLinks = [
     { title: 'Debt Manager', subtitle: 'Respond to borrowing costs', action: 'debt', icon: Landmark },
     { title: 'Compare Hub', subtitle: 'See better rates side by side', action: 'comparehub', icon: Compass },
     { title: 'Learning Hub', subtitle: 'Understand the why', action: 'learninghub', icon: GraduationCap },
-    { title: 'Buddy AI', subtitle: 'Talk through the market story', action: 'overview', icon: Bot },
+    { title: 'Buddy AI', subtitle: 'Talk through the market story', action: 'buddy', icon: Bot },
 ];
 
 const alertOptions = [
@@ -292,6 +292,16 @@ const MarketWatchPanel = ({ onSelectSection }) => {
 
     return (
         <div className="space-y-5">
+            <section role="note" aria-label="Market data notice" className="rounded-[1.2rem] border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 shadow-sm">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <p className="text-sm font-bold">Sample market data — not live</p>
+                    <span className="w-fit rounded-full bg-amber-200/70 px-3 py-1 text-[11px] font-bold uppercase tracking-wide">Pro preview</span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-amber-900/80">
+                    The figures on this page are fixed examples for education and product preview. Check CBK, NSE, KNBS or EPRA for current information before making a financial decision.
+                </p>
+            </section>
+
             <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,_#0f4d35_0%,_#197a53_40%,_#239c69_78%,_#2fb07b_100%)] px-5 py-6 text-white shadow-[0_18px_48px_rgba(25,122,83,0.22)] sm:px-7">
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="max-w-3xl">
@@ -710,7 +720,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                     </span>
                     <div>
                         <h2 className="text-xl font-bold text-slate-950">Transparent Sources</h2>
-                        <p className="text-sm text-slate-500">Market Watch should feel practical and accountable.</p>
+                        <p className="text-sm text-slate-500">Official sources to use when checking the current market.</p>
                     </div>
                 </div>
 
@@ -723,7 +733,7 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                 </div>
 
                 <p className="mt-4 text-sm leading-7 text-slate-500">
-                    This view is designed for education and decision support. It should help members know what to review next, not replace regulated financial advice.
+                    The values displayed above are fixed sample data and are not fetched from these sources. This view is for education and product preview only. It does not provide live prices or replace regulated financial advice.
                 </p>
             </section>
 

@@ -23,6 +23,8 @@ import {
     X,
 } from 'lucide-react';
 import { createAsset, createAssetCategory, deleteAsset, getAssetCategories, getAssets, updateAsset } from '../../../services/investmentTrackerApi';
+import { deletePlan, getLatestPlan, savePlan } from '../../../services/plannerApi';
+import PlannerSyncStatus from '../common/PlannerSyncStatus';
 import { getDebts } from '../../../services/debtApi';
 import { markDashboardDataExists } from '../../../utils/dashboardDataState';
 import { usePlannerFinancialContext } from '../../../hooks/usePlannerFinancialContext';
@@ -245,6 +247,7 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
     const [calculator, setCalculator] = useState(defaultCalculator);
     const [assets, setAssets] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [savedPlan, setSavedPlan] = useState(null);
     const [totalDebt, setTotalDebt] = useState(0);
     const [activeTab, setActiveTab] = useState('dependents');
     const [profileWorkspace, setProfileWorkspace] = useState(() => readProfileWorkspace());
@@ -266,12 +269,27 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
         setLoading(true);
         setError('');
         try {
-            const [assetRows, categoryRows, debts] = await Promise.all([getAssets(), getAssetCategories(), getDebts().catch(() => [])]);
+            const [assetRows, categoryRows, debts, backendPlan] = await Promise.all([
+                getAssets(),
+                getAssetCategories(),
+                getDebts().catch(() => []),
+                getLatestPlan('protection'),
+            ]);
             setAssets(assetRows);
             setCategories(categoryRows);
+            setSavedPlan(backendPlan);
             const debtTotal = Array.isArray(debts) ? debts.reduce((sum, item) => sum + asNumber(item.balance), 0) : 0;
             setTotalDebt(debtTotal);
             setCalculator((current) => ({ ...current, outstandingDebts: String(Math.round(debtTotal)) }));
+            if (backendPlan) {
+                setCalculator((current) => ({
+                    ...current,
+                    annualIncome: backendPlan.annual_income || current.annualIncome,
+                    dependents: String(backendPlan.dependants ?? current.dependents),
+                    yearsToCover: backendPlan.income_replacement_years || current.yearsToCover,
+                    outstandingDebts: backendPlan.outstanding_debts || String(Math.round(debtTotal)),
+                }));
+            }
         } catch (err) {
             setError(err.message || 'Unable to load protection planner data right now.');
         } finally {
@@ -471,8 +489,13 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
             window.localStorage.setItem(USER_PROFILE_WORKSPACE_KEY, JSON.stringify(nextWorkspace));
             window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
         }
+        if (savedPlan?.uuid) {
+            deletePlan('protection', savedPlan.uuid)
+                .then(() => setSavedPlan(null))
+                .catch((err) => setError(err.message || 'The saved protection plan could not be deleted.'));
+        }
     };
-    const completeProtectionFlow = (nextView = 'overview') => {
+    const completeProtectionFlow = async (nextView = 'overview') => {
         const nextWorkspace = {
             ...profileWorkspace,
             dependentsCount: protectionAnswers.dependents ?? calculator.dependents,
@@ -491,6 +514,19 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(USER_PROFILE_WORKSPACE_KEY, JSON.stringify(nextWorkspace));
             window.localStorage.setItem(PROTECTION_ONBOARDING_KEY, 'true');
+        }
+        try {
+            const persistedPlan = await savePlan('protection', {
+                name: 'Household protection plan',
+                dependants: Math.max(asNumber(calculator.dependents), 0),
+                annual_income: String(Math.max(asNumber(calculator.annualIncome), 0)),
+                income_replacement_years: String(Math.max(asNumber(calculator.yearsToCover), 1)),
+                outstanding_debts: String(Math.max(asNumber(calculator.outstandingDebts), 0)),
+                existing_life_cover: String(Math.max(coverageTotal, 0)),
+            }, savedPlan);
+            setSavedPlan(persistedPlan);
+        } catch (err) {
+            setError(err.message || 'Your answers were kept, but the protection plan could not be saved.');
         }
     };
     const clearProtectionNotice = () => setSuccess('');
@@ -635,6 +671,7 @@ const ProtectionPlanner = ({ onSelectSection, user }) => {
         <div className="space-y-4">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {success && <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-700">{success}</div>}
+            <PlannerSyncStatus plan={savedPlan} />
 
             <MobileProtectionFlow
                 answers={protectionAnswers}

@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import { getStoredUserProfile } from '../../../services/authApi';
+import { filterItemsForTier } from '../../../utils/tierAccess';
 
 export const COMMUNITY_POSTS_KEY = 'shilingi_dashboard_community_posts_v3';
 const COMMUNITY_ACTIONS_KEY = 'shilingi_dashboard_community_actions_v1';
@@ -37,6 +38,7 @@ const defaultCommunityState = {
 export const seedPosts = [
     {
         id: 'seed-1',
+        minimumTier: 'BASIC',
         initials: 'JM',
         name: 'James Mwangi',
         location: 'Nairobi',
@@ -55,6 +57,7 @@ export const seedPosts = [
     },
     {
         id: 'seed-2',
+        minimumTier: 'BASIC',
         initials: 'SW',
         name: 'Stella Wanjiru',
         location: 'Nakuru',
@@ -73,6 +76,7 @@ export const seedPosts = [
     },
     {
         id: 'seed-3',
+        minimumTier: 'PRO',
         initials: 'BO',
         name: 'Brian Ochieng',
         location: 'Mombasa',
@@ -91,10 +95,11 @@ export const seedPosts = [
     },
     {
         id: 'seed-4',
+        minimumTier: 'PLUS',
         initials: 'AN',
         name: 'Amina Njeri',
         location: 'Kisumu',
-        memberTier: 'Elite Member',
+        memberTier: 'Pro Member',
         time: '1 day ago',
         type: 'Milestone',
         typeAccent: 'bg-violet-50 text-violet-700 border-violet-100',
@@ -125,13 +130,13 @@ const contributors = [
 ];
 
 const mainTabs = [
-    { id: 'feed', label: 'Community Feed', badge: null },
-    { id: 'challenges', label: 'Challenges', badge: '3 Active' },
-    { id: 'podcast', label: 'Podcast', badge: null },
-    { id: 'bookclub', label: 'Book Club', badge: null },
-    { id: 'kids', label: 'Shilingi Kids', badge: null },
-    { id: 'expert', label: 'Expert Q&A', badge: null },
-    { id: 'leaderboard', label: 'Leaderboard', badge: null },
+    { id: 'feed', label: 'Community Feed', badge: null, minimumTier: 'BASIC' },
+    { id: 'challenges', label: 'Challenges', badge: '3 Active', minimumTier: 'BASIC' },
+    { id: 'podcast', label: 'Podcast', badge: null, minimumTier: 'PLUS' },
+    { id: 'bookclub', label: 'Book Club', badge: null, minimumTier: 'BASIC' },
+    { id: 'kids', label: 'Shilingi Kids', badge: null, minimumTier: 'BASIC' },
+    { id: 'expert', label: 'Expert Q&A', badge: null, minimumTier: 'PRO' },
+    { id: 'leaderboard', label: 'Leaderboard', badge: null, minimumTier: 'BASIC' },
 ];
 
 const filterTabs = ['All Posts', 'Wins', 'Questions', 'Tips', 'Milestones'];
@@ -144,18 +149,18 @@ const challengeCards = [
 ];
 
 const upcomingChallenges = [
-    { title: 'Home Deposit Race', description: 'Save 10% more toward your home deposit goal this month. Top 10 savers win a free financial coaching session.', icon: '🏠', starts: 'Apr 1st', duration: '30 days', reward: 'Prize' },
-    { title: 'Debt Demolition April', description: 'Pay KES 5,000 extra on any debt this April. Track your progress and inspire others to do the same.', icon: '🧩', starts: 'Apr 1st', duration: '30 days', reward: 'Free Entry' },
-    { title: 'NSE Investor Challenge', description: 'Buy your first NSE stock worth at least KES 5,000 this quarter. Share your experience and portfolio.', icon: '🌍', starts: 'Apr 15th', duration: '90 days', reward: 'Badge' },
+    { title: 'Home Deposit Race', description: 'Save 10% more toward your home deposit goal this month. Top 10 savers win a free financial coaching session.', icon: '🏠', starts: 'Apr 1st', duration: '30 days', reward: 'Prize', minimumTier: 'BASIC' },
+    { title: 'Debt Demolition April', description: 'Pay KES 5,000 extra on any debt this April. Track your progress and inspire others to do the same.', icon: '🧩', starts: 'Apr 1st', duration: '30 days', reward: 'Free Entry', minimumTier: 'PLUS' },
+    { title: 'NSE Investor Challenge', description: 'Buy your first NSE stock worth at least KES 5,000 this quarter. Share your experience and portfolio.', icon: '🌍', starts: 'Apr 15th', duration: '90 days', reward: 'Badge', minimumTier: 'PRO' },
 ];
 
 const podcastEpisodes = [
-    { title: 'Ep. 42: How to Build KES 1M by 35', host: 'Grace Nyambu, CFP', date: '8 Mar 2026', duration: '38 min', tag: 'Investing', icon: '💰', accent: 'bg-emerald-50 text-emerald-700' },
-    { title: 'Ep. 41: Getting Out of Debt - Real Stories', host: 'Amina Njeri & Brian Ochieng', date: '1 Mar 2026', duration: '52 min', tag: 'Debt', icon: '💳', accent: 'bg-rose-50 text-rose-700' },
-    { title: 'Ep. 40: T-Bills, Bonds & Fixed Income Explained', host: 'David Kamau, CFA', date: '22 Feb 2026', duration: '44 min', tag: 'Fixed Income', icon: '🏛️', accent: 'bg-amber-50 text-amber-700' },
-    { title: 'Ep. 39: FIRE at 45 - Is It Realistic in Kenya?', host: 'Moses Gitau, Retirement Coach', date: '15 Feb 2026', duration: '61 min', tag: 'Retirement', icon: '👵', accent: 'bg-violet-50 text-violet-700' },
-    { title: 'Ep. 38: Buying Land in Kenya - What They Don\'t Tell You', host: 'Ruth Kamau, Property Attorney', date: '8 Feb 2026', duration: '48 min', tag: 'Property', icon: '🏡', accent: 'bg-blue-50 text-blue-700' },
-    { title: 'Ep. 37: Women & Wealth - Closing the Financial Gap', host: 'Shilingi Moves Team', date: '1 Feb 2026', duration: '55 min', tag: 'Women & Finance', icon: '👩', accent: 'bg-cyan-50 text-cyan-700' },
+    { title: 'Ep. 42: How to Build KES 1M by 35', host: 'Grace Nyambu, CFP', date: '8 Mar 2026', duration: '38 min', tag: 'Investing', icon: '💰', accent: 'bg-emerald-50 text-emerald-700', minimumTier: 'PRO' },
+    { title: 'Ep. 41: Getting Out of Debt - Real Stories', host: 'Amina Njeri & Brian Ochieng', date: '1 Mar 2026', duration: '52 min', tag: 'Debt', icon: '💳', accent: 'bg-rose-50 text-rose-700', minimumTier: 'PLUS' },
+    { title: 'Ep. 40: T-Bills, Bonds & Fixed Income Explained', host: 'David Kamau, CFA', date: '22 Feb 2026', duration: '44 min', tag: 'Fixed Income', icon: '🏛️', accent: 'bg-amber-50 text-amber-700', minimumTier: 'PRO' },
+    { title: 'Ep. 39: FIRE at 45 - Is It Realistic in Kenya?', host: 'Moses Gitau, Retirement Coach', date: '15 Feb 2026', duration: '61 min', tag: 'Retirement', icon: '👵', accent: 'bg-violet-50 text-violet-700', minimumTier: 'PRO' },
+    { title: 'Ep. 38: Buying Land in Kenya - What They Don\'t Tell You', host: 'Ruth Kamau, Property Attorney', date: '8 Feb 2026', duration: '48 min', tag: 'Property', icon: '🏡', accent: 'bg-blue-50 text-blue-700', minimumTier: 'PLUS' },
+    { title: 'Ep. 37: Women & Wealth - Closing the Financial Gap', host: 'Shilingi Moves Team', date: '1 Feb 2026', duration: '55 min', tag: 'Women & Finance', icon: '👩', accent: 'bg-cyan-50 text-cyan-700', minimumTier: 'PRO' },
 ];
 
 const readingSchedule = [
@@ -240,7 +245,7 @@ const getTypeConfig = (type) => {
     return { accent: 'bg-amber-50 text-amber-700 border-amber-100', border: 'border-l-4 border-l-amber-400', action: 'Win' };
 };
 
-const CommunityHubPanel = () => {
+const CommunityHubPanel = ({ currentTier = 'PRO' }) => {
     const [posts, setPosts] = useState(seedPosts);
     const [communityState, setCommunityState] = useState(defaultCommunityState);
     const [composerOpen, setComposerOpen] = useState(false);
@@ -253,6 +258,13 @@ const CommunityHubPanel = () => {
     const [actionNotice, setActionNotice] = useState('');
     const user = useMemo(() => getStoredUserProfile(), []);
     const identity = useMemo(() => getUserIdentity(user), [user]);
+    const availableTabs = useMemo(() => filterItemsForTier(mainTabs, currentTier), [currentTier]);
+
+    useEffect(() => {
+        if (!availableTabs.some((tab) => tab.id === activeTab)) {
+            setActiveTab(availableTabs[0]?.id || 'feed');
+        }
+    }, [activeTab, availableTabs]);
 
     useEffect(() => {
         try {
@@ -314,9 +326,10 @@ const CommunityHubPanel = () => {
     }, [actionModal]);
 
     const filteredPosts = useMemo(() => {
-        if (activeFilter === 'All Posts') return posts;
-        return posts.filter((post) => post.type === activeFilter.slice(0, -1) || post.type === activeFilter.slice(0, -1).replace('ie', 'y'));
-    }, [activeFilter, posts]);
+        const tierPosts = filterItemsForTier(posts, currentTier);
+        if (activeFilter === 'All Posts') return tierPosts;
+        return tierPosts.filter((post) => post.type === activeFilter.slice(0, -1) || post.type === activeFilter.slice(0, -1).replace('ie', 'y'));
+    }, [activeFilter, currentTier, posts]);
 
     const handleSubmitPost = () => {
         const message = draft.trim();
@@ -509,7 +522,7 @@ const CommunityHubPanel = () => {
             </section>
 
             <div className="flex flex-wrap gap-3">
-                {mainTabs.map((tab) => (
+                {availableTabs.map((tab) => (
                     <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={activeTab === tab.id ? 'inline-flex items-center gap-2 rounded-[1rem] border border-[#0f5d4a] bg-[#0f4f3f] px-4 py-3 text-sm font-semibold text-white shadow-sm' : 'inline-flex items-center gap-2 rounded-[1rem] border border-[#dbeee5] bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:border-[#bfe3d3]'}>
                         {tab.label}
                         {tab.badge ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">{tab.badge}</span> : null}
@@ -524,8 +537,8 @@ const CommunityHubPanel = () => {
             ) : null}
 
             {activeTab === 'feed' ? <FeedView identity={identity} posts={filteredPosts} activeFilter={activeFilter} setActiveFilter={setActiveFilter} setComposerOpen={setComposerOpen} setSelectedType={setSelectedType} openActionModal={openActionModal} /> : null}
-            {activeTab === 'challenges' ? <ChallengesView openActionModal={openActionModal} communityState={communityState} /> : null}
-            {activeTab === 'podcast' ? <PodcastView openActionModal={openActionModal} communityState={communityState} /> : null}
+            {activeTab === 'challenges' ? <ChallengesView currentTier={currentTier} openActionModal={openActionModal} communityState={communityState} /> : null}
+            {activeTab === 'podcast' ? <PodcastView currentTier={currentTier} openActionModal={openActionModal} communityState={communityState} /> : null}
             {activeTab === 'bookclub' ? <BookClubView openActionModal={openActionModal} communityState={communityState} identity={identity} /> : null}
             {activeTab === 'kids' ? <KidsView openActionModal={openActionModal} communityState={communityState} /> : null}
             {activeTab === 'expert' ? <ExpertView openActionModal={openActionModal} communityState={communityState} /> : null}
@@ -639,7 +652,7 @@ const FeedView = ({ identity, posts, activeFilter, setActiveFilter, setComposerO
     </div>
 );
 
-const ChallengesView = ({ openActionModal, communityState }) => (
+const ChallengesView = ({ currentTier, openActionModal, communityState }) => (
     <div className="space-y-6">
         <SectionHeader title="Community Challenges" description="Join money challenges with fellow Kenyans. Track progress, earn badges, and build wealth together." actionLabel="+ Create Challenge" onAction={() => openActionModal({ kind: 'create-challenge', title: 'Create a Community Challenge', description: 'Sketch the challenge idea you want to bring to the community and we will save it for the next content pass.', primaryLabel: 'Save Challenge Idea', inputLabel: 'Challenge concept', placeholder: 'e.g. 21-day cash-only challenge for households trying to reduce impulse spend...', successMessage: 'Your challenge idea has been saved.' })} />
         <section className="space-y-3">
@@ -689,7 +702,7 @@ const ChallengesView = ({ openActionModal, communityState }) => (
         <section className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Upcoming Challenges</p>
             <div className="grid gap-4 xl:grid-cols-3">
-                {upcomingChallenges.map((challenge) => (
+                {filterItemsForTier(upcomingChallenges, currentTier).map((challenge) => (
                     <div key={challenge.title} className="rounded-[1.6rem] border border-[#cfe8dc] bg-white p-5 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
                         <span className="text-3xl">{challenge.icon}</span>
                         <h3 className="mt-4 text-[1.25rem] font-semibold text-slate-900">{challenge.title}</h3>
@@ -729,7 +742,7 @@ const ChallengesView = ({ openActionModal, communityState }) => (
     </div>
 );
 
-const PodcastView = ({ openActionModal, communityState }) => (
+const PodcastView = ({ currentTier, openActionModal, communityState }) => (
     <div className="space-y-6">
         <section className="rounded-[2rem] bg-gradient-to-r from-[#114738] to-[#226b57] p-6 text-white shadow-[0_18px_40px_rgba(8,51,39,0.16)]">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -745,7 +758,7 @@ const PodcastView = ({ openActionModal, communityState }) => (
         <section className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">All Episodes</p>
             <div className="space-y-3">
-                {podcastEpisodes.map((episode) => (
+                {filterItemsForTier(podcastEpisodes, currentTier).map((episode) => (
                     <div key={episode.title} className="rounded-[1.5rem] border border-[#cfe8dc] bg-white p-4 shadow-[0_14px_30px_rgba(15,76,58,0.08)]">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center"><div className="flex h-16 w-16 items-center justify-center rounded-[1rem] bg-[#eef8f3] text-3xl">{episode.icon}</div><div className="flex-1"><p className="text-[1.15rem] font-semibold text-slate-900">{episode.title}</p><p className="text-sm text-slate-400">{episode.host} · {episode.date}</p><div className="mt-2 flex flex-wrap items-center gap-3"><span className="text-sm text-slate-400">◷ {episode.duration}</span><span className={`rounded-full px-3 py-1 text-xs font-semibold ${episode.accent}`}>{episode.tag}</span><button type="button" onClick={() => openActionModal({ kind: 'play-episode', itemId: episode.title, title: episode.title, description: `Host: ${episode.host}. Category: ${episode.tag}. We can wire this into a full player next.`, primaryLabel: 'Play Episode', successMessage: `${episode.title} queued for playback.` })} className="rounded-full bg-[#1c6c5d] px-4 py-2 text-sm font-semibold text-white">{communityState.playedEpisodes.includes(episode.title) ? 'Queued' : '▶ Play'}</button>{communityState.savedEpisodes.includes(episode.title) ? <span className="rounded-full border border-[#bfe3d3] px-3 py-1 text-xs font-semibold text-[#1c6c5d]">Saved</span> : null}</div></div></div>
                     </div>

@@ -11,24 +11,46 @@ const extractNumericValue = (text) => {
 const getLatestHeading = (name) => screen.getAllByRole('heading', { name }).at(-1);
 
 describe('ResourcesToolsPanel', () => {
-    it('opens budget calculator modal and shows 50/30/20 values', async () => {
-        const user = userEvent.setup();
-        render(<ResourcesToolsPanel />);
+    it('shows the approved cumulative calculator list for Basic, Plus, and Pro', () => {
+        const basic = render(<ResourcesToolsPanel currentTier="BASIC" />);
+        expect(screen.getByRole('button', { name: /savings calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /emergency fund calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /paye \/ tax calculator/i })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /debt repayment calculator/i })).not.toBeInTheDocument();
+        basic.unmount();
 
-        await user.click(screen.getByRole('button', { name: /budget builder/i }));
+        const plus = render(<ResourcesToolsPanel currentTier="PLUS" />);
+        expect(screen.getByRole('button', { name: /debt repayment calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /debt snowball calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /insurance needs analysis/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /credit card repayment calculator/i })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /retirement calculator/i })).not.toBeInTheDocument();
+        plus.unmount();
 
-        expect(getLatestHeading(/budget builder/i)).toBeInTheDocument();
-        expect(screen.getByText(/50\/30\/20 split/i)).toBeInTheDocument();
-        expect(screen.getByText(/60,000/)).toBeInTheDocument();
-        expect(screen.getByText(/36,000/)).toBeInTheDocument();
-        expect(screen.getByText(/24,000/)).toBeInTheDocument();
+        render(<ResourcesToolsPanel currentTier="PRO" />);
+        expect(screen.getByRole('button', { name: /retirement calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /investment return calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /compound interest calculator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /portfolio allocator/i })).toBeInTheDocument();
     });
 
-    it('updates loan calculator monthly payment after changing inputs', async () => {
+    it('opens the savings calculator and shows monthly and annual targets', async () => {
         const user = userEvent.setup();
         render(<ResourcesToolsPanel />);
 
-        await user.click(screen.getByRole('button', { name: /loan calculator/i }));
+        await user.click(screen.getByRole('button', { name: /savings calculator/i }));
+
+        expect(getLatestHeading(/savings calculator/i)).toBeInTheDocument();
+        expect(screen.getByText(/suggested savings target/i)).toBeInTheDocument();
+        expect(screen.getByText(/24,000/)).toBeInTheDocument();
+        expect(screen.getByText(/288,000/)).toBeInTheDocument();
+    });
+
+    it('updates debt repayment calculator after changing inputs', async () => {
+        const user = userEvent.setup();
+        render(<ResourcesToolsPanel />);
+
+        await user.click(screen.getByRole('button', { name: /debt repayment calculator/i }));
 
         const resultCard = screen.getByText(/estimated monthly payment/i).closest('div');
         const initialValue = extractNumericValue(resultCard?.querySelector('p.text-2xl')?.textContent);
@@ -49,48 +71,42 @@ describe('ResourcesToolsPanel', () => {
         const user = userEvent.setup();
         render(<ResourcesToolsPanel />);
 
-        await user.click(screen.getByRole('button', { name: /fire calculator/i }));
-        expect(getLatestHeading(/fire calculator/i)).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /retirement calculator/i }));
+        expect(getLatestHeading(/retirement calculator/i)).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: /close calculator/i }));
-        expect(screen.getAllByRole('heading', { name: /fire calculator/i })).toHaveLength(1);
+        expect(screen.getAllByRole('heading', { name: /retirement calculator/i })).toHaveLength(1);
     });
 
-    it('opens fx converter and recalculates when currency pair changes', async () => {
+    it('opens portfolio allocator and recalculates when risk style changes', async () => {
         const user = userEvent.setup();
         render(<ResourcesToolsPanel />);
 
-        await user.click(screen.getByRole('button', { name: /fx converter/i }));
-        expect(getLatestHeading(/fx converter/i)).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /portfolio allocator/i }));
+        expect(getLatestHeading(/portfolio allocator/i)).toBeInTheDocument();
 
-        const resultCard = screen.getByText(/converted amount/i).closest('div');
-        const before = extractNumericValue(resultCard?.querySelector('p.text-2xl')?.textContent);
+        expect(screen.getByText(/illustrative allocation/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/225,000/)).toHaveLength(2);
 
-        fireEvent.change(screen.getByLabelText(/from currency/i), { target: { value: 'EUR' } });
-        fireEvent.change(screen.getByLabelText(/to currency/i), { target: { value: 'USD' } });
-
-        const after = extractNumericValue(resultCard?.querySelector('p.text-2xl')?.textContent);
-        expect(after).not.toEqual(before);
+        fireEvent.change(screen.getByLabelText(/risk style/i), { target: { value: 'growth' } });
+        expect(screen.getByText(/350,000/)).toBeInTheDocument();
     });
 
-    it('opens debt payoff planner and shows debt-free timeline', async () => {
+    it('opens debt snowball calculator and shows debt-free timeline', async () => {
         const user = userEvent.setup();
         render(<ResourcesToolsPanel />);
 
-        await user.click(screen.getByRole('button', { name: /debt payoff planner/i }));
-        expect(getLatestHeading(/debt payoff planner/i)).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /debt snowball calculator/i }));
+        expect(getLatestHeading(/debt snowball calculator/i)).toBeInTheDocument();
         expect(screen.getByText(/debt-free timeline/i)).toBeInTheDocument();
     });
 
-    it('switches into books, podcasts, and learning hub tabs', async () => {
+    it('switches into books and learning hub tabs', async () => {
         const user = userEvent.setup();
         render(<ResourcesToolsPanel />);
 
         await user.click(screen.getAllByRole('button', { name: /^books$/i })[0]);
         expect(screen.getByRole('heading', { name: /curated financial books/i })).toBeInTheDocument();
-
-        await user.click(screen.getAllByRole('button', { name: /^podcasts$/i })[0]);
-        expect(screen.getByRole('heading', { name: /curated financial podcasts/i })).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: /learning hub/i }));
         expect(screen.getByRole('heading', { name: /^learning hub$/i })).toBeInTheDocument();
@@ -104,7 +120,7 @@ describe('ResourcesToolsPanel', () => {
 
         await user.click(screen.getByRole('button', { name: /^tax$/i }));
         expect(screen.getByRole('button', { name: /paye \/ tax calculator/i })).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /loan calculator/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /debt repayment calculator/i })).not.toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: /debt manager/i }));
         expect(onSelectSection).toHaveBeenCalledWith('debt');

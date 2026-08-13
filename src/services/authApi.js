@@ -10,14 +10,11 @@ import {
     setRefreshToken,
     setStoredUserProfile,
 } from './sessionManager';
-import { resolveApiBaseUrl } from './apiConfig';
+import { getConfiguredApiUrl } from './apiConfig';
 import { fetchWithTimeout } from './secureFetch';
 import { syncStoredPreferredNameFromUser } from '../utils/memberIdentity';
 
-const API_URL = resolveApiBaseUrl({
-    envUrl: import.meta.env.VITE_API_URL,
-    isDev: import.meta.env.DEV,
-});
+const API_URL = getConfiguredApiUrl();
 
 const LOGIN_ENDPOINT =`${API_URL}/api/v1/auth/login/`;
 const REGISTER_ENDPOINT = `${API_URL}/api/v1/auth/register/`;
@@ -26,7 +23,9 @@ const PASSWORD_RESET_CONFIRM_ENDPOINT = `${API_URL}/api/v1/auth/reset-password/`
 const VERIFY_EMAIL_ENDPOINT = `${API_URL}/api/v1/auth/verify-email/`;
 const RESEND_VERIFICATION_ENDPOINT = `${API_URL}/api/v1/auth/resend-verification/`;
 const PROFILE_ENDPOINT = `${API_URL}/api/v1/users/me/`;
+const TIER_ENDPOINT = `${API_URL}/api/v1/users/me/tier/`;
 const REFRESH_ENDPOINT = `${API_URL}${import.meta.env.VITE_AUTH_REFRESH_ENDPOINT || '/api/v1/auth/token/refresh/'}`;
+const LOGOUT_ENDPOINT = `${API_URL}/api/v1/auth/logout/`;
 const AUTH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_TIMEOUT_MS || 15000);
 let refreshSessionPromise = null;
 
@@ -184,6 +183,25 @@ function storeUserProfile(user) {
     syncStoredPreferredNameFromUser(user);
 }
 
+async function syncCurrentTier() {
+    const token = getAccessToken();
+    if (!token) return null;
+    try {
+        const response = await fetchWithTimeout(TIER_ENDPOINT, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const tier = payload?.data || payload;
+        const currentUser = getPersistedUserProfile() || {};
+        storeUserProfile({ ...currentUser, tier: tier?.current_tier || currentUser.tier, tier_info: tier });
+        return tier;
+    } catch {
+        return null;
+    }
+}
+
 export async function loginUser(credentials) {
     const normalizedCredentials = normalizeLoginCredentials(credentials);
     const response = await authRequestWithRetry(
@@ -193,7 +211,7 @@ export async function loginUser(credentials) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(credentials),
+            body: JSON.stringify(normalizedCredentials),
         },
         {
             timeoutMs: AUTH_TIMEOUT_MS,
@@ -209,6 +227,7 @@ export async function loginUser(credentials) {
     }
 
     storeUserProfile(extractUser(payload));
+    await syncCurrentTier();
 
     return payload;
 }
@@ -297,7 +316,9 @@ export async function refreshSession() {
             });
 
             const payload = await parseResponse(response, { handleUnauthorized: false });
-            return storeTokens(payload);
+            const stored = storeTokens(payload);
+            if (stored) await syncCurrentTier();
+            return stored;
         })().finally(() => {
             refreshSessionPromise = null;
         });
@@ -401,11 +422,21 @@ export async function getUserProfile() {
     const result = await parseResponse(response);
     const user = extractUser(result);
     storeUserProfile(user);
-    return user;
+    const tier = await syncCurrentTier();
+    return tier ? { ...user, tier: tier.current_tier || user?.tier, tier_info: tier } : user;
 }
 
 export function logoutUser() {
+    const access = getAccessToken();
+    const refresh = getRefreshToken();
     clearAuthStorage();
+    if (refresh && access) {
+        fetchWithTimeout(LOGOUT_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access}` },
+            body: JSON.stringify({ refresh }),
+        }, AUTH_TIMEOUT_MS).catch(() => null);
+    }
 }
 
 export function hasStoredAccessToken() {

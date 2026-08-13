@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     Building2,
     Globe,
@@ -15,6 +15,7 @@ import {
     WalletCards,
     X,
 } from 'lucide-react';
+import { filterItemsForTier, tierAllows } from '../../../utils/tierAccess';
 
 const BRAND_GREEN = '#1f9c72';
 
@@ -35,12 +36,32 @@ const compareTabs = [
     { id: 'insurance', label: 'Insurance', icon: '✅' },
 ];
 
+const compareMinimumTier = {
+    loans: 'PLUS',
+    savings: 'BASIC',
+    investments: 'PRO',
+    banking: 'BASIC',
+    transfers: 'BASIC',
+    retirement: 'PRO',
+    mortgage: 'PLUS',
+    insurance: 'PLUS',
+};
+
 const wizardQuestions = [
     { key: 'goal', title: 'What is your primary financial goal?', options: ['Save', 'Borrow', 'Invest', 'Protect', 'Transfer', 'Retire'] },
     { key: 'horizon', title: 'What is your time horizon?', options: ['Under 1 year', '1-3 years', '3-5 years', '5+ years'] },
     { key: 'risk', title: 'What is your risk comfort level?', options: ['Conservative', 'Moderate', 'Aggressive', 'Unsure'] },
     { key: 'amount', title: 'How much can you commit monthly?', options: ['Under KES 5K', 'KES 5K-20K', 'KES 20K-50K', 'Over KES 50K'] },
 ];
+
+const wizardGoalMinimumTier = {
+    Save: 'BASIC',
+    Transfer: 'BASIC',
+    Borrow: 'PLUS',
+    Protect: 'PLUS',
+    Invest: 'PRO',
+    Retire: 'PRO',
+};
 
 const wizardPicks = {
     Save: [
@@ -149,6 +170,7 @@ export const compareModules = [
             },
             {
                 id: 'ut',
+                minimumTier: 'PRO',
                 label: 'Other Unit Trusts',
                 columns: ['Provider', 'Fund Types', 'Min. Investment', 'Annual Fee', 'Regulation', 'Best For', 'Action'],
                 rows: [
@@ -460,8 +482,20 @@ const calculateMortgagePayment = (principal, annualRate, years) => {
     return principal * ((monthlyRate * (1 + monthlyRate) ** months) / (((1 + monthlyRate) ** months) - 1));
 };
 
-const ComparisonHubPanel = () => {
-    const [activeTab, setActiveTab] = useState('loans');
+const ComparisonHubPanel = ({ currentTier = 'PRO' }) => {
+    const allowedTabs = useMemo(
+        () => filterItemsForTier(
+            compareTabs.map((tab) => ({ ...tab, minimumTier: compareMinimumTier[tab.id] })),
+            currentTier,
+        ),
+        [currentTier],
+    );
+    const [activeTab, setActiveTab] = useState(
+        () => filterItemsForTier(
+            compareTabs.map((tab) => ({ ...tab, minimumTier: compareMinimumTier[tab.id] })),
+            currentTier,
+        )[0]?.id || 'savings',
+    );
     const [activeSegments, setActiveSegments] = useState(() => Object.fromEntries(compareModules.map((module) => [module.id, module.segments[0].id])));
     const [activeFilters, setActiveFilters] = useState(() => Object.fromEntries(compareModules.map((module) => [module.id, module.filters[0] || null])));
     const [wizardOpen, setWizardOpen] = useState(false);
@@ -475,7 +509,16 @@ const ComparisonHubPanel = () => {
     const activeModule = moduleMap[activeTab];
     const activeSegment = activeModule.segments.find((segment) => segment.id === activeSegments[activeTab]) || activeModule.segments[0];
     const currentQuestion = wizardQuestions[wizardStep];
+    const currentQuestionOptions = currentQuestion.key === 'goal'
+        ? currentQuestion.options.filter((option) => tierAllows(currentTier, wizardGoalMinimumTier[option] || 'BASIC'))
+        : currentQuestion.options;
     const actionContent = compareActionContent[activeTab] || compareActionContent.loans;
+
+    useEffect(() => {
+        if (!allowedTabs.some((tab) => tab.id === activeTab)) {
+            setActiveTab(allowedTabs[0]?.id || 'savings');
+        }
+    }, [activeTab, allowedTabs]);
 
     // The wizard mirrors the Claude flow but keeps every answer in React state,
     // which makes the Compare Hub easier to reason about and easier to test.
@@ -516,7 +559,7 @@ const ComparisonHubPanel = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <span className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-[11px] font-semibold text-white">Basic Tier</span>
+                        <span className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-[11px] font-semibold text-white">{currentTier} Tier</span>
                         <button type="button" className="rounded-lg bg-[#fff5e8] px-4 py-2 text-sm font-semibold text-[#166d52]">
                             Upgrade Plan ?
                         </button>
@@ -525,7 +568,7 @@ const ComparisonHubPanel = () => {
             </section>
 
             <nav className="sticky top-[5.25rem] z-20 flex gap-2 overflow-x-auto rounded-[1rem] border border-[#d0ddd9] bg-white/95 p-2 shadow-sm backdrop-blur-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {compareTabs.map((tab) => {
+                {allowedTabs.map((tab) => {
                     const active = activeTab === tab.id;
                     return (
                         <button
@@ -567,7 +610,7 @@ const ComparisonHubPanel = () => {
                     <p className="mt-1 text-sm leading-6 text-slate-500">{activeModule.description}</p>
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                        {activeModule.segments.map((segment) => (
+                        {activeModule.segments.filter((segment) => tierAllows(currentTier, segment.minimumTier || 'BASIC')).map((segment) => (
                             <button
                                 key={segment.id}
                                 type="button"
@@ -744,7 +787,7 @@ const ComparisonHubPanel = () => {
 
                                 <p className="text-base font-bold text-slate-950">{currentQuestion.title}</p>
                                 <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                    {currentQuestion.options.map((option) => (
+                                    {currentQuestionOptions.map((option) => (
                                         <button
                                             key={option}
                                             type="button"

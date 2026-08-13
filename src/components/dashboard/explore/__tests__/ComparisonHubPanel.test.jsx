@@ -4,6 +4,19 @@ import { describe, expect, it } from 'vitest';
 import ComparisonHubPanel from '../ComparisonHubPanel';
 
 describe('ComparisonHubPanel', () => {
+    it('shows only the comparison areas included in the current cumulative tier', () => {
+        const { rerender } = render(<ComparisonHubPanel currentTier="BASIC" />);
+
+        expect(screen.getByRole('button', { name: /mmfs/i })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /^loans$/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /^investments$/i })).not.toBeInTheDocument();
+
+        rerender(<ComparisonHubPanel currentTier="PLUS" />);
+        expect(screen.getByRole('button', { name: /^loans$/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^insurance$/i })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /^investments$/i })).not.toBeInTheDocument();
+    });
+
     it('switches between main compare tabs', async () => {
         const user = userEvent.setup();
         render(<ComparisonHubPanel />);

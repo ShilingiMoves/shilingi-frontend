@@ -3,15 +3,12 @@ import {
     handleUnauthorizedSession,
     setStoredUserProfile,
 } from './sessionManager';
-import { resolveApiBaseUrl } from './apiConfig';
+import { getConfiguredApiUrl } from './apiConfig';
 import { fetchWithTimeout } from './secureFetch';
 import { refreshSession } from './authApi';
 import { normalizePreferredNameToFirstName, syncStoredPreferredNameFromUser } from '../utils/memberIdentity';
 
-const API_URL = resolveApiBaseUrl({
-    envUrl: import.meta.env.VITE_API_URL,
-    isDev: import.meta.env.DEV,
-});
+const API_URL = getConfiguredApiUrl();
 const AUTH_HEADER_PREFIX = import.meta.env.VITE_AUTH_HEADER_PREFIX || 'Bearer';
 const AUTH_HEADER_NAME = import.meta.env.VITE_AUTH_HEADER_NAME || 'Authorization';
 

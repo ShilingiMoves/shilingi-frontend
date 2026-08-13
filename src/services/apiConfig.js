@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCTION_API_URL = 'https://shilingi-backend-dxdyhgahfab4buan.westeurope-01.azurewebsites.net';
+const DEFAULT_PRODUCTION_API_URL = 'https://shilingi-backend-production.up.railway.app';
 const DEFAULT_LOCAL_API_URL = '';
 
 function sanitizeUrl(candidate, { allowHttp = false } = {}) {
@@ -39,6 +39,13 @@ export function resolveApiBaseUrl({ envUrl, isDev }) {
     }
 
     return DEFAULT_PRODUCTION_API_URL;
+}
+
+export function getConfiguredApiUrl() {
+    return resolveApiBaseUrl({
+        envUrl: import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL,
+        isDev: import.meta.env.DEV,
+    });
 }
 
 export { DEFAULT_LOCAL_API_URL, DEFAULT_PRODUCTION_API_URL };

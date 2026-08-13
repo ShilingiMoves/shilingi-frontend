@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, Globe, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Globe, LockKeyhole, X } from 'lucide-react';
 import { dashboardSectionMap, dashboardSidebarGroups } from './dashboardSections';
 
 const DashboardSidebar = ({
@@ -10,11 +10,13 @@ const DashboardSidebar = ({
     onSelectSection,
     mobileOpen = false,
     onCloseMobile,
+    accessBySection = {},
+    navigationGroups = dashboardSidebarGroups,
 }) => {
-    const groupIds = useMemo(() => dashboardSidebarGroups.map((group) => group.id), []);
+    const groupIds = useMemo(() => navigationGroups.map((group) => group.id), [navigationGroups]);
     const activeGroupId = useMemo(
-        () => dashboardSidebarGroups.find((group) => group.items.includes(activeSection))?.id ?? dashboardSidebarGroups[0]?.id,
-        [activeSection]
+        () => navigationGroups.find((group) => group.items.includes(activeSection))?.id ?? navigationGroups[0]?.id,
+        [activeSection, navigationGroups]
     );
     const [expandedGroups, setExpandedGroups] = useState(() =>
         groupIds.reduce((accumulator, groupId, index) => {
@@ -92,7 +94,7 @@ const DashboardSidebar = ({
 
                 <nav className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-gutter:stable] sm:px-4">
                     <div className="space-y-5">
-                        {dashboardSidebarGroups.map((group) => (
+                        {navigationGroups.map((group) => (
                             <div key={group.id}>
                                 {!collapsed && (
                                     <button
@@ -117,6 +119,8 @@ const DashboardSidebar = ({
 
                                         const Icon = item.icon;
                                         const isActive = activeSection === item.id;
+                                        const sectionAccess = accessBySection[item.id];
+                                        const isLocked = sectionAccess && !sectionAccess.allowed;
 
                                         return (
                                             <button
@@ -135,11 +139,14 @@ const DashboardSidebar = ({
                                                     <Icon size={18} />
                                                 </span>
                                                 {!collapsed && (
-                                                    <span className="min-w-0">
+                                                    <span className="min-w-0 flex-1">
                                                         <span className="block truncate text-sm font-semibold">{item.label}</span>
-                                                        <span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{item.helper}</span>
+                                                        <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                                            {isLocked ? `${sectionAccess.minimumTier} plan required` : item.helper}
+                                                        </span>
                                                     </span>
                                                 )}
+                                                {isLocked && !collapsed && <LockKeyhole size={15} className="shrink-0 text-amber-600" />}
                                             </button>
                                         );
                                     })}

@@ -8,6 +8,8 @@ import {
     ShieldCheck,
     X,
 } from 'lucide-react';
+import { getStoredUserProfile } from '../services/authApi';
+import { normalizeTier, tierAllows } from '../utils/tierAccess';
 
 const MAX_MESSAGE_LENGTH = 260;
 const EXIT_INTENT_STORAGE_KEY = 'shilingi_buddy_exit_intent_shown';
@@ -55,7 +57,7 @@ const knowledgeBase = [
     },
     {
         keywords: ['dashboard', 'tier', 'basic', 'plus', 'pro', 'elite'],
-        reply: 'Think of the Shilingi Dashboard as your financial control centre. Basic helps you start, Plus is useful if you are serious about budgeting and debt, Pro supports deeper planning, and Elite adds AI guidance.',
+        reply: 'Shilingi Moves has only three plans. Basic includes Budget, Tax, and Buddy AI Lite. Plus adds Debt, Protection, Net Worth, and Buddy AI Coach. Pro adds Investment, Retirement, Market Watch, and Buddy AI Wealth Strategist.',
     },
     {
         keywords: ['budget', 'spend', 'expense', '50/30/20', 'planner'],
@@ -63,6 +65,7 @@ const knowledgeBase = [
     },
     {
         keywords: ['debt', 'loan', 'borrow', 'payoff', 'repayment'],
+        minimumTier: 'PLUS',
         reply: 'Debt becomes easier to handle when it is visible. List each loan, balance, interest rate, minimum payment, and due date. Then choose a repayment strategy: highest-interest first to save money, or smallest-balance first to build momentum.',
     },
     {
@@ -94,11 +97,12 @@ const knowledgeBase = [
         reply: 'Your financial privacy matters. Please do not share PINs, passwords, card numbers, ID numbers, or private account details in this chat. Keep sensitive actions on official secure pages.',
     },
     {
-        keywords: ['contact', 'support', 'help'],
+        keywords: ['contact', 'customer support', 'account support'],
         reply: 'For account-specific help, use the official support or contact options on the website. I can guide you around Shilingi Moves and answer general finance questions here.',
     },
     {
         keywords: ['invest', 'investment', 'returns', 'stock', 'fund'],
+        minimumTier: 'PRO',
         reply: 'Investing starts with your goal, time frame, risk comfort, and emergency savings. I can explain concepts in simple language, but I cannot promise returns or tell you exactly what to buy. For personal choices, use trusted licensed professionals.',
     },
     {
@@ -119,7 +123,13 @@ function getSafetyReply(message) {
     return null;
 }
 
-function getBuddyReply(message) {
+const buddyRoleForTier = (tier) => ({
+    BASIC: 'Buddy AI Lite',
+    PLUS: 'Buddy AI Coach',
+    PRO: 'Buddy AI Wealth Strategist',
+}[normalizeTier(tier)]);
+
+export function getBuddyReply(message, currentTier = 'BASIC') {
     const safetyReply = getSafetyReply(message);
     if (safetyReply) return safetyReply;
 
@@ -128,12 +138,19 @@ function getBuddyReply(message) {
         topic.keywords.some((keyword) => text.includes(keyword))
     );
 
+    if (matchedTopic?.minimumTier && !tierAllows(currentTier, matchedTopic.minimumTier)) {
+        return `${matchedTopic.minimumTier} includes this deeper guidance. Your ${normalizeTier(currentTier)} plan still includes ${buddyRoleForTier(currentTier)} for the financial topics available at your level.`;
+    }
+
     if (matchedTopic) return matchedTopic.reply;
 
     return 'That is a thoughtful question. To guide you well, tell me which area matters most right now: budgeting, debt, saving, investing basics, choosing a product, or finding the right Shilingi Moves tool.';
 }
 
 function ShilingiBuddy() {
+    const storedUser = getStoredUserProfile();
+    const currentTier = normalizeTier(storedUser?.tier_info?.current_tier || storedUser?.tier);
+    const buddyRole = buddyRoleForTier(currentTier);
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState(initialMessages);
     const [inputValue, setInputValue] = useState('');
@@ -203,7 +220,7 @@ function ShilingiBuddy() {
             const buddyMessage = {
                 id: buddyMessageId,
                 sender: 'buddy',
-                text: getBuddyReply(cleanMessage),
+                text: getBuddyReply(cleanMessage, currentTier),
             };
 
             setMessages((currentMessages) => [...currentMessages, buddyMessage]);
@@ -231,6 +248,7 @@ function ShilingiBuddy() {
                             </span>
                             <div className="min-w-0">
                                 <h2 className="truncate text-[11px] font-bold">Shilingi Buddy</h2>
+                                <p className="truncate text-[9px] text-white/70">{buddyRole}</p>
                                 <p className="truncate text-[8px] font-medium text-primary-50">Money guide</p>
                             </div>
                         </div>

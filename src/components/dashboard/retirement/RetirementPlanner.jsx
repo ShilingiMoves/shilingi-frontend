@@ -20,6 +20,8 @@ import {
   getAssetCategories,
   getAssets,
 } from "../../../services/investmentTrackerApi";
+import { deletePlan, getLatestPlan, savePlan } from "../../../services/plannerApi";
+import PlannerSyncStatus from "../common/PlannerSyncStatus";
 import { markDashboardDataExists } from "../../../utils/dashboardDataState";
 import { usePlannerFinancialContext } from "../../../hooks/usePlannerFinancialContext";
 import {
@@ -328,6 +330,7 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
   const [calculator, setCalculator] = useState(defaultCalculator);
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [savedPlan, setSavedPlan] = useState(null);
   const [activeTab, setActiveTab] = useState("objectives");
   const [mobileFlowStep, setMobileFlowStep] = useState(() =>
     readRetirementOnboardingSeen() ? "complete" : "welcome",
@@ -348,12 +351,25 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
     setLoading(true);
     setError("");
     try {
-      const [assetRows, categoryRows] = await Promise.all([
+      const [assetRows, categoryRows, backendPlan] = await Promise.all([
         getAssets(),
         getAssetCategories(),
+        getLatestPlan("retirement"),
       ]);
       setAssets(assetRows);
       setCategories(categoryRows);
+      setSavedPlan(backendPlan);
+      if (backendPlan) {
+        setCalculator((current) => ({
+          ...current,
+          currentAge: String(backendPlan.current_age || current.currentAge),
+          targetAge: String(backendPlan.retirement_age || current.targetAge),
+          currentSavings: backendPlan.current_retirement_savings || current.currentSavings,
+          monthlyContribution: backendPlan.monthly_contribution || current.monthlyContribution,
+          monthlyExpensesAtRetirement: backendPlan.desired_monthly_income_today || current.monthlyExpensesAtRetirement,
+          expectedReturn: backendPlan.pre_retirement_return_percent || current.expectedReturn,
+        }));
+      }
     } catch (err) {
       setError(
         err.message || "Unable to load retirement planner data right now.",
@@ -598,6 +614,11 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
     setMobileFlowStep("questions");
     setError("");
     setSuccess("");
+    if (savedPlan?.uuid) {
+      deletePlan("retirement", savedPlan.uuid)
+        .then(() => setSavedPlan(null))
+        .catch((err) => setError(err.message || "The saved retirement plan could not be deleted."));
+    }
   };
   const handleMobileRetirementBack = () => {
     if (mobileFlowStep === "questions") {
@@ -620,7 +641,7 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
     }
     startMobileRetirementQuestions();
   };
-  const completeMobileRetirementOnboarding = (
+  const completeMobileRetirementOnboarding = async (
     nextView = "dashboard",
     { keepNotice = false } = {},
   ) => {
@@ -651,6 +672,27 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
     setMobileFundView(nextView);
     setActiveTab("objectives");
     setSuccess(keepNotice ? RETIREMENT_ANSWERS_SAVED_MESSAGE : "");
+    try {
+      const retirementAge = Math.max(
+        Math.round(toNumber(calculator.targetAge)),
+        19,
+      );
+      const persistedPlan = await savePlan("retirement", {
+        name: "Retirement target",
+        current_age: Math.max(Math.round(toNumber(calculator.currentAge)), 18),
+        retirement_age: retirementAge,
+        life_expectancy: Math.min(Math.max(retirementAge + 20, 85), 120),
+        current_retirement_savings: String(Math.max(effectiveCurrentSavings, 0)),
+        monthly_contribution: String(Math.max(effectiveMonthlyContribution, 0)),
+        desired_monthly_income_today: String(Math.max(toNumber(calculator.monthlyExpensesAtRetirement), 1)),
+        pre_retirement_return_percent: String(Math.max(toNumber(calculator.expectedReturn), 0)),
+        post_retirement_return_percent: "6",
+        inflation_percent: "5",
+      }, savedPlan);
+      setSavedPlan(persistedPlan);
+    } catch (err) {
+      setError(err.message || "Your target was kept, but the retirement plan could not be saved.");
+    }
   };
   const handleMobileRetirementNext = () => {
     const currentQuestion = retirementQuestionFlow[mobileQuestionIndex];
@@ -755,6 +797,7 @@ const RetirementPlanner = ({ onSelectSection, user }) => {
           {success}
         </div>
       )}
+      <PlannerSyncStatus plan={savedPlan} />
       <MobileRetirementOnboarding
         answers={retirementAnswers}
         displayName={displayName}

@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import NumericInput from '../../common/NumericInput';
+import { filterItemsForTier, tierAllows } from '../../../utils/tierAccess';
 import {
     Bot,
     BookOpen,
@@ -29,22 +30,8 @@ const currencyFormatter = new Intl.NumberFormat('en-KE', {
     maximumFractionDigits: 0,
 });
 
-const plainNumberFormatter = new Intl.NumberFormat('en-KE', {
-    maximumFractionDigits: 2,
-});
-
-const fxRatesToKes = {
-    KES: 1,
-    USD: 129,
-    EUR: 140,
-    GBP: 163,
-    UGX: 0.036,
-    TZS: 0.05,
-};
-
 const primaryTabs = [
     { id: 'calculators', label: 'Calculators', icon: Calculator },
-    { id: 'podcasts', label: 'Podcasts', icon: Headphones },
     { id: 'books', label: 'Books', icon: BookOpen, activeTone: 'gold' },
 ];
 
@@ -53,7 +40,6 @@ const primaryTabs = [
 const contentTabs = [
     { id: 'calculators', label: 'My Calculators', icon: Calculator },
     { id: 'books', label: 'Books', icon: BookOpen },
-    { id: 'podcasts', label: 'Podcasts', icon: Headphones },
     { id: 'learning', label: 'Learning Hub', icon: GraduationCap },
 ];
 
@@ -66,7 +52,6 @@ const calculatorFilters = [
     { id: 'debt', label: 'Debt' },
     { id: 'tax', label: 'Tax' },
     { id: 'insurance', label: 'Insurance' },
-    { id: 'property', label: 'Property' },
 ];
 
 const calculatorCards = [
@@ -82,7 +67,7 @@ const calculatorCards = [
     },
     {
         id: 'loan',
-        title: 'Loan Calculator',
+        title: 'Debt Repayment Calculator',
         description: 'Monthly repayments, total interest, and full amortisation schedule for any loan.',
         category: 'debt',
         badge: 'Popular',
@@ -102,58 +87,40 @@ const calculatorCards = [
     },
     {
         id: 'budget',
-        title: 'Budget Builder (50/30/20)',
-        description: 'Plan your monthly budget using the Needs / Wants / Savings formula based on your income.',
+        title: 'Savings Calculator',
+        description: 'Estimate a practical monthly and annual savings target from your income.',
         category: 'budgeting',
         icon: Calculator,
         iconTone: 'bg-[#eef8f4] text-[#166a55]',
     },
     {
         id: 'fire',
-        title: 'FIRE Calculator',
-        description: 'Find your Financial Independence number using the 4% safe withdrawal rate rule.',
+        title: 'Retirement Calculator',
+        description: 'Estimate the portfolio needed to support your planned annual retirement income.',
         category: 'investing',
         icon: Zap,
         iconTone: 'bg-[#fff5e7] text-[#df8a00]',
     },
     {
         id: 'debtPayoff',
-        title: 'Debt Payoff Planner',
+        title: 'Debt Snowball Calculator',
         description: 'Avalanche vs snowball method - see which strategy saves you the most interest.',
         category: 'debt',
         icon: Target,
         iconTone: 'bg-[#fff1ef] text-[#d94d4d]',
     },
     {
-        id: 'netWorth',
-        title: 'Net Worth Tracker',
-        description: 'Calculate your total assets minus liabilities to see your real net worth today.',
-        category: 'budgeting',
-        icon: PiggyBank,
-        iconTone: 'bg-[#ecfaf6] text-[#18846a]',
-    },
-    {
         id: 'insurance',
-        title: 'Insurance Cover Calculator',
+        title: 'Insurance Needs Analysis',
         description: 'Calculate how much life, medical, and income protection cover your family needs.',
         category: 'insurance',
         icon: ShieldCheck,
         iconTone: 'bg-[#f5efff] text-[#7a57d1]',
     },
     {
-        id: 'homeAffordability',
-        title: 'Home Affordability Calculator',
-        description: 'Find out how much house you can afford based on your income, debts, and savings in Kenya.',
-        category: 'property',
-        badge: 'New',
-        badgeTone: 'bg-[#ffb320] text-[#5a3a00]',
-        icon: Home,
-        iconTone: 'bg-[#eef4ff] text-[#2f74db]',
-    },
-    {
         id: 'nseReturns',
-        title: 'NSE Investment Returns',
-        description: 'Estimate dividend income and capital gains from Safaricom, KCB, Equity, or any NSE stock.',
+        title: 'Investment Return Calculator',
+        description: 'Estimate income, growth, and total value from an investment assumption.',
         category: 'investing',
         icon: TrendingUp,
         iconTone: 'bg-[#eef8f4] text-[#166a55]',
@@ -167,16 +134,57 @@ const calculatorCards = [
         iconTone: 'bg-[#fff7ec] text-[#b56a00]',
     },
     {
-        id: 'fx',
-        title: 'FX Converter',
-        description: 'KES to USD, EUR, GBP and more - useful for diaspora remittances and offshore investing.',
+        id: 'portfolio',
+        title: 'Portfolio Allocator',
+        description: 'Split an investment amount across cash, fixed income, and growth assets.',
         category: 'investing',
         badge: 'New',
         badgeTone: 'bg-[#ffb320] text-[#5a3a00]',
         icon: Wallet,
         iconTone: 'bg-[#fff7ec] text-[#b56a00]',
     },
+    {
+        id: 'creditCard',
+        title: 'Credit Card Repayment Calculator',
+        description: 'Estimate how long a credit card balance may take to clear and the interest paid.',
+        category: 'debt',
+        icon: Receipt,
+        iconTone: 'bg-[#fff1ef] text-[#d94d4d]',
+    },
 ];
+
+const calculatorMinimumTier = {
+    paye: 'BASIC',
+    budget: 'BASIC',
+    emergencyFund: 'BASIC',
+    loan: 'PLUS',
+    debtPayoff: 'PLUS',
+    insurance: 'PLUS',
+    creditCard: 'PLUS',
+    compound: 'PRO',
+    fire: 'PRO',
+    nseReturns: 'PRO',
+    portfolio: 'PRO',
+};
+
+const getResourceMinimumTier = (item) => {
+    const text = [item.title, item.blurb, item.description, item.badge, item.tagTwo]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+    if (/debt|loan|insurance|credit|net worth|mortgage/.test(text)) return 'PLUS';
+    if (/invest|retire|portfolio|nse|t-bill|bond|fire|wealth/.test(text)) return 'PRO';
+    return 'BASIC';
+};
+
+const filterResourceSections = (sections, currentTier, itemKey) => (
+    sections
+        .map((section) => ({
+            ...section,
+            [itemKey]: (section[itemKey] || []).filter((item) => tierAllows(currentTier, getResourceMinimumTier(item))),
+        }))
+        .filter((section) => section[itemKey].length > 0)
+);
 
 const curatedBookSections = [
     {
@@ -677,16 +685,15 @@ const ModalField = ({ label, children }) => (
     </div>
 );
 
-const ResourcesToolsPanel = ({ onSelectSection }) => {
+const ResourcesToolsPanel = ({ currentTier = 'PRO', onSelectSection }) => {
     const [activeTab, setActiveTab] = useState('calculators');
     const [activeFilter, setActiveFilter] = useState('all');
     const [selectedTool, setSelectedTool] = useState(null);
 
     const [monthlyIncome, setMonthlyIncome] = useState(120000);
     const budgetSplit = useMemo(() => ({
-        needs: monthlyIncome * 0.5,
-        wants: monthlyIncome * 0.3,
-        savings: monthlyIncome * 0.2,
+        monthlySavings: monthlyIncome * 0.2,
+        annualSavings: monthlyIncome * 0.2 * 12,
     }), [monthlyIncome]);
 
     const [loanAmount, setLoanAmount] = useState(500000);
@@ -735,17 +742,16 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
         };
     }, [grossMonthlyPay]);
 
-    const [fxAmount, setFxAmount] = useState(1000);
-    const [fxFrom, setFxFrom] = useState('USD');
-    const [fxTo, setFxTo] = useState('KES');
-    const fxConvertedAmount = useMemo(() => {
-        const fromRate = fxRatesToKes[fxFrom] ?? 1;
-        const toRate = fxRatesToKes[fxTo] ?? 1;
-        if (fxAmount <= 0 || fromRate <= 0 || toRate <= 0) {
-            return 0;
-        }
-        return (fxAmount * fromRate) / toRate;
-    }, [fxAmount, fxFrom, fxTo]);
+    const [portfolioAmount, setPortfolioAmount] = useState(500000);
+    const [portfolioStyle, setPortfolioStyle] = useState('balanced');
+    const portfolioAllocation = useMemo(() => {
+        const weights = {
+            conservative: { cash: 20, fixedIncome: 60, growth: 20 },
+            balanced: { cash: 10, fixedIncome: 45, growth: 45 },
+            growth: { cash: 5, fixedIncome: 25, growth: 70 },
+        }[portfolioStyle];
+        return Object.fromEntries(Object.entries(weights).map(([key, percent]) => [key, { percent, amount: portfolioAmount * percent / 100 }]));
+    }, [portfolioAmount, portfolioStyle]);
 
     const [yearlyExpense, setYearlyExpense] = useState(1200000);
     const [safeRate, setSafeRate] = useState(4);
@@ -797,9 +803,26 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
         };
     }, [payoffBalance, payoffRate, payoffMonthly]);
 
-    const [manualAssets, setManualAssets] = useState(500000);
-    const [manualLiabilities, setManualLiabilities] = useState(120000);
-    const netWorthResult = useMemo(() => manualAssets - manualLiabilities, [manualAssets, manualLiabilities]);
+    const [cardBalance, setCardBalance] = useState(120000);
+    const [cardRate, setCardRate] = useState(36);
+    const [cardPayment, setCardPayment] = useState(15000);
+    const cardRepayment = useMemo(() => {
+        const monthlyRate = cardRate / 100 / 12;
+        if (cardBalance <= 0 || cardPayment <= 0 || (monthlyRate > 0 && cardPayment <= cardBalance * monthlyRate)) {
+            return { months: 999, interest: 0 };
+        }
+        let balance = cardBalance;
+        let months = 0;
+        let paid = 0;
+        while (balance > 0.01 && months < 600) {
+            const interest = balance * monthlyRate;
+            const payment = Math.min(cardPayment, balance + interest);
+            balance = Math.max(balance + interest - payment, 0);
+            paid += payment;
+            months += 1;
+        }
+        return { months, interest: Math.max(paid - cardBalance, 0) };
+    }, [cardBalance, cardPayment, cardRate]);
 
     const [monthlyExpenses, setMonthlyExpenses] = useState(60000);
     const [monthsCovered, setMonthsCovered] = useState(6);
@@ -818,36 +841,58 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
         };
     }, [nseInvestment, dividendYield, capitalGainRate]);
 
-    const [housingIncome, setHousingIncome] = useState(120000);
-    const [housingDebt, setHousingDebt] = useState(20000);
-    const [housingSavings, setHousingSavings] = useState(800000);
-    const homeAffordability = useMemo(() => {
-        const availableMonthly = Math.max((housingIncome * 0.3) - housingDebt, 0);
-        const estimatedLoan = availableMonthly * 120;
-        return {
-            monthlyBudget: availableMonthly,
-            estimatedLoan,
-            estimatedHomePrice: estimatedLoan + housingSavings,
-        };
-    }, [housingIncome, housingDebt, housingSavings]);
+    const availableCalculators = useMemo(
+        () => filterItemsForTier(
+            calculatorCards.map((item) => ({ ...item, minimumTier: calculatorMinimumTier[item.id] || 'BASIC' })),
+            currentTier,
+        ),
+        [currentTier],
+    );
+    const availableLearningHighlights = useMemo(
+        () => learningHighlights.filter((item) => tierAllows(currentTier, getResourceMinimumTier(item))),
+        [currentTier],
+    );
+    const availableEcosystemLinks = useMemo(
+        () => ecosystemLinks.filter((item) => tierAllows(currentTier, {
+            debt: 'PLUS', protection: 'PLUS', investments: 'PRO', retirement: 'PRO',
+        }[item.id] || 'BASIC')),
+        [currentTier],
+    );
+    const availableBookSections = useMemo(
+        () => filterResourceSections(curatedBookSections, currentTier, 'books'),
+        [currentTier],
+    );
+    const availablePodcastSections = useMemo(
+        () => filterResourceSections(curatedPodcastSections, currentTier, 'items'),
+        [currentTier],
+    );
+    const availableCalculatorFilters = useMemo(() => {
+        const categories = new Set(availableCalculators.map((item) => item.category));
+        return calculatorFilters.filter((filter) => filter.id === 'all' || categories.has(filter.id));
+    }, [availableCalculators]);
+
+    useEffect(() => {
+        if (!availableCalculatorFilters.some((filter) => filter.id === activeFilter)) {
+            setActiveFilter('all');
+        }
+    }, [activeFilter, availableCalculatorFilters]);
 
     const selectedToolMeta = useMemo(() => {
-        return calculatorCards.find((item) => item.id === selectedTool);
-    }, [selectedTool]);
+        return availableCalculators.find((item) => item.id === selectedTool);
+    }, [availableCalculators, selectedTool]);
 
     const filteredCalculators = useMemo(() => {
         if (activeFilter === 'all') {
-            return calculatorCards;
+            return availableCalculators;
         }
-        return calculatorCards.filter((item) => item.category === activeFilter);
-    }, [activeFilter]);
+        return availableCalculators.filter((item) => item.category === activeFilter);
+    }, [activeFilter, availableCalculators]);
 
     const readingProgress = '3 Books';
 
-    // Buddy stays non-interactive for now so the footer can mirror the design
-    // system without exposing a route the dashboard is currently hiding.
     const handleEcosystemNavigate = (sectionId) => {
         if (sectionId === 'buddy') {
+            onSelectSection?.('buddy');
             return;
         }
         onSelectSection?.(sectionId);
@@ -864,10 +909,9 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                             <NumericInput aria-label="Monthly income (KES)" className={inputClass} value={monthlyIncome} onChange={(event) => setMonthlyIncome(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
-                            <p className="text-sm font-semibold text-slate-900">50/30/20 split</p>
-                            <p className="mt-3 text-sm text-slate-600">Needs (50%): <span className="font-semibold text-[#166a55]">{currencyFormatter.format(budgetSplit.needs)}</span></p>
-                            <p className="mt-1 text-sm text-slate-600">Wants (30%): <span className="font-semibold text-[#b56a00]">{currencyFormatter.format(budgetSplit.wants)}</span></p>
-                            <p className="mt-1 text-sm text-slate-600">Savings (20%): <span className="font-semibold text-[#2f74db]">{currencyFormatter.format(budgetSplit.savings)}</span></p>
+                            <p className="text-sm font-semibold text-slate-900">Suggested savings target</p>
+                            <p className="mt-3 text-sm text-slate-600">Monthly (20%): <span className="font-semibold text-[#166a55]">{currencyFormatter.format(budgetSplit.monthlySavings)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Annual target: <span className="font-semibold text-[#2f74db]">{currencyFormatter.format(budgetSplit.annualSavings)}</span></p>
                         </div>
                     </div>
                 );
@@ -924,40 +968,39 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                         </div>
                     </div>
                 );
-            case 'fx':
+            case 'portfolio':
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
-                        <ModalField label="Amount">
-                            <NumericInput aria-label="FX amount" className={inputClass} value={fxAmount} onChange={(event) => setFxAmount(Number(event.target.value || 0))} />
+                        <ModalField label="Portfolio amount (KES)">
+                            <NumericInput aria-label="Portfolio amount (KES)" className={inputClass} value={portfolioAmount} onChange={(event) => setPortfolioAmount(Number(event.target.value || 0))} />
                         </ModalField>
-                        <ModalField label="From currency">
-                            <select aria-label="From currency" className={inputClass} value={fxFrom} onChange={(event) => setFxFrom(event.target.value)}>
-                                {Object.keys(fxRatesToKes).map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+                        <ModalField label="Risk style">
+                            <select aria-label="Risk style" className={inputClass} value={portfolioStyle} onChange={(event) => setPortfolioStyle(event.target.value)}>
+                                <option value="conservative">Conservative</option>
+                                <option value="balanced">Balanced</option>
+                                <option value="growth">Growth</option>
                             </select>
                         </ModalField>
-                        <ModalField label="To currency">
-                            <select aria-label="To currency" className={inputClass} value={fxTo} onChange={(event) => setFxTo(event.target.value)}>
-                                {Object.keys(fxRatesToKes).map((currency) => <option key={currency} value={currency}>{currency}</option>)}
-                            </select>
-                        </ModalField>
-                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
-                            <p className="text-sm font-semibold text-slate-900">Converted amount</p>
-                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{plainNumberFormatter.format(fxConvertedAmount)} {fxTo}</p>
-                            <p className="mt-2 text-xs text-slate-500">Indicative rates for planning preview.</p>
+                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
+                            <p className="text-sm font-semibold text-slate-900">Illustrative allocation</p>
+                            <p className="mt-3 text-sm text-slate-600">Cash ({portfolioAllocation.cash.percent}%): <span className="font-semibold text-slate-900">{currencyFormatter.format(portfolioAllocation.cash.amount)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Fixed income ({portfolioAllocation.fixedIncome.percent}%): <span className="font-semibold text-slate-900">{currencyFormatter.format(portfolioAllocation.fixedIncome.amount)}</span></p>
+                            <p className="mt-1 text-sm text-slate-600">Growth assets ({portfolioAllocation.growth.percent}%): <span className="font-semibold text-[#166a55]">{currencyFormatter.format(portfolioAllocation.growth.amount)}</span></p>
+                            <p className="mt-2 text-xs text-slate-500">Educational illustration only, not investment advice.</p>
                         </div>
                     </div>
                 );
             case 'fire':
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
-                        <ModalField label="Annual expense (KES)">
+                        <ModalField label="Annual retirement income needed (KES)">
                             <NumericInput className={inputClass} value={yearlyExpense} onChange={(event) => setYearlyExpense(Number(event.target.value || 0))} />
                         </ModalField>
                         <ModalField label="Safe withdrawal rate (%)">
                             <input className={inputClass} type="number" min={0.5} step="0.1" value={safeRate} onChange={(event) => setSafeRate(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
-                            <p className="text-sm font-semibold text-slate-900">FIRE number (target portfolio)</p>
+                            <p className="text-sm font-semibold text-slate-900">Estimated retirement portfolio target</p>
                             <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(fireNumber)}</p>
                         </div>
                     </div>
@@ -983,21 +1026,6 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                                     <p className="mt-1 text-sm text-slate-600">Total interest: <span className="font-semibold text-slate-900">{currencyFormatter.format(debtPayoffResult.totalInterest)}</span></p>
                                 </>
                             )}
-                        </div>
-                    </div>
-                );
-            case 'netWorth':
-                return (
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <ModalField label="Total assets (KES)">
-                            <NumericInput aria-label="Total assets (KES)" className={inputClass} value={manualAssets} onChange={(event) => setManualAssets(Number(event.target.value || 0))} />
-                        </ModalField>
-                        <ModalField label="Total liabilities (KES)">
-                            <NumericInput aria-label="Total liabilities (KES)" className={inputClass} value={manualLiabilities} onChange={(event) => setManualLiabilities(Number(event.target.value || 0))} />
-                        </ModalField>
-                        <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4 md:col-span-2">
-                            <p className="text-sm font-semibold text-slate-900">Estimated net worth</p>
-                            <p className={`mt-2 text-2xl font-extrabold ${netWorthResult >= 0 ? 'text-[#166a55]' : 'text-[#d94d4d]'}`}>{currencyFormatter.format(netWorthResult)}</p>
                         </div>
                     </div>
                 );
@@ -1054,23 +1082,22 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                         </div>
                     </div>
                 );
-            case 'homeAffordability':
+            case 'creditCard':
                 return (
                     <div className="grid gap-4 md:grid-cols-2">
-                        <ModalField label="Monthly income (KES)">
-                            <NumericInput className={inputClass} value={housingIncome} onChange={(event) => setHousingIncome(Number(event.target.value || 0))} />
+                        <ModalField label="Credit card balance (KES)">
+                            <NumericInput aria-label="Credit card balance (KES)" className={inputClass} value={cardBalance} onChange={(event) => setCardBalance(Number(event.target.value || 0))} />
                         </ModalField>
-                        <ModalField label="Existing monthly debt (KES)">
-                            <NumericInput className={inputClass} value={housingDebt} onChange={(event) => setHousingDebt(Number(event.target.value || 0))} />
+                        <ModalField label="Annual interest rate (%)">
+                            <input aria-label="Credit card annual interest rate (%)" className={inputClass} type="number" min={0} step="0.1" value={cardRate} onChange={(event) => setCardRate(Number(event.target.value || 0))} />
                         </ModalField>
-                        <ModalField label="Available savings / deposit (KES)">
-                            <NumericInput className={inputClass} value={housingSavings} onChange={(event) => setHousingSavings(Number(event.target.value || 0))} />
+                        <ModalField label="Monthly repayment (KES)">
+                            <NumericInput aria-label="Credit card monthly repayment (KES)" className={inputClass} value={cardPayment} onChange={(event) => setCardPayment(Number(event.target.value || 0))} />
                         </ModalField>
                         <div className="rounded-[1.1rem] border border-[#c7e4db] bg-[#f8fcfa] p-4">
-                            <p className="text-sm font-semibold text-slate-900">Affordability estimate</p>
-                            <p className="mt-2 text-sm text-slate-600">Safe monthly housing budget: <span className="font-semibold text-slate-900">{currencyFormatter.format(homeAffordability.monthlyBudget)}</span></p>
-                            <p className="mt-1 text-sm text-slate-600">Estimated loan size: <span className="font-semibold text-slate-900">{currencyFormatter.format(homeAffordability.estimatedLoan)}</span></p>
-                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{currencyFormatter.format(homeAffordability.estimatedHomePrice)}</p>
+                            <p className="text-sm font-semibold text-slate-900">Estimated repayment result</p>
+                            <p className="mt-2 text-2xl font-extrabold text-[#166a55]">{cardRepayment.months >= 999 ? 'Increase payment' : `${cardRepayment.months} months`}</p>
+                            {cardRepayment.months < 999 && <p className="mt-2 text-sm text-slate-600">Estimated interest: <span className="font-semibold text-slate-900">{currencyFormatter.format(cardRepayment.interest)}</span></p>}
                         </div>
                     </div>
                 );
@@ -1097,7 +1124,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                             </div>
                         </div>
                         <p className="mt-3 max-w-2xl text-sm leading-6 text-white/85">
-                            Financial calculators, curated books and podcasts tailored for the Kenyan market - to help you make smarter money decisions every day.
+                            Financial calculators, curated books and learning resources tailored for the Kenyan market - to help you make smarter money decisions every day.
                         </p>
                     </div>
 
@@ -1116,10 +1143,9 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 </div>
             </section>
 
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <TopMetricCard label="Calculators Available" value="12" helper="3 favourited - Click to open" accent="text-[#166a55]" />
+            <section className="grid gap-3 md:grid-cols-3">
+                <TopMetricCard label="Calculators Available" value={availableCalculators.length} helper={`Included with your ${String(currentTier || 'BASIC').toUpperCase()} plan`} accent="text-[#166a55]" />
                 <TopMetricCard label="Curated Books" value="18" helper="KE - Africa - Global editions" accent="text-[#b56a00]" />
-                <TopMetricCard label="Curated Podcasts" value="15" helper="KE - Africa - Global voices" accent="text-[#2f74db]" />
                 <TopMetricCard label="Your Reading Progress" value={readingProgress} helper="1 in progress - 2 completed" accent="text-[#7a57d1]" />
             </section>
 
@@ -1134,7 +1160,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
             {activeTab === 'calculators' && (
                 <>
                     <section className="flex flex-wrap gap-2 rounded-[1rem] border border-[#d0ddd9] bg-[#f8fbfa] p-2">
-                        {calculatorFilters.map((filter) => (
+                        {availableCalculatorFilters.map((filter) => (
                             <FilterPill key={filter.id} active={activeFilter === filter.id} label={filter.label} onClick={() => setActiveFilter(filter.id)} />
                         ))}
                     </section>
@@ -1170,7 +1196,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                         </button>
                     </div>
 
-                    {curatedBookSections.map((section) => (
+                    {availableBookSections.map((section) => (
                         <div key={section.id} className="space-y-4">
                             <div className="flex items-center justify-between gap-4 border-b border-[#cfe8df] pb-3">
                                 <h4 className="text-[1.15rem] font-bold tracking-tight text-slate-950">{section.title}</h4>
@@ -1229,7 +1255,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                         </button>
                     </div>
 
-                    {curatedPodcastSections.map((section) => (
+                    {availablePodcastSections.map((section) => (
                         <div key={section.id} className="space-y-4">
                             <div className="flex items-center justify-between gap-4 border-b border-[#cfe8df] pb-3">
                                 <h4 className="text-[1.15rem] font-bold tracking-tight text-slate-950">{section.title}</h4>
@@ -1285,7 +1311,7 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                     </div>
 
                     <div className="grid gap-3 xl:grid-cols-3">
-                        {learningHighlights.map((item) => {
+                        {availableLearningHighlights.map((item) => {
                             const Icon = item.icon;
 
                             return (
@@ -1331,9 +1357,9 @@ const ResourcesToolsPanel = ({ onSelectSection }) => {
                 </div>
 
                 <div className="mt-4 grid gap-3 lg:grid-cols-3 xl:grid-cols-6">
-                    {ecosystemLinks.map((item) => {
+                    {availableEcosystemLinks.map((item) => {
                         const Icon = item.icon;
-                        const isDisabled = item.id === 'buddy';
+                        const isDisabled = false;
 
                         return (
                             <button
