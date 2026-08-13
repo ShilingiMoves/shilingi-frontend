@@ -59,20 +59,24 @@ const SignInPage = () => {
         setError('');
         setSuccess('');
 
+        const submittedForm = new FormData(event.currentTarget);
+        const submittedEmail = String(submittedForm.get('email') || formValues.email).trim().toLowerCase();
+        const submittedPassword = sanitizePasswordInput(submittedForm.get('password') || formValues.password);
+
         try {
             setIsSubmitting(true);
             const loginPayload = await loginUser({
-                email: formValues.email.trim().toLowerCase(),
-                password: formValues.password,
+                email: submittedEmail,
+                password: submittedPassword,
             });
             setSuccess('Welcome back. Your account is ready, and your money tools are now open.');
-            const nextSection = getPostLoginSection(formValues.email);
+            const nextSection = getPostLoginSection(submittedEmail);
             const loggedInUser = loginPayload?.data?.user || loginPayload?.user || loginPayload?.data || loginPayload;
             if (!hasAnyPreferredName(loggedInUser)) {
                 queuePreferredNamePrompt(nextSection === 'user' ? 'signup' : 'returning');
             }
             clearPendingProfileSignup();
-            if (shouldShowProfileSetup(formValues.email)) {
+            if (shouldShowProfileSetup(submittedEmail)) {
                 navigate('/profile-setup', { replace: true });
                 return;
             }
