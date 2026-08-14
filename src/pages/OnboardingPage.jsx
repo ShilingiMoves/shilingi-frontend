@@ -22,6 +22,8 @@ import {
     WalletCards,
 } from 'lucide-react';
 import { loginUser, registerUser, resendVerificationEmail } from '../services/authApi';
+import { getMpesaPayment, startMpesaCheckout } from '../services/platformApi';
+import { getAccessToken } from '../services/sessionManager';
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { markProfileSetupPending, shouldShowProfileSetup } from '../utils/profileSetupState';
 import onboardingIllustration from '../assets/onboarding-financial-coach.webp';
@@ -39,10 +41,10 @@ const passwordRules = [
 
 const profileOptions = [
     { id: 'salaried', label: 'Salaried Employee', icon: Briefcase, plan: 'plus' },
-    { id: 'business', label: 'Business Owner', icon: Building2, plan: 'elite' },
+    { id: 'business', label: 'Business Owner', icon: Building2, plan: 'pro' },
     { id: 'freelancer', label: 'Freelancer', icon: BadgeDollarSign, plan: 'basic' },
     { id: 'student', label: 'Student', icon: GraduationCap, plan: 'basic' },
-    { id: 'retiree', label: 'Retiree', icon: Landmark, plan: 'elite' },
+    { id: 'retiree', label: 'Retiree', icon: Landmark, plan: 'pro' },
     { id: 'exploring', label: 'Just Exploring', icon: Heart, plan: 'basic' },
 ];
 
@@ -62,7 +64,7 @@ const goalOptions = [
     { id: 'invest', label: 'Start investing', icon: TrendingUp, plan: 'pro' },
     { id: 'grow', label: 'Grow my investments', icon: TrendingUp, plan: 'pro' },
     { id: 'land', label: 'Buy land long-term', icon: Landmark, plan: 'pro' },
-    { id: 'business', label: 'Grow my business', icon: Building2, plan: 'elite' },
+    { id: 'business', label: 'Grow my business', icon: Building2, plan: 'pro' },
     { id: 'education', label: "Children's education", icon: GraduationCap, plan: 'plus' },
 ];
 
@@ -81,38 +83,31 @@ const planDetails = {
         shortName: 'Basic',
         eyebrow: 'Build your foundation',
         description: 'Perfect for students, first-time earners, young professionals and anyone beginning their financial journey.',
-        tools: ['Dashboard insights', 'Budget planner', 'Net-worth tracker', 'Market Watch'],
+        tools: ['Dashboard insights', 'Budget planner', 'Tax planner', 'Beginner learning tools'],
     },
     plus: {
         name: 'Shilingi Plus',
-        price: 500,
-        priceLabel: 'KES 500',
+        price: 499,
+        annualPrice: 4990,
+        priceLabel: 'KES 499',
         shortName: 'Plus',
         eyebrow: 'Build financial security',
         description: 'Perfect for salaried employees, young families, borrowers and individuals building financial resilience.',
-        tools: ['Dashboard insights', 'Budget planner', 'Debt manager', 'Protection planner', 'Net-worth tracker'],
+        tools: ['Everything in Basic', 'Debt manager', 'Protection planner', 'Net-worth tracker'],
     },
     pro: {
         name: 'Shilingi Pro',
-        price: 700,
-        priceLabel: 'KES 700',
+        price: 699,
+        annualPrice: 6990,
+        priceLabel: 'KES 699',
         shortName: 'Pro',
         eyebrow: 'Build wealth',
         description: 'Perfect for professionals, entrepreneurs, active investors and retirement planners.',
-        tools: ['Dashboard insights', 'Budget planner', 'Debt manager', 'Investment planner', 'Retirement planner', 'Net-worth tracker'],
-    },
-    elite: {
-        name: 'Shilingi Elite',
-        price: 1000,
-        priceLabel: 'KES 1,000',
-        shortName: 'Elite',
-        eyebrow: 'Achieve financial freedom',
-        description: 'Perfect for executives, business owners, high-net-worth individuals, families and pre-retirees.',
-        tools: ['Investment planner', 'Retirement planner', 'Debt manager', 'Budget planner', 'Learning hub', 'Comparison hub', 'Resources and tools', 'Community'],
+        tools: ['Everything in Plus', 'Investment planner', 'Retirement planner', 'Market Watch'],
     },
 };
 
-const planOrder = ['basic', 'plus', 'pro', 'elite'];
+const planOrder = ['basic', 'plus', 'pro'];
 const assessmentSteps = ['profile', 'stage', 'goals', 'confidence'];
 const steps = ['welcome', 'profile', 'stage', 'goals', 'confidence', 'results', 'plan', 'payment', 'account'];
 
@@ -120,8 +115,12 @@ const OnboardingPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const initialAuthMode = normalizeAuthMode(searchParams.get('auth') || searchParams.get('mode'));
+    const requestedPlanKey = normalizePlanKey(searchParams.get('plan'));
+    const isCheckoutEntry = searchParams.get('checkout') === '1' && Boolean(requestedPlanKey && requestedPlanKey !== 'basic');
     const isDirectAuthEntry = Boolean(initialAuthMode);
-    const [stepIndex, setStepIndex] = useState(() => (initialAuthMode ? steps.indexOf('account') : 0));
+    const [stepIndex, setStepIndex] = useState(() => (
+        initialAuthMode ? steps.indexOf('account') : isCheckoutEntry ? steps.indexOf('payment') : 0
+    ));
     const [answers, setAnswers] = useState({
         profile: '',
         stage: '',
@@ -131,7 +130,7 @@ const OnboardingPage = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisProgress, setAnalysisProgress] = useState(0);
     const [billingCycle, setBillingCycle] = useState('monthly');
-    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [selectedPlan, setSelectedPlan] = useState(requestedPlanKey);
     const [showOtherPlans, setShowOtherPlans] = useState(false);
     const [accountMode, setAccountMode] = useState(() => initialAuthMode || 'choice');
     const [authError, setAuthError] = useState('');
@@ -347,6 +346,11 @@ const OnboardingPage = () => {
                 email: signinValues.email.trim().toLowerCase(),
                 password: signinValues.password,
             });
+            if (!isDirectAuthEntry && activePlan.price > 0) {
+                setAccountMode('choice');
+                setStepIndex(steps.indexOf('payment'));
+                return;
+            }
             if (shouldShowProfileSetup(signinValues.email)) {
                 navigate('/profile-setup', { replace: true });
                 return;
@@ -497,10 +501,13 @@ const OnboardingPage = () => {
                         <PaymentScreen
                             billingCycle={billingCycle}
                             onBack={() => setStepIndex(steps.indexOf('plan'))}
-                            onContinue={() => {
+                            isAuthenticated={Boolean(getAccessToken())}
+                            onPaymentSuccess={() => navigate('/dashboard/app', { replace: true })}
+                            onRequireAccount={() => {
                                 setAccountMode('choice');
                                 setStepIndex(steps.indexOf('account'));
                             }}
+                            planKey={activePlanKey}
                             plan={activePlan}
                         />
                     )}
@@ -975,7 +982,71 @@ const PlanCard = ({ billingCycle, isRecommended, isSelected, onSelect, onStartPl
     </article>
 );
 
-const PaymentScreen = ({ billingCycle, onBack, onContinue, plan }) => (
+export const PaymentScreen = ({ billingCycle, isAuthenticated, onBack, onPaymentSuccess, onRequireAccount, plan, planKey, pollIntervalMs = 3000 }) => {
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [payment, setPayment] = useState(null);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [isStarting, setIsStarting] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
+
+    const checkPayment = async (paymentUuid) => {
+        const latest = await getMpesaPayment(paymentUuid);
+        setPayment(latest);
+        if (latest.status === 'SUCCEEDED') {
+            setMessage('Payment confirmed. Your plan is now active.');
+        } else if (['FAILED', 'CANCELLED'].includes(latest.status)) {
+            setError(latest.result_description || 'The M-Pesa payment was not completed. You can try again.');
+        } else {
+            setMessage('Still waiting for M-Pesa confirmation. You can check again.');
+        }
+        return latest;
+    };
+
+    const pollPayment = async (paymentUuid) => {
+        setIsChecking(true);
+        try {
+            for (let attempt = 0; attempt < 40; attempt += 1) {
+                await new Promise((resolve) => window.setTimeout(resolve, pollIntervalMs));
+                const latest = await checkPayment(paymentUuid);
+                if (['SUCCEEDED', 'FAILED', 'CANCELLED'].includes(latest.status)) return;
+            }
+            setMessage('The payment is still pending. Use “Check payment status” after you finish on your phone.');
+        } catch (statusError) {
+            setError(statusError.message || 'We could not check the payment status. Please try again.');
+        } finally {
+            setIsChecking(false);
+        }
+    };
+
+    const handleCheckout = async (event) => {
+        event.preventDefault();
+        setError('');
+        setMessage('');
+        if (!/^(?:254|0)?(?:7|1)\d{8}$/.test(phoneNumber.replace(/[\s+-]/g, ''))) {
+            setError('Enter a Kenyan Safaricom number such as 0712345678.');
+            return;
+        }
+
+        setIsStarting(true);
+        try {
+            const checkout = await startMpesaCheckout({
+                plan: String(planKey).toUpperCase(),
+                billingPeriod: String(billingCycle).toUpperCase(),
+                phoneNumber,
+                idempotencyKey: createPaymentIdempotencyKey(),
+            });
+            setPayment(checkout.payment);
+            setMessage(checkout.customer_message || 'Check your phone and enter your M-Pesa PIN. Never enter your PIN on this website.');
+            void pollPayment(checkout.payment.uuid);
+        } catch (checkoutError) {
+            setError(checkoutError.message || 'We could not send the M-Pesa request. Please try again.');
+        } finally {
+            setIsStarting(false);
+        }
+    };
+
+    return (
     <div className="flex flex-1 flex-col overflow-y-auto px-0 pb-4 pt-5">
         <button
             type="button"
@@ -1005,19 +1076,35 @@ const PaymentScreen = ({ billingCycle, onBack, onContinue, plan }) => (
                 </div>
             </div>
 
-            <button
-                type="button"
-                onClick={onContinue}
-                className="mt-6 inline-flex min-h-[54px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-bold text-white"
-            >
-                Continue to payment
-            </button>
-            <p className="mt-3 text-center text-xs leading-5 text-[#8e97ab]">
-                Payment provider connection will attach here. For now this continues to account setup.
-            </p>
+            {!isAuthenticated ? (
+                <>
+                    <button type="button" onClick={onRequireAccount} className="mt-6 inline-flex min-h-[54px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-bold text-white">
+                        Sign in or create account
+                    </button>
+                    <p className="mt-3 text-center text-xs leading-5 text-[#8e97ab]">Your account must be signed in before we can safely start an M-Pesa payment.</p>
+                </>
+            ) : (
+                <form className="mt-6" onSubmit={handleCheckout}>
+                    <label htmlFor="mpesa-phone" className="text-sm font-bold text-[#170f49]">M-Pesa phone number</label>
+                    <input id="mpesa-phone" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder="0712345678" inputMode="tel" autoComplete="tel" className="mt-2 min-h-[52px] w-full rounded-2xl border border-[#d9dbe9] px-4 text-sm text-[#170f49] outline-none focus:border-[#0c6060]" />
+                    {error && <p role="alert" className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+                    {message && <p role="status" className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
+                    <button type="submit" disabled={isStarting || isChecking} className="mt-4 inline-flex min-h-[54px] w-full items-center justify-center rounded-full bg-[#0c6060] px-6 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                        {isStarting ? 'Sending request…' : isChecking ? 'Waiting for M-Pesa…' : 'Send M-Pesa request'}
+                    </button>
+                    {payment?.uuid && payment.status !== 'SUCCEEDED' && (
+                        <button type="button" disabled={isChecking} onClick={() => checkPayment(payment.uuid)} className="mt-3 min-h-[46px] w-full rounded-full border border-[#0c6060] px-5 text-sm font-bold text-[#0c6060] disabled:opacity-60">Check payment status</button>
+                    )}
+                    {payment?.status === 'SUCCEEDED' && (
+                        <button type="button" onClick={onPaymentSuccess} className="mt-3 min-h-[50px] w-full rounded-full bg-[#0c6060] px-5 text-sm font-bold text-white">Open upgraded dashboard</button>
+                    )}
+                    <p className="mt-3 text-center text-xs leading-5 text-[#8e97ab]">Enter your M-Pesa PIN only on your phone. Shilingi Moves will never ask for your PIN.</p>
+                </form>
+            )}
         </div>
     </div>
-);
+    );
+};
 
 const AccountScreen = ({
     accountMode,
@@ -1330,6 +1417,18 @@ function normalizeAuthMode(value) {
     return '';
 }
 
+function normalizePlanKey(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return planOrder.includes(normalized) ? normalized : null;
+}
+
+function createPaymentIdempotencyKey() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return `payment-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 function getEmailVerificationRedirectUrl() {
     const configuredUrl = import.meta.env.VITE_EMAIL_VERIFICATION_REDIRECT_URL;
     if (configuredUrl) return configuredUrl;
@@ -1441,7 +1540,7 @@ function isExistingAccountError(error) {
 function buildRecommendation(answers) {
     const stage = stageOptions.find((item) => item.id === answers.stage) || stageOptions[0];
     const confidence = confidenceOptions.find((item) => item.id === answers.confidence) || confidenceOptions[0];
-    const votes = { basic: 0, plus: 0, pro: 0, elite: 0 };
+    const votes = { basic: 0, plus: 0, pro: 0 };
     const profile = profileOptions.find((item) => item.id === answers.profile);
     if (profile) votes[profile.plan] += 2;
 
@@ -1452,7 +1551,7 @@ function buildRecommendation(answers) {
 
     if (['emergency', 'paycheck'].includes(stage.id)) votes.plus += 1;
     if (['investing', 'retirement'].includes(stage.id)) votes.pro += 2;
-    if (stage.id === 'family-wealth') votes.elite += 2;
+    if (stage.id === 'family-wealth') votes.pro += 2;
 
     const planKey = Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0];
     const score = Math.min(94, Math.max(24, stage.score + confidence.score + answers.goals.length * 2));
@@ -1467,7 +1566,7 @@ function buildRecommendation(answers) {
             { label: 'Current financial stage', value: stage.stage, icon: WalletCards },
             { label: 'Primary goal', value: primaryGoal, icon: Target },
             { label: 'Financial strength', value: score >= 65 ? 'Consistent saving habits' : 'Ready for guided structure', icon: PiggyBank },
-            { label: 'Biggest opportunity', value: planKey === 'elite' ? 'Legacy and wealth clarity' : 'Long-term wealth building', icon: TrendingUp },
+            { label: 'Biggest opportunity', value: planKey === 'pro' ? 'Long-term wealth and retirement planning' : 'Build stronger money habits', icon: TrendingUp },
         ],
     };
 }
@@ -1475,7 +1574,7 @@ function buildRecommendation(answers) {
 function formatPlanPrice(plan, billingCycle) {
     if (plan.price === 0) return plan.priceLabel;
     if (billingCycle === 'annual') {
-        const annualPrice = Math.round(plan.price * 12 * 0.8);
+        const annualPrice = plan.annualPrice;
         return `KES ${annualPrice.toLocaleString('en-KE')}`;
     }
     return plan.priceLabel;

@@ -16,6 +16,13 @@ export default defineConfig(({ mode }) => {
       setupFiles: './src/test/setupTests.js',
       globals: true,
       css: true,
+      // The larger dashboard interaction tests can take longer than Vitest's
+      // five-second default on Windows and in shared CI runners.
+      testTimeout: 30000,
+      // A bounded thread pool avoids Windows worker-start timeouts when the
+      // complete dashboard suite runs at once.
+      pool: 'threads',
+      maxWorkers: 2,
     },
     server: {
       port: 5173,

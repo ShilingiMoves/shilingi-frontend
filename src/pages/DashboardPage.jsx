@@ -354,7 +354,13 @@ const DashboardPage = () => {
         if (!accessReady && SECTION_FEATURE_MAP[activeSection]) return sectionLoader;
         const sectionAccess = getSectionAccess(accessBySection, activeSection);
         if (!sectionAccess.allowed) {
-            return standardShell(<UpgradeAccessPanel access={sectionAccess} onBack={() => handleSelectSection('overview')} />);
+            return standardShell(
+                <UpgradeAccessPanel
+                    access={sectionAccess}
+                    onBack={() => handleSelectSection('overview')}
+                    onUpgrade={() => navigate(`/onboarding?plan=${String(sectionAccess.minimumTier).toLowerCase()}&checkout=1`)}
+                />
+            );
         }
         switch (activeSection) {
             case 'overview':
@@ -569,7 +575,11 @@ const DashboardPage = () => {
             )}
 
             {accessPrompt && (
-                <UpgradeAccessModal access={accessPrompt} onClose={() => setAccessPrompt(null)} />
+                <UpgradeAccessModal
+                    access={accessPrompt}
+                    onClose={() => setAccessPrompt(null)}
+                    onUpgrade={() => navigate(`/onboarding?plan=${String(accessPrompt.minimumTier).toLowerCase()}&checkout=1`)}
+                />
             )}
 
             <MobileDashboardNav
@@ -620,7 +630,7 @@ const MobileDashboardNav = ({ activeSection, onOpenMore, onSelectSection }) => (
     </nav>
 );
 
-const UpgradeAccessPanel = ({ access, onBack }) => (
+const UpgradeAccessPanel = ({ access, onBack, onUpgrade }) => (
     <section className="mx-auto max-w-2xl rounded-[1.75rem] border border-amber-200 bg-white p-7 text-center shadow-sm">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-700">
             <FileText size={26} />
@@ -630,13 +640,18 @@ const UpgradeAccessPanel = ({ access, onBack }) => (
         <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600">
             Your current {access.currentTier} membership does not include {access.title || 'this planner'}. The backend remains the final authority for access.
         </p>
-        <button type="button" onClick={onBack} className="mt-6 rounded-full bg-[#0c6060] px-6 py-3 text-sm font-semibold text-white">
-            Return to dashboard
-        </button>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <button type="button" onClick={onUpgrade} className="rounded-full bg-[#0c6060] px-6 py-3 text-sm font-semibold text-white">
+                Upgrade to {access.minimumTier}
+            </button>
+            <button type="button" onClick={onBack} className="rounded-full border border-[#0c6060] px-6 py-3 text-sm font-semibold text-[#0c6060]">
+                Return to dashboard
+            </button>
+        </div>
     </section>
 );
 
-const UpgradeAccessModal = ({ access, onClose }) => (
+const UpgradeAccessModal = ({ access, onClose, onUpgrade }) => (
     <div className="fixed inset-0 z-[75] flex items-end justify-center bg-slate-950/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-5">
         <section className="w-full max-w-md rounded-[1.5rem] border border-amber-200 bg-white p-6 text-center shadow-2xl">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-700">Upgrade required</p>
@@ -644,7 +659,10 @@ const UpgradeAccessModal = ({ access, onClose }) => (
             <p className="mt-3 text-sm leading-6 text-slate-600">
                 This feature is not included in your current {access.currentTier} plan. No request was sent and your existing work was not changed.
             </p>
-            <button type="button" onClick={onClose} className="mt-6 w-full rounded-full bg-[#0c6060] px-5 py-3 text-sm font-semibold text-white">
+            <button type="button" onClick={onUpgrade} className="mt-6 w-full rounded-full bg-[#0c6060] px-5 py-3 text-sm font-semibold text-white">
+                Upgrade to {access.minimumTier}
+            </button>
+            <button type="button" onClick={onClose} className="mt-3 w-full rounded-full border border-[#0c6060] px-5 py-3 text-sm font-semibold text-[#0c6060]">
                 Continue with my plan
             </button>
         </section>

@@ -196,7 +196,7 @@ const SignUpPage = () => {
                     {step === 'form' && (
                         <div className="mb-8">
                             <h2 className="text-3xl font-extrabold text-gray-900">Create your account</h2>
-                            <p className="mt-2 text-sm leading-6 text-gray-600">Fill in your details below. We will verify your email before you set your password.</p>
+                            <p className="mt-2 text-sm leading-6 text-gray-600">Fill in your details below, create a strong password, then verify your email before signing in.</p>
                         </div>
                     )}
 

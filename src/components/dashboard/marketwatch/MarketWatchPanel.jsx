@@ -510,9 +510,9 @@ const MarketWatchPanel = ({ onSelectSection }) => {
                                             <td className={`px-2 py-4 align-top text-sm font-semibold ${row.change.includes('+') ? 'text-[#239c69]' : row.change === 'Stable' ? 'text-slate-500' : 'text-amber-700'}`}>{row.change}</td>
                                             <td className="px-2 py-4 align-top">
                                                 <div className="flex h-10 items-end gap-1">
-                                                    {row.bars.map((bar) => (
+                                                    {row.bars.map((bar, index) => (
                                                         <span
-                                                            key={`${row.name}-${bar}`}
+                                                            key={`${row.name}-${index}`}
                                                             className={`w-2 rounded-t-full ${row.tone === 'green' ? 'bg-[#2aa975]/85' : row.tone === 'amber' ? 'bg-amber-400/85' : 'bg-primary-600/85'}`}
                                                             style={{ height: `${bar}%` }}
                                                         />
