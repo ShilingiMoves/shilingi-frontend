@@ -55,7 +55,33 @@ describe('Swagger-driven tier access', () => {
     it('orders main and planning navigation from the live catalog, including Tax Planner', () => {
         const groups = buildDashboardNavigationGroups(catalog, [{ id: 'explore', label: 'Explore', items: ['comparehub'] }]);
         expect(groups[0]).toMatchObject({ id: 'main', items: ['overview'] });
-        expect(groups[1].items).toEqual(['budget', 'debt', 'protection', 'investments', 'retirement', 'tax']);
+        expect(groups[1].items).toEqual(['budget', 'tax', 'debt', 'protection', 'investments', 'retirement']);
         expect(groups[2].id).toBe('explore');
+    });
+
+    it('keeps every available Basic feature open when backend entitlements are incomplete', () => {
+        const access = buildDashboardAccess(catalog, {
+            current_tier: 'BASIC',
+            entitlements: ['DASHBOARD', 'PROFILE', 'BUDGET_PLANNER'],
+        });
+
+        expect(access.budget.allowed).toBe(true);
+        expect(access.tax.allowed).toBe(true);
+        expect(access.tax.minimumTier).toBe('BASIC');
+        expect(access.debt.allowed).toBe(false);
+    });
+
+    it('places Tax Planner directly after Budget Planner even if the catalog order is wrong', () => {
+        const reorderedCatalog = {
+            ...catalog,
+            frontend_navigation: catalog.frontend_navigation.map((group) => group.code === 'PLANNING_TOOLS'
+                ? { ...group, items: [...group.items].reverse() }
+                : group),
+        };
+
+        const planning = buildDashboardNavigationGroups(reorderedCatalog, [])
+            .find((group) => group.id === 'planning');
+
+        expect(planning.items.slice(0, 2)).toEqual(['budget', 'tax']);
     });
 });

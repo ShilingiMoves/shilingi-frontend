@@ -394,7 +394,7 @@ const DashboardPage = () => {
             case 'tax':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <TaxPlanner />
+                        <TaxPlanner user={profile} />
                     </Suspense>
                 );
 

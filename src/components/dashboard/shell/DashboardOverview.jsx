@@ -447,6 +447,48 @@ const buildCalendarGrid = (referenceDate, events) => {
     return weeks;
 };
 const formatCompactSigned = (value) => `${toNum(value) >= 0 ? '+' : '-'}${Math.round(Math.abs(toNum(value))).toLocaleString('en-KE')}`;
+
+export const PlannerShortcutCards = ({ onSelectSection }) => {
+    const planners = [
+        {
+            id: 'budget',
+            label: 'Budget Planner',
+            emoji: '🎓',
+            cardClass: 'border-[#e7e9e4] bg-white hover:border-[#cdd8d3] hover:bg-[#fbfdfc]',
+        },
+        {
+            id: 'tax',
+            label: 'Tax Planner',
+            emoji: '👩‍💼',
+            cardClass: 'border-[#f1e2b6] bg-gradient-to-b from-[#fffdf4] to-[#fcf6e4] hover:border-[#eabb3a]',
+        },
+    ];
+
+    return (
+        <section className="mt-4" aria-label="Planner shortcuts">
+            <h2 className="text-sm font-semibold text-[#0c6060]">
+                What would you like to do today?
+            </h2>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+                {planners.map((planner) => (
+                    <button
+                        key={planner.id}
+                        type="button"
+                        onClick={() => onSelectSection(planner.id)}
+                        className={`flex h-[108px] min-w-0 flex-col items-center justify-center gap-[5px] rounded-[14px] border p-4 text-center shadow-[0_0_1px_rgba(0,0,0,0.07)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0c6060] ${planner.cardClass}`}
+                        aria-label={`Open ${planner.label}`}
+                    >
+                        <span aria-hidden="true" className="text-[32px] font-bold leading-none tracking-[-0.38px]">
+                            {planner.emoji}
+                        </span>
+                        <span className="text-[13px] leading-normal text-[#6e7e76]">{planner.label}</span>
+                    </button>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const buildCashflowForecast = ({ referenceDate, incomes, debts, goals, investments, expenses }) => {
     const recurringIncome = (incomes || []).reduce((sum, income) => {
         const amount = toNum(income?.amount || income?.monthly_amount || income?.net_amount);
@@ -1638,6 +1680,7 @@ const DesktopDashboardOverview = ({
         { type: 'item', label: 'Home', icon: Home, target: 'overview', active: true },
         { type: 'label', label: 'Planning Tools' },
         { type: 'item', label: 'Budget Planner', icon: Search, target: 'budget' },
+        { type: 'item', label: 'Tax Planner', icon: Calculator, target: 'tax' },
         { type: 'item', label: 'Debt Manager', icon: Bell, target: 'debt' },
         { type: 'item', label: 'Protection Planner', icon: Shield, target: 'protection' },
         { type: 'item', label: 'Retirement Planner', icon: FileText, target: 'retirement' },
@@ -1737,6 +1780,8 @@ const DesktopDashboardOverview = ({
                             ))}
                         </div>
                     </section>
+
+                    <PlannerShortcutCards onSelectSection={onSelectSection} />
 
                     <section className="mt-3 grid grid-cols-4 gap-[5px]">
                         {stats.map(({ icon: Icon, label, value }) => (
@@ -1959,6 +2004,8 @@ const MobileDashboardOverview = ({
                         ))}
                     </div>
                 </section>
+
+                <PlannerShortcutCards onSelectSection={onSelectSection} />
 
                 <section className="mt-4 grid grid-cols-4 gap-[5px]">
                     {stats.map(({ icon: Icon, label, value }) => (

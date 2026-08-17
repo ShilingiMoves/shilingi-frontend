@@ -57,15 +57,21 @@ export const buildDashboardAccess = (catalog, tierInfo) => {
             const sectionId = FEATURE_SECTION_MAP[item.code];
             if (!sectionId) continue;
             const available = item.backend_status === 'AVAILABLE';
-            const allowedByTier = tierAllows(currentTier, item.minimum_tier);
+            const minimumTier = normalizeTier(item.minimum_tier);
+            const allowedByTier = tierAllows(currentTier, minimumTier);
+            // BASIC is the platform's free baseline. A stale or incomplete
+            // entitlement list must never ask an authenticated BASIC member to
+            // "upgrade" to the plan they already have.
+            const includedInBaseline = minimumTier === 'BASIC' && allowedByTier;
             const entitled = ['DASHBOARD', 'PROFILE'].includes(item.code)
+                || includedInBaseline
                 || (hasEntitlementData ? entitlements.has(item.code) : allowedByTier);
             access[sectionId] = {
                 allowed: available && entitled,
                 backendStatus: item.backend_status,
                 code: item.code,
                 currentTier,
-                minimumTier: normalizeTier(item.minimum_tier),
+                minimumTier,
                 title: item.title,
             };
         }
@@ -77,10 +83,21 @@ export const buildDashboardAccess = (catalog, tierInfo) => {
 export const getSectionAccess = (access, sectionId) => access?.[sectionId] || { allowed: true };
 
 export const buildDashboardNavigationGroups = (catalog, fallbackGroups) => {
+    const planningPriority = ['budget', 'tax'];
+    const orderPlanningItems = (items) => [...items].sort((left, right) => {
+        const leftPriority = planningPriority.indexOf(left);
+        const rightPriority = planningPriority.indexOf(right);
+        if (leftPriority === -1 && rightPriority === -1) return 0;
+        if (leftPriority === -1) return 1;
+        if (rightPriority === -1) return -1;
+        return leftPriority - rightPriority;
+    });
     const catalogGroups = (catalog?.frontend_navigation || []).map((group) => ({
         id: group.code === 'MAIN' ? 'main' : group.code === 'PLANNING_TOOLS' ? 'planning' : group.code.toLowerCase(),
         label: group.title,
-        items: (group.items || []).map((item) => FEATURE_SECTION_MAP[item.code]).filter(Boolean),
+        items: group.code === 'PLANNING_TOOLS'
+            ? orderPlanningItems((group.items || []).map((item) => FEATURE_SECTION_MAP[item.code]).filter(Boolean))
+            : (group.items || []).map((item) => FEATURE_SECTION_MAP[item.code]).filter(Boolean),
     })).filter((group) => group.items.length > 0);
 
     if (catalogGroups.length === 0) return fallbackGroups;

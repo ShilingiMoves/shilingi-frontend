@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import TaxPlanner from '../TaxPlanner';
+import TaxPlanner, { TAX_ONBOARDING_STORAGE_PREFIX } from '../TaxPlanner';
 import {
     calculatePlan,
     getLatestPlan,
@@ -32,8 +32,25 @@ const result = {
 describe('TaxPlanner', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.localStorage.clear();
+        window.localStorage.setItem(`${TAX_ONBOARDING_STORAGE_PREFIX}_guest`, 'true');
         getLatestPlan.mockResolvedValue(null);
         getTaxRules.mockResolvedValue({ rules_version: 'KE-PAYE-2026.1', disclaimer: 'Estimate only.' });
+    });
+
+    it('shows the Basic Tax Planner journey for a new member', async () => {
+        window.localStorage.removeItem(`${TAX_ONBOARDING_STORAGE_PREFIX}_guest`);
+        const user = userEvent.setup();
+        render(<TaxPlanner />);
+
+        expect(await screen.findByRole('heading', { name: /understand your taxes/i })).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /first job/i }));
+        await user.click(screen.getByRole('button', { name: /^continue$/i }));
+        await user.click(screen.getByRole('button', { name: /get started/i }));
+        await user.click(screen.getByRole('button', { name: /yes, continue/i }));
+
+        expect(await screen.findByText(/question 1 of 5/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /receive a payslip/i })).toBeInTheDocument();
     });
 
     it('loads a saved estimate into the form and results', async () => {
