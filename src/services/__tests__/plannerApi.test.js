@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../apiClient';
-import { calculatePlan, createPlan, deletePlan, listPlans, savePlan, updatePlan } from '../plannerApi';
+import { calculatePlan, calculateSalary, createPlan, deletePlan, listPlans, savePlan, updatePlan } from '../plannerApi';
 
 vi.mock('../apiClient', () => ({
     default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
@@ -26,6 +26,26 @@ describe('plannerApi Swagger contract', () => {
         expect(apiClient.post).toHaveBeenLastCalledWith('/api/v1/investment-planner/calculate/', {
             goal_name: 'Home', target_amount: '5000000', horizon_years: 8,
             expected_annual_return_percent: '8', annual_fee_percent: '0', inflation_percent: '0',
+        });
+    });
+
+    it('uses the live salary calculator for the Tax Planner breakdown', async () => {
+        apiClient.post.mockResolvedValue({ data: { estimated_take_home_pay: '70441.65' } });
+
+        await expect(calculateSalary({
+            pay_period: '2026-08-01',
+            gross_income: '100000',
+            apply_nssf: true,
+            apply_shif: true,
+            apply_affordable_housing_levy: true,
+        })).resolves.toEqual({ estimated_take_home_pay: '70441.65' });
+
+        expect(apiClient.post).toHaveBeenCalledWith('/api/v1/tax-planner/salary-calculator/', {
+            pay_period: '2026-08-01',
+            gross_income: '100000',
+            apply_nssf: true,
+            apply_shif: true,
+            apply_affordable_housing_levy: true,
         });
     });
 

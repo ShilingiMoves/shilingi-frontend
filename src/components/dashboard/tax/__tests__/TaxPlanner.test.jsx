@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TaxPlanner, { TAX_ONBOARDING_STORAGE_PREFIX } from '../TaxPlanner';
 import {
     calculatePlan,
+    calculateSalary,
+    deletePlan,
     getLatestPlan,
     getTaxRules,
     savePlan,
@@ -12,6 +14,7 @@ import {
 
 vi.mock('../../../../services/plannerApi', () => ({
     calculatePlan: vi.fn(),
+    calculateSalary: vi.fn(),
     deletePlan: vi.fn(),
     getLatestPlan: vi.fn(),
     getTaxRules: vi.fn(),
@@ -76,7 +79,67 @@ describe('TaxPlanner', () => {
         render(<TaxPlanner />);
 
         expect(await screen.findByDisplayValue('Saved PAYE')).toBeInTheDocument();
-        expect(screen.getByText(/19,000/)).toBeInTheDocument();
+        expect(screen.getAllByText(/19,000/).length).toBeGreaterThan(0);
+    });
+
+    it('renders the Figma tax dashboard cards for a Basic member', async () => {
+        render(<TaxPlanner />);
+
+        expect(await screen.findByRole('heading', { name: /^tax planner$/i })).toBeInTheDocument();
+        expect(screen.getByText(/tax confidence/i)).toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { name: /my tax status/i }).length).toBeGreaterThan(0);
+        expect(screen.getByRole('heading', { name: /my tax milestones/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /my learning hub/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /my tax resources/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /unlock more with shilingi plus/i })).toBeInTheDocument();
+    });
+
+    it('shows live payroll results in the Figma salary breakdown', async () => {
+        calculateSalary.mockResolvedValue({
+            gross_income: '100000.00',
+            estimated_paye: '16908.35',
+            estimated_take_home_pay: '70441.65',
+            statutory_deductions: {
+                affordable_housing_levy: '1500.00',
+                nssf_employee: '6000.00',
+                shif: '2750.00',
+            },
+            paye_breakdown: result,
+        });
+        const user = userEvent.setup();
+        render(<TaxPlanner />);
+
+        await user.click(await screen.findByRole('button', { name: /tax calculator/i }));
+        await user.type(screen.getByLabelText(/estimated monthly income/i), '100000');
+        await user.click(screen.getByRole('button', { name: /^continue$/i }));
+
+        await waitFor(() => expect(calculateSalary).toHaveBeenCalledWith(expect.objectContaining({ gross_income: '100000' })));
+        expect((await screen.findAllByRole('heading', { name: /salary breakdown/i })).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/70,442/).length).toBeGreaterThan(0);
+    });
+
+    it('uses the manual tax estimate for the freelancer Figma experience', async () => {
+        window.localStorage.setItem(`${TAX_ONBOARDING_STORAGE_PREFIX}_guest_profile`, JSON.stringify({
+            persona: 'freelancer',
+            answers: { accounts: ['kra'] },
+        }));
+        calculatePlan.mockResolvedValue(result);
+        const user = userEvent.setup();
+        render(<TaxPlanner />);
+
+        await user.click(await screen.findByRole('button', { name: /tax calculator/i }));
+        await user.type(screen.getByLabelText(/estimated monthly income/i), '100000');
+        await user.click(screen.getByRole('button', { name: /^continue$/i }));
+
+        await waitFor(() => expect(calculatePlan).toHaveBeenCalledWith('tax', expect.objectContaining({
+            gross_income: '100000',
+            nssf_contribution: '0',
+            affordable_housing_levy: '0',
+            shif_contribution: '0',
+        })));
+        expect(calculateSalary).not.toHaveBeenCalled();
+        expect(await screen.findByText(/estimated tax position is ready/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/tax basics for freelancers/i).length).toBeGreaterThan(0);
     });
 
     it('previews through the backend without saving', async () => {
@@ -84,6 +147,7 @@ describe('TaxPlanner', () => {
         const user = userEvent.setup();
         render(<TaxPlanner />);
         await screen.findByRole('heading', { name: /tax planner/i });
+        await user.click(screen.getByText(/advanced tax details/i));
 
         fireEvent.change(screen.getByLabelText(/gross income/i), { target: { value: '100000' } });
         await user.click(screen.getByRole('button', { name: /calculate estimate/i }));
@@ -98,6 +162,7 @@ describe('TaxPlanner', () => {
         const user = userEvent.setup();
         render(<TaxPlanner />);
         await screen.findByRole('heading', { name: /tax planner/i });
+        await user.click(screen.getByText(/advanced tax details/i));
 
         fireEvent.change(screen.getByLabelText(/gross income/i), { target: { value: '100000' } });
         await user.click(screen.getByRole('button', { name: /save estimate/i }));
@@ -106,10 +171,39 @@ describe('TaxPlanner', () => {
         expect((await screen.findAllByText(/saved to your shilingi account/i)).length).toBeGreaterThan(0);
     });
 
+    it('restarts the journey and removes only the saved tax setup', async () => {
+        window.localStorage.setItem(`${TAX_ONBOARDING_STORAGE_PREFIX}_guest_profile`, JSON.stringify({
+            persona: 'salaried',
+            answers: { resident: 'yes' },
+        }));
+        getLatestPlan.mockResolvedValue({
+            uuid: 'tax-1',
+            name: 'Saved PAYE',
+            tax_year: 2026,
+            period: 'MONTHLY',
+            is_resident: true,
+            gross_income: '100000.00',
+            calculation_result: result,
+        });
+        deletePlan.mockResolvedValue({});
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        const user = userEvent.setup();
+        render(<TaxPlanner />);
+
+        await user.click(await screen.findByText(/advanced tax details/i));
+        await user.click(screen.getByRole('button', { name: /restart tax planner/i }));
+
+        await waitFor(() => expect(deletePlan).toHaveBeenCalledWith('tax', 'tax-1'));
+        expect(window.localStorage.getItem(`${TAX_ONBOARDING_STORAGE_PREFIX}_guest`)).toBeNull();
+        expect(window.localStorage.getItem(`${TAX_ONBOARDING_STORAGE_PREFIX}_guest_profile`)).toBeNull();
+        expect(await screen.findByRole('heading', { name: /understand your taxes/i })).toBeInTheDocument();
+    });
+
     it('blocks empty or zero gross income before an API request', async () => {
         const user = userEvent.setup();
         render(<TaxPlanner />);
         await screen.findByRole('heading', { name: /tax planner/i });
+        await user.click(screen.getByText(/advanced tax details/i));
 
         await user.click(screen.getByRole('button', { name: /calculate estimate/i }));
 

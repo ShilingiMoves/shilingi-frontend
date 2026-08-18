@@ -5,13 +5,20 @@ import {
     BadgeDollarSign,
     BookOpen,
     Briefcase,
+    CalendarDays,
     Calculator,
     Check,
     CheckCircle2,
+    ChevronDown,
+    ChevronRight,
+    Circle,
     FileText,
     GraduationCap,
     Landmark,
+    Lightbulb,
+    LockKeyhole,
     PiggyBank,
+    Play,
     Receipt,
     RefreshCw,
     ShieldCheck,
@@ -29,6 +36,7 @@ import {
     getLatestPlan,
     getTaxRules,
     savePlan,
+    calculateSalary,
 } from '../../../services/plannerApi';
 import PlannerSyncStatus from '../common/PlannerSyncStatus';
 
@@ -39,6 +47,7 @@ const personaOptions = [
     { id: 'student', label: 'Student', icon: GraduationCap },
     { id: 'first-job', label: 'First job', icon: Sparkles },
     { id: 'professional', label: 'Young professional', icon: Briefcase },
+    { id: 'freelancer', label: 'Freelancer or consultant', icon: Users },
     { id: 'new-taxpayer', label: 'New taxpayer', icon: Receipt },
 ];
 
@@ -136,10 +145,45 @@ const buildPayload = (form) => ({
     ])),
 });
 
-const TaxPlanner = ({ user = {} }) => {
+const salariedExperience = {
+    statusRows: [
+        ['PAYE Status', 'Deducted monthly'],
+        ['Annual Return Status', 'Not yet filed'],
+        ['Estimated Take-Home Pay', null],
+    ],
+    learning: ['Understanding PAYE', 'Reading Your Payslip', 'Filing Your Annual Return'],
+    resources: ['Tax Calculator', 'Payslip Explainer', 'Tax Calendar'],
+    panels: {
+        status: ['Created Tax Profile', 'How PAYE Works', 'Example Payslip', 'How Taxes Support Public Services'],
+        learning: ['Understanding Taxes', 'Getting Your KRA PIN', 'Understanding PAYE'],
+        solutions: ['KRA Registration', 'Understanding Employment Taxes'],
+        tools: ['Beginner Tax Calculator', 'KRA Guide'],
+    },
+    nextLearning: 'Filing Your Annual Return',
+};
+
+const freelancerExperience = {
+    statusRows: [
+        ['KRA Registration', 'Registered'],
+        ['Income Records', 'In progress'],
+        ['Annual Return Status', 'Not yet filed'],
+    ],
+    learning: ['Taxes for Consultants', 'Keeping Income Records', 'Filing Your First Tax Return'],
+    resources: ['Tax Calculator', 'Income Tracker', 'Tax Calendar'],
+    panels: {
+        status: ['Income Overview', 'Estimated Tax Position', 'Income Record Status', 'Tax Filing Readiness', 'Simple Record-Keeping Tips'],
+        learning: ['Tax Basics for Freelancers', 'Managing Variable Income', 'Income Record Keeping'],
+        solutions: ['Income Tracking', 'Tax Calendar', 'Record-Keeping Templates'],
+        tools: ['Tax Calculator', 'Income Tracker', 'Tax Calendar'],
+    },
+    nextLearning: 'Keeping Income Records',
+};
+
+const TaxPlanner = ({ onUpgrade = () => {}, user = {} }) => {
     const [form, setForm] = useState(defaultForm);
     const [savedPlan, setSavedPlan] = useState(null);
     const [preview, setPreview] = useState(null);
+    const [payrollResult, setPayrollResult] = useState(null);
     const [rules, setRules] = useState(null);
     const [loading, setLoading] = useState(true);
     const [working, setWorking] = useState(false);
@@ -150,14 +194,16 @@ const TaxPlanner = ({ user = {} }) => {
     const [questionIndex, setQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [calculatorOpen, setCalculatorOpen] = useState(false);
+    const [activeSnapshotTab, setActiveSnapshotTab] = useState('status');
     const [incomeEstimate, setIncomeEstimate] = useState('');
     const [salaryBasis, setSalaryBasis] = useState('GROSS');
     const [nssfRate, setNssfRate] = useState('TIER_1_2');
-    const [incomeDeductions, setIncomeDeductions] = useState({ shif: false, housing: false });
+    const [incomeDeductions, setIncomeDeductions] = useState({ shif: true, housing: true });
     const onboardingStorageKey = useMemo(() => {
         const identifier = user?.uuid || user?.id || user?.email || 'guest';
         return `${TAX_ONBOARDING_STORAGE_PREFIX}_${identifier}`;
     }, [user?.email, user?.id, user?.uuid]);
+    const profileStorageKey = `${onboardingStorageKey}_profile`;
 
     useEffect(() => {
         let mounted = true;
@@ -179,6 +225,15 @@ const TaxPlanner = ({ user = {} }) => {
                 }
                 const completedOnboarding = typeof window !== 'undefined'
                     && window.localStorage.getItem(onboardingStorageKey) === 'true';
+                if (completedOnboarding) {
+                    try {
+                        const storedProfile = JSON.parse(window.localStorage.getItem(profileStorageKey) || '{}');
+                        if (storedProfile.persona) setPersona(storedProfile.persona);
+                        if (storedProfile.answers) setAnswers(storedProfile.answers);
+                    } catch {
+                        // A damaged local preference should never block the live planner.
+                    }
+                }
                 setJourneyStep(plan || completedOnboarding ? 'planner' : 'persona');
             })
             .catch((err) => {
@@ -189,7 +244,7 @@ const TaxPlanner = ({ user = {} }) => {
             })
             .finally(() => { if (mounted) setLoading(false); });
         return () => { mounted = false; };
-    }, [onboardingStorageKey]);
+    }, [onboardingStorageKey, profileStorageKey]);
 
     const result = preview || savedPlan?.calculation_result || null;
     const warnings = useMemo(() => result?.warnings || [], [result]);
@@ -256,6 +311,41 @@ const TaxPlanner = ({ user = {} }) => {
         }
     };
 
+    const handleRestartJourney = async () => {
+        const confirmed = window.confirm(
+            'Restart your Tax Planner journey? This will delete your saved tax estimate and setup answers. Your account and other planners will not be changed.',
+        );
+        if (!confirmed) return;
+
+        setWorking(true);
+        setError('');
+        setSuccess('');
+        try {
+            if (savedPlan?.uuid) {
+                await deletePlan('tax', savedPlan.uuid);
+            }
+            window.localStorage.removeItem(onboardingStorageKey);
+            window.localStorage.removeItem(profileStorageKey);
+            setSavedPlan(null);
+            setPreview(null);
+            setPayrollResult(null);
+            setPersona('');
+            setAnswers({});
+            setQuestionIndex(0);
+            setForm({ ...defaultForm });
+            setIncomeEstimate('');
+            setSalaryBasis('GROSS');
+            setNssfRate('TIER_1_2');
+            setIncomeDeductions({ shif: true, housing: true });
+            setCalculatorOpen(false);
+            setJourneyStep('persona');
+        } catch (err) {
+            setError(err.message || 'The Tax Planner journey could not be restarted.');
+        } finally {
+            setWorking(false);
+        }
+    };
+
     const handleAnswer = (questionId, value) => {
         const question = taxQuestions.find((item) => item.id === questionId);
         setAnswers((current) => {
@@ -281,6 +371,7 @@ const TaxPlanner = ({ user = {} }) => {
     const finishOnboarding = () => {
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(onboardingStorageKey, 'true');
+            window.localStorage.setItem(profileStorageKey, JSON.stringify({ persona, answers }));
         }
         setJourneyStep('planner');
     };
@@ -293,12 +384,68 @@ const TaxPlanner = ({ user = {} }) => {
         setQuestionIndex((current) => current + 1);
     };
 
-    const applyIncomeCalculator = () => {
+    const applyIncomeCalculator = async () => {
         const estimate = Number(incomeEstimate || 0);
-        if (estimate > 0) updateField('gross_income', String(estimate));
-        if (!incomeDeductions.housing) updateField('affordable_housing_levy', '0');
-        if (!incomeDeductions.shif) updateField('shif_contribution', '0');
-        setCalculatorOpen(false);
+        if (estimate <= 0) {
+            setError('Enter an estimated monthly income greater than zero.');
+            return;
+        }
+
+        setWorking(true);
+        setError('');
+        setSuccess('');
+        try {
+            if (persona === 'freelancer') {
+                const taxEstimate = await calculatePlan('tax', buildPayload({
+                    ...form,
+                    gross_income: String(estimate),
+                    nssf_contribution: '0',
+                    affordable_housing_levy: '0',
+                    shif_contribution: '0',
+                }));
+                setForm((current) => ({
+                    ...current,
+                    gross_income: String(estimate),
+                    nssf_contribution: '0',
+                    affordable_housing_levy: '0',
+                    shif_contribution: '0',
+                }));
+                setPayrollResult(null);
+                setPreview(taxEstimate);
+                setActiveSnapshotTab('status');
+                setCalculatorOpen(false);
+                setSuccess('Your estimated tax position is ready using the live Shilingi tax rules.');
+                return;
+            }
+
+            const today = new Date();
+            const payPeriod = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+            const salary = await calculateSalary({
+                pay_period: payPeriod,
+                gross_income: String(estimate),
+                is_resident: form.is_resident,
+                apply_nssf: nssfRate !== 'NONE',
+                apply_shif: incomeDeductions.shif,
+                apply_affordable_housing_levy: incomeDeductions.housing,
+            });
+            const statutory = salary?.statutory_deductions || {};
+            setForm((current) => ({
+                ...current,
+                gross_income: String(estimate),
+                nssf_contribution: String(statutory.nssf_employee || 0),
+                shif_contribution: String(statutory.shif || 0),
+                affordable_housing_levy: String(statutory.affordable_housing_levy || 0),
+            }));
+            setPayrollResult(salary);
+            setPreview(salary?.paye_breakdown || null);
+            setActiveSnapshotTab('status');
+            setCalculatorOpen(false);
+            setSuccess('Your salary breakdown is ready using the live Shilingi tax rules.');
+        } catch (err) {
+            setError(err.message || 'The salary breakdown could not be calculated.');
+        } finally {
+            setWorking(false);
+        }
     };
 
     if (loading) {
@@ -341,93 +488,132 @@ const TaxPlanner = ({ user = {} }) => {
         );
     }
 
+    const isFreelancer = persona === 'freelancer';
+    const experience = isFreelancer ? freelancerExperience : salariedExperience;
+    const grossIncome = payrollResult?.gross_income || result?.gross_income || form.gross_income;
+    const estimatedPaye = payrollResult?.estimated_paye || result?.estimated_paye;
+    const takeHomePay = payrollResult?.estimated_take_home_pay || result?.income_after_paye;
+    const hasCalculation = Boolean(payrollResult || result);
+    const hasKraPin = Boolean(answers?.accounts?.includes?.('kra'));
+    const snapshotStatusRows = experience.statusRows.map(([label, value]) => {
+        if (label === 'PAYE Status' && !hasCalculation) return [label, 'Not calculated'];
+        if (label === 'KRA Registration') return [label, hasKraPin ? 'Registered' : 'Not confirmed'];
+        if (label === 'Income Records') return [label, hasCalculation ? 'In progress' : 'Not started'];
+        return [label, value === null ? (takeHomePay ? formatKES(takeHomePay) : 'Not calculated') : value];
+    });
+    const milestones = [
+        ['Created Tax Profile', true],
+        ['Obtained KRA PIN', hasKraPin],
+        ['Understand PAYE', hasCalculation],
+        ['Complete Tax Basics', false],
+        ['File First Tax Return', false],
+    ];
+    const openSnapshotTab = (tab) => {
+        setActiveSnapshotTab(tab);
+        window.requestAnimationFrame(() => document.getElementById('tax-snapshot-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    };
+
     return (
-        <div className="space-y-4 pb-20">
-            <section className="rounded-[1rem] bg-[linear-gradient(135deg,_#145f57_0%,_#1f9c72_100%)] px-5 py-5 text-white shadow-sm">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="inline-flex h-12 w-12 items-center justify-center rounded-[0.9rem] bg-white/15"><Landmark size={22} /></span>
-                        <div>
-                            <h2 className="text-xl font-bold">Tax Planner</h2>
-                            <p className="mt-1 text-sm text-white/75">Estimate Kenyan PAYE using the live Shilingi backend rules.</p>
-                        </div>
-                    </div>
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold">Available on every plan</span>
+        <div className="mx-auto max-w-[1180px] space-y-3 pb-24 text-[#182727] sm:space-y-4">
+            <header className="pt-1 sm:pt-2">
+                <h2 className="text-lg font-extrabold tracking-tight text-[#086b67] sm:text-2xl">Tax Planner</h2>
+                <p className="mt-1 max-w-xl text-xs leading-4 text-slate-600 sm:text-sm sm:leading-5">Understand your taxes, estimate your deductions, and build healthy financial habits.</p>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:max-w-md sm:gap-3">
+                    <button type="button" onClick={() => { setIncomeEstimate(form.gross_income || ''); setCalculatorOpen(true); }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-sm transition hover:border-[#0c6664]/40 hover:bg-[#f7fbf9]">
+                        <Calculator size={18} className="text-[#9f2f25]" /> Tax Calculator
+                    </button>
+                    <button type="button" onClick={() => openSnapshotTab('tools')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#ead7a0] bg-[#fffaf0] px-3 text-xs font-bold text-slate-800 shadow-sm transition hover:bg-[#fff6df]">
+                        <CalendarDays size={18} className="text-[#b27d00]" /> Tax Calendar
+                    </button>
                 </div>
-            </section>
+            </header>
 
             {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</div>}
-            <PlannerSyncStatus plan={savedPlan} />
+            <TaxConfidenceCard
+                grossIncome={grossIncome}
+                hasCalculation={hasCalculation}
+                isFreelancer={isFreelancer}
+                onNext={() => { setIncomeEstimate(form.gross_income || ''); setCalculatorOpen(true); }}
+                paye={estimatedPaye}
+                takeHome={takeHomePay}
+            />
 
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-                <section className="rounded-[1rem] border border-[#d0ddd9] bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2"><Calculator size={18} className="text-primary-700" /><h3 className="text-lg font-bold text-slate-950">Your PAYE details</h3></div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIncomeEstimate(form.gross_income || '');
-                                setCalculatorOpen(true);
-                            }}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#0c6664] px-4 text-xs font-bold text-white sm:hidden"
-                        >
-                            <Calculator size={15} /> Calculate income
-                        </button>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <TaxInfoCard icon={Briefcase} title="My Tax Status">
+                    <div className="space-y-2.5">
+                        {snapshotStatusRows.map(([label, value]) => <TaxStatusRow key={label} label={label} value={value} />)}
                     </div>
-                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                        <label className="text-sm font-semibold text-slate-700">Estimate name
-                            <input value={form.name} onChange={(event) => updateField('name', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500" />
-                        </label>
-                        <label className="text-sm font-semibold text-slate-700">Tax year
-                            <select value={form.tax_year} onChange={(event) => updateField('tax_year', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500">
-                                {Array.from({ length: Math.max(currentYear - 2023, 1) }, (_, index) => currentYear - index).map((year) => <option key={year} value={year}>{year}</option>)}
-                            </select>
-                        </label>
-                        <label className="text-sm font-semibold text-slate-700">Period
-                            <select value={form.period} onChange={(event) => updateField('period', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500">
-                                <option value="MONTHLY">Monthly</option><option value="ANNUAL">Annual</option>
-                            </select>
-                        </label>
-                        <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-700 sm:self-end">
-                            <input type="checkbox" checked={form.is_resident} onChange={(event) => updateField('is_resident', event.target.checked)} className="h-4 w-4 accent-primary-600" /> Kenyan resident
-                        </label>
-                        {moneyFields.map(([field, label]) => (
-                            <label key={field} className="text-sm font-semibold text-slate-700">{label} (KES)
-                                <input type="number" min="0" step="0.01" value={form[field]} onChange={(event) => updateField(field, event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500" />
-                            </label>
+                </TaxInfoCard>
+                <TaxInfoCard icon={Landmark} title="My Tax Milestones">
+                    <div className="space-y-2.5">
+                        {milestones.map(([label, complete]) => (
+                            <div key={label} className="flex items-center gap-3 text-xs text-slate-700">
+                                {complete ? <CheckCircle2 size={17} className="shrink-0 text-emerald-500" fill="currentColor" stroke="white" /> : <Circle size={16} className="shrink-0 text-slate-300" />}
+                                <span>{label}</span>
+                            </div>
                         ))}
                     </div>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                        <button type="button" disabled={working} onClick={handlePreview} className="inline-flex items-center gap-2 rounded-xl border border-primary-600 px-4 py-2.5 text-sm font-semibold text-primary-700 disabled:opacity-50"><RefreshCw size={15} /> Calculate estimate</button>
-                        <button type="button" disabled={working} onClick={handleSave} className="rounded-xl bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Save estimate</button>
-                        {savedPlan?.uuid && <button type="button" disabled={working} onClick={handleDelete} className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-50"><Trash2 size={15} /> Delete</button>}
-                    </div>
-                </section>
-
-                <div className="space-y-4">
-                    <section className="rounded-[1rem] border border-[#d0ddd9] bg-white p-5 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-950">Your estimate</h3>
-                        {result ? (
-                            <div className="mt-4 space-y-3">
-                                <Metric label="Gross income" value={formatKES(result.gross_income)} />
-                                <Metric label="Allowable deductions" value={formatKES(result.total_allowable_deductions)} />
-                                <Metric label="Taxable income" value={formatKES(result.taxable_income)} />
-                                <Metric label="Estimated PAYE" value={formatKES(result.estimated_paye)} emphasis />
-                                <Metric label="Income after PAYE" value={formatKES(result.income_after_paye)} />
-                                <Metric label="Effective tax rate" value={`${result.effective_tax_rate_percent || '0'}%`} />
-                            </div>
-                        ) : <p className="mt-4 text-sm leading-6 text-slate-500">Enter your income and select Calculate estimate. Nothing is saved until you choose Save estimate.</p>}
-                    </section>
-
-                    <section className="rounded-[1rem] border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
-                        <div className="flex items-center gap-2 font-bold"><ShieldCheck size={17} /> Important tax note</div>
-                        <p className="mt-2 leading-6">{result?.disclaimer || rules?.disclaimer || 'This is an educational estimate and not a KRA filing or professional tax advice.'}</p>
-                        {warnings.length > 0 && <ul className="mt-3 list-disc space-y-1 pl-5">{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
-                        {(result?.rules_version || rules?.rules_version) && <p className="mt-3 text-xs font-semibold">Rules version: {result?.rules_version || rules?.rules_version}</p>}
-                    </section>
-                </div>
+                </TaxInfoCard>
+                <TaxInfoCard icon={GraduationCap} title="My Learning Hub">
+                    <TaxBulletList items={experience.learning} />
+                </TaxInfoCard>
+                <TaxInfoCard icon={Briefcase} title="My Tax Resources" className="md:col-span-2 xl:col-span-3">
+                    <TaxBulletList items={experience.resources} columns />
+                </TaxInfoCard>
             </div>
+
+            <TaxSnapshotWorkspace
+                activeTab={activeSnapshotTab}
+                experience={experience}
+                isFreelancer={isFreelancer}
+                onTabChange={setActiveSnapshotTab}
+                payrollResult={payrollResult}
+                result={result}
+            />
+
+            <div className="space-y-3 lg:grid lg:grid-cols-[1fr_1fr_1.15fr] lg:gap-3 lg:space-y-0">
+                <section>
+                    <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-[#0b6a66]">Today&apos;s tax tip</p>
+                    <button type="button" onClick={() => openSnapshotTab('learning')} className="flex min-h-[78px] w-full items-center gap-3 rounded-xl border border-[#edc768] bg-[#fff9eb] px-4 py-3 text-left shadow-sm">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#d4a321]"><Lightbulb size={16} /></span>
+                        <span className="flex-1 text-xs leading-5 text-[#8c6715]">A KRA PIN is required for many employment and financial transactions in Kenya.</span>
+                        <ChevronRight size={16} className="text-[#d4a321]" />
+                    </button>
+                </section>
+                <section>
+                    <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-[#0b6a66]">Continue learning</p>
+                    <button type="button" onClick={() => openSnapshotTab('learning')} className="flex min-h-[78px] w-full items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 text-left shadow-sm">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eef8f4] text-[#0c6664]"><Play size={14} fill="currentColor" /></span>
+                        <span className="flex-1"><span className="block text-[10px] font-semibold uppercase text-slate-500">Next recommended</span><span className="mt-0.5 block text-xs font-bold text-slate-900">{experience.nextLearning}</span></span>
+                        <ChevronRight size={16} className="text-[#d4a321]" />
+                    </button>
+                </section>
+                <TaxUpgradeCard onUpgrade={onUpgrade} />
+            </div>
+
+            <details className="group rounded-xl border border-slate-200 bg-white shadow-sm">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-bold text-[#0c6664]">
+                    <span className="inline-flex items-center gap-2"><Calculator size={17} /> Advanced tax details and saved estimate</span>
+                    <ChevronDown size={17} className="transition group-open:rotate-180" />
+                </summary>
+                <div className="border-t border-slate-100 p-4 sm:p-5">
+                    <PlannerSyncStatus plan={savedPlan} />
+                    <AdvancedTaxDetails
+                        form={form}
+                        handleDelete={handleDelete}
+                        handlePreview={handlePreview}
+                        handleRestartJourney={handleRestartJourney}
+                        handleSave={handleSave}
+                        result={result}
+                        rules={rules}
+                        savedPlan={savedPlan}
+                        updateField={updateField}
+                        warnings={warnings}
+                        working={working}
+                    />
+                </div>
+            </details>
 
             {calculatorOpen && (
                 <IncomeCalculatorSheet
@@ -446,6 +632,201 @@ const TaxPlanner = ({ user = {} }) => {
         </div>
     );
 };
+
+const TaxConfidenceCard = ({ grossIncome, hasCalculation, isFreelancer, onNext, paye, takeHome }) => {
+    const dateLabel = new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric', month: 'long', weekday: 'long', year: 'numeric',
+    }).format(new Date()).toUpperCase();
+    const summaryRows = hasCalculation
+        ? isFreelancer
+            ? [['Estimated Monthly Income', formatKES(grossIncome)], ['Estimated Tax Position', formatKES(paye)]]
+            : [['Monthly Salary', formatKES(grossIncome)], ['Estimated PAYE', formatKES(paye)], ['Estimated Take-Home Pay', formatKES(takeHome)]]
+        : [['KRA PIN', 'Available'], ['Tax Readiness', 'Learning']];
+
+    return (
+        <section className="relative overflow-hidden rounded-[18px] bg-[#14594b] px-5 pb-5 pt-4 text-white shadow-[0_12px_28px_rgba(15,77,65,0.18)] sm:px-6 sm:py-6">
+            <span className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/[0.07]" aria-hidden="true" />
+            <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[9px] font-semibold tracking-[0.18em] text-white/75">{dateLabel}</span>
+            <div className="relative mt-3 flex items-center gap-3">
+                <span className="relative inline-flex h-12 w-12 shrink-0 rounded-full bg-[conic-gradient(#e9b938_0_28%,#0a6b5b_28%_100%)]">
+                    <span className="absolute inset-[7px] rounded-full bg-[#14594b]" />
+                </span>
+                <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.17em] text-white/65">Tax Confidence™</p>
+                    <p className="mt-0.5 text-xl font-extrabold leading-none">{hasCalculation ? 'Learning' : 'Getting Started'}</p>
+                </div>
+            </div>
+            <div className="relative mt-4 rounded-lg bg-black/10 px-3 py-2.5">
+                {summaryRows.map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between gap-4 border-b border-white/10 py-1.5 last:border-0">
+                        <span className="text-[10px] text-white/80">{label}</span>
+                        <span className="text-[10px] font-bold text-white">{value}</span>
+                    </div>
+                ))}
+                <button type="button" onClick={onNext} className="mt-2 flex min-h-10 w-full items-center justify-between rounded-md bg-white/10 px-3 text-left transition hover:bg-white/15">
+                    <span><span className="block text-[8px] font-semibold uppercase text-white/55">Next step</span><span className="block text-[10px] font-bold">{hasCalculation ? 'Review or update your estimate' : 'Learn About PAYE'}</span></span>
+                    <ChevronRight size={16} />
+                </button>
+            </div>
+        </section>
+    );
+};
+
+const TaxInfoCard = ({ children, className = '', icon: Icon, title }) => (
+    <section className={`rounded-[16px] border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(23,43,31,0.04)] ${className}`}>
+        <div className="mb-4 flex items-center gap-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#edf7f2] text-[#14594b]"><Icon size={16} /></span>
+            <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
+        </div>
+        {children}
+    </section>
+);
+
+const TaxStatusRow = ({ label, value }) => (
+    <div className="flex items-center justify-between gap-4 text-[11px]">
+        <span className="text-slate-400">{label}</span>
+        <span className="rounded-full bg-[#edf8f5] px-2 py-0.5 text-right font-bold text-[#0b6a66]">{value}</span>
+    </div>
+);
+
+const TaxBulletList = ({ columns = false, items }) => (
+    <ul className={columns ? 'grid gap-2 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2'}>
+        {items.map((item) => <li key={item} className="flex items-start gap-2 text-xs leading-5 text-slate-700"><span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#0b7b72]" />{item}</li>)}
+    </ul>
+);
+
+const snapshotTabs = [
+    ['status', 'My Tax Status'],
+    ['learning', 'My Learning'],
+    ['solutions', 'Explore Tax Solutions'],
+    ['tools', 'Tax Tools'],
+];
+
+const TaxSnapshotWorkspace = ({ activeTab, experience, isFreelancer, onTabChange, payrollResult, result }) => (
+    <section id="tax-snapshot-tabs" className="scroll-mt-24 space-y-3">
+        <div className="flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:hidden">
+            {snapshotTabs.map(([id, label]) => (
+                <button key={id} type="button" onClick={() => onTabChange(id)} className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-semibold transition ${activeTab === id ? 'bg-[#0c5e53] text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+            ))}
+        </div>
+
+        <div className="lg:hidden">
+            <TaxSnapshotPanel
+                id={activeTab}
+                isFreelancer={isFreelancer}
+                items={experience.panels[activeTab]}
+                payrollResult={payrollResult}
+                result={result}
+            />
+        </div>
+
+        <div className="hidden gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4">
+            {snapshotTabs.map(([id]) => (
+                <TaxSnapshotPanel key={id} id={id} isFreelancer={isFreelancer} items={experience.panels[id]} payrollResult={payrollResult} result={result} />
+            ))}
+        </div>
+    </section>
+);
+
+const TaxSnapshotPanel = ({ id, isFreelancer, items, payrollResult, result }) => {
+    const tab = snapshotTabs.find(([tabId]) => tabId === id);
+    const showBreakdown = id === 'status' && Boolean(payrollResult || result);
+    const statutory = payrollResult?.statutory_deductions || {};
+    const breakdown = payrollResult
+        ? [
+            ['PAYE', payrollResult.estimated_paye],
+            ['Housing Levy', statutory.affordable_housing_levy],
+            ['NSSF', statutory.nssf_employee],
+            ['SHA', statutory.shif],
+            ['Estimated Take-Home Pay', payrollResult.estimated_take_home_pay],
+        ]
+        : isFreelancer
+            ? [['Gross Income', result?.gross_income], ['Estimated Tax Position', result?.estimated_paye], ['Income After Tax', result?.income_after_paye]]
+            : [['PAYE', result?.estimated_paye], ['Income After PAYE', result?.income_after_paye]];
+
+    return (
+        <TaxInfoCard icon={id === 'status' ? LockKeyhole : id === 'learning' ? GraduationCap : id === 'solutions' ? ShieldCheck : Briefcase} title={showBreakdown ? 'Salary Breakdown' : tab?.[1] || 'Tax information'}>
+            {showBreakdown ? (
+                <div className="space-y-1">
+                    {breakdown.map(([label, value]) => (
+                        <div key={label} className="flex items-center justify-between gap-4 border-b border-slate-100 py-2 text-[11px] last:border-0">
+                            <span className="font-semibold text-[#0b6a66]">{label}</span>
+                            <span className="inline-flex items-center gap-2 font-extrabold text-[#0b6a66]">{formatKES(value)} <ChevronDown size={12} /></span>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="divide-y divide-slate-100">
+                    {items.map((item) => (
+                        <div key={item} className="flex min-h-10 items-center gap-2 py-2 text-xs text-slate-700">
+                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#edf7f2] text-[#0b6a66]"><FileText size={12} /></span>
+                            <span className="flex-1 font-semibold">{item}</span>
+                            {id !== 'status' && <ChevronRight size={14} className="text-slate-500" />}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </TaxInfoCard>
+    );
+};
+
+const TaxUpgradeCard = ({ onUpgrade }) => (
+    <section>
+        <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-[#0b6a66]">Upgrade</p>
+        <div className="rounded-[16px] bg-[#5a3d0a] p-4 text-white shadow-sm">
+            <h3 className="text-base font-extrabold text-[#f3c84b]">Unlock More with Shilingi Plus</h3>
+            <ul className="mt-3 space-y-1.5 text-xs text-white/90">
+                {['Tax Health Score', 'Tax Relief Tracker', 'Tax Optimizer', 'Monthly Tax Reports'].map((item) => <li key={item} className="flex items-center gap-2"><Check size={14} className="text-[#f3c84b]" />{item}</li>)}
+            </ul>
+            <button type="button" onClick={onUpgrade} className="mt-4 min-h-11 w-full rounded-lg bg-[#f1c443] px-4 text-sm font-extrabold text-[#4b350d] transition hover:bg-[#f7d267]">Upgrade</button>
+        </div>
+    </section>
+);
+
+const AdvancedTaxDetails = ({ form, handleDelete, handlePreview, handleRestartJourney, handleSave, result, rules, savedPlan, updateField, warnings, working }) => (
+    <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <section>
+            <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-semibold text-slate-700">Estimate name
+                    <input value={form.name} onChange={(event) => updateField('name', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500" />
+                </label>
+                <label className="text-sm font-semibold text-slate-700">Tax year
+                    <select value={form.tax_year} onChange={(event) => updateField('tax_year', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500">
+                        {Array.from({ length: Math.max(currentYear - 2023, 1) }, (_, index) => currentYear - index).map((year) => <option key={year} value={year}>{year}</option>)}
+                    </select>
+                </label>
+                <label className="text-sm font-semibold text-slate-700">Period
+                    <select value={form.period} onChange={(event) => updateField('period', event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500"><option value="MONTHLY">Monthly</option><option value="ANNUAL">Annual</option></select>
+                </label>
+                <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-700 sm:self-end">
+                    <input type="checkbox" checked={form.is_resident} onChange={(event) => updateField('is_resident', event.target.checked)} className="h-4 w-4 accent-primary-600" /> Kenyan resident
+                </label>
+                {moneyFields.map(([field, label]) => (
+                    <label key={field} className="text-sm font-semibold text-slate-700">{label} (KES)
+                        <input aria-label={`${label} (KES)`} type="number" min="0" step="0.01" value={form[field]} onChange={(event) => updateField(field, event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-primary-500" />
+                    </label>
+                ))}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" disabled={working} onClick={handlePreview} className="inline-flex items-center gap-2 rounded-xl border border-primary-600 px-4 py-2.5 text-sm font-semibold text-primary-700 disabled:opacity-50"><RefreshCw size={15} /> Calculate estimate</button>
+                <button type="button" disabled={working} onClick={handleSave} className="rounded-xl bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Save estimate</button>
+                {savedPlan?.uuid && <button type="button" disabled={working} onClick={handleDelete} className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-50"><Trash2 size={15} /> Delete</button>}
+                <button type="button" disabled={working} onClick={handleRestartJourney} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 disabled:opacity-50"><RefreshCw size={15} /> Restart Tax Planner</button>
+            </div>
+        </section>
+        <div className="space-y-4">
+            <section className="rounded-xl bg-slate-50 p-4">
+                <h3 className="text-sm font-bold text-slate-950">Your estimate</h3>
+                {result ? <div className="mt-3 space-y-2"><Metric label="Gross income" value={formatKES(result.gross_income)} /><Metric label="Estimated PAYE" value={formatKES(result.estimated_paye)} emphasis /><Metric label="Income after PAYE" value={formatKES(result.income_after_paye)} /></div> : <p className="mt-3 text-xs leading-5 text-slate-500">Enter your income and calculate an estimate. Nothing is saved until you choose Save estimate.</p>}
+            </section>
+            <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950">
+                <div className="flex items-center gap-2 font-bold"><ShieldCheck size={16} /> Important tax note</div>
+                <p className="mt-2 leading-5">{result?.disclaimer || rules?.disclaimer || 'This is an educational estimate and not a KRA filing or professional tax advice.'}</p>
+                {warnings.length > 0 && <ul className="mt-3 list-disc space-y-1 pl-5">{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+            </section>
+        </div>
+    </div>
+);
 
 const Metric = ({ label, value, emphasis = false }) => (
     <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${emphasis ? 'bg-primary-700 text-white' : 'bg-slate-50 text-slate-800'}`}>
@@ -497,7 +878,6 @@ const IncomeCalculatorSheet = ({
                 <label className="block text-[10px] font-semibold text-slate-500">Select Treat Salary As
                     <select value={salaryBasis} onChange={(event) => onSalaryBasisChange(event.target.value)} className="mt-1.5 h-10 w-full rounded-[10px] border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none focus:border-[#0c6664]">
                         <option value="GROSS">Gross Pay</option>
-                        <option value="NET">Net Pay</option>
                     </select>
                 </label>
                 <label className="block text-[10px] font-semibold text-slate-500">Select NSSF Rates

@@ -394,7 +394,7 @@ const DashboardPage = () => {
             case 'tax':
                 return standardShell(
                     <Suspense fallback={sectionLoader}>
-                        <TaxPlanner user={profile} />
+                        <TaxPlanner user={profile} onUpgrade={() => navigate('/onboarding?plan=plus&checkout=1')} />
                     </Suspense>
                 );
 
