@@ -2,11 +2,12 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
+    BarChart3,
     CheckCircle2,
-    Calculator,
+    Compass,
     FileText,
     Home,
-    LineChart,
+    MessageSquare,
     MoreHorizontal,
     Users,
     X,
@@ -89,6 +90,7 @@ const DashboardPage = () => {
     const lastAppliedLocationKeyRef = useRef(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [mobileMenuMode, setMobileMenuMode] = useState('more');
     const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [preferredNamePrompt, setPreferredNamePrompt] = useState(() => readQueuedPreferredNamePrompt());
     const [resumePrompt, setResumePrompt] = useState(null);
@@ -105,6 +107,42 @@ const DashboardPage = () => {
         () => buildDashboardNavigationGroups(tierCatalog, dashboardSidebarGroups),
         [tierCatalog]
     );
+    const mobileMenuConfig = useMemo(() => {
+        if (mobileMenuMode === 'planners') {
+            const plannerGroup = dashboardSidebarGroups.find((group) => group.id === 'planning');
+            return {
+                title: 'Your Planners',
+                description: 'Choose a planner. Locked tools show the plan required to access them.',
+                // Use the complete product catalogue here rather than the live
+                // navigation subset so upgrade opportunities remain discoverable.
+                groups: plannerGroup ? [{ ...plannerGroup, label: 'All planners' }] : [],
+            };
+        }
+
+        if (mobileMenuMode === 'hubs') {
+            const hubGroup = dashboardSidebarGroups.find((group) => group.id === 'explore');
+            return {
+                title: 'Explore Hubs',
+                description: 'Choose where you want to learn, compare, or use financial tools.',
+                groups: hubGroup ? [{
+                    ...hubGroup,
+                    label: 'All hubs',
+                    items: hubGroup.items.filter((sectionId) => sectionId !== 'communityhub'),
+                }] : [],
+            };
+        }
+
+        return {
+            title: 'Dashboard Menu',
+            description: 'Move easily between tools and close when finished.',
+            groups: navigationGroups,
+        };
+    }, [mobileMenuMode, navigationGroups]);
+
+    const openMobileMenu = useCallback((mode = 'more') => {
+        setMobileMenuMode(mode);
+        setMobileSidebarOpen(true);
+    }, []);
 
     const closePreferredNamePrompt = useCallback(() => {
         clearQueuedPreferredNamePrompt();
@@ -127,6 +165,14 @@ const DashboardPage = () => {
 
     useEffect(() => {
         const handleAccessDenied = () => {
+            // The overview deliberately combines data from several planners. A BASIC
+            // member can receive an expected 403 from a Plus/Pro data source while
+            // the BASIC home itself remains available. Never turn that background
+            // response into an "upgrade to BASIC" prompt on the home screen.
+            if (activeSection === 'overview') {
+                return;
+            }
+
             const sectionAccess = getSectionAccess(accessBySection, activeSection);
             setAccessPrompt({
                 ...sectionAccess,
@@ -364,7 +410,7 @@ const DashboardPage = () => {
         }
         switch (activeSection) {
             case 'overview':
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} accessBySection={accessBySection} />;
 
             case 'cashflow':
                 return standardShell(
@@ -493,7 +539,7 @@ const DashboardPage = () => {
                 );
 
             default:
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} accessBySection={accessBySection} />;
         }
     };
 
@@ -504,7 +550,7 @@ const DashboardPage = () => {
                     <DashboardTopbar
                         activeSection={activeSection}
                         onSelectSection={handleSelectSection}
-                        onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+                        onOpenMobileMenu={() => openMobileMenu('more')}
                         onSignOut={handleSignOut}
                         user={profile}
                     />
@@ -513,7 +559,7 @@ const DashboardPage = () => {
                 <DashboardTopbar
                     activeSection={activeSection}
                     onSelectSection={handleSelectSection}
-                    onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+                    onOpenMobileMenu={() => openMobileMenu('more')}
                     onSignOut={handleSignOut}
                     user={profile}
                 />
@@ -531,7 +577,9 @@ const DashboardPage = () => {
                             mobileOpen={mobileSidebarOpen}
                             onCloseMobile={() => setMobileSidebarOpen(false)}
                             accessBySection={accessBySection}
-                            navigationGroups={navigationGroups}
+                            navigationGroups={mobileMenuConfig.groups}
+                            mobileTitle={mobileMenuConfig.title}
+                            mobileDescription={mobileMenuConfig.description}
                         />
                     </div>
                 ) : (
@@ -544,7 +592,9 @@ const DashboardPage = () => {
                         mobileOpen={mobileSidebarOpen}
                         onCloseMobile={() => setMobileSidebarOpen(false)}
                         accessBySection={accessBySection}
-                        navigationGroups={navigationGroups}
+                        navigationGroups={mobileSidebarOpen ? mobileMenuConfig.groups : navigationGroups}
+                        mobileTitle={mobileMenuConfig.title}
+                        mobileDescription={mobileMenuConfig.description}
                     />
                 )}
 
@@ -584,7 +634,7 @@ const DashboardPage = () => {
 
             <MobileDashboardNav
                 activeSection={activeSection}
-                onOpenMore={() => setMobileSidebarOpen(true)}
+                onOpenMenu={openMobileMenu}
                 onSelectSection={handleSelectSection}
             />
         </div>
@@ -593,35 +643,36 @@ const DashboardPage = () => {
 
 const mobileDashboardNavItems = [
     { id: 'overview', label: 'Home', icon: Home },
-    { id: 'budget', label: 'Budget', icon: Calculator },
-    { id: 'debt', label: 'Debt', icon: FileText },
-    { id: 'investments', label: 'Investment', icon: LineChart },
+    { id: 'planners', label: 'Planners', icon: BarChart3, sections: ['cashflow', 'budget', 'tax', 'debt', 'investments', 'protection', 'retirement', 'networth', 'marketwatch'], menu: 'planners' },
+    { id: 'hubs', label: 'Hubs', icon: Compass, sections: ['comparehub', 'resourceshub', 'learninghub'], menu: 'hubs' },
+    { id: 'communityhub', label: 'Community', icon: MessageSquare },
 ];
 
-const MobileDashboardNav = ({ activeSection, onOpenMore, onSelectSection }) => (
+const MobileDashboardNav = ({ activeSection, onOpenMenu, onSelectSection }) => (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:hidden">
         <div className="mx-auto flex h-16 max-w-[430px] items-stretch">
-            {mobileDashboardNavItems.map(({ id, label, icon: Icon }) => {
-                const isActive = activeSection === id;
+            {mobileDashboardNavItems.map(({ id, label, icon: Icon, sections = [id], menu }) => {
+                const isActive = sections.includes(activeSection);
 
                 return (
                     <button
                         key={id}
                         type="button"
-                        onClick={() => onSelectSection(id)}
-                        className={`flex flex-1 flex-col items-center justify-center gap-1 border-t-2 text-[10px] ${
-                            isActive ? 'border-[#0c6060] text-[#0c6060]' : 'border-transparent text-[#5e5f60]'
+                        onClick={() => menu ? onOpenMenu(menu) : onSelectSection(id)}
+                        className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] transition-colors ${
+                            isActive ? 'text-[#0c6060]' : 'text-[#68716e]'
                         }`}
+                        aria-current={isActive ? 'page' : undefined}
                     >
-                        <Icon size={22} />
+                        <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
                         <span>{label}</span>
                     </button>
                 );
             })}
             <button
                 type="button"
-                onClick={onOpenMore}
-                className="flex flex-1 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-[10px] text-[#5e5f60]"
+                onClick={() => onOpenMenu('more')}
+                className="flex flex-1 flex-col items-center justify-center gap-1 text-[10px] text-[#68716e]"
             >
                 <MoreHorizontal size={22} />
                 <span>More</span>

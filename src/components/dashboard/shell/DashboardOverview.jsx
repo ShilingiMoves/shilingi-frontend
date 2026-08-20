@@ -42,6 +42,7 @@ import {
 } from '../../../utils/memberIdentity';
 import { buildDerivedFinancialHealth } from '../../../utils/financialIntelligence';
 import { useAdaptivePolling } from '../../../hooks/useAdaptivePolling';
+import MobileDashboardHome from './MobileDashboardHome';
 
 const toneMap = {
     morning: { label: 'Good morning', shell: 'from-[#14986b] via-[#117f5a] to-[#0a4d37]' },
@@ -681,7 +682,7 @@ const isNewUser = (user) => {
     return !(profile.monthly_income || profile.primary_financial_goal || ws.shortTermGoal || ws.mediumTermGoal || ws.longTermGoal || hasData);
 };
 
-const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSignOut }) => {
+const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSignOut, accessBySection = {} }) => {
     const [displayName, setDisplayName] = useState(() => getDashboardDisplayName(user));
     const moment = useMemo(() => getMoment(new Date()), []);
     const palette = toneMap[moment];
@@ -713,6 +714,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
 
     const loadOverviewData = useCallback(async ({ isActive = () => true } = {}) => {
         const monthParams = { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 };
+        const sectionAllowed = (sectionId) => accessBySection?.[sectionId]?.allowed !== false;
         const settled = await settleWithConcurrency([
             () => incomeService.getSummary(),
             () => incomeService.getIncomes({ limit: 100 }),
@@ -720,11 +722,11 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
             () => getBudgets({ current: 'true', ...monthParams }),
             () => getExpenses({ limit: 100, ...monthParams }),
             () => getGoals({ status: 'ACTIVE' }),
-            () => getInvestmentAssets(),
-            () => getDebts(),
-            () => getNetWorthSummary(),
-            () => getHealthScore(),
-            () => getHealthScoreBreakdown(),
+            () => sectionAllowed('investments') ? getInvestmentAssets() : Promise.resolve([]),
+            () => sectionAllowed('debt') ? getDebts() : Promise.resolve([]),
+            () => sectionAllowed('networth') ? getNetWorthSummary() : Promise.resolve({}),
+            () => sectionAllowed('health') ? getHealthScore() : Promise.resolve({ overall_score: 0 }),
+            () => sectionAllowed('health') ? getHealthScoreBreakdown() : Promise.resolve({ components: [] }),
         ]);
         const pick = (i, f) => (settled[i]?.status === 'fulfilled' ? settled[i].value : f);
         const incomeSummary = pick(0, {}), incomesPayload = pick(1, {}), budgetSummary = pick(2, {}), budgets = pick(3, []), expensesPayload = pick(4, {}), goals = pick(5, []), inv = pick(6, []), debts = pick(7, []), nw = pick(8, {}), healthScore = pick(9, {}), healthBreakdown = pick(10, {});
@@ -888,7 +890,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
             goalCount: goalRows.length,
             debtCount: debts.length,
         };
-    }, [currentMonth, user]);
+    }, [accessBySection, currentMonth, user]);
 
     useEffect(() => {
         let mounted = true;
@@ -1112,6 +1114,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                 currentScore={currentScore}
                 displayName={displayName}
                 hasData={hasData}
+                healthAccess={accessBySection?.health}
                 investmentRows={mobileInvestmentRows}
                 live={live}
                 mobileActions={mobileActions}
@@ -1125,6 +1128,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                 investmentScore={investmentScore}
                 spendingRows={spendingRows}
                 stats={stats}
+                streakDays={streakDays}
             />
             <DesktopDashboardOverview
                 aiInsights={mobileInsights}
@@ -1948,6 +1952,7 @@ const MobileDashboardOverview = ({
     currentScore,
     displayName,
     hasData,
+    healthAccess,
     investmentRows,
     live,
     mobileActions,
@@ -1961,7 +1966,27 @@ const MobileDashboardOverview = ({
     sync,
     spendingRows,
     stats,
+    streakDays = 0,
+    clientMobileDesign = true,
 }) => {
+    if (clientMobileDesign) {
+        return (
+            <MobileDashboardHome
+                aiInsights={aiInsights}
+                ctaButtons={ctaButtons}
+                currentScore={currentScore}
+                displayName={displayName}
+                hasData={hasData}
+                healthAccess={healthAccess}
+                live={live}
+                onSelectSection={onSelectSection}
+                palette={palette}
+                streakDays={streakDays}
+                sync={sync}
+            />
+        );
+    }
+
     const totalSpent = toNum(live.spent);
     const weeklyBars = hasData && spendingRows.length
         ? spendingRows.slice(0, 7).map((row) => clamp(Number(row.percent || 0), 18, 88))

@@ -19,7 +19,7 @@ export const SECTION_FEATURE_MAP = Object.freeze(
 export const DEFAULT_SECTION_MIN_TIER = Object.freeze({
     overview: 'BASIC', user: 'BASIC', budget: 'BASIC', debt: 'PLUS',
     protection: 'PLUS', networth: 'PLUS', investments: 'PRO', retirement: 'PRO', tax: 'BASIC',
-    marketwatch: 'PRO',
+    health: 'PLUS', marketwatch: 'PRO',
 });
 
 export const normalizeTier = (tier) => {

@@ -132,7 +132,7 @@ const DashboardTopbar = ({
 
     return (
         <header
-            className="sticky top-0 z-40 border-gray-200 bg-[#f8f8f8] sm:border-b sm:shadow-sm"
+            className="sticky top-0 z-40 border-b border-[#e7ebe9] bg-white sm:shadow-sm"
         >
             {anyPanelOpen && (
                 <button
@@ -143,7 +143,7 @@ const DashboardTopbar = ({
                 />
             )}
 
-            <div className="mx-auto max-w-[1600px] px-4 py-3 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1600px] px-[22px] py-3 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-3">
                     <div className="flex items-center gap-3">
                         <button
@@ -164,7 +164,7 @@ const DashboardTopbar = ({
                             <img
                                 src={animatedLogo}
                                 alt="Shilingi Moves"
-                                className="h-[51px] w-[85px] object-contain sm:h-14 sm:w-auto lg:h-16"
+                                className="h-[46px] w-[58px] object-contain sm:h-14 sm:w-auto lg:h-16"
                             />
                         </button>
                     </div>
@@ -228,7 +228,7 @@ const DashboardTopbar = ({
                                     setAccountOpen(false);
                                     setSearchOpen(false);
                                 }}
-                                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600 sm:rounded-2xl"
+                                className="relative hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary-600 sm:inline-flex sm:rounded-2xl"
                                 aria-label="Open notifications"
                             >
                                 <Bell size={18} />
@@ -258,16 +258,16 @@ const DashboardTopbar = ({
                                     setNotificationsOpen(false);
                                     setSearchOpen(false);
                                 }}
-                                className="inline-flex h-12 w-12 items-center justify-center gap-3 rounded-full border border-gray-200 bg-white p-0 shadow-sm transition-colors hover:border-primary-200 hover:bg-gray-50 sm:h-auto sm:w-auto sm:py-1 sm:pl-1 sm:pr-3"
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white py-1 pl-1 pr-1 text-[#16302b] transition-colors hover:bg-[#e4f0ee] sm:gap-3 sm:border sm:border-gray-200 sm:pr-3 sm:shadow-sm"
                             >
                                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0c6060] sm:bg-[#8c8f3f] sm:text-white">
                                     {memberInitials}
                                 </span>
-                                <span className="hidden min-w-0 text-left md:block">
-                                    <span className="block truncate text-sm font-semibold text-gray-900">{displayName}</span>
-                                    <span className="block truncate text-[11px] text-[#f4c95d]">{tierLabel}</span>
+                                <span className="min-w-0 max-w-[108px] text-left sm:hidden md:block">
+                                    <span className="block truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{displayName}</span>
+                                    <span className="hidden truncate text-[11px] text-[#f4c95d] md:block">{tierLabel}</span>
                                 </span>
-                                <ChevronDown size={16} className="hidden text-gray-500 sm:block" />
+                                <ChevronDown size={15} className="text-gray-500" />
                             </button>
 
                             {accountOpen && (

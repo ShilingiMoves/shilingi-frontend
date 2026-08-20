@@ -52,6 +52,14 @@ describe('Swagger-driven tier access', () => {
         expect(buildDashboardAccess(catalog, { current_tier: 'PRO' }).marketwatch.minimumTier).toBe('PRO');
     });
 
+    it('keeps Financial Health locked for Basic and unlocks it on Plus', () => {
+        expect(buildDashboardAccess(catalog, { current_tier: 'BASIC' }).health).toMatchObject({
+            allowed: false,
+            minimumTier: 'PLUS',
+        });
+        expect(buildDashboardAccess(catalog, { current_tier: 'PLUS' }).health.allowed).toBe(true);
+    });
+
     it('orders main and planning navigation from the live catalog, including Tax Planner', () => {
         const groups = buildDashboardNavigationGroups(catalog, [{ id: 'explore', label: 'Explore', items: ['comparehub'] }]);
         expect(groups[0]).toMatchObject({ id: 'main', items: ['overview'] });

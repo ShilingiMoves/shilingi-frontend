@@ -104,6 +104,11 @@ export const getMemberInitials = (user = {}) => {
         return initials.toUpperCase();
     }
 
+    const emailInitial = String(user?.email || '').trim().charAt(0);
+    if (emailInitial) {
+        return emailInitial.toUpperCase();
+    }
+
     return 'SM';
 };
 
@@ -135,7 +140,18 @@ export const getDashboardDisplayName = (user = {}) => {
     if (storedPreferredName) return storedPreferredName;
 
     const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
-    return fullName || user?.name || 'My Profile';
+    if (fullName || user?.name) return fullName || user.name;
+
+    const emailHandle = String(user?.email || '').split('@')[0].trim();
+    if (emailHandle) {
+        return emailHandle
+            .split(/[._-]+/)
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+    }
+
+    return 'My Profile';
 };
 
 export const setStoredPreferredName = (name) => {

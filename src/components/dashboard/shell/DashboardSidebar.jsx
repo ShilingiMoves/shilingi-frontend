@@ -12,6 +12,8 @@ const DashboardSidebar = ({
     onCloseMobile,
     accessBySection = {},
     navigationGroups = dashboardSidebarGroups,
+    mobileTitle = 'Dashboard Menu',
+    mobileDescription = 'Move easily between tools and close when finished.',
 }) => {
     const groupIds = useMemo(() => navigationGroups.map((group) => group.id), [navigationGroups]);
     const activeGroupId = useMemo(
@@ -78,8 +80,8 @@ const DashboardSidebar = ({
                 <div className="border-b border-slate-200 px-4 py-4 lg:hidden">
                     <div className="flex items-center justify-between gap-3">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">Dashboard Menu</p>
-                            <p className="mt-1 text-sm text-slate-500">Move easily between tools and close when finished.</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">{mobileTitle}</p>
+                            <p className="mt-1 text-sm text-slate-500">{mobileDescription}</p>
                         </div>
                         <button
                             type="button"
