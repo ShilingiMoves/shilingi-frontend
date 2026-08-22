@@ -24,6 +24,7 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 const ReferPage = lazy(() => import('./pages/ReferPage'));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
 const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage'));
+const WellnessAssessmentPage = lazy(() => import('./pages/WellnessAssessmentPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLandingPage = lazy(() => import('./pages/DashboardLandingPage'));
 const SignInPage = lazy(() => import('./pages/SignInPage'));
@@ -68,8 +69,9 @@ function AppLayout() {
     const location = useLocation();
     const isOnboardingSurface = location.pathname === '/onboarding';
     const isProfileSetupSurface = location.pathname === '/profile-setup';
-    const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface;
-    const hideShilingiBuddy = location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface;
+    const isWellnessAssessmentSurface = location.pathname === '/wellness-assessment';
+    const hidePublicNavbar = location.pathname === '/dashboard/app' || location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface || isWellnessAssessmentSurface;
+    const hideShilingiBuddy = location.pathname === '/debts' || isOnboardingSurface || isProfileSetupSurface || isWellnessAssessmentSurface;
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -94,6 +96,14 @@ function AppLayout() {
                             element={
                                 <ProtectedRoute>
                                     <ProfileSetupPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/wellness-assessment"
+                            element={
+                                <ProtectedRoute>
+                                    <WellnessAssessmentPage />
                                 </ProtectedRoute>
                             }
                         />
@@ -136,7 +146,7 @@ function AppLayout() {
                 </Suspense>
             </main>
             {!hideShilingiBuddy && <ShilingiBuddy />}
-            {!isOnboardingSurface && !isProfileSetupSurface && <CookieConsentBanner />}
+            {!isOnboardingSurface && !isProfileSetupSurface && !isWellnessAssessmentSurface && <CookieConsentBanner />}
         </div>
     );
 }

@@ -26,6 +26,7 @@ import { getMpesaPayment, startMpesaCheckout } from '../services/platformApi';
 import { getAccessToken } from '../services/sessionManager';
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { markProfileSetupPending, shouldShowProfileSetup } from '../utils/profileSetupState';
+import { getWellnessAssessment } from '../services/wellnessAssessmentApi';
 import onboardingIllustration from '../assets/onboarding-financial-coach.webp';
 import onboardingLogo from '../assets/shilingi-logo-animated.gif';
 
@@ -346,6 +347,16 @@ const OnboardingPage = () => {
                 email: signinValues.email.trim().toLowerCase(),
                 password: signinValues.password,
             });
+            try {
+                const assessment = await getWellnessAssessment();
+                if (!assessment?.is_completed) {
+                    navigate('/wellness-assessment', { replace: true });
+                    return;
+                }
+            } catch {
+                navigate('/wellness-assessment', { replace: true });
+                return;
+            }
             if (!isDirectAuthEntry && activePlan.price > 0) {
                 setAccountMode('choice');
                 setStepIndex(steps.indexOf('payment'));
@@ -415,7 +426,14 @@ const OnboardingPage = () => {
 
                 <div className="relative z-10 flex flex-1 flex-col px-4 pb-7">
                     {currentStep === 'welcome' && (
-                        <WelcomeScreen onStart={() => setStepIndex(1)} />
+                        <WelcomeScreen onStart={() => {
+                            if (getAccessToken()) {
+                                navigate('/wellness-assessment');
+                                return;
+                            }
+                            setAccountMode('choice');
+                            setStepIndex(steps.indexOf('account'));
+                        }} />
                     )}
 
                     {currentStep === 'profile' && (

@@ -1686,6 +1686,7 @@ const DesktopDashboardOverview = ({
         { type: 'item', label: 'Budget Planner', icon: Search, target: 'budget' },
         { type: 'item', label: 'Tax Planner', icon: Calculator, target: 'tax' },
         { type: 'item', label: 'Debt Manager', icon: Bell, target: 'debt' },
+        { type: 'item', label: 'Investment Planner', icon: Briefcase, target: 'investments' },
         { type: 'item', label: 'Protection Planner', icon: Shield, target: 'protection' },
         { type: 'item', label: 'Retirement Planner', icon: FileText, target: 'retirement' },
         { type: 'item', label: 'Net Worth Tracker', icon: BookOpen, target: 'networth' },
@@ -1748,7 +1749,7 @@ const DesktopDashboardOverview = ({
                     <div className="mt-auto max-w-[232px]">
                         <p className="text-xs font-bold leading-5 tracking-[-0.02em] text-[#232e3d]">©Kaizen Publishers Limited All rights reserved.</p>
                         <p className="mt-1 text-[10px] leading-4 text-[#8e97ab]">
-                            Shilingi Moves is a financial wellness platform and does not provide regulated financial advice.
+                            Shilingi Moves is a financial wellness platform and does not provide regulated financial advice. All content is for educational and informational purposes only. Consult a licensed financial advisor before making investment decisions.
                         </p>
                     </div>
                 </aside>
@@ -1758,7 +1759,7 @@ const DesktopDashboardOverview = ({
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <p className="text-base text-[#111827]">{palette.label},</p>
-                                <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName}</h1>
+                                <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName} 👋</h1>
                                 <p className="mt-2 text-base text-[#111827]">Your Financial Health score is {currentScore}/100</p>
                             </div>
                         </div>
@@ -1767,7 +1768,7 @@ const DesktopDashboardOverview = ({
                     <section className="mt-4 overflow-hidden rounded-[10px] bg-[linear-gradient(107deg,_#0c6060_0%,_#eabb3a_163%)] p-6 text-white">
                         <div className="flex items-start gap-4">
                             <p className="min-w-0 flex-1 text-base leading-6">Please complete your profile and planners to unlock personalized insights tailored to your life.</p>
-                            <span className="text-xl leading-none text-white/85">x</span>
+                            <span aria-hidden="true" className="text-xl leading-none text-white/85">×</span>
                         </div>
                         <div className="mt-4 flex flex-wrap items-center gap-2">
                             {ctaButtons.map((button) => (
@@ -1784,8 +1785,6 @@ const DesktopDashboardOverview = ({
                             ))}
                         </div>
                     </section>
-
-                    <PlannerShortcutCards onSelectSection={onSelectSection} />
 
                     <section className="mt-3 grid grid-cols-4 gap-[5px]">
                         {stats.map(({ icon: Icon, label, value }) => (

@@ -15,6 +15,7 @@ import {
 import DashboardSidebar from '../components/dashboard/shell/DashboardSidebar';
 import DashboardOverview from '../components/dashboard/shell/DashboardOverview';
 import DashboardTopbar from '../components/dashboard/shell/DashboardTopbar';
+import { MobileHubsView, MobilePlannersView } from '../components/dashboard/shell/MobileDashboardCatalogViews';
 import { getStoredUserProfile, getUserProfile, logoutUser } from '../services/authApi';
 import { getUserTier, updatePreferredName } from '../services/userApi';
 import { getTierCatalog } from '../services/platformApi';
@@ -90,7 +91,7 @@ const DashboardPage = () => {
     const lastAppliedLocationKeyRef = useRef(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const [mobileMenuMode, setMobileMenuMode] = useState('more');
+    const [mobileCatalogView, setMobileCatalogView] = useState(null);
     const [profile, setProfile] = useState(() => getStoredUserProfile());
     const [preferredNamePrompt, setPreferredNamePrompt] = useState(() => readQueuedPreferredNamePrompt());
     const [resumePrompt, setResumePrompt] = useState(null);
@@ -107,40 +108,7 @@ const DashboardPage = () => {
         () => buildDashboardNavigationGroups(tierCatalog, dashboardSidebarGroups),
         [tierCatalog]
     );
-    const mobileMenuConfig = useMemo(() => {
-        if (mobileMenuMode === 'planners') {
-            const plannerGroup = dashboardSidebarGroups.find((group) => group.id === 'planning');
-            return {
-                title: 'Your Planners',
-                description: 'Choose a planner. Locked tools show the plan required to access them.',
-                // Use the complete product catalogue here rather than the live
-                // navigation subset so upgrade opportunities remain discoverable.
-                groups: plannerGroup ? [{ ...plannerGroup, label: 'All planners' }] : [],
-            };
-        }
-
-        if (mobileMenuMode === 'hubs') {
-            const hubGroup = dashboardSidebarGroups.find((group) => group.id === 'explore');
-            return {
-                title: 'Explore Hubs',
-                description: 'Choose where you want to learn, compare, or use financial tools.',
-                groups: hubGroup ? [{
-                    ...hubGroup,
-                    label: 'All hubs',
-                    items: hubGroup.items.filter((sectionId) => sectionId !== 'communityhub'),
-                }] : [],
-            };
-        }
-
-        return {
-            title: 'Dashboard Menu',
-            description: 'Move easily between tools and close when finished.',
-            groups: navigationGroups,
-        };
-    }, [mobileMenuMode, navigationGroups]);
-
-    const openMobileMenu = useCallback((mode = 'more') => {
-        setMobileMenuMode(mode);
+    const openMobileMenu = useCallback(() => {
         setMobileSidebarOpen(true);
     }, []);
 
@@ -377,6 +345,14 @@ const DashboardPage = () => {
         });
     }, [accessBySection, location.pathname, location.search, navigate]);
 
+    const handleMobileCatalogSelect = useCallback((sectionId) => {
+        const sectionAccess = getSectionAccess(accessBySection, sectionId);
+        if (sectionAccess.allowed) {
+            setMobileCatalogView(null);
+        }
+        handleSelectSection(sectionId);
+    }, [accessBySection, handleSelectSection]);
+
     const openProfileFromPrompt = () => {
         closePreferredNamePrompt();
         handleSelectSection('user');
@@ -550,7 +526,7 @@ const DashboardPage = () => {
                     <DashboardTopbar
                         activeSection={activeSection}
                         onSelectSection={handleSelectSection}
-                        onOpenMobileMenu={() => openMobileMenu('more')}
+                        onOpenMobileMenu={openMobileMenu}
                         onSignOut={handleSignOut}
                         user={profile}
                     />
@@ -559,7 +535,7 @@ const DashboardPage = () => {
                 <DashboardTopbar
                     activeSection={activeSection}
                     onSelectSection={handleSelectSection}
-                    onOpenMobileMenu={() => openMobileMenu('more')}
+                    onOpenMobileMenu={openMobileMenu}
                     onSignOut={handleSignOut}
                     user={profile}
                 />
@@ -577,9 +553,7 @@ const DashboardPage = () => {
                             mobileOpen={mobileSidebarOpen}
                             onCloseMobile={() => setMobileSidebarOpen(false)}
                             accessBySection={accessBySection}
-                            navigationGroups={mobileMenuConfig.groups}
-                            mobileTitle={mobileMenuConfig.title}
-                            mobileDescription={mobileMenuConfig.description}
+                            navigationGroups={navigationGroups}
                         />
                     </div>
                 ) : (
@@ -592,14 +566,34 @@ const DashboardPage = () => {
                         mobileOpen={mobileSidebarOpen}
                         onCloseMobile={() => setMobileSidebarOpen(false)}
                         accessBySection={accessBySection}
-                        navigationGroups={mobileSidebarOpen ? mobileMenuConfig.groups : navigationGroups}
-                        mobileTitle={mobileMenuConfig.title}
-                        mobileDescription={mobileMenuConfig.description}
+                        navigationGroups={navigationGroups}
                     />
                 )}
 
                 <main ref={mainContentRef} className="min-w-0 flex-1 pb-6 lg:h-full lg:overflow-y-auto lg:pb-0 lg:[scrollbar-gutter:stable]">
-                    {renderActiveSection()}
+                    {mobileCatalogView === 'planners' && (
+                        <MobilePlannersView
+                            accessBySection={accessBySection}
+                            currentTier={tierInfo?.current_tier || profile?.tier || 'BASIC'}
+                            onBack={() => {
+                                setMobileCatalogView(null);
+                                handleSelectSection('overview');
+                            }}
+                            onSelectSection={handleMobileCatalogSelect}
+                        />
+                    )}
+                    {mobileCatalogView === 'hubs' && (
+                        <MobileHubsView
+                            onBack={() => {
+                                setMobileCatalogView(null);
+                                handleSelectSection('overview');
+                            }}
+                            onSelectSection={handleMobileCatalogSelect}
+                        />
+                    )}
+                    <div className={mobileCatalogView ? 'hidden sm:block' : ''}>
+                        {renderActiveSection()}
+                    </div>
                 </main>
             </div>
 
@@ -634,8 +628,13 @@ const DashboardPage = () => {
 
             <MobileDashboardNav
                 activeSection={activeSection}
-                onOpenMenu={openMobileMenu}
-                onSelectSection={handleSelectSection}
+                activeCatalogView={mobileCatalogView}
+                onOpenCatalog={setMobileCatalogView}
+                onOpenMore={openMobileMenu}
+                onSelectSection={(sectionId) => {
+                    setMobileCatalogView(null);
+                    handleSelectSection(sectionId);
+                }}
             />
         </div>
     );
@@ -643,22 +642,22 @@ const DashboardPage = () => {
 
 const mobileDashboardNavItems = [
     { id: 'overview', label: 'Home', icon: Home },
-    { id: 'planners', label: 'Planners', icon: BarChart3, sections: ['cashflow', 'budget', 'tax', 'debt', 'investments', 'protection', 'retirement', 'networth', 'marketwatch'], menu: 'planners' },
-    { id: 'hubs', label: 'Hubs', icon: Compass, sections: ['comparehub', 'resourceshub', 'learninghub'], menu: 'hubs' },
+    { id: 'planners', label: 'Planners', icon: BarChart3, sections: ['cashflow', 'budget', 'tax', 'debt', 'investments', 'protection', 'retirement', 'networth', 'marketwatch'], catalog: 'planners' },
+    { id: 'hubs', label: 'Hubs', icon: Compass, sections: ['comparehub', 'resourceshub', 'learninghub'], catalog: 'hubs' },
     { id: 'communityhub', label: 'Community', icon: MessageSquare },
 ];
 
-const MobileDashboardNav = ({ activeSection, onOpenMenu, onSelectSection }) => (
+const MobileDashboardNav = ({ activeSection, activeCatalogView, onOpenCatalog, onOpenMore, onSelectSection }) => (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:hidden">
         <div className="mx-auto flex h-16 max-w-[430px] items-stretch">
-            {mobileDashboardNavItems.map(({ id, label, icon: Icon, sections = [id], menu }) => {
-                const isActive = sections.includes(activeSection);
+            {mobileDashboardNavItems.map(({ id, label, icon: Icon, sections = [id], catalog }) => {
+                const isActive = catalog ? activeCatalogView === catalog : !activeCatalogView && sections.includes(activeSection);
 
                 return (
                     <button
                         key={id}
                         type="button"
-                        onClick={() => menu ? onOpenMenu(menu) : onSelectSection(id)}
+                        onClick={() => catalog ? onOpenCatalog(catalog) : onSelectSection(id)}
                         className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] transition-colors ${
                             isActive ? 'text-[#0c6060]' : 'text-[#68716e]'
                         }`}
@@ -671,7 +670,7 @@ const MobileDashboardNav = ({ activeSection, onOpenMenu, onSelectSection }) => (
             })}
             <button
                 type="button"
-                onClick={() => onOpenMenu('more')}
+                onClick={onOpenMore}
                 className="flex flex-1 flex-col items-center justify-center gap-1 text-[10px] text-[#68716e]"
             >
                 <MoreHorizontal size={22} />

@@ -6,6 +6,7 @@ import { hasStoredAccessToken, loginUser, resendVerificationEmail } from '../ser
 import { persistDashboardSection } from '../utils/dashboardDataState';
 import { hasAnyPreferredName, queuePreferredNamePrompt } from '../utils/memberIdentity';
 import { shouldShowProfileSetup } from '../utils/profileSetupState';
+import { getWellnessAssessment } from '../services/wellnessAssessmentApi';
 import { PENDING_PROFILE_SIGNUP_EMAIL_KEY } from './SignUpPage';
 
 const isPendingProfileSignup = (email) => {
@@ -76,6 +77,16 @@ const SignInPage = () => {
                 queuePreferredNamePrompt(nextSection === 'user' ? 'signup' : 'returning');
             }
             clearPendingProfileSignup();
+            try {
+                const assessment = await getWellnessAssessment();
+                if (!assessment?.is_completed) {
+                    navigate('/wellness-assessment', { replace: true });
+                    return;
+                }
+            } catch {
+                navigate('/wellness-assessment', { replace: true });
+                return;
+            }
             if (shouldShowProfileSetup(submittedEmail)) {
                 navigate('/profile-setup', { replace: true });
                 return;

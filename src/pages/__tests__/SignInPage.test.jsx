@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SignInPage from '../SignInPage';
 import { loginUser } from '../../services/authApi';
+import { getWellnessAssessment } from '../../services/wellnessAssessmentApi';
 
 vi.mock('../../services/authApi', () => ({
     hasStoredAccessToken: () => false,
@@ -19,10 +20,15 @@ vi.mock('../../utils/profileSetupState', () => ({
     shouldShowProfileSetup: () => false,
 }));
 
+vi.mock('../../services/wellnessAssessmentApi', () => ({
+    getWellnessAssessment: vi.fn(),
+}));
+
 describe('SignInPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         loginUser.mockResolvedValue({ data: { user: { email: 'plus.frontend@shilingimove.test' }, tokens: { access: 'test' } } });
+        getWellnessAssessment.mockResolvedValue({ is_completed: true });
     });
 
     it('submits the exact values present in the form', async () => {
