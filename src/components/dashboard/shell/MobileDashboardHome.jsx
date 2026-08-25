@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import QuickExpenseModal from '../budget/QuickExpenseModal';
 import DailyMoneyActionModal from './DailyMoneyActionModal';
-import { getTodayMoney } from '../../../services/dailyMoneyApi';
+import { getMoneyCalendar, getTodayMoney } from '../../../services/dailyMoneyApi';
 
 const toNumber = (value) => {
     const number = Number(value);
@@ -12,6 +12,55 @@ const toNumber = (value) => {
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const formatKes = (value) => `KES ${Math.round(toNumber(value)).toLocaleString('en-KE')}`;
+
+const parseEventDate = (event) => {
+    const value = event?.due_at || event?.date || event?.event_date || event?.starts_at;
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getCalendarEventTitle = (event) => event?.title || event?.name || event?.label || 'Money event';
+
+const getCalendarEventEmoji = (event) => {
+    const label = `${getCalendarEventTitle(event)} ${event?.type || ''} ${event?.event_type || ''}`.toLowerCase();
+    if (label.includes('rent')) return '🏠';
+    if (label.includes('payday') || label.includes('salary') || label.includes('income')) return '💰';
+    if (label.includes('netflix') || label.includes('subscription') || label.includes('renew')) return '🔁';
+    if (label.includes('tax') || label.includes('paye') || label.includes('kra')) return '🧾';
+    if (label.includes('loan') || label.includes('debt')) return '💳';
+    return event?.icon || '📅';
+};
+
+const formatEventTiming = (date) => {
+    if (!date) return '';
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const days = Math.round((target.getTime() - start.getTime()) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Tomorrow';
+    if (days > 1 && days < 31) return `In ${days} days`;
+    if (days < 0) return 'Overdue';
+    return date.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' });
+};
+
+const normalizeCalendarEvents = (calendar, today) => {
+    const calendarEvents = Array.isArray(calendar) ? calendar : calendar?.events || calendar?.results || [];
+    const reminders = today?.reminders || [];
+    return [...calendarEvents, ...reminders]
+        .map((event, index) => ({
+            ...event,
+            _key: event?.uuid || event?.id || `${getCalendarEventTitle(event)}-${index}`,
+            _date: parseEventDate(event),
+        }))
+        .filter((event) => event._date)
+        .sort((left, right) => left._date.getTime() - right._date.getTime())
+        .filter((event, index, list) => index === list.findIndex((candidate) => (
+            getCalendarEventTitle(candidate) === getCalendarEventTitle(event)
+            && candidate._date.toDateString() === event._date.toDateString()
+        )));
+};
 
 const MobileDashboardHome = ({
     aiInsights = [],
@@ -30,12 +79,18 @@ const MobileDashboardHome = ({
     const [quickExpenseOpen, setQuickExpenseOpen] = useState(false);
     const [dailyAction, setDailyAction] = useState(null);
     const [todayMoney, setTodayMoney] = useState(null);
+    const [moneyCalendar, setMoneyCalendar] = useState(null);
     const [todayError, setTodayError] = useState('');
 
     const refreshToday = useCallback(async () => {
         try {
             setTodayError('');
-            setTodayMoney(await getTodayMoney());
+            const [today, calendar] = await Promise.all([
+                getTodayMoney(),
+                getMoneyCalendar().catch(() => null),
+            ]);
+            setTodayMoney(today);
+            setMoneyCalendar(calendar);
         } catch (error) {
             console.error('Failed to load daily money dashboard:', error);
             setTodayError('Your daily tools could not refresh. Existing dashboard information is still shown.');
@@ -44,8 +99,12 @@ const MobileDashboardHome = ({
 
     useEffect(() => {
         let active = true;
-        getTodayMoney()
-            .then((data) => active && setTodayMoney(data))
+        Promise.all([getTodayMoney(), getMoneyCalendar().catch(() => null)])
+            .then(([today, calendar]) => {
+                if (!active) return;
+                setTodayMoney(today);
+                setMoneyCalendar(calendar);
+            })
             .catch((error) => {
                 console.error('Failed to load daily money dashboard:', error);
                 if (active) setTodayError('Your daily tools could not refresh. Existing dashboard information is still shown.');
@@ -76,9 +135,9 @@ const MobileDashboardHome = ({
             : { label: 'On track', dot: 'bg-green-500', shell: 'bg-[#e2f5ec] text-[#2f9e6b]' };
     const insight = aiInsights[0];
     const canViewFinancialHealth = healthAccess?.allowed !== false;
-    const displayedHealthScore = canViewFinancialHealth ? currentScore : 0;
-    const healthPlan = healthAccess?.minimumTier || 'PLUS';
     const effectiveStreak = toNumber(todayMoney?.streak?.current_streak ?? streakDays);
+    const calendarEvents = normalizeCalendarEvents(moneyCalendar, todayMoney).slice(0, 4);
+    const calendarMonth = (calendarEvents[0]?._date || new Date()).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
 
     const handleExpenseSaved = () => {
         setQuickExpenseOpen(false);
@@ -137,35 +196,22 @@ const MobileDashboardHome = ({
                     </section>
                 )}
 
-                <section className="mt-4 rounded-[20px] border border-[#e2e7e4] bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,40,35,0.22)]">
+                {canViewFinancialHealth && <section className="mt-4 rounded-[20px] border border-[#e2e7e4] bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,40,35,0.22)]">
                     <p className="text-[12px] font-bold uppercase tracking-[0.04em] text-[#4d5a56]">Financial Health</p>
                     <div className="mt-2 flex items-center gap-4">
-                        <HealthRing score={displayedHealthScore} />
+                        <HealthRing score={currentScore} />
                         <div className="min-w-0 flex-1">
                             <span className="inline-flex rounded-full bg-[#e2f5ec] px-2 py-1 text-[11px] font-semibold text-[#2f9e6b]">
-                                {canViewFinancialHealth
-                                    ? (hasData ? 'Score updated this month' : 'Add data to get scored')
-                                    : `Available on ${healthPlan}`}
+                                {hasData ? 'Score updated this month' : 'Add data to get scored'}
                             </span>
                             <p className="mt-3 text-[12px] leading-[1.45] text-[#4d5a56]">
-                                {!canViewFinancialHealth
-                                    ? 'Upgrade and complete more planners to unlock your personalized financial health score.'
-                                    : hasData
+                                {hasData
                                     ? "You're building solid habits. Keep logging spend to lift your score."
                                     : 'Complete your profile and first planner to unlock a live financial health score.'}
                             </p>
-                            {!canViewFinancialHealth && (
-                                <button
-                                    type="button"
-                                    onClick={() => onSelectSection('health')}
-                                    className="mt-3 rounded-full bg-[#eabb3a] px-3 py-2 text-[11px] font-bold text-[#2a1f04]"
-                                >
-                                    Upgrade to {healthPlan}
-                                </button>
-                            )}
                         </div>
                     </div>
-                </section>
+                </section>}
 
                 <section className="mt-6">
                     <h2 className="text-[15px] font-bold">What would you like to do today?</h2>
@@ -230,18 +276,6 @@ const MobileDashboardHome = ({
 
                 <section className="mt-6">
                     <div className="flex items-end justify-between gap-3">
-                        <div><h2 className="text-[15px] font-bold">Money Calendar</h2><p className="mt-1 text-[11px] text-[#4d5a56]">Your plans and upcoming reminders.</p></div>
-                        <button type="button" onClick={() => setDailyAction('remind')} className="text-[11px] font-bold text-[#0c6060]">+ Add reminder</button>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                        {todayMoney?.plan && <CalendarRow emoji="🗓️" title="Today's money plan" detail={`${todayMoney.plan.items?.length || 0} planned item${todayMoney.plan.items?.length === 1 ? '' : 's'}`} />}
-                        {(todayMoney?.reminders || []).slice(0, 3).map((reminder) => <CalendarRow key={reminder.uuid} emoji="🔔" title={reminder.title} detail={new Date(reminder.due_at).toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' })} />)}
-                        {!todayMoney?.plan && !(todayMoney?.reminders || []).length && <button type="button" onClick={() => setDailyAction('plan')} className="w-full rounded-[14px] border border-dashed border-[#cbd6d1] bg-white px-4 py-4 text-left text-[12px] text-[#68736f]">No plans or reminders yet. Plan your day to get started.</button>}
-                    </div>
-                </section>
-
-                <section className="mt-6">
-                    <div className="flex items-end justify-between gap-3">
                         <div><h2 className="text-[15px] font-bold">Your Planners</h2><p className="mt-1 text-[11px] text-[#4d5a56]">Build your plan one move at a time.</p></div>
                         <button type="button" onClick={() => onSelectSection('budget')} className="text-[11px] font-bold text-[#0c6060]">View planners</button>
                     </div>
@@ -251,13 +285,77 @@ const MobileDashboardHome = ({
                     </div>
                 </section>
 
-                <section className="mt-6 pb-4">
+                <section className="mt-6">
                     <h2 className="text-[15px] font-bold">Explore Your Hubs</h2>
                     <p className="mt-1 text-[11px] text-[#4d5a56]">Learn, compare and get the right tools.</p>
                     <div className="mt-3 grid grid-cols-3 gap-2">
                         <HubButton emoji="🎓" label="Learning" onClick={() => onSelectSection('learninghub')} />
                         <HubButton emoji="⚖️" label="Comparison" onClick={() => onSelectSection('comparehub')} />
                         <HubButton emoji="🧰" label="Resources" onClick={() => onSelectSection('resourceshub')} />
+                    </div>
+                </section>
+
+                <button
+                    type="button"
+                    onClick={() => onSelectSection('learninghub')}
+                    className="mt-3 flex w-full items-center gap-3 rounded-[14px] border border-[#eabb3a] bg-[linear-gradient(120deg,_#fff8e6,_#fdeec4)] px-3.5 py-3 text-left shadow-[0_6px_18px_-10px_rgba(214,165,33,0.45)]"
+                >
+                    <span className="flex shrink-0 -space-x-2" aria-hidden="true">
+                        {['📚', '🧮', '📊'].map((icon) => <span key={icon} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#fdeec4] bg-white text-xs">{icon}</span>)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-[12px] font-bold text-[#5c4108]">See what&apos;s inside each hub</span>
+                        <span className="mt-0.5 block text-[10px] leading-tight text-[#8a6d1c]">Articles, comparisons, calculators &amp; more</span>
+                    </span>
+                    <span className="rounded-full bg-[#eabb3a] px-3 py-2 text-[11px] font-extrabold text-[#2a1f04]">Explore ›</span>
+                </button>
+
+                <section className="mt-6">
+                    <h2 className="text-[15px] font-bold">Community</h2>
+                    <p className="mt-1 text-[12px] text-[#4d5a56]">You&apos;re not doing this alone.</p>
+                    <button
+                        type="button"
+                        onClick={() => onSelectSection('communityhub')}
+                        className="mt-3 flex w-full items-center gap-3 rounded-[14px] bg-[linear-gradient(120deg,_#073f3f,_#0c6060)] px-4 py-3.5 text-left text-white shadow-[0_8px_20px_-12px_rgba(15,40,35,0.35)]"
+                    >
+                        <span className="flex shrink-0 -space-x-2" aria-hidden="true">
+                            {['A', 'M', 'W'].map((letter, index) => <span key={letter} className={`flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-[#073f3f] text-[11px] font-bold ${['bg-[#eabb3a]', 'bg-[#0c6060]', 'bg-[#7c8e4d]'][index]}`}>{letter}</span>)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-[12px] font-bold leading-tight">Members building better money habits</span>
+                            <span className="mt-1 block text-[10px] leading-tight text-[#cfe4e0]">Monthly challenges · Success stories · Community support</span>
+                        </span>
+                        <span className="text-[#cfe4e0]" aria-hidden="true">›</span>
+                    </button>
+                </section>
+
+                <section className="mt-6 pb-4">
+                    <div className="flex items-end justify-between gap-3">
+                        <div><h2 className="text-[15px] font-bold">Money Calendar</h2><p className="mt-1 text-[11px] text-[#4d5a56]">Nothing catches you off guard.</p></div>
+                        <button type="button" onClick={() => setDailyAction('remind')} className="rounded-full bg-[#eabb3a] px-3.5 py-2 text-[11px] font-bold text-[#2a1f04]">+ Add event</button>
+                    </div>
+                    <div className="mt-3 overflow-hidden rounded-[20px] border border-[#e2e7e4] bg-white px-4 pb-3 pt-4 shadow-[0_8px_20px_-12px_rgba(15,40,35,0.22)]">
+                        <div className="flex items-center justify-between border-b border-[#e7ebe9] pb-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f6f5] text-[#68736f]" aria-hidden="true">‹</span>
+                            <p className="text-[12px] font-bold">{calendarMonth}</p>
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f6f5] text-[#68736f]" aria-hidden="true">›</span>
+                        </div>
+                        <div className="divide-y divide-[#edf0ee]">
+                            {calendarEvents.map((event) => (
+                                <CalendarRow
+                                    key={event._key}
+                                    emoji={getCalendarEventEmoji(event)}
+                                    title={getCalendarEventTitle(event)}
+                                    timing={formatEventTiming(event._date)}
+                                    amount={event.amount ?? event.expected_amount ?? event.value}
+                                />
+                            ))}
+                            {!calendarEvents.length && (
+                                <button type="button" onClick={() => setDailyAction('remind')} className="w-full py-5 text-left text-[11px] leading-5 text-[#68736f]">
+                                    No upcoming money events yet. Add rent, payday, subscriptions or tax deadlines and they will appear here.
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </section>
 
@@ -277,7 +375,14 @@ const QuickAction = ({ emoji, label, onClick, tone = 'bg-[#e4f0ee]' }) => (
     </button>
 );
 
-const CalendarRow = ({ emoji, title, detail }) => <div className="flex items-center gap-3 rounded-[14px] border border-[#e7ebe9] bg-white px-3 py-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e4f0ee]">{emoji}</span><span className="min-w-0"><span className="block truncate text-[12px] font-bold">{title}</span><span className="mt-0.5 block truncate text-[10px] text-[#68736f]">{detail}</span></span></div>;
+const CalendarRow = ({ emoji, title, timing, amount }) => (
+    <div className="flex min-h-[44px] items-center gap-2 py-2.5">
+        <span className="w-5 shrink-0 text-sm" aria-hidden="true">{emoji}</span>
+        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold">{title}</span>
+        <span className="shrink-0 text-[10px] text-[#4d5a56]">{timing}</span>
+        {toNumber(amount) > 0 && <span className="min-w-[72px] shrink-0 text-right text-[10px] font-bold text-[#0c6060]">{formatKes(amount)}</span>}
+    </div>
+);
 
 const HubButton = ({ emoji, label, onClick }) => (
     <button type="button" onClick={onClick} className="rounded-[14px] border border-[#e7ebe9] bg-white px-2 py-3 text-center">

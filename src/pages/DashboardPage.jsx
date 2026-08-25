@@ -2,13 +2,8 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
-    BarChart3,
     CheckCircle2,
-    Compass,
     FileText,
-    Home,
-    MessageSquare,
-    MoreHorizontal,
     Users,
     X,
 } from 'lucide-react';
@@ -629,6 +624,7 @@ const DashboardPage = () => {
             <MobileDashboardNav
                 activeSection={activeSection}
                 activeCatalogView={mobileCatalogView}
+                healthAccess={accessBySection?.health}
                 onOpenCatalog={setMobileCatalogView}
                 onOpenMore={openMobileMenu}
                 onSelectSection={(sectionId) => {
@@ -641,44 +637,51 @@ const DashboardPage = () => {
 };
 
 const mobileDashboardNavItems = [
-    { id: 'overview', label: 'Home', icon: Home },
-    { id: 'planners', label: 'Planners', icon: BarChart3, sections: ['cashflow', 'budget', 'tax', 'debt', 'investments', 'protection', 'retirement', 'networth', 'marketwatch'], catalog: 'planners' },
-    { id: 'hubs', label: 'Hubs', icon: Compass, sections: ['comparehub', 'resourceshub', 'learninghub'], catalog: 'hubs' },
-    { id: 'communityhub', label: 'Community', icon: MessageSquare },
+    { id: 'overview', label: 'Home', icon: '🏠' },
+    { id: 'planners', label: 'Planners', icon: '📊', sections: ['cashflow', 'budget', 'tax', 'debt', 'investments', 'protection', 'retirement', 'networth', 'marketwatch'], catalog: 'planners' },
+    { id: 'hubs', label: 'Hubs', icon: '🧭', sections: ['comparehub', 'resourceshub', 'learninghub'], catalog: 'hubs' },
+    { id: 'communityhub', label: 'Community', icon: '💬' },
 ];
 
-const MobileDashboardNav = ({ activeSection, activeCatalogView, onOpenCatalog, onOpenMore, onSelectSection }) => (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:hidden">
-        <div className="mx-auto flex h-16 max-w-[430px] items-stretch">
-            {mobileDashboardNavItems.map(({ id, label, icon: Icon, sections = [id], catalog }) => {
+export const MobileDashboardNav = ({ activeSection, activeCatalogView, healthAccess, onOpenCatalog, onOpenMore, onSelectSection }) => {
+    const canUseTracker = healthAccess?.allowed === true;
+    const items = [
+        ...mobileDashboardNavItems,
+        canUseTracker
+            ? { id: 'health', label: 'Tracker', icon: '📈' }
+            : { id: 'more', label: 'More', icon: '•••', action: 'more' },
+    ];
+
+    return (
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#dce3df] bg-white/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
+            <div className="mx-auto flex h-16 max-w-[430px] items-stretch">
+            {items.map(({ id, label, icon, sections = [id], catalog, action }) => {
                 const isActive = catalog ? activeCatalogView === catalog : !activeCatalogView && sections.includes(activeSection);
 
                 return (
                     <button
                         key={id}
                         type="button"
-                        onClick={() => catalog ? onOpenCatalog(catalog) : onSelectSection(id)}
+                        onClick={() => action === 'more' ? onOpenMore() : catalog ? onOpenCatalog(catalog) : onSelectSection(id)}
                         className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] transition-colors ${
                             isActive ? 'text-[#0c6060]' : 'text-[#68716e]'
                         }`}
                         aria-current={isActive ? 'page' : undefined}
                     >
-                        <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
+                        <span
+                            aria-hidden="true"
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-[19px] leading-none ${isActive ? 'bg-[#e4f0ee]' : ''} ${action === 'more' ? 'border border-[#d7dfdb] bg-[#f4f6f5] text-[13px] font-extrabold tracking-[-1px] text-[#16302b]' : ''}`}
+                        >
+                            {icon}
+                        </span>
                         <span>{label}</span>
                     </button>
                 );
             })}
-            <button
-                type="button"
-                onClick={onOpenMore}
-                className="flex flex-1 flex-col items-center justify-center gap-1 text-[10px] text-[#68716e]"
-            >
-                <MoreHorizontal size={22} />
-                <span>More</span>
-            </button>
-        </div>
-    </nav>
-);
+            </div>
+        </nav>
+    );
+};
 
 const UpgradeAccessPanel = ({ access, onBack, onUpgrade }) => (
     <section className="mx-auto max-w-2xl rounded-[1.75rem] border border-amber-200 bg-white p-7 text-center shadow-sm">

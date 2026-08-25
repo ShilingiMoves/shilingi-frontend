@@ -925,6 +925,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
     const shouldShowNewUserHero = newUser && !hasData && !hasIncomeData;
     const healthComponents = hasData ? healthSnapshot.components : [];
     const currentScore = hasData ? clamp(Number(healthSnapshot.score || 0), 0, 100) : 0;
+    const canViewFinancialHealth = accessBySection?.health?.allowed !== false;
     const streakDays = hasData ? clamp(Number(dashboardStreak.count || 0), 0, 3650) : 0;
     const savingsRateScore = hasData ? findHealthComponentScore(healthComponents, ['saving', 'savings'], Math.min(100, Math.max(0, Math.round((live.savings / Math.max(live.income || 1, 1)) * 100)))) : 0;
     const debtRatioScore = hasData ? findHealthComponentScore(healthComponents, ['debt', 'liabilit'], Math.min(100, Math.max(0, Math.round((Math.abs(live.breakdown.liabilities) / Math.max(live.netWorth || 1, 1)) * 100)))) : 0;
@@ -951,9 +952,9 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
             investments: live.raw.investments,
             income: live.income,
             savings: live.savings,
-            score: currentScore,
+            score: canViewFinancialHealth ? currentScore : 0,
         });
-    }, [hasData, live.raw, live.income, live.savings, currentScore]);
+    }, [canViewFinancialHealth, hasData, live.raw, live.income, live.savings, currentScore]);
     const calendarEvents = useMemo(() => {
         const liveEvents = hasData ? buildCalendarEvents({
             referenceDate: currentMonth,
@@ -1138,6 +1139,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                 debtRatioScore={debtRatioScore}
                 displayName={displayName}
                 hasData={hasData}
+                healthAccess={accessBySection?.health}
                 investmentRows={mobileInvestmentRows}
                 investmentScore={investmentScore}
                 live={live}
@@ -1160,13 +1162,19 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                             <div className="min-w-0 flex-1">
                                 {shouldShowNewUserHero ? (
                                     <>
-                                        <h1 className="max-w-4xl text-[1.55rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.95rem]">Welcome {displayName}, your financial health score is {currentScore}/100.</h1>
+                                        <h1 className="max-w-4xl text-[1.55rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.95rem]">
+                                            Welcome {displayName}{canViewFinancialHealth ? `, your financial health score is ${currentScore}/100.` : '.'}
+                                        </h1>
                                         <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">Please complete your profile and planners to unlock personalized insights tailored to your life.</p>
                                     </>
                                 ) : (
                                     <>
                                         <h1 className="max-w-4xl text-[1.5rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-[1.8rem]">{palette.label}, {displayName}!</h1>
-                                        <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">Great progress today. Your health score is {currentScore}/100{hasData ? ` and you have ${fmtKES(live.savings)} in tracked savings.` : '.'}</p>
+                                        <p className="mt-2 max-w-3xl text-sm leading-7 text-white/80">
+                                            {canViewFinancialHealth
+                                                ? `Great progress today. Your health score is ${currentScore}/100${hasData ? ` and you have ${fmtKES(live.savings)} in tracked savings.` : '.'}`
+                                                : `Great progress today${hasData ? ` — you have ${fmtKES(live.savings)} in tracked savings.` : '.'}`}
+                                        </p>
                                     </>
                                 )}
                                 <div className="mt-3 flex flex-wrap gap-2.5">{ctaButtons.map((b) => <button key={b.id} type="button" onClick={() => onSelectSection(b.target)} className={b.primary ? 'inline-flex items-center gap-2 rounded-full bg-[#F0C94D] px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-amber-300/20' : 'inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15'}>{b.label}<ArrowRight size={14} /></button>)}</div>
@@ -1178,7 +1186,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                                 {!shouldShowNewUserHero && (
                                     <div className="grid w-full grid-cols-2 gap-2.5 sm:max-w-[230px]">
                                         <HeroBadge label="Day Streak" value={String(streakDays)} />
-                                        <HeroBadge label="Health Score" value={String(currentScore)} suffix="/100" />
+                                        {canViewFinancialHealth && <HeroBadge label="Health Score" value={String(currentScore)} suffix="/100" />}
                                     </div>
                                 )}
                             </div>
@@ -1194,7 +1202,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                         <div className="absolute inset-y-0 right-0 w-40 rounded-full bg-white/5 blur-0" />
                         <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-emerald-100">Net Worth Overview</p>
                         <p className="mt-1 text-[1.55rem] font-extrabold leading-none">{hasData ? fmtKES(live.netWorth) : 'KES 0'}</p>
-                        <p className="mt-1 text-[10px] text-emerald-100">{hasData ? 'Updated now - +12.3% YTD' : 'Updated from your connected planners'}</p>
+                        <p className="mt-1 text-[10px] text-emerald-100">Updated from your connected planners</p>
                         <div className="mt-2 h-[46px] rounded-[0.8rem] bg-white/5 p-1.5">
                             <div className="relative h-full overflow-hidden rounded-[1rem] bg-[linear-gradient(180deg,rgba(98,255,215,0.16)_0%,rgba(98,255,215,0.04)_100%)]">
                                 <svg viewBox="0 0 100 36" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
@@ -1247,7 +1255,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                     </div>
 
                     <div className="grid gap-4">
-                        <article className="rounded-[1.4rem] border border-emerald-100 bg-white p-5 shadow-sm">
+                        {canViewFinancialHealth && <article className="rounded-[1.4rem] border border-emerald-100 bg-white p-5 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <p className="inline-flex items-center gap-2 text-base font-bold text-slate-900"><Heart size={15} className="fill-emerald-500 text-emerald-500" />Financial Health Score</p>
                                 <button type="button" onClick={() => onSelectSection('health')} className="text-xs font-semibold text-primary-700">Details -</button>
@@ -1263,7 +1271,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                                 <HealthBar label="Budget" value={budgetScore} color="bg-blue-600" textColor="text-blue-600" />
                                 <HealthBar label="Investments" value={investmentScore} color="bg-violet-600" textColor="text-violet-600" />
                             </div>
-                        </article>
+                        </article>}
                         <Panel title="Financial Goals" action="+ New Goal" onAction={() => onSelectSection('user')}>
                             {live.goals.length ? (
                                 live.goals.map((g) => (
@@ -1330,7 +1338,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">Smart Guidance</p>
                             <h3 className="mt-1 text-xl font-bold text-slate-900">AI Insights</h3>
                         </div>
-                        <button type="button" onClick={() => onSelectSection('health')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">All <ArrowRight size={14} /></button>
+                        <button type="button" onClick={() => onSelectSection(canViewFinancialHealth ? 'health' : 'budget')} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700">All <ArrowRight size={14} /></button>
                     </div>
                     <div className="grid gap-3">
                         {(hasData ? aiInsights : []).length ? aiInsights.map(({ title, description, badge, icon: Icon, iconShell, badgeShell }) => (
@@ -1652,6 +1660,7 @@ const DesktopDashboardOverview = ({
     debtRatioScore,
     displayName,
     hasData,
+    healthAccess,
     investmentRows,
     investmentScore,
     live,
@@ -1661,7 +1670,6 @@ const DesktopDashboardOverview = ({
     palette,
     savingsRateScore,
     sync,
-    spendingRows,
     stats,
     user,
 }) => {
@@ -1676,10 +1684,28 @@ const DesktopDashboardOverview = ({
         ...mobileActions,
         { label: 'Market Watch', icon: Landmark, target: 'marketwatch' },
     ];
-    const weeklyBars = hasData && spendingRows.length
-        ? spendingRows.slice(0, 7).map((row) => clamp(Number(row.percent || 0), 20, 88))
-        : [0, 0, 0, 0, 0, 0, 0];
-    const avgPerDay = live.spent > 0 ? Math.round(toNum(live.spent) / 30) : 0;
+    const weeklySpending = useMemo(() => {
+        const now = new Date();
+        const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+        const amounts = Array(7).fill(0);
+
+        (live.raw?.expenses || []).forEach((expense) => {
+            const date = startOfDay(expense?.date || expense?.expense_date || expense?.created_at);
+            if (!date) return;
+            const index = Math.floor((date.getTime() - monday.getTime()) / 86400000);
+            if (index >= 0 && index < 7) amounts[index] += Math.abs(toNum(expense?.amount));
+        });
+
+        const total = amounts.reduce((sum, amount) => sum + amount, 0);
+        const elapsedDays = clamp(((now.getDay() + 6) % 7) + 1, 1, 7);
+        const max = Math.max(...amounts, 0);
+        return {
+            bars: amounts.map((amount) => max > 0 && amount > 0 ? clamp(Math.round((amount / max) * 100), 8, 100) : 0),
+            average: total > 0 ? Math.round(total / elapsedDays) : 0,
+            total,
+        };
+    }, [live.raw?.expenses]);
     const desktopNav = [
         { type: 'item', label: 'Home', icon: Home, target: 'overview', active: true },
         { type: 'label', label: 'Planning Tools' },
@@ -1697,6 +1723,7 @@ const DesktopDashboardOverview = ({
         ? `${palette.label}, ${displayName}. Keep up the progress.`
         : 'Complete setup to unlock your personalized health score.';
     const tierLabel = user?.tier || user?.subscription_tier || user?.plan || 'Basic';
+    const canViewFinancialHealth = healthAccess?.allowed !== false;
     return (
         <div className="hidden min-h-screen bg-[#f8f8f8] lg:block">
             <div className="mx-auto grid min-h-screen max-w-[1280px] grid-cols-[296px_minmax(0,1fr)_343px] overflow-hidden rounded-[40px] bg-[#f8f8f8]">
@@ -1760,7 +1787,9 @@ const DesktopDashboardOverview = ({
                             <div>
                                 <p className="text-base text-[#111827]">{palette.label},</p>
                                 <h1 className="mt-1 text-[32px] font-extrabold leading-none text-[#0c6060]">{displayName} 👋</h1>
-                                <p className="mt-2 text-base text-[#111827]">Your Financial Health score is {currentScore}/100</p>
+                                <p className="mt-2 text-base text-[#111827]">
+                                    {canViewFinancialHealth ? `Your Financial Health score is ${currentScore}/100` : 'See how your money is working for you.'}
+                                </p>
                             </div>
                         </div>
                     </section>
@@ -1819,8 +1848,8 @@ const DesktopDashboardOverview = ({
                                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f6] text-[#6a7282]"><ChevronRight size={16} /></span>
                             </div>
                             <div className="mt-5 flex h-40 items-end justify-between px-3">
-                                {weeklyBars.map((height, index) => (
-                                    <div key={`${height}-${index}`} className="flex flex-1 flex-col items-center gap-2">
+                                {weeklySpending.bars.map((height, index) => (
+                                    <div key={index} className="flex flex-1 flex-col items-center gap-2">
                                         <span
                                             className={`w-[58px] rounded-t-[10px] ${index === 5 ? 'bg-[#eabb3a]' : 'bg-[#ffecb8]'}`}
                                             style={{ height: `${height}%` }}
@@ -1834,11 +1863,11 @@ const DesktopDashboardOverview = ({
                             <div className="mt-4 flex items-end justify-between border-t border-[#f3f4f6] px-4 py-3">
                                 <div>
                                     <p className="text-xs text-[#6a7282]">Average per day</p>
-                                    <p className="text-lg font-extrabold text-[#232e3d]">{fmtKES(avgPerDay)}</p>
+                                    <p className="text-lg font-extrabold text-[#232e3d]">{fmtKES(weeklySpending.average)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-[#6a7282]">vs last week</p>
-                                    <p className="text-lg font-extrabold text-[#232e3d]">0%</p>
+                                    <p className="text-xs text-[#6a7282]">This week</p>
+                                    <p className="text-lg font-extrabold text-[#232e3d]">{fmtKES(weeklySpending.total)}</p>
                                 </div>
                             </div>
                         </div>
@@ -1866,7 +1895,7 @@ const DesktopDashboardOverview = ({
                         <input className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#8b98a5]" placeholder="Search" />
                     </label>
 
-                    <DesktopRailCard title="Financial Health Score" action="View More" onAction={() => onSelectSection('health')}>
+                    {canViewFinancialHealth && <DesktopRailCard title="Financial Health Score" action="View More" onAction={() => onSelectSection('health')}>
                         <DesktopNotice>{healthNotice}</DesktopNotice>
                         <div className="mt-3 flex items-center gap-3">
                             <MobileGauge score={currentScore} amount={fmtKES(live.savings || live.netWorth)} />
@@ -1877,7 +1906,7 @@ const DesktopDashboardOverview = ({
                                 <LegendRow label="Investments" value={Math.round(investmentScore)} color="bg-[#2563eb]" />
                             </div>
                         </div>
-                    </DesktopRailCard>
+                    </DesktopRailCard>}
 
                     <DesktopRailCard title="Investment Portfolio" action="View More" onAction={() => onSelectSection('investments')}>
                         <DesktopNotice>{hasData ? 'Your portfolio mix is ready for review.' : 'Complete investment setup to track your portfolio.'}</DesktopNotice>
