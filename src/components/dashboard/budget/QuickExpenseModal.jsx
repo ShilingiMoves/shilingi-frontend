@@ -13,21 +13,18 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
         category: '',
         amount: '',
         description: '',
+        spend_type: 'NEED',
     });
 
-    async function loadCategories() {
-        try {
-            setLoadError('');
-            const data = await getCategories();
-            setCategories(data);
-        } catch (error) {
-            console.error('Failed to load categories:', error);
-            setLoadError('We could not load budget categories right now.');
-        }
-    }
-
     useEffect(() => {
-        loadCategories();
+        let active = true;
+        getCategories()
+            .then((data) => active && setCategories(data))
+            .catch((error) => {
+                console.error('Failed to load categories:', error);
+                if (active) setLoadError('We could not load budget categories right now.');
+            });
+        return () => { active = false; };
     }, []);
 
     const handleChange = (e) => {
@@ -56,6 +53,7 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
             await quickExpense({
                 ...formData,
                 category: formData.category || '',
+                idempotency_key: globalThis.crypto?.randomUUID?.() || `${Date.now()}`,
             });
             if (onSuccess) onSuccess();
             markDashboardDataExists();
@@ -177,6 +175,18 @@ const QuickExpenseModal = ({ onClose, onSuccess }) => {
                             placeholder="What did you spend on?"
                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                         />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Was this a need or a want?</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            {[
+                                ['NEED', 'Need'],
+                                ['WANT', 'Want'],
+                            ].map(([value, label]) => (
+                                <button key={value} type="button" onClick={() => setFormData((current) => ({ ...current, spend_type: value }))} className={formData.spend_type === value ? 'rounded-xl border border-primary-600 bg-primary-50 px-4 py-3 text-sm font-bold text-primary-700' : 'rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600'}>{label}</button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Actions */}

@@ -13,6 +13,17 @@ export const API_PATHS = Object.freeze({
         checkout: '/api/v1/billing/mpesa/checkout/',
         payments: '/api/v1/billing/mpesa/payments/',
     }),
+    dailyMoney: Object.freeze({
+        today: '/api/v1/daily-money/today/',
+        preferences: '/api/v1/daily-money/preferences/',
+        plans: '/api/v1/daily-money/plans/',
+        shoppingLists: '/api/v1/daily-money/shopping-lists/',
+        reminders: '/api/v1/daily-money/reminders/',
+        affordability: '/api/v1/daily-money/affordability/check/',
+        calendar: '/api/v1/daily-money/calendar/',
+        calendarEvents: '/api/v1/daily-money/calendar-events/',
+        activity: '/api/v1/daily-money/activity/',
+    }),
 });
 
 export const unwrapData = (payload) => payload?.data ?? payload;

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import QuickExpenseModal from '../budget/QuickExpenseModal';
+import DailyMoneyActionModal from './DailyMoneyActionModal';
+import { getTodayMoney } from '../../../services/dailyMoneyApi';
 
 const toNumber = (value) => {
     const number = Number(value);
@@ -26,15 +28,45 @@ const MobileDashboardHome = ({
 }) => {
     const [profileBannerVisible, setProfileBannerVisible] = useState(true);
     const [quickExpenseOpen, setQuickExpenseOpen] = useState(false);
-    const totalSpent = Math.max(0, toNumber(live.spent));
+    const [dailyAction, setDailyAction] = useState(null);
+    const [todayMoney, setTodayMoney] = useState(null);
+    const [todayError, setTodayError] = useState('');
+
+    const refreshToday = useCallback(async () => {
+        try {
+            setTodayError('');
+            setTodayMoney(await getTodayMoney());
+        } catch (error) {
+            console.error('Failed to load daily money dashboard:', error);
+            setTodayError('Your daily tools could not refresh. Existing dashboard information is still shown.');
+        }
+    }, []);
+
+    useEffect(() => {
+        let active = true;
+        getTodayMoney()
+            .then((data) => active && setTodayMoney(data))
+            .catch((error) => {
+                console.error('Failed to load daily money dashboard:', error);
+                if (active) setTodayError('Your daily tools could not refresh. Existing dashboard information is still shown.');
+            });
+        return () => { active = false; };
+    }, []);
+
+    const totalSpent = Math.max(0, toNumber(todayMoney?.spent_today ?? live.spent));
     const totalBudget = (live.raw?.budgets || []).reduce(
         (sum, budget) => sum + toNumber(
             budget?.budgeted_amount || budget?.allocated_amount || budget?.amount || budget?.target_amount
         ),
         0
     );
-    const spendTarget = Math.max(totalBudget || toNumber(live.income), totalSpent);
-    const availableToSpend = Math.max(spendTarget - totalSpent, 0);
+    const backendTarget = todayMoney?.daily_target;
+    const spendTarget = backendTarget !== null && backendTarget !== undefined
+        ? Math.max(toNumber(backendTarget), totalSpent)
+        : Math.max(totalBudget || toNumber(live.income), totalSpent);
+    const availableToSpend = todayMoney?.remaining_today !== null && todayMoney?.remaining_today !== undefined
+        ? Math.max(toNumber(todayMoney.remaining_today), 0)
+        : Math.max(spendTarget - totalSpent, 0);
     const spentPercent = spendTarget > 0 ? clamp(Math.round((totalSpent / spendTarget) * 100), 0, 100) : 0;
     const profileCompletion = clamp(Number(live.completion || 0), 0, 100);
     const spendState = totalSpent > spendTarget && spendTarget > 0
@@ -46,13 +78,21 @@ const MobileDashboardHome = ({
     const canViewFinancialHealth = healthAccess?.allowed !== false;
     const displayedHealthScore = canViewFinancialHealth ? currentScore : 0;
     const healthPlan = healthAccess?.minimumTier || 'PLUS';
+    const effectiveStreak = toNumber(todayMoney?.streak?.current_streak ?? streakDays);
 
     const handleExpenseSaved = () => {
         setQuickExpenseOpen(false);
         sync?.refreshNow?.();
+        refreshToday();
         window.dispatchEvent(new CustomEvent('healthRefreshRequested', {
             detail: { source: 'dashboard:quick-expense' },
         }));
+    };
+
+    const handleDailyActionSaved = () => {
+        setDailyAction(null);
+        refreshToday();
+        sync?.refreshNow?.();
     };
 
     return (
@@ -97,7 +137,7 @@ const MobileDashboardHome = ({
                     </section>
                 )}
 
-                <section className="mt-3 rounded-[20px] border border-[#e2e7e4] bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,40,35,0.22)]">
+                <section className="mt-4 rounded-[20px] border border-[#e2e7e4] bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,40,35,0.22)]">
                     <p className="text-[12px] font-bold uppercase tracking-[0.04em] text-[#4d5a56]">Financial Health</p>
                     <div className="mt-2 flex items-center gap-4">
                         <HealthRing score={displayedHealthScore} />
@@ -127,6 +167,20 @@ const MobileDashboardHome = ({
                     </div>
                 </section>
 
+                <section className="mt-6">
+                    <h2 className="text-[15px] font-bold">What would you like to do today?</h2>
+                    <p className="mt-2 text-[12px] leading-relaxed text-[#4d5a56]">Powered by your Budget Planner, Tax Planner &amp; Shilingi Buddy.</p>
+                    <div className="mt-3 grid grid-cols-5 gap-2">
+                        <QuickAction emoji="🗓️" label="Plan Your Day" onClick={() => setDailyAction('plan')} tone="bg-[#edf1df]" />
+                        <QuickAction emoji="🧾" label="Track" onClick={() => setQuickExpenseOpen(true)} tone="bg-[#e4f0ee]" />
+                        <QuickAction emoji="🛒" label="Shop" onClick={() => setDailyAction('shop')} tone="bg-[#dff2ea]" />
+                        <QuickAction emoji="🔔" label="Remind" onClick={() => setDailyAction('remind')} tone="bg-[#fff1bc]" />
+                        <QuickAction emoji="🤔" label="Can I Afford?" onClick={() => setDailyAction('afford')} tone="bg-[#f1e5f8]" />
+                    </div>
+                </section>
+
+                {todayError && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">{todayError}</p>}
+
                 <section className="mt-3 rounded-[20px] border border-[#e2e7e4] bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,40,35,0.22)]">
                     <div className="flex items-center justify-between gap-3">
                         <p className="text-[12px] font-bold uppercase tracking-[0.04em] text-[#4d5a56]">💰 Money Today</p>
@@ -147,21 +201,6 @@ const MobileDashboardHome = ({
                     </div>
                 </section>
 
-                <section className="mt-6">
-                    <h2 className="text-[15px] font-bold">What would you like to do today?</h2>
-                    <p className="mt-2 text-[12px] text-[#4d5a56]">Small daily moves that build lasting money habits.</p>
-                    <div className="mt-3 grid grid-cols-4 gap-2">
-                        <QuickAction emoji="🧾" label="Log an Expense" onClick={() => setQuickExpenseOpen(true)} />
-                        <QuickAction emoji="🛒" label="Shopping List" onClick={() => onSelectSection('budget')} />
-                        <QuickAction emoji="🪙" label="Round-Up & Save" onClick={() => onSelectSection('user')} />
-                        <QuickAction
-                            emoji="🤖"
-                            label="Ask Shilingi Buddy"
-                            onClick={() => window.dispatchEvent(new CustomEvent('shilingi-buddy-open'))}
-                        />
-                    </div>
-                </section>
-
                 <section className="mt-4 rounded-[20px] bg-[linear-gradient(135deg,_#0f4a4a,_#0c6060)] p-4 text-white">
                     <p className="text-[12px] font-bold uppercase tracking-[0.04em] text-[#bfe3dd]">💡 Shilingi Insight</p>
                     <div className="mt-2 flex items-start gap-2.5">
@@ -178,14 +217,26 @@ const MobileDashboardHome = ({
                 <section className="mt-3 rounded-[20px] border border-[#e2e7e4] bg-white p-4">
                     <div className="flex items-center justify-between gap-3">
                         <p className="text-[12px] font-bold">🔥 7-Day Money Streak</p>
-                        <p className="text-[11px] font-semibold text-[#4d5a56]">{Math.min(streakDays, 7)} of 7 days</p>
+                        <p className="text-[11px] font-semibold text-[#4d5a56]">{Math.min(effectiveStreak, 7)} of 7 days</p>
                     </div>
                     <div className="mt-3 flex gap-1.5">
                         {Array.from({ length: 7 }, (_, index) => (
-                            <span key={index} className={`flex h-7 flex-1 items-center justify-center rounded-lg border text-[11px] ${index < Math.min(streakDays, 7) ? 'border-[#d6a521] bg-[#eabb3a] text-[#3a2c05]' : 'border-[#e7ebe9] bg-[#f4f6f5] text-[#8a9490]'}`}>
-                                {index < Math.min(streakDays, 7) ? '✓' : index + 1}
+                            <span key={index} className={`flex h-7 flex-1 items-center justify-center rounded-lg border text-[11px] ${index < Math.min(effectiveStreak, 7) ? 'border-[#d6a521] bg-[#eabb3a] text-[#3a2c05]' : 'border-[#e7ebe9] bg-[#f4f6f5] text-[#8a9490]'}`}>
+                                {index < Math.min(effectiveStreak, 7) ? '✓' : index + 1}
                             </span>
                         ))}
+                    </div>
+                </section>
+
+                <section className="mt-6">
+                    <div className="flex items-end justify-between gap-3">
+                        <div><h2 className="text-[15px] font-bold">Money Calendar</h2><p className="mt-1 text-[11px] text-[#4d5a56]">Your plans and upcoming reminders.</p></div>
+                        <button type="button" onClick={() => setDailyAction('remind')} className="text-[11px] font-bold text-[#0c6060]">+ Add reminder</button>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                        {todayMoney?.plan && <CalendarRow emoji="🗓️" title="Today's money plan" detail={`${todayMoney.plan.items?.length || 0} planned item${todayMoney.plan.items?.length === 1 ? '' : 's'}`} />}
+                        {(todayMoney?.reminders || []).slice(0, 3).map((reminder) => <CalendarRow key={reminder.uuid} emoji="🔔" title={reminder.title} detail={new Date(reminder.due_at).toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' })} />)}
+                        {!todayMoney?.plan && !(todayMoney?.reminders || []).length && <button type="button" onClick={() => setDailyAction('plan')} className="w-full rounded-[14px] border border-dashed border-[#cbd6d1] bg-white px-4 py-4 text-left text-[12px] text-[#68736f]">No plans or reminders yet. Plan your day to get started.</button>}
                     </div>
                 </section>
 
@@ -213,17 +264,20 @@ const MobileDashboardHome = ({
                 {quickExpenseOpen && (
                     <QuickExpenseModal onClose={() => setQuickExpenseOpen(false)} onSuccess={handleExpenseSaved} />
                 )}
+                {dailyAction && <DailyMoneyActionModal action={dailyAction} today={todayMoney} onClose={() => setDailyAction(null)} onSaved={handleDailyActionSaved} />}
             </div>
         </div>
     );
 };
 
-const QuickAction = ({ emoji, label, onClick }) => (
-    <button type="button" onClick={onClick} className="min-w-0 rounded-[14px] border border-[#e7ebe9] bg-white px-1 py-3 text-center shadow-[0_8px_20px_-16px_rgba(15,40,35,0.28)]">
-        <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#e4f0ee] text-base" aria-hidden="true">{emoji}</span>
+const QuickAction = ({ emoji, label, onClick, tone = 'bg-[#e4f0ee]' }) => (
+    <button type="button" onClick={onClick} className="min-w-0 rounded-[14px] border border-[#e1e6e3] bg-white px-0.5 py-3 text-center shadow-[0_8px_20px_-16px_rgba(15,40,35,0.28)] transition active:scale-[0.98]">
+        <span className={`mx-auto flex h-9 w-9 items-center justify-center rounded-[10px] text-base ${tone}`} aria-hidden="true">{emoji}</span>
         <span className="mt-2 block text-[9px] font-semibold leading-tight">{label}</span>
     </button>
 );
+
+const CalendarRow = ({ emoji, title, detail }) => <div className="flex items-center gap-3 rounded-[14px] border border-[#e7ebe9] bg-white px-3 py-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e4f0ee]">{emoji}</span><span className="min-w-0"><span className="block truncate text-[12px] font-bold">{title}</span><span className="mt-0.5 block truncate text-[10px] text-[#68736f]">{detail}</span></span></div>;
 
 const HubButton = ({ emoji, label, onClick }) => (
     <button type="button" onClick={onClick} className="rounded-[14px] border border-[#e7ebe9] bg-white px-2 py-3 text-center">

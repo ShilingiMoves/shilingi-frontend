@@ -43,7 +43,7 @@ export const plans = [
         labelClass: 'text-slate-400',
         includedTitle: "What's included",
         features: [
-            { text: 'Financial Health Indicator', included: true, tone: 'green' },
+            { text: 'Daily money tools and streaks', included: true, tone: 'green' },
             { text: 'Budget Planner', included: true, tone: 'green' },
             { text: 'Tax Planner', included: true, tone: 'green' },
             { text: 'Four essential financial hubs', included: true, tone: 'green' },
@@ -66,6 +66,7 @@ export const plans = [
         labelClass: 'text-sky-300',
         includedTitle: 'Everything in Basic, plus',
         features: [
+            { text: 'Financial Health Score', included: true, tone: 'blue' },
             { text: 'Debt Manager', included: true, tone: 'blue' },
             { text: 'Protection Planner', included: true, tone: 'blue' },
             { text: 'Net Worth Tracker', included: true, tone: 'blue' },
@@ -111,6 +112,8 @@ const comparisonGroups = [
         category: 'Budgeting and Cash Flow',
         rows: [
             { feature: 'Budget Planner', values: [true, true, true] },
+            { feature: 'Daily money tools', values: [true, true, true] },
+            { feature: 'Financial Health Score', values: ['-', true, true] },
             { feature: 'Net Worth Tracker', values: ['-', true, true] },
         ],
     },
