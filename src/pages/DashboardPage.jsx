@@ -381,7 +381,7 @@ const DashboardPage = () => {
         }
         switch (activeSection) {
             case 'overview':
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} accessBySection={accessBySection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} onUpgradePlan={(plan) => navigate(`/onboarding?plan=${plan}&checkout=1`)} accessBySection={accessBySection} />;
 
             case 'cashflow':
                 return standardShell(
@@ -510,7 +510,7 @@ const DashboardPage = () => {
                 );
 
             default:
-                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} accessBySection={accessBySection} />;
+                return <DashboardOverview user={profile} hasIncomeData={hasIncomeData} onSelectSection={handleSelectSection} onSignOut={handleSignOut} onUpgradePlan={(plan) => navigate(`/onboarding?plan=${plan}&checkout=1`)} accessBySection={accessBySection} />;
         }
     };
 
@@ -624,9 +624,22 @@ const DashboardPage = () => {
             <MobileDashboardNav
                 activeSection={activeSection}
                 activeCatalogView={mobileCatalogView}
-                healthAccess={accessBySection?.health}
                 onOpenCatalog={setMobileCatalogView}
                 onOpenMore={openMobileMenu}
+                onOpenTracker={() => {
+                    setMobileCatalogView(null);
+                    const trackerAccess = getSectionAccess(accessBySection, 'health');
+                    if (trackerAccess.allowed) {
+                        handleSelectSection('health');
+                        return;
+                    }
+                    setAccessPrompt({
+                        ...trackerAccess,
+                        allowed: false,
+                        minimumTier: 'PRO',
+                        title: 'Tracker and financial analytics',
+                    });
+                }}
                 onSelectSection={(sectionId) => {
                     setMobileCatalogView(null);
                     handleSelectSection(sectionId);
@@ -643,13 +656,11 @@ const mobileDashboardNavItems = [
     { id: 'communityhub', label: 'Community', icon: '💬' },
 ];
 
-export const MobileDashboardNav = ({ activeSection, activeCatalogView, healthAccess, onOpenCatalog, onOpenMore, onSelectSection }) => {
-    const canUseTracker = healthAccess?.allowed === true;
+export const MobileDashboardNav = ({ activeSection, activeCatalogView, onOpenCatalog, onOpenMore, onOpenTracker, onSelectSection }) => {
     const items = [
         ...mobileDashboardNavItems,
-        canUseTracker
-            ? { id: 'health', label: 'Tracker', icon: '📈' }
-            : { id: 'more', label: 'More', icon: '•••', action: 'more' },
+        { id: 'health', label: 'Tracker', icon: '📈', action: 'tracker' },
+        { id: 'more', label: 'More', icon: '•••', action: 'more' },
     ];
 
     return (
@@ -662,8 +673,8 @@ export const MobileDashboardNav = ({ activeSection, activeCatalogView, healthAcc
                     <button
                         key={id}
                         type="button"
-                        onClick={() => action === 'more' ? onOpenMore() : catalog ? onOpenCatalog(catalog) : onSelectSection(id)}
-                        className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] transition-colors ${
+                        onClick={() => action === 'more' ? onOpenMore() : action === 'tracker' ? onOpenTracker() : catalog ? onOpenCatalog(catalog) : onSelectSection(id)}
+                        className={`flex flex-1 flex-col items-center justify-center gap-1 text-[9px] transition-colors ${
                             isActive ? 'text-[#0c6060]' : 'text-[#68716e]'
                         }`}
                         aria-current={isActive ? 'page' : undefined}

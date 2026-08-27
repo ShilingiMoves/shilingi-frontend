@@ -682,7 +682,7 @@ const isNewUser = (user) => {
     return !(profile.monthly_income || profile.primary_financial_goal || ws.shortTermGoal || ws.mediumTermGoal || ws.longTermGoal || hasData);
 };
 
-const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSignOut, accessBySection = {} }) => {
+const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSignOut, onUpgradePlan, accessBySection = {} }) => {
     const [displayName, setDisplayName] = useState(() => getDashboardDisplayName(user));
     const moment = useMemo(() => getMoment(new Date()), []);
     const palette = toneMap[moment];
@@ -1121,6 +1121,7 @@ const DashboardOverview = ({ user, hasIncomeData = false, onSelectSection, onSig
                 mobileActions={mobileActions}
                 onSelectSection={onSelectSection}
                 onSignOut={onSignOut}
+                onUpgradePlan={onUpgradePlan}
                 palette={palette}
                 savingsRateScore={savingsRateScore}
                 sync={overviewSync}
@@ -1986,6 +1987,7 @@ const MobileDashboardOverview = ({
     mobileActions,
     onSelectSection,
     onSignOut,
+    onUpgradePlan,
     palette,
     savingsRateScore,
     debtRatioScore,
@@ -2008,6 +2010,7 @@ const MobileDashboardOverview = ({
                 healthAccess={healthAccess}
                 live={live}
                 onSelectSection={onSelectSection}
+                onUpgradePlan={onUpgradePlan}
                 palette={palette}
                 streakDays={streakDays}
                 sync={sync}

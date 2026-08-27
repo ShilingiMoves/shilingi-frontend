@@ -19,6 +19,10 @@ const hubs = [
         name: 'Learning Hub',
         description: 'Beginner lessons on budgeting and tax',
         tags: ['Articles', 'Videos', 'Quizzes', 'Games', 'Learning paths'],
+        accent: 'border-t-[#0c6060]',
+        iconTone: 'bg-[#e4f0ee]',
+        tagTone: 'bg-[#e4f0ee] text-[#0c6060]',
+        buttonTone: 'bg-[#0c6060] text-white',
     },
     {
         id: 'comparehub',
@@ -26,6 +30,10 @@ const hubs = [
         name: 'Comparison Hub',
         description: 'Compare financial products side by side',
         tags: ['Chama', 'Sacco', 'Bank', 'Microfinance', 'MMFs', 'Money transfer'],
+        accent: 'border-t-[#eabb3a]',
+        iconTone: 'bg-[#fbf1de]',
+        tagTone: 'bg-[#fbf1de] text-[#c8891c]',
+        buttonTone: 'bg-[#eabb3a] text-[#2a1f04]',
     },
     {
         id: 'resourceshub',
@@ -33,6 +41,10 @@ const hubs = [
         name: 'Resources & Tools',
         description: 'Calculators and beginner reading',
         tags: ['Savings calculator', 'Emergency fund', 'PAYE calculator', 'Beginner books'],
+        accent: 'border-t-[#7c8e4d]',
+        iconTone: 'bg-[#eef1e2]',
+        tagTone: 'bg-[#eef1e2] text-[#617039]',
+        buttonTone: 'bg-[#7c8e4d] text-white',
     },
 ];
 
@@ -83,18 +95,18 @@ export const MobileHubsView = ({ onBack, onSelectSection }) => (
     >
         <div className="space-y-3 px-4 py-4">
             {hubs.map((hub) => (
-                <article key={hub.id} className="rounded-[20px] border border-[#e7ebe9] bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,40,35,0.28)]">
+                <article key={hub.id} className={`rounded-[20px] border border-t-[3px] border-[#e7ebe9] bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,40,35,0.28)] ${hub.accent}`}>
                     <div className="flex items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e4f0ee] text-xl" aria-hidden="true">{hub.emoji}</span>
+                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl ${hub.iconTone}`} aria-hidden="true">{hub.emoji}</span>
                         <div className="min-w-0">
                             <h2 className="text-[14px] font-bold text-[#16302b]">{hub.name}</h2>
                             <p className="mt-0.5 text-[11px] text-[#4d5a56]">{hub.description}</p>
                         </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-1.5">
-                        {hub.tags.map((tag) => <span key={tag} className="rounded-full border border-[#e7ebe9] bg-[#f4f6f5] px-2.5 py-1.5 text-[10px] font-semibold text-[#4d5a56]">{tag}</span>)}
+                        {hub.tags.map((tag) => <span key={tag} className={`rounded-full border border-[#e7ebe9] px-2.5 py-1.5 text-[10px] font-semibold ${hub.tagTone}`}>{tag}</span>)}
                     </div>
-                    <button type="button" onClick={() => onSelectSection(hub.id)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#0c6060] px-4 py-3 text-[12px] font-bold text-white">
+                    <button type="button" onClick={() => onSelectSection(hub.id)} className={`mt-4 flex w-full items-center justify-center gap-2 rounded-[12px] px-4 py-3 text-[12px] font-bold ${hub.buttonTone}`}>
                         Open {hub.name}<ChevronRight size={15} />
                     </button>
                 </article>
@@ -144,4 +156,3 @@ const PlannerGroup = ({ title, badge, planners: groupPlanners, locked = false, o
         </section>
     );
 };
-

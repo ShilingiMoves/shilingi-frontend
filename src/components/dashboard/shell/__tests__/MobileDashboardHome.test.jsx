@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MobileDashboardHome from '../MobileDashboardHome';
 import { getMoneyCalendar, getTodayMoney } from '../../../../services/dailyMoneyApi';
@@ -9,16 +10,21 @@ vi.mock('../../../../services/dailyMoneyApi', () => ({
     getTodayMoney: vi.fn(),
 }));
 
-const renderHome = (healthAccess) => render(
-    <MobileDashboardHome
-        currentScore={72}
-        displayName="Myra"
-        healthAccess={healthAccess}
-        live={{ raw: { budgets: [] } }}
-        onSelectSection={vi.fn()}
-        palette={{ label: 'Good morning' }}
-    />
-);
+const renderHome = (healthAccess) => {
+    const onUpgradePlan = vi.fn();
+    render(
+        <MobileDashboardHome
+            currentScore={72}
+            displayName="Myra"
+            healthAccess={healthAccess}
+            live={{ raw: { budgets: [] } }}
+            onSelectSection={vi.fn()}
+            onUpgradePlan={onUpgradePlan}
+            palette={{ label: 'Good morning' }}
+        />
+    );
+    return { onUpgradePlan };
+};
 
 describe('MobileDashboardHome', () => {
     beforeEach(() => {
@@ -33,10 +39,16 @@ describe('MobileDashboardHome', () => {
         });
     });
 
-    it('hides Financial Health for Basic members and renders account calendar events', async () => {
-        renderHome({ allowed: false, currentTier: 'BASIC', minimumTier: 'PLUS' });
+    it('shows a locked zero-score snapshot for Basic and renders account calendar events', async () => {
+        const user = userEvent.setup();
+        const { onUpgradePlan } = renderHome({ allowed: false, currentTier: 'BASIC', minimumTier: 'PLUS' });
 
-        expect(screen.queryByText('Financial Health')).not.toBeInTheDocument();
+        expect(screen.getByText('Financial Health')).toBeInTheDocument();
+        expect(screen.getByText('Available on Plus & Pro')).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'Upgrade to Plus' }));
+        await user.click(screen.getByRole('button', { name: 'Upgrade to Pro' }));
+        expect(onUpgradePlan).toHaveBeenNthCalledWith(1, 'plus');
+        expect(onUpgradePlan).toHaveBeenNthCalledWith(2, 'pro');
         expect(await screen.findByText('Rent due')).toBeInTheDocument();
         expect(screen.getByText('Payday')).toBeInTheDocument();
         expect(screen.getByText('Netflix renewal')).toBeInTheDocument();
